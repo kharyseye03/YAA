@@ -1,0 +1,76 @@
+name: yaa
+description: "YAA - Application mobile de vente en ligne"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.7.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # ── State Management ────────────────────────────────────
+  flutter_riverpod: ^2.6.1
+  riverpod_annotation: ^2.6.1
+
+  # ── Navigation ──────────────────────────────────────────
+  go_router: ^14.8.1
+
+  # ── Network ─────────────────────────────────────────────
+  dio: ^5.7.0
+
+  # ── Data & Serialization ────────────────────────────────
+  freezed_annotation: ^2.4.4
+  json_annotation: ^4.9.0
+
+  # ── Local Storage ───────────────────────────────────────
+  shared_preferences: ^2.3.4
+
+  # ── UI & Assets ─────────────────────────────────────────
+  flutter_svg: ^2.0.17
+  cached_network_image: ^3.4.1
+  shimmer: ^3.0.0
+  flutter_screenutil: ^5.9.3
+
+  # ── Utils ───────────────────────────────────────────────
+  intl: ^0.19.0
+  url_launcher: ^6.3.1
+
+  # ── Icons ───────────────────────────────────────────────
+  cupertino_icons: ^1.0.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+  # ── Code Generation ─────────────────────────────────────
+  build_runner: ^2.4.14
+  freezed: ^2.5.8
+  json_serializable: ^6.9.4
+  riverpod_generator: ^2.6.3
+
+flutter:
+  uses-material-design: true
+
+  # ── Fonts ───────────────────────────────────────────────
+  fonts:
+    - family: Archivo
+      fonts:
+        - asset: assets/fonts/Archivo/static/Archivo-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Archivo/static/Archivo-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Archivo/static/Archivo-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Archivo/static/Archivo-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/Archivo/static/Archivo-ExtraBold.ttf
+          weight: 800
+
+  # ── Assets ──────────────────────────────────────────────
+  assets:
+    - assets/images/
+    - assets/icons/
+    - assets/svg/
