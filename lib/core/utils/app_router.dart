@@ -1,8 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../features/splash/presentation/screens/splash_screen.dart';
-import '../../features/onboarding/presentation/screens/onboarding_screen.dart';
+
+import '../../features/auth/forgot_password_screen.dart';
+import '../../features/auth/forgot_verification_screen.dart';
+import '../../features/auth/location_screen.dart';
+import '../../features/auth/login_screen.dart';
+import '../../features/auth/password_screen.dart';
+import '../../features/auth/register_screen.dart';
+import '../../features/auth/reset_password_screen.dart';
+import '../../features/auth/verification_screen.dart';
+import '../../features/starter/onboarding/screens/onboarding_screen.dart';
+import '../../features/starter/splash/splash_screen.dart';
 
 /// Route path constants.
 abstract final class RoutePaths {
@@ -10,6 +19,12 @@ abstract final class RoutePaths {
   static const String onboarding = '/onboarding';
   static const String login = '/login';
   static const String register = '/register';
+  static const String verification = '/verification';
+  static const String password = '/password';
+  static const String location = '/location';
+  static const String forgotPassword = '/forgot-password';
+  static const String forgotVerification = '/forgot-verification';
+  static const String resetPassword = '/reset-password';
   static const String home = '/home';
   static const String restaurantList = '/restaurants';
   static const String restaurantDetail = '/restaurants/:id';
@@ -33,6 +48,12 @@ abstract final class RouteNames {
   static const String onboarding = 'onboarding';
   static const String login = 'login';
   static const String register = 'register';
+  static const String verification = 'verification';
+  static const String password = 'password';
+  static const String location = 'location';
+  static const String forgotPassword = 'forgotPassword';
+  static const String forgotVerification = 'forgotVerification';
+  static const String resetPassword = 'resetPassword';
   static const String home = 'home';
   static const String restaurantList = 'restaurantList';
   static const String restaurantDetail = 'restaurantDetail';
@@ -69,7 +90,51 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
 
       // TODO: Add remaining routes as screens are built
-    ],
+
+      // ── Auth Flow ──────────────────────────────────────────
+      GoRoute(
+        path: RoutePaths.register,
+        name: RouteNames.register,
+        builder: (context, state) => const RegisterScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.verification,
+        name: RouteNames.verification,
+        builder: (context, state) => const VerificationScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.password,
+        name: RouteNames.password,
+        builder: (context, state) => const PasswordScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.location,
+        name: RouteNames.location,
+        builder: (context, state) => const LocationScreen(),
+      ),
+
+      // ── Login Flow ─────────────────────────────────────────
+      GoRoute(
+        path: RoutePaths.login,
+        name: RouteNames.login,
+        builder: (context, state) => const LoginScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.forgotPassword,
+        name: RouteNames.forgotPassword,
+        builder: (context, state) => const ForgotPasswordScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.forgotVerification,
+        name: RouteNames.forgotVerification,
+        builder: (context, state) => const ForgotVerificationScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.resetPassword,
+        name: RouteNames.resetPassword,
+        builder: (context, state) => const ResetPasswordScreen(),
+      ),
+      ],
 
     // Global error page
     errorBuilder: (context, state) => Scaffold(

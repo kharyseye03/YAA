@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/constants/constants.dart';
-import '../../../../core/utils/app_router.dart';
+import '../../../core/constants/constants.dart';
+import '../../../core/utils/app_router.dart';
 
 /// Splash screen — full blue background with centered logo.
 class SplashScreen extends StatefulWidget {
