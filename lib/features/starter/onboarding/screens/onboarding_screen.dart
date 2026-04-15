@@ -8,6 +8,7 @@ import '../widgets/dot_indicator.dart';
 import '../widgets/onboarding_image_diamonds.dart';
 import '../widgets/onboarding_image_grid.dart';
 import '../widgets/onboarding_page_data.dart';
+import '../widgets/onboarding_image_hexagons.dart';
 
 /// Onboarding screen with swipeable pages.
 ///
@@ -50,6 +51,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         'assets/images/img1_ob1.png',
         'assets/images/img6_ob1.png',
         'assets/images/img2_ob1.png',
+        'assets/images/img1_ob1.png',
+
       ],
     ),
     // Last page — uses diamond layout
@@ -212,11 +215,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           const SizedBox(height: AppDimens.xxxl),
 
           // Image layout
+          // Image layout
           Expanded(
             flex: 5,
-            child: isLast
-                ? OnboardingImageDiamonds(images: page.images)
-                : OnboardingImageGrid(images: page.images),
+            child: index == 0
+                ? OnboardingImageGrid(images: page.images)
+                : index == 1
+                ? OnboardingImageHexagons(images: page.images)
+                : OnboardingImageDiamonds(images: page.images),
           ),
 
           const SizedBox(height: AppDimens.xxl),
