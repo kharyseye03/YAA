@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 import 'package:yaa/features/screens/home/product_card.dart';
 import 'package:yaa/features/screens/home/promo_banner_carousel.dart';
+import 'package:yaa/features/screens/home/search_bar_widget.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimens.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../core/utils/app_router.dart';
 import 'category_list.dart';
 import 'home_bottom_nav.dart';
 import 'home_header.dart';
@@ -118,12 +121,8 @@ class _HomeScreenState extends State<HomeScreen> {
           // ── Header (blue) ─────────────────────────────────
           HomeHeader(
             userName: 'Gérald charo KEITA',
-            onMenuTap: () {
-              // TODO: Open drawer
-            },
-            onNotificationTap: () {
-              // TODO: Go to notifications
-            },
+            onMenuTap: () {},
+            onNotificationTap: () {},
           ),
 
           // ── Scrollable content ────────────────────────────
@@ -135,14 +134,15 @@ class _HomeScreenState extends State<HomeScreen> {
                 children: [
                   const SizedBox(height: AppDimens.lg),
 
-                  // Promo banner
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: AppDimens.screenPadding),
-                    child: PromoBannerCarousel(banners: _banners),
-                  ),
-
-                  const SizedBox(height: AppDimens.xxl),
+                  // Promo banner — hidden in search mode
+                  if (_currentNavIndex == 0) ...[
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: AppDimens.screenPadding),
+                      child: PromoBannerCarousel(banners: _banners),
+                    ),
+                    const SizedBox(height: AppDimens.xxl),
+                  ],
 
                   // Categories section
                   Padding(
@@ -169,6 +169,20 @@ class _HomeScreenState extends State<HomeScreen> {
 
                   const SizedBox(height: AppDimens.xxl),
 
+                  // Search bar — visible only in search mode
+                  if (_currentNavIndex == 1) ...[
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: AppDimens.screenPadding),
+                      child: SearchBarWidget(
+                        onFilterTap: () {
+                          // TODO: Open filter
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: AppDimens.xxl),
+                  ],
+
                   // Recent publications section
                   Padding(
                     padding: const EdgeInsets.symmetric(
@@ -184,11 +198,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   const SizedBox(height: AppDimens.md),
 
                   // Products grid
-                // Products grid
-                Builder(
+                  Builder(
                     builder: (context) {
-                      final products = _productsByCategory[_activeCategoryIndex] ??
-                          [];
+                      final products =
+                          _productsByCategory[_activeCategoryIndex] ?? [];
                       return Padding(
                         padding: const EdgeInsets.symmetric(
                             horizontal: AppDimens.screenPadding),
@@ -201,14 +214,13 @@ class _HomeScreenState extends State<HomeScreen> {
                             crossAxisCount: 2,
                             mainAxisSpacing: AppDimens.lg,
                             crossAxisSpacing: AppDimens.md,
-                            childAspectRatio: 0.78,
+                            childAspectRatio: 0.72,
                           ),
                           itemBuilder: (context, index) {
                             return ProductCard(
                               product: products[index],
-                              onTap: () {
-                                // TODO: Navigate to product detail
-                              },
+                              onTap: () =>
+                                  context.pushNamed(RouteNames.productDetail),
                               onAddTap: () {
                                 // TODO: Add to cart
                               },
@@ -216,9 +228,9 @@ class _HomeScreenState extends State<HomeScreen> {
                           },
                         ),
                       );
-                    }
-                )
-                ]
+                    },
+                  ),
+                ],
               ),
             ),
           ),
@@ -230,9 +242,7 @@ class _HomeScreenState extends State<HomeScreen> {
         currentIndex: _currentNavIndex,
         cartItemCount: 0,
         onTap: (index) => setState(() => _currentNavIndex = index),
-        onCartTap: () {
-          // TODO: Go to cart
-        },
+        onCartTap: () => context.pushNamed(RouteNames.cart),
       ),
     );
   }
