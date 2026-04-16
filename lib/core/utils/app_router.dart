@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import '../../features/auth/forgot_password_screen.dart';
 import '../../features/auth/forgot_verification_screen.dart';
 import '../../features/auth/location_screen.dart';
@@ -10,7 +9,10 @@ import '../../features/auth/password_screen.dart';
 import '../../features/auth/register_screen.dart';
 import '../../features/auth/reset_password_screen.dart';
 import '../../features/auth/verification_screen.dart';
+import '../../features/cart/cart_screen.dart';
+import '../../features/cart/checkout_screen.dart';
 import '../../features/screens/home/home_screen.dart';
+import '../../features/screens/product/product_detail_screen.dart';
 import '../../features/starter/onboarding/screens/onboarding_screen.dart';
 import '../../features/starter/splash/splash_screen.dart';
 
@@ -27,6 +29,7 @@ abstract final class RoutePaths {
   static const String forgotVerification = '/forgot-verification';
   static const String resetPassword = '/reset-password';
   static const String home = '/home';
+  static const String productDetail = '/product-detail';
   static const String restaurantList = '/restaurants';
   static const String restaurantDetail = '/restaurants/:id';
   static const String pharmacyList = '/pharmacies';
@@ -56,6 +59,7 @@ abstract final class RouteNames {
   static const String forgotVerification = 'forgotVerification';
   static const String resetPassword = 'resetPassword';
   static const String home = 'home';
+  static const String productDetail = 'productDetail';
   static const String restaurantList = 'restaurantList';
   static const String restaurantDetail = 'restaurantDetail';
   static const String pharmacyList = 'pharmacyList';
@@ -140,6 +144,23 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: RoutePaths.home,
         name: RouteNames.home,
         builder: (context, state) => const HomeScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.productDetail,
+        name: RouteNames.productDetail,
+        builder: (context, state) => const ProductDetailScreen(),
+      ),
+
+      // ── Cart & Checkout ────────────────────────────────────
+      GoRoute(
+        path: RoutePaths.cart,
+        name: RouteNames.cart,
+        builder: (context, state) => const CartScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.checkout,
+        name: RouteNames.checkout,
+        builder: (context, state) => const CheckoutScreen(),
       ),
     ],
 
