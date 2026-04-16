@@ -5,8 +5,11 @@ import '../../core/constants/app_dimens.dart';
 import '../../core/constants/app_text_styles.dart';
 import '../../core/utils/app_router.dart';
 import '../../shared/widgets/auth_header.dart';
+import '../../shared/widgets/phone_number_formatter.dart';
 import '../../shared/widgets/yaa_button.dart';
 import '../../shared/widgets/yaa_text_field.dart';
+import 'package:flutter/services.dart';
+
 
 /// Forgot password screen — "Mot de passe oublié"
 /// Toggle between phone and email input, then send OTP.
@@ -41,7 +44,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            const AuthHeader(),
+            AuthHeader(
+              onBack: () => context.goNamed(RouteNames.login),
+            ),
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.symmetric(
@@ -82,13 +87,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
                     // Input field based on selected tab
                     if (_isPhone)
-                      YaaTextField(
-                        controller: _phoneController,
-                        label: 'Numéro de téléphone',
-                        hint: 'Ex: 77 123 45 67',
-                        keyboardType: TextInputType.phone,
-                        textInputAction: TextInputAction.done,
-                      )
+                    PhoneTextField(controller: _phoneController)
                     else
                       YaaTextField(
                         controller: _emailController,
@@ -129,82 +128,60 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         children: [
           // Phone tab
           Expanded(
-            child: GestureDetector(
+            child: _buildTab(
+              isActive: _isPhone,
+              icon: Icons.phone,
+              label: 'Téléphone',
               onTap: () => setState(() => _isPhone = true),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 250),
-                curve: Curves.easeInOut,
-                decoration: BoxDecoration(
-                  color: _isPhone
-                      ? AppColors.primarySurface
-                      : Colors.transparent,
-                  borderRadius:
-                  BorderRadius.circular(AppDimens.radiusFull),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.phone,
-                      size: 18,
-                      color: _isPhone
-                          ? AppColors.primary
-                          : AppColors.grey600,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Téléphone',
-                      style: AppTextStyles.labelMedium.copyWith(
-                        color: _isPhone
-                            ? AppColors.primary
-                            : AppColors.grey600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
             ),
           ),
-
           // Email tab
           Expanded(
-            child: GestureDetector(
+            child: _buildTab(
+              isActive: !_isPhone,
+              icon: Icons.mail_outlined,
+              label: 'Email',
               onTap: () => setState(() => _isPhone = false),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 250),
-                curve: Curves.easeInOut,
-                decoration: BoxDecoration(
-                  color: !_isPhone
-                      ? AppColors.primarySurface
-                      : Colors.transparent,
-                  borderRadius:
-                  BorderRadius.circular(AppDimens.radiusFull),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.mail_outlined,
-                      size: 18,
-                      color: !_isPhone
-                          ? AppColors.primary
-                          : AppColors.grey600,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Email',
-                      style: AppTextStyles.labelMedium.copyWith(
-                        color: !_isPhone
-                            ? AppColors.primary
-                            : AppColors.grey600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
             ),
           ),
         ],
+      ),
+    );
+  }
+  Widget _buildTab({
+    required bool isActive,
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeInOut,
+        height: double.infinity,
+        decoration: BoxDecoration(
+          color: isActive ? AppColors.primarySurface : AppColors.grey100,
+          borderRadius: BorderRadius.circular(AppDimens.radiusFull),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              size: 18,
+              color: isActive ? AppColors.primary : AppColors.grey600,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: AppTextStyles.labelMedium.copyWith(
+                color: isActive ? AppColors.primary : AppColors.grey600,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

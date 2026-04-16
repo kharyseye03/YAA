@@ -87,9 +87,9 @@ class YaaButton extends StatelessWidget {
       return Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, size: AppDimens.iconMd),
-          const SizedBox(width: AppDimens.sm),
           Text(label, style: AppTextStyles.button.copyWith(color: color)),
+          const SizedBox(width: AppDimens.sm),
+          Icon(icon, size: AppDimens.iconMd),
         ],
       );
     }

@@ -87,7 +87,7 @@ abstract final class AppTheme {
       // ── Input Decoration ───────────────────────────────
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: AppColors.grey100,
+        fillColor: AppColors.white,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: AppDimens.lg,
           vertical: AppDimens.lg,
@@ -97,11 +97,11 @@ abstract final class AppTheme {
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppDimens.radiusMd),
-          borderSide: BorderSide.none,
+          borderSide: const BorderSide(color: AppColors.grey300, width: 1),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppDimens.radiusMd),
-          borderSide: BorderSide.none,
+          borderSide: const BorderSide(color: AppColors.grey300, width: 1),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppDimens.radiusMd),

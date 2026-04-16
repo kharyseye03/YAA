@@ -65,7 +65,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                           fontSize: 28,
                           fontWeight: FontWeight.w800,
                           color: AppColors.primary,
-                          fontStyle: FontStyle.italic,
+
                         ),
                       ),
 
