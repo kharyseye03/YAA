@@ -10,6 +10,7 @@ import '../../features/auth/password_screen.dart';
 import '../../features/auth/register_screen.dart';
 import '../../features/auth/reset_password_screen.dart';
 import '../../features/auth/verification_screen.dart';
+import '../../features/screens/home/home_screen.dart';
 import '../../features/starter/onboarding/screens/onboarding_screen.dart';
 import '../../features/starter/splash/splash_screen.dart';
 
@@ -134,7 +135,13 @@ final routerProvider = Provider<GoRouter>((ref) {
         name: RouteNames.resetPassword,
         builder: (context, state) => const ResetPasswordScreen(),
       ),
-      ],
+      // ── Home ───────────────────────────────────────────────
+      GoRoute(
+        path: RoutePaths.home,
+        name: RouteNames.home,
+        builder: (context, state) => const HomeScreen(),
+      ),
+    ],
 
     // Global error page
     errorBuilder: (context, state) => Scaffold(
