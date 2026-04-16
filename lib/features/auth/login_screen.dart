@@ -5,8 +5,11 @@ import '../../core/constants/app_dimens.dart';
 import '../../core/constants/app_text_styles.dart';
 import '../../core/utils/app_router.dart';
 import '../../shared/widgets/auth_header.dart';
+import '../../shared/widgets/phone_number_formatter.dart';
 import '../../shared/widgets/yaa_button.dart';
 import '../../shared/widgets/yaa_text_field.dart';
+import 'package:flutter/services.dart';
+
 /// Login screen — "Se connecter"
 /// Fields: Numéro de téléphone, Mot de passe
 /// Google sign-in, forgot password link, register link.
@@ -44,7 +47,9 @@ class _LoginScreenState extends State<LoginScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            const AuthHeader(),
+            AuthHeader(
+              onBack: () => context.goNamed(RouteNames.register),
+            ),
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(
@@ -81,19 +86,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       const SizedBox(height: AppDimens.xxl),
 
                       // Phone
-                      YaaTextField(
-                        controller: _phoneController,
-                        label: 'Numéro de téléphone',
-                        hint: 'Ex: 77 123 45 67',
-                        keyboardType: TextInputType.phone,
-                        textInputAction: TextInputAction.next,
-                        validator: (value) {
-                          if (value == null || value.trim().isEmpty) {
-                            return 'Veuillez entrer votre numéro';
-                          }
-                          return null;
-                        },
-                      ),
+                      PhoneTextField(controller: _phoneController),
 
                       const SizedBox(height: AppDimens.xl),
 
@@ -195,16 +188,11 @@ class _LoginScreenState extends State<LoginScreen> {
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              // Google icon placeholder
-                              Text(
-                                'G',
-                                style: TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.error,
-                                ),
+                              Image.asset(
+                                'assets/images/g-logo.png',
+                                width: 40,
+                                height: 40,
                               ),
-                              const SizedBox(width: AppDimens.md),
                               Text(
                                 'Continuer avec Google',
                                 style: AppTextStyles.labelMedium.copyWith(

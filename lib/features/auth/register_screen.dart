@@ -4,6 +4,7 @@ import '../../../../core/constants/constants.dart';
 import '../../../../core/utils/app_router.dart';
 import '../../../../shared/widgets/widgets.dart';
 import '../../shared/widgets/auth_header.dart';
+import '../../shared/widgets/phone_number_formatter.dart';
 
 /// Registration screen — "Création de compte"
 /// Fields: Prénom et nom, Numéro de téléphone, Adresse email
@@ -44,7 +45,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
         child: Column(
           children: [
             // Header
-            const AuthHeader(),
+            AuthHeader(
+              onBack: () => context.goNamed(RouteNames.onboarding),
+            ),
 
             // Scrollable content
             Expanded(
@@ -101,20 +104,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       const SizedBox(height: AppDimens.xl),
 
                       // Phone field
-                      YaaTextField(
-                        controller: _phoneController,
-                        label: 'Numéro de téléphone',
-                        hint: 'Ex: 77 123 45 67',
-                        keyboardType: TextInputType.phone,
-                        textInputAction: TextInputAction.next,
-                        autofillHints: const [AutofillHints.telephoneNumber],
-                        validator: (value) {
-                          if (value == null || value.trim().isEmpty) {
-                            return 'Veuillez entrer votre numéro';
-                          }
-                          return null;
-                        },
-                      ),
+                      PhoneTextField(controller: _phoneController),
 
                       const SizedBox(height: AppDimens.xl),
 
