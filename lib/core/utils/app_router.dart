@@ -12,6 +12,9 @@ import '../../features/auth/verification_screen.dart';
 import '../../features/cart/cart_screen.dart';
 import '../../features/cart/checkout_screen.dart';
 import '../../features/screens/home/home_screen.dart';
+import '../../features/screens/order/order_detail_screen.dart';
+import '../../features/screens/order/order_tracking_screen.dart';
+import '../../features/screens/order/orders_screen.dart';
 import '../../features/screens/product/product_detail_screen.dart';
 import '../../features/starter/onboarding/screens/onboarding_screen.dart';
 import '../../features/starter/splash/splash_screen.dart';
@@ -41,9 +44,10 @@ abstract final class RoutePaths {
   static const String cart = '/cart';
   static const String checkout = '/checkout';
   static const String orders = '/orders';
-  static const String orderDetail = '/orders/:id';
+  static const String orderDetail = '/order-detail';
   static const String profile = '/profile';
   static const String search = '/search';
+  static const String orderTracking = '/orderTracking';
 }
 
 /// Route name constants.
@@ -60,6 +64,7 @@ abstract final class RouteNames {
   static const String resetPassword = 'resetPassword';
   static const String home = 'home';
   static const String productDetail = 'productDetail';
+  static const String orderTracking = 'orderTracking';
   static const String restaurantList = 'restaurantList';
   static const String restaurantDetail = 'restaurantDetail';
   static const String pharmacyList = 'pharmacyList';
@@ -161,6 +166,22 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: RoutePaths.checkout,
         name: RouteNames.checkout,
         builder: (context, state) => const CheckoutScreen(),
+      ),
+      // ── Orders ─────────────────────────────────────────────
+      GoRoute(
+        path: RoutePaths.orders,
+        name: RouteNames.orders,
+        builder: (context, state) => const OrdersScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.orderTracking,
+        name: RouteNames.orderTracking,
+        builder: (context, state) => const OrderTrackingScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.orderDetail,
+        name: RouteNames.orderDetail,
+        builder: (context, state) => const OrderDetailScreen(),
       ),
     ],
 
