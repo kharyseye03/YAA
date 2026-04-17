@@ -9,6 +9,7 @@ import '../../../core/constants/app_dimens.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/utils/app_router.dart';
 import '../order/orders_screen.dart';
+import '../profile/profile_screen.dart';
 import 'category_list.dart';
 import 'home_bottom_nav.dart';
 import 'home_header.dart';
@@ -122,6 +123,8 @@ class _HomeScreenState extends State<HomeScreen> {
           // ── Header (blue) ─────────────────────────────────
           _currentNavIndex == 2
               ? _buildSimpleHeader('Commandes')
+              : _currentNavIndex == 3
+              ? _buildSimpleHeader('Mon compte')
               : HomeHeader(
             userName: 'Gérald charo KEITA',
             onMenuTap: () {},
@@ -133,6 +136,8 @@ class _HomeScreenState extends State<HomeScreen> {
           Expanded(
             child: _currentNavIndex == 2
                 ? const OrdersScreen()
+                : _currentNavIndex == 3
+                ? const ProfileScreen()
                 : _buildHomeContent(),
           ),
         ],

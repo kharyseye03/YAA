@@ -16,6 +16,9 @@ import '../../features/screens/order/order_detail_screen.dart';
 import '../../features/screens/order/order_tracking_screen.dart';
 import '../../features/screens/order/orders_screen.dart';
 import '../../features/screens/product/product_detail_screen.dart';
+import '../../features/screens/profile/edit_personal_info_screen.dart';
+import '../../features/screens/profile/personal_info_screen.dart';
+import '../../features/screens/profile/terms_screen.dart';
 import '../../features/starter/onboarding/screens/onboarding_screen.dart';
 import '../../features/starter/splash/splash_screen.dart';
 
@@ -48,6 +51,9 @@ abstract final class RoutePaths {
   static const String profile = '/profile';
   static const String search = '/search';
   static const String orderTracking = '/orderTracking';
+  static const String personalInfo = '/personalInfo';
+  static const String editPersonalInfo = '/editPersonalInfo';
+  static const String terms = '/terms';
 }
 
 /// Route name constants.
@@ -79,6 +85,9 @@ abstract final class RouteNames {
   static const String orderDetail = 'orderDetail';
   static const String profile = 'profile';
   static const String search = 'search';
+  static const String personalInfo = 'personalInfo';
+  static const String editPersonalInfo = 'editPersonalInfo';
+  static const String terms = 'terms';
 }
 
 /// GoRouter provider for Riverpod.
@@ -182,6 +191,21 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: RoutePaths.orderDetail,
         name: RouteNames.orderDetail,
         builder: (context, state) => const OrderDetailScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.personalInfo,
+        name: RouteNames.personalInfo,
+        builder: (context, state) => const PersonalInfoScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.editPersonalInfo,
+        name: RouteNames.editPersonalInfo,
+        builder: (context, state) => const EditPersonalInfoScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.terms,
+        name: RouteNames.terms,
+        builder: (context, state) => const TermsScreen(),
       ),
     ],
 
