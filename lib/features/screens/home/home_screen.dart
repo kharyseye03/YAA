@@ -8,6 +8,8 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimens.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/utils/app_router.dart';
+import '../order/orders_screen.dart';
+import '../profile/profile_screen.dart';
 import 'category_list.dart';
 import 'home_bottom_nav.dart';
 import 'home_header.dart';
@@ -119,120 +121,24 @@ class _HomeScreenState extends State<HomeScreen> {
       body: Column(
         children: [
           // ── Header (blue) ─────────────────────────────────
-          HomeHeader(
+          _currentNavIndex == 2
+              ? _buildSimpleHeader('Commandes')
+              : _currentNavIndex == 3
+              ? _buildSimpleHeader('Mon compte')
+              : HomeHeader(
             userName: 'Gérald charo KEITA',
             onMenuTap: () {},
             onNotificationTap: () {},
           ),
 
           // ── Scrollable content ────────────────────────────
+          // ── Content based on tab ────────────────────────
           Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.only(bottom: AppDimens.lg),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: AppDimens.lg),
-
-                  // Promo banner — hidden in search mode
-                  if (_currentNavIndex == 0) ...[
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: AppDimens.screenPadding),
-                      child: PromoBannerCarousel(banners: _banners),
-                    ),
-                    const SizedBox(height: AppDimens.xxl),
-                  ],
-
-                  // Categories section
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: AppDimens.screenPadding),
-                    child: Text(
-                      'Catégories',
-                      style: AppTextStyles.h3.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: AppDimens.md),
-
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: AppDimens.screenPadding),
-                    child: CategoryList(
-                      categories: _categories,
-                      activeIndex: _activeCategoryIndex,
-                    ),
-                  ),
-
-                  const SizedBox(height: AppDimens.xxl),
-
-                  // Search bar — visible only in search mode
-                  if (_currentNavIndex == 1) ...[
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: AppDimens.screenPadding),
-                      child: SearchBarWidget(
-                        onFilterTap: () {
-                          // TODO: Open filter
-                        },
-                      ),
-                    ),
-                    const SizedBox(height: AppDimens.xxl),
-                  ],
-
-                  // Recent publications section
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: AppDimens.screenPadding),
-                    child: Text(
-                      'Publication récente',
-                      style: AppTextStyles.h3.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: AppDimens.md),
-
-                  // Products grid
-                  Builder(
-                    builder: (context) {
-                      final products =
-                          _productsByCategory[_activeCategoryIndex] ?? [];
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: AppDimens.screenPadding),
-                        child: GridView.builder(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemCount: products.length,
-                          gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            mainAxisSpacing: AppDimens.lg,
-                            crossAxisSpacing: AppDimens.md,
-                            childAspectRatio: 0.72,
-                          ),
-                          itemBuilder: (context, index) {
-                            return ProductCard(
-                              product: products[index],
-                              onTap: () =>
-                                  context.pushNamed(RouteNames.productDetail),
-                              onAddTap: () {
-                                // TODO: Add to cart
-                              },
-                            );
-                          },
-                        ),
-                      );
-                    },
-                  ),
-                ],
-              ),
-            ),
+            child: _currentNavIndex == 2
+                ? const OrdersScreen()
+                : _currentNavIndex == 3
+                ? const ProfileScreen()
+                : _buildHomeContent(),
           ),
         ],
       ),
@@ -243,6 +149,144 @@ class _HomeScreenState extends State<HomeScreen> {
         cartItemCount: 0,
         onTap: (index) => setState(() => _currentNavIndex = index),
         onCartTap: () => context.pushNamed(RouteNames.cart),
+      ),
+    );
+  }
+
+  Widget _buildSimpleHeader(String title) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.only(
+        left: AppDimens.screenPadding,
+        right: AppDimens.screenPadding,
+        top: MediaQuery.of(context).padding.top + AppDimens.md,
+        bottom: AppDimens.xl,
+      ),
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFF1652F0),
+            Color(0xFF08399A)
+          ],
+        ),
+      ),
+      child: Text(
+        title,
+        style: AppTextStyles.h2.copyWith(
+          color: AppColors.white,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHomeContent() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.only(bottom: AppDimens.lg),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: AppDimens.lg),
+
+// Promo banner — hidden in search mode
+          if (_currentNavIndex == 0) ...[
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                  horizontal: AppDimens.screenPadding),
+              child: PromoBannerCarousel(banners: _banners),
+            ),
+            const SizedBox(height: AppDimens.xxl),
+          ],
+
+// Categories section
+          Padding(
+            padding: const EdgeInsets.symmetric(
+                horizontal: AppDimens.screenPadding),
+            child: Text(
+              'Catégories',
+              style: AppTextStyles.h3.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+
+          const SizedBox(height: AppDimens.md),
+
+          Padding(
+            padding: const EdgeInsets.symmetric(
+                horizontal: AppDimens.screenPadding),
+            child: CategoryList(
+              categories: _categories,
+              activeIndex: _activeCategoryIndex,
+            ),
+          ),
+
+          const SizedBox(height: AppDimens.xxl),
+
+// Search bar — visible only in search mode
+          if (_currentNavIndex == 1) ...[
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                  horizontal: AppDimens.screenPadding),
+              child: SearchBarWidget(
+                onFilterTap: () {
+// TODO: Open filter
+                },
+              ),
+            ),
+            const SizedBox(height: AppDimens.xxl),
+          ],
+
+// Recent publications section
+          Padding(
+            padding: const EdgeInsets.symmetric(
+                horizontal: AppDimens.screenPadding),
+            child: Text(
+              'Publication récente',
+              style: AppTextStyles.h3.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+
+          const SizedBox(height: AppDimens.md),
+
+// Products grid
+          Builder(
+            builder: (context) {
+              final products =
+                  _productsByCategory[_activeCategoryIndex] ?? [];
+              return Padding(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: AppDimens.screenPadding),
+                child: GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: products.length,
+                  gridDelegate:
+                  const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    mainAxisSpacing: AppDimens.lg,
+                    crossAxisSpacing: AppDimens.md,
+                    childAspectRatio: 0.72,
+                  ),
+                  itemBuilder: (context, index) {
+                    return ProductCard(
+                      product: products[index],
+                      onTap: () =>
+                          context.pushNamed(RouteNames.productDetail),
+                      onAddTap: () {
+                      // TODO: Add to cart
+                      },
+                    );
+                  },
+                ),
+              );
+            },
+          ),
+        ],
       ),
     );
   }
