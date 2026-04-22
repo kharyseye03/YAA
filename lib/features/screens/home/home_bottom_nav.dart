@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:remixicon/remixicon.dart';
 import '../../../core/constants/app_colors.dart';
 
 /// Custom bottom navigation bar with 4 items + centered cart FAB.
@@ -43,14 +44,14 @@ class HomeBottomNav extends StatelessWidget {
                     children: [
                       Expanded(
                         child: _NavItem(
-                          icon: Icons.home_rounded,
+                          icon: RemixIcons.home_6_line,
                           isActive: currentIndex == 0,
                           onTap: () => onTap(0),
                         ),
                       ),
                       Expanded(
                         child: _NavItem(
-                          icon: Icons.search,
+                          icon: RemixIcons.search_2_line,
                           isActive: currentIndex == 1,
                           onTap: () => onTap(1),
                         ),
@@ -66,7 +67,7 @@ class HomeBottomNav extends StatelessWidget {
                       ),
                       Expanded(
                         child: _NavItem(
-                          icon: Icons.person_outline,
+                          icon: RemixIcons.user_3_line,
                           isActive: currentIndex == 3,
                           onTap: () => onTap(3),
                         ),

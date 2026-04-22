@@ -4,12 +4,10 @@ import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimens.dart';
 import '../../core/constants/app_text_styles.dart';
 import '../../core/utils/app_router.dart';
-import '../../shared/widgets/phone_number_formatter.dart';
 import '../../shared/widgets/yaa_button.dart';
 import '../../shared/widgets/yaa_text_field.dart';
 
-/// Cart screen — "Panier"
-/// Shows order summary, delivery address, cart items, description field,
+/// Cart screen showing a summary of items, description field,
 /// add more button, and order button.
 class CartScreen extends StatelessWidget {
   const CartScreen({super.key});
@@ -179,17 +177,27 @@ class CartScreen extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFF1652F0), Color(0xFF3B7BF7)],
+          colors: [
+            Color(0xFF1652F0),
+            Color(0xFF08399A)
+          ],
         ),
       ),
       child: Row(
         children: [
           GestureDetector(
             onTap: () => Navigator.of(context).pop(),
-            child: const Icon(
-              Icons.chevron_left,
-              color: AppColors.white,
-              size: 28,
+            child: Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: AppColors.white.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(AppDimens.radiusMd),
+              ),
+              child: const Icon(
+                Icons.chevron_left,
+                color: AppColors.white,
+                size: 28,
+              ),
             ),
           ),
           const SizedBox(width: AppDimens.md),
@@ -395,8 +403,8 @@ class CartScreen extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   description,
-                  style: AppTextStyles.bodySmall.copyWith(
-                    color: AppColors.grey500,
+                  style: AppTextStyles.caption.copyWith(
+                    color: AppColors.grey600,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -406,31 +414,36 @@ class CartScreen extends StatelessWidget {
                   price,
                   style: AppTextStyles.labelMedium.copyWith(
                     color: AppColors.primary,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ],
             ),
           ),
 
-          // Quantity badge
+          const SizedBox(width: AppDimens.md),
+
+          // Quantity selector
           Container(
-            width: 28,
-            height: 28,
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(color: AppColors.primary, width: 1.5),
+              color: AppColors.grey100,
+              borderRadius: BorderRadius.circular(AppDimens.radiusSm),
             ),
-            child: Center(
-              child: Text(
-                '$quantity',
-                style: TextStyle(
-                  fontFamily: 'Archivo',
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.primary,
+            child: Row(
+              children: [
+                const Icon(Icons.remove, size: 14, color: AppColors.grey700),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: Text(
+                    quantity.toString(),
+                    style: AppTextStyles.labelSmall.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
                 ),
-              ),
+                const Icon(Icons.add, size: 14, color: AppColors.grey700),
+              ],
             ),
           ),
         ],

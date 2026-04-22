@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:remixicon/remixicon.dart';
 import '../../../../core/constants/constants.dart';
 
 /// Reusable header for auth screens.
@@ -47,7 +48,7 @@ class AuthHeader extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(
-                Icons.language,
+                RemixIcons.global_fill,
                 size: 18,
                 color: AppColors.primary,
               ),

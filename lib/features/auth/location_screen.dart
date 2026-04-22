@@ -12,7 +12,7 @@ class LocationScreen extends StatelessWidget {
 
   void _onUseLocation(BuildContext context) {
     // TODO: Request location permission, then navigate
-    context.goNamed(RouteNames.home);
+    context.goNamed(RouteNames.login);
   }
 
   @override

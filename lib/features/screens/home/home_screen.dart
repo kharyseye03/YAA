@@ -33,7 +33,7 @@ class _HomeScreenState extends State<HomeScreen> {
     PromoBannerData(
       title: 'Besoin d\'un livreur ?',
       description: 'Lancez une annonce et fixez votre prix\nde livraison.',
-      icon: Icons.pedal_bike,
+      icon: Icons.directions_bike,
     ),
     PromoBannerData(
       title: 'Offres du jour',
@@ -262,6 +262,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 padding: const EdgeInsets.symmetric(
                     horizontal: AppDimens.screenPadding),
                 child: GridView.builder(
+                  padding: EdgeInsets.zero,
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
                   itemCount: products.length,

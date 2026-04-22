@@ -139,7 +139,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           Expanded(
             child: _buildTab(
               isActive: !_isPhone,
-              icon: Icons.mail_outlined,
+              icon: Icons.mail,
               label: 'Email',
               onTap: () => setState(() => _isPhone = false),
             ),
