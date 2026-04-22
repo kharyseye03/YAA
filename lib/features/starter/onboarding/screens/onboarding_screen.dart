@@ -8,7 +8,6 @@ import '../widgets/dot_indicator.dart';
 import '../widgets/onboarding_image_diamonds.dart';
 import '../widgets/onboarding_image_grid.dart';
 import '../widgets/onboarding_page_data.dart';
-import '../widgets/onboarding_image_hexagons.dart';
 
 /// Onboarding screen with swipeable pages.
 ///
@@ -43,16 +42,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     OnboardingPageData(
       title: 'Explorez des centaines\nde boutiques',
       description:
-          'Restaurants, pharmacies, supermarchés\net boutiques — tout est à portée de main.',
+      'Restaurants, pharmacies, supermarchés\net boutiques — tout est à portée de main.',
       images: [
-        'assets/images/img4_ob1.png',
-        'assets/images/img5_ob1.png',
-        'assets/images/img3_ob1.png',
-        'assets/images/img1_ob1.png',
-        'assets/images/img6_ob1.png',
-        'assets/images/img2_ob1.png',
-        'assets/images/img1_ob1.png',
-
+        'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=300',
+        'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=300',
+        'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=300',
+        'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=300',
+        'https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=300',
+        'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=300',
       ],
     ),
     // Last page — uses diamond layout
@@ -208,21 +205,20 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   Widget _buildPage(OnboardingPageData page, int index) {
     final isLast = index == _pages.length - 1;
 
-    return Padding(
+    return Container(
       padding: const EdgeInsets.symmetric(horizontal: AppDimens.screenPadding),
       child: Column(
         children: [
           const SizedBox(height: AppDimens.xxxl),
-
-          // Image layout
           // Image layout
           Expanded(
             flex: 5,
-            child: index == 0
-                ? OnboardingImageGrid(images: page.images)
-                : index == 1
-                ? OnboardingImageHexagons(images: page.images)
-                : OnboardingImageDiamonds(images: page.images),
+            child: index == 2
+                ? OnboardingImageDiamonds(images: page.images)
+                : OnboardingImageGrid(
+              images: page.images,
+              useNetwork: index == 1,
+            ),
           ),
 
           const SizedBox(height: AppDimens.xxl),
@@ -297,8 +293,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         YaaButton(
           label: 'Se connecter',
           onPressed: _goToLogin,
-          isOutlined: true,
-          backgroundColor: AppColors.grey100,
+          isOutlined: false,
+          backgroundColor: AppColors.primarySurface,
           foregroundColor: AppColors.primary,
         ),
       ],

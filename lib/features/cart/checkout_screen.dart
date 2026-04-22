@@ -6,6 +6,7 @@ import '../../core/constants/app_text_styles.dart';
 import '../../shared/widgets/phone_number_formatter.dart';
 import '../../shared/widgets/yaa_button.dart';
 import '../../shared/widgets/yaa_text_field.dart';
+
 /// Checkout / Payment screen — "Paiement"
 /// Toggle between "Carte bancaire" and "Mobile money",
 /// shows different payment form for each.
@@ -100,7 +101,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   // Payment method toggle
                   _buildPaymentToggle(),
 
-                  const SizedBox(height: AppDimens.xxl),
+                  const SizedBox(height: AppDimens.md),
 
                   // Payment form
                   _isCard
@@ -166,17 +167,27 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFF1652F0), Color(0xFF3B7BF7)],
+          colors: [
+            Color(0xFF1652F0),
+            Color(0xFF08399A)
+          ],
         ),
       ),
       child: Row(
         children: [
           GestureDetector(
             onTap: () => Navigator.of(context).pop(),
-            child: const Icon(
-              Icons.chevron_left,
-              color: AppColors.white,
-              size: 28,
+            child: Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: AppColors.white.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(AppDimens.radiusMd),
+              ),
+              child: const Icon(
+                Icons.chevron_left,
+                color: AppColors.white,
+                size: 28,
+              ),
             ),
           ),
           const SizedBox(width: AppDimens.md),
@@ -355,13 +366,14 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   // ── Mobile Money Providers ───────────────────────────────
   Widget _buildMobileMoneyProviders() {
     final providers = [
-      {'name': 'Wave', 'icon': Icons.waves},
-      {'name': 'Yas money', 'icon': Icons.account_balance_wallet},
-      {'name': 'Orange money', 'icon': Icons.phone_android},
-      {'name': 'Kay pay', 'icon': Icons.payment},
+      {'name': 'Wave', 'image': 'assets/images/wave2.webp'},
+      {'name': 'Yas money', 'image': 'assets/images/yas2.webp'},
+      {'name': 'Orange money', 'image': 'assets/images/om.webp'},
+      {'name': 'Kay pay', 'image': 'assets/images/kpay.webp'},
     ];
 
     return GridView.builder(
+      padding: EdgeInsets.zero,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -392,19 +404,19 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(
-                  provider['icon'] as IconData,
-                  size: 28,
-                  color: isSelected
-                      ? AppColors.primary
-                      : AppColors.grey600,
+                Image.asset(
+                  provider['image'] as String,
+                  height: 32,
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) =>
+                  const Icon(Icons.payment, size: 28, color: AppColors.grey600),
                 ),
                 const SizedBox(height: AppDimens.sm),
                 Text(
                   provider['name'] as String,
                   style: AppTextStyles.bodySmall.copyWith(
-                    color: AppColors.dark,
-                    fontWeight: FontWeight.w500,
+                    color: isSelected ? AppColors.primary : AppColors.dark,
+                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                   ),
                 ),
               ],

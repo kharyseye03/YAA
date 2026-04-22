@@ -141,7 +141,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             TextSpan(
                               text: 'd\'utilisation Conditions',
                               style: AppTextStyles.bodySmall.copyWith(
-                                color: AppColors.dark,
+                                color: AppColors.primary,
                                 decoration: TextDecoration.underline,
                                 fontWeight: FontWeight.w500,
                               ),
@@ -150,7 +150,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             TextSpan(
                               text: 'Politique de confidentialité',
                               style: AppTextStyles.bodySmall.copyWith(
-                                color: AppColors.dark,
+                                color: AppColors.primary,
                                 decoration: TextDecoration.underline,
                                 fontWeight: FontWeight.w500,
                               ),
