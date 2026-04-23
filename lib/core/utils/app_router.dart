@@ -12,6 +12,7 @@ import '../../features/auth/verification_screen.dart';
 import '../../features/cart/cart_screen.dart';
 import '../../features/cart/checkout_screen.dart';
 import '../../features/screens/home/home_screen.dart';
+import '../../features/screens/home/notifications.dart';
 import '../../features/screens/order/order_detail_screen.dart';
 import '../../features/screens/order/order_tracking_screen.dart';
 import '../../features/screens/order/orders_screen.dart';
@@ -54,6 +55,7 @@ abstract final class RoutePaths {
   static const String personalInfo = '/personalInfo';
   static const String editPersonalInfo = '/editPersonalInfo';
   static const String terms = '/terms';
+  static const String notifications = '/notifications';
 }
 
 /// Route name constants.
@@ -88,12 +90,13 @@ abstract final class RouteNames {
   static const String personalInfo = 'personalInfo';
   static const String editPersonalInfo = 'editPersonalInfo';
   static const String terms = 'terms';
+  static const String notifications = 'notifications';
 }
 
 /// GoRouter provider for Riverpod.
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
-    initialLocation: RoutePaths.splash,
+    initialLocation: RoutePaths.home,
     debugLogDiagnostics: true,
     routes: [
       GoRoute(
@@ -206,6 +209,12 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: RoutePaths.terms,
         name: RouteNames.terms,
         builder: (context, state) => const TermsScreen(),
+      ),
+
+      GoRoute(
+        path: RoutePaths.notifications,
+        name: RouteNames.notifications,
+        builder: (context, state) => const NotificationsScreen(),
       ),
     ],
 
