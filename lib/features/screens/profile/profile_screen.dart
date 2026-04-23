@@ -42,14 +42,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     Positioned(
                       bottom: 0,
                       right: 0,
-                      child: Container(
-                        width: 32,
-                        height: 32,
-                        decoration: const BoxDecoration(
-                          color: AppColors.primary,
-                          shape: BoxShape.circle,
+                      child: GestureDetector(
+                        onTap: () => context.pushNamed(RouteNames.editPersonalInfo),
+                        child: Container(
+                          width: 32,
+                          height: 32,
+                          decoration: const BoxDecoration(
+                            color: AppColors.primary,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.edit, color: AppColors.white, size: 16),
                         ),
-                        child: const Icon(Icons.edit, color: AppColors.white, size: 16),
                       ),
                     ),
                   ],
