@@ -127,8 +127,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ? _buildSimpleHeader('Mon compte')
               : HomeHeader(
             userName: 'Gérald charo KEITA',
-            onMenuTap: () {},
-            onNotificationTap: () {},
+            onNotificationTap: () => context.goNamed(RouteNames.notifications),
           ),
 
           // ── Scrollable content ────────────────────────────
