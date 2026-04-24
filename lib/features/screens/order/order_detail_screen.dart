@@ -239,17 +239,27 @@ class OrderDetailScreen extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFF1652F0), Color(0xFF3B7BF7)],
+          colors: [
+            Color(0xFF1652F0),
+            Color(0xFF08399A)
+          ],
         ),
       ),
       child: Row(
         children: [
           GestureDetector(
             onTap: () => Navigator.of(context).pop(),
-            child: const Icon(
-              Icons.chevron_left,
-              color: AppColors.white,
-              size: 28,
+            child: Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: AppColors.white.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(AppDimens.radiusMd),
+              ),
+              child: const Icon(
+                Icons.chevron_left,
+                color: AppColors.white,
+                size: 28,
+              ),
             ),
           ),
           const SizedBox(width: AppDimens.md),

@@ -40,19 +40,19 @@ class _PasswordScreenState extends State<PasswordScreen> {
     return Scaffold(
       backgroundColor: AppColors.white,
       body: SafeArea(
-        child: Column(
-          children: [
-            // Header
-            const AuthHeader(),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            children: [
+              // ── Header ──────────────────────────────────────────────
+              const AuthHeader(),
 
-            // Content
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppDimens.screenPadding,
-                ),
-                child: Form(
-                  key: _formKey,
+              // ── Scrollable content ──────────────────────────────────
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppDimens.screenPadding,
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -96,8 +96,7 @@ class _PasswordScreenState extends State<PasswordScreen> {
                           size: 22,
                         ),
                         onSuffixTap: () {
-                          setState(
-                                  () => _obscurePassword = !_obscurePassword);
+                          setState(() => _obscurePassword = !_obscurePassword);
                         },
                         validator: (value) {
                           if (value == null || value.isEmpty) {
@@ -119,6 +118,7 @@ class _PasswordScreenState extends State<PasswordScreen> {
                         hint: '••••••••••',
                         obscureText: _obscureConfirm,
                         textInputAction: TextInputAction.done,
+                        onSubmitted: (_) => _onConfirm(),
                         suffixIcon: Icon(
                           _obscureConfirm
                               ? Icons.visibility_off_outlined
@@ -127,8 +127,7 @@ class _PasswordScreenState extends State<PasswordScreen> {
                           size: 22,
                         ),
                         onSuffixTap: () {
-                          setState(
-                                  () => _obscureConfirm = !_obscureConfirm);
+                          setState(() => _obscureConfirm = !_obscureConfirm);
                         },
                         validator: (value) {
                           if (value == null || value.isEmpty) {
@@ -141,21 +140,27 @@ class _PasswordScreenState extends State<PasswordScreen> {
                         },
                       ),
 
-                      const Spacer(),
-
-                      // Confirm button
-                      YaaButton(
-                        label: 'Confirmer',
-                        onPressed: _onConfirm,
-                      ),
-
-                      const SizedBox(height: AppDimens.xxl),
+                      const SizedBox(height: AppDimens.xxxl),
                     ],
                   ),
                 ),
               ),
-            ),
-          ],
+
+              // ── Button anchored at bottom ────────────────────────────
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppDimens.screenPadding,
+                  0,
+                  AppDimens.screenPadding,
+                  AppDimens.xxl,
+                ),
+                child: YaaButton(
+                  label: 'Confirmer',
+                  onPressed: _onConfirm,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

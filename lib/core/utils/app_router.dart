@@ -9,8 +9,8 @@ import '../../features/auth/password_screen.dart';
 import '../../features/auth/register_screen.dart';
 import '../../features/auth/reset_password_screen.dart';
 import '../../features/auth/verification_screen.dart';
-import '../../features/cart/cart_screen.dart';
-import '../../features/cart/checkout_screen.dart';
+import '../../features/screens/cart/cart_screen.dart';
+import '../../features/screens/cart/checkout_screen.dart';
 import '../../features/screens/home/home_screen.dart';
 import '../../features/screens/home/notifications.dart';
 import '../../features/screens/order/order_detail_screen.dart';
@@ -96,7 +96,7 @@ abstract final class RouteNames {
 /// GoRouter provider for Riverpod.
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
-    initialLocation: RoutePaths.home,
+    initialLocation: RoutePaths.splash,
     debugLogDiagnostics: true,
     routes: [
       GoRoute(
