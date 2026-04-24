@@ -85,8 +85,25 @@ class _RestaurantSheet extends StatelessWidget {
                   shape: BoxShape.circle,
                   color: AppColors.grey200,
                 ),
-                child: const Icon(Icons.restaurant,
-                    color: AppColors.grey500, size: 36),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(AppDimens.radiusSm),
+                  child: Image.asset(
+                    'assets/images/resto_tata.jpg',
+                    width: 44,
+                    height: 44,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: AppColors.grey100,
+                        borderRadius: BorderRadius.circular(AppDimens.radiusSm),
+                      ),
+                      child: const Icon(Icons.restaurant,
+                          color: AppColors.grey500, size: 22),
+                    ),
+                  ),
+                ),
               ),
             ),
           ),

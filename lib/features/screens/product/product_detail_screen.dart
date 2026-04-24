@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimens.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../core/utils/app_router.dart';
+import '../../../shared/widgets/restaurant_sheet.dart';
 import '../../../shared/widgets/yaa_button.dart';
 /// Product detail screen.
 /// Full-width image (rounded bottom corners), name, price, rating,
@@ -144,8 +147,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               child: YaaButton(
                 label: 'Ajouter au panier — 2500F',
                 onPressed: () {
-                  // TODO: Add to cart
-                  Navigator.of(context).pop();
+                  context.pushNamed(RouteNames.cart);
                 },
               ),
             ),
@@ -227,61 +229,70 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   }
 
   Widget _buildRestaurantCard() {
-    return Container(
-      padding: const EdgeInsets.all(AppDimens.lg),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(AppDimens.radiusMd),
-        border: Border.all(color: AppColors.grey200),
-      ),
-      child: Row(
-        children: [
-          // Restaurant logo placeholder
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: AppColors.grey100,
+    return GestureDetector(
+      onTap: () => showRestaurantSheet(context),
+      child: Container(
+        padding: const EdgeInsets.all(AppDimens.lg),
+        decoration: BoxDecoration(
+          color: AppColors.white,
+          borderRadius: BorderRadius.circular(AppDimens.radiusMd),
+          border: Border.all(color: AppColors.grey200),
+        ),
+        child: Row(
+          children: [
+            // Restaurant logo
+            ClipRRect(
               borderRadius: BorderRadius.circular(AppDimens.radiusSm),
-            ),
-            child: const Icon(
-              Icons.restaurant,
-              color: AppColors.grey500,
-              size: 22,
-            ),
-          ),
-
-          const SizedBox(width: AppDimens.md),
-
-          // Restaurant info
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'les delices de mami',
-                  style: AppTextStyles.labelMedium.copyWith(
-                    fontWeight: FontWeight.w700,
+              child: Image.asset(
+                'assets/images/resto_tata.jpg',
+                width: 44,
+                height: 44,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: AppColors.grey100,
+                    borderRadius: BorderRadius.circular(AppDimens.radiusSm),
                   ),
+                  child: const Icon(Icons.restaurant,
+                      color: AppColors.grey500, size: 22),
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  '★ 4.8 •20-30 min',
-                  style: AppTextStyles.bodySmall.copyWith(
-                    color: AppColors.grey600,
-                  ),
-                ),
-              ],
+              ),
             ),
-          ),
 
-          // Arrow
-          const Icon(
-            Icons.chevron_right,
-            color: AppColors.grey400,
-            size: 24,
-          ),
-        ],
+            const SizedBox(width: AppDimens.md),
+
+            // Restaurant info
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'les delices de mami',
+                    style: AppTextStyles.labelMedium.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    '★ 4.8 • 20-30 min',
+                    style: AppTextStyles.bodySmall.copyWith(
+                      color: AppColors.grey600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Arrow — bleu
+            const Icon(
+              Icons.chevron_right,
+              color: AppColors.primary,
+              size: 24,
+            ),
+          ],
+        ),
       ),
     );
   }

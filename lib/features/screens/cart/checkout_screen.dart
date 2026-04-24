@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/app_dimens.dart';
+import '../../../core/constants/app_text_styles.dart';
+import '../../../core/utils/app_router.dart';
+import '../../../shared/widgets/phone_number_formatter.dart';
+import '../../../shared/widgets/yaa_button.dart';
+import '../../../shared/widgets/yaa_text_field.dart';
 
-import '../../core/constants/app_colors.dart';
-import '../../core/constants/app_dimens.dart';
-import '../../core/constants/app_text_styles.dart';
-import '../../shared/widgets/phone_number_formatter.dart';
-import '../../shared/widgets/yaa_button.dart';
-import '../../shared/widgets/yaa_text_field.dart';
 
 /// Checkout / Payment screen — "Paiement"
 /// Toggle between "Carte bancaire" and "Mobile money",
@@ -90,9 +92,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   // Informations de paiement
                   Text(
                     'Informations de paiement',
-                    style: AppTextStyles.bodyMedium.copyWith(
-                      color: AppColors.grey700,
-                      fontWeight: FontWeight.w500,
+                    style: AppTextStyles.labelLarge.copyWith(
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
 
@@ -139,9 +141,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   Expanded(
                     child: YaaButton(
                       label: 'Payer',
-                      onPressed: () {
-                        // TODO: Process payment
-                      },
+                      onPressed: () => _showOrderSuccessSheet(),
                       icon: Icons.arrow_forward,
                     ),
                   ),
@@ -480,4 +480,148 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       ],
     );
   }
+
+  void _showOrderSuccessSheet() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.white,
+      isDismissible: false,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (_) => _OrderSuccessSheet(
+        onContinue: () {
+          Navigator.of(context).pop();
+          context.goNamed(RouteNames.home);
+        },
+      ),
+    );
+  }
+}
+
+// ── Bottom sheet : commande enregistrée ────────────────────────────────────
+
+class _OrderSuccessSheet extends StatefulWidget {
+  const _OrderSuccessSheet({required this.onContinue});
+  final VoidCallback onContinue;
+
+  @override
+  State<_OrderSuccessSheet> createState() => _OrderSuccessSheetState();
+}
+
+class _OrderSuccessSheetState extends State<_OrderSuccessSheet> {
+  int _rating = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(
+          AppDimens.screenPadding,
+          16,
+          AppDimens.screenPadding,
+          AppDimens.xxl,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Drag handle
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppColors.grey300,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+
+            const SizedBox(height: AppDimens.xxl),
+
+            // Double cercle succès
+            Container(
+              width: 110,
+              height: 110,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppColors.primarySurface,
+              ),
+              child: Center(
+                child: Container(
+                  width: 70,
+                  height: 70,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: AppColors.primary.withValues(alpha: 0.12),
+                  ),
+                  child: const Icon(
+                    Icons.check_circle_outline_rounded,
+                    size: 36,
+                    color: AppColors.primary,
+                  ),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: AppDimens.xl),
+
+            // Titre
+            Text(
+              'Votre commande a été bien\nenregistrée',
+              textAlign: TextAlign.center,
+              style: AppTextStyles.h4.copyWith(
+                fontWeight: FontWeight.w700,
+                color: AppColors.dark,
+              ),
+            ),
+
+            const SizedBox(height: AppDimens.xl),
+
+            // Séparateur
+            const Divider(color: AppColors.grey200),
+
+            const SizedBox(height: AppDimens.lg),
+
+            // Rating
+            Text(
+              'Notez votre expérience',
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: AppColors.grey600,
+              ),
+            ),
+
+            const SizedBox(height: AppDimens.md),
+
+            // Étoiles
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(5, (index) {
+                return GestureDetector(
+                  onTap: () {
+                    setState(() => _rating = index + 1);
+                    // Redirige après une courte pause
+                    Future.delayed(
+                      const Duration(milliseconds: 600),
+                      widget.onContinue,
+                    );
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 6),
+                    child: Icon(
+                      index < _rating ? Icons.star : Icons.star_border,
+                      size: 36,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                );
+              }),
+            ),
+
+            const SizedBox(height: AppDimens.xl),
+          ],
+        ),
+      ),
+    );
+  }
+
 }
