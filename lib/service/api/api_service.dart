@@ -161,5 +161,31 @@ class ApiService {
       rethrow;
     }
   }
+
+  Future<RegisterResponse> forgotPassword({
+    required String email,
+  }) async {
+    try {
+      final body = {'email': email};
+      final response = await _post(ApiConfig.forgotPasswordEndpoint, body);
+      return RegisterResponse.fromJson(response);
+    } catch (e) {
+      print('❌ Erreur forgotPassword: $e');
+      rethrow;
+    }
+  }
+
+  Future<RegisterResponse> resendCode({
+    required String email,
+  }) async {
+    try {
+      final body = {'email': email};
+      final response = await _post(ApiConfig.resendCodeEndpoint, body);
+      return RegisterResponse.fromJson(response);
+    } catch (e) {
+      print('❌ Erreur resendCode: $e');
+      rethrow;
+    }
+  }
 }
 

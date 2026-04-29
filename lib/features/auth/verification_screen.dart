@@ -98,6 +98,33 @@ class _VerificationScreenState extends State<VerificationScreen> {
     }
   }
 
+  Future<void> _onResendCode() async {
+    try {
+      await ApiService().resendCode(email: widget.email);
+
+      // Succès → on relance le timer
+      _startResendTimer();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content         : Text('Code renvoyé avec succès'),
+            backgroundColor : Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content         : Text(e.toString().replaceAll('Exception: ', '')),
+            backgroundColor : AppColors.error,
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -179,7 +206,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
                             ),
                           )
                               : GestureDetector(
-                            onTap: _startResendTimer,
+                            onTap: _onResendCode,
                             child: Text(
                               'Renvoyer le code',
                               style: AppTextStyles.labelMedium.copyWith(

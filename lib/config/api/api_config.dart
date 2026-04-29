@@ -7,6 +7,8 @@ class ApiConfig {
   static const String registerEndpoint = '/registrations/client';
   static const String verifyOtpEndpoint = '/registrations/otp';
   static const String resetPasswordEndpoint = '/registrations/reset-password';
+  static const String forgotPasswordEndpoint = '/registrations/forgot-password';
+  static const String resendCodeEndpoint = '/registrations/resend-code';
 
   // ── Timeouts (en secondes) ────────────────────────
   static const int connectionTimeout = 30;

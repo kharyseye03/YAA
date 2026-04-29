@@ -153,12 +153,16 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: RoutePaths.forgotVerification,
         name: RouteNames.forgotVerification,
-        builder: (context, state) => const ForgotVerificationScreen(),
+        builder: (context, state) => ForgotVerificationScreen(
+          email: state.extra as String,
+        ),
       ),
       GoRoute(
         path: RoutePaths.resetPassword,
         name: RouteNames.resetPassword,
-        builder: (context, state) => const ResetPasswordScreen(),
+        builder: (context, state) => ResetPasswordScreen(
+          email: state.extra as String,
+        ),
       ),
       // ── Home ───────────────────────────────────────────────
       GoRoute(
