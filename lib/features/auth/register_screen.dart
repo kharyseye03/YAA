@@ -1,3 +1,4 @@
+/*
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/constants.dart';
@@ -212,6 +213,278 @@ class _RegisterScreenState extends State<RegisterScreen> {
 }
 
 // Extension for email validation (in case not imported)
+extension _StringValidation on String {
+  bool get isValidEmail =>
+      RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
+          .hasMatch(this);
+}*/
+
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import '../../../../core/constants/constants.dart';
+import '../../../../core/utils/app_router.dart';
+import '../../../../shared/widgets/widgets.dart';
+import '../../service/api/api_service.dart';
+import '../../shared/widgets/auth_header.dart';
+import '../../shared/widgets/phone_number_formatter.dart';
+
+class RegisterScreen extends StatefulWidget {
+  const RegisterScreen({super.key});
+
+  @override
+  State<RegisterScreen> createState() => _RegisterScreenState();
+}
+
+class _RegisterScreenState extends State<RegisterScreen> {
+  final _formKey          = GlobalKey<FormState>();
+  final _firstNameController = TextEditingController();
+  final _lastNameController  = TextEditingController();
+  final _phoneController  = TextEditingController();
+  final _emailController  = TextEditingController();
+
+  // Contrôle l'état du bouton pendant l'appel API
+  bool _isLoading = false;
+
+  @override
+  void dispose() {
+    _firstNameController.dispose();
+    _lastNameController.dispose();
+    _phoneController.dispose();
+    _emailController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _onConfirm() async {
+    // 1. Valider le formulaire avant tout appel réseau
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+
+    setState(() => _isLoading = true);
+
+    try {
+      // 2. Le PhoneTextField formate "77 123 45 67"
+      //    L'API veut "771234567" → on retire les espaces
+      final rawPhone = _phoneController.text.replaceAll(' ', '');
+
+      // 3. Appel API via le service — jamais directement ici
+      await ApiService().register(
+        firstName : _firstNameController.text.trim(),
+        lastName  : _lastNameController.text.trim(),
+        email     : _emailController.text.trim(),
+        telephone : rawPhone,
+      );
+
+      // 4. Succès → on navigue vers la vérification OTP
+      //    On passe l'email pour que l'écran OTP sache
+      //    à quelle adresse le code a été envoyé
+      if (mounted) {
+        context.pushNamed(
+          RouteNames.verification,
+          extra: _emailController.text.trim(),
+        );
+      }
+    } catch (e) {
+      // 5. Erreur → on affiche le message dans un SnackBar
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content         : Text(e.toString().replaceAll('Exception: ', '')),
+            backgroundColor : AppColors.error,
+          ),
+        );
+      }
+    } finally {
+      // 6. "finally" s'exécute TOUJOURS, succès ou erreur
+      //    On remet le bouton en état normal
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.white,
+      body: SafeArea(
+        child: Column(
+          children: [
+            AuthHeader(onBack: () => context.goNamed(RouteNames.onboarding)),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppDimens.screenPadding,
+                ),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: AppDimens.lg),
+
+                      Text(
+                        'Création de compte',
+                        style: AppTextStyles.h1.copyWith(
+                          fontSize    : 28,
+                          fontWeight  : FontWeight.w800,
+                          color       : AppColors.primary,
+                        ),
+                      ),
+
+                      const SizedBox(height: AppDimens.md),
+
+                      Text(
+                        'Créer un compte maintenant et profitez\npleinement de l\'application.',
+                        style: AppTextStyles.bodyMedium.copyWith(
+                          color  : AppColors.grey600,
+                          height : 1.5,
+                        ),
+                      ),
+
+                      const SizedBox(height: AppDimens.xxl),
+
+                      // ── Prénom ──────────────────────────────
+                      YaaTextField(
+                        controller      : _firstNameController,
+                        label           : 'Prénom',
+                        hint            : 'Ex: Abdoul Karim',
+                        keyboardType    : TextInputType.name,
+                        textInputAction : TextInputAction.next,
+                        autofillHints   : const [AutofillHints.givenName],
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Veuillez entrer votre prénom';
+                          }
+                          return null;
+                        },
+                      ),
+
+                      const SizedBox(height: AppDimens.xl),
+
+                      // ── Nom ─────────────────────────────────
+                      YaaTextField(
+                        controller      : _lastNameController,
+                        label           : 'Nom',
+                        hint            : 'Ex: DIALLO',
+                        keyboardType    : TextInputType.name,
+                        textInputAction : TextInputAction.next,
+                        autofillHints   : const [AutofillHints.familyName],
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Veuillez entrer votre nom';
+                          }
+                          return null;
+                        },
+                      ),
+
+                      const SizedBox(height: AppDimens.xl),
+
+                      // ── Téléphone ───────────────────────────
+                      PhoneTextField(controller: _phoneController),
+
+                      const SizedBox(height: AppDimens.xl),
+
+                      // ── Email ───────────────────────────────
+                      YaaTextField(
+                        controller      : _emailController,
+                        label           : 'Adresse email',
+                        hint            : 'Ex: abdoul@gmail.com',
+                        keyboardType    : TextInputType.emailAddress,
+                        textInputAction : TextInputAction.done,
+                        autofillHints   : const [AutofillHints.email],
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Veuillez entrer votre email';
+                          }
+                          if (!value.trim().isValidEmail) {
+                            return 'Email invalide';
+                          }
+                          return null;
+                        },
+                      ),
+
+                      const SizedBox(height: AppDimens.lg),
+
+                      // ── Conditions ──────────────────────────
+                      RichText(
+                        text: TextSpan(
+                          style: AppTextStyles.bodySmall.copyWith(
+                            color: AppColors.grey600,
+                          ),
+                          children: [
+                            const TextSpan(text: 'En continuant, vous acceptez nos '),
+                            TextSpan(
+                              text  : 'Conditions d\'utilisation',
+                              style : AppTextStyles.bodySmall.copyWith(
+                                color      : AppColors.primary,
+                                decoration : TextDecoration.underline,
+                                fontWeight : FontWeight.w500,
+                              ),
+                            ),
+                            const TextSpan(text: ' et notre '),
+                            TextSpan(
+                              text  : 'Politique de confidentialité',
+                              style : AppTextStyles.bodySmall.copyWith(
+                                color      : AppColors.primary,
+                                decoration : TextDecoration.underline,
+                                fontWeight : FontWeight.w500,
+                              ),
+                            ),
+                            const TextSpan(text: '.'),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(height: AppDimens.xxl),
+
+                      // ── Bouton ──────────────────────────────
+                      // isLoading=true → le bouton se désactive
+                      // pour éviter les doubles soumissions
+                      YaaButton(
+                        label     : _isLoading ? 'Chargement...' : 'Confirmer',
+                        onPressed : _isLoading ? null : _onConfirm,
+                        icon      : _isLoading ? null : Icons.arrow_forward,
+                      ),
+
+                      const SizedBox(height: AppDimens.huge),
+
+                      // ── Lien connexion ──────────────────────
+                      Center(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              'Vous avez déjà un compte ? ',
+                              style: AppTextStyles.bodyMedium.copyWith(
+                                color: AppColors.grey600,
+                              ),
+                            ),
+                            GestureDetector(
+                              behavior: HitTestBehavior.opaque,
+                              onTap    : () => context.goNamed(RouteNames.login),
+                              child    : Text(
+                                'Se Connecter',
+                                style: AppTextStyles.labelMedium.copyWith(
+                                  color           : AppColors.primary,
+                                  decoration      : TextDecoration.underline,
+                                  decorationColor : AppColors.primary,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(height: AppDimens.xxl),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 extension _StringValidation on String {
   bool get isValidEmail =>
       RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')

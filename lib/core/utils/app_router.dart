@@ -120,14 +120,18 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const RegisterScreen(),
       ),
       GoRoute(
-        path: RoutePaths.verification,
         name: RouteNames.verification,
-        builder: (context, state) => const VerificationScreen(),
+        path: '/verification',
+        builder: (context, state) => VerificationScreen(
+          email: state.extra as String,
+        ),
       ),
       GoRoute(
-        path: RoutePaths.password,
         name: RouteNames.password,
-        builder: (context, state) => const PasswordScreen(),
+        path: '/password',
+        builder: (context, state) => PasswordScreen(
+          email: state.extra as String,
+        ),
       ),
       GoRoute(
         path: RoutePaths.location,
