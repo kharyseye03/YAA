@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import '../../config/api/api_config.dart';
+import '../../model/auth/login_response.dart';
 import '../../model/auth/register_response.dart';
 
 class ApiService {
@@ -184,6 +185,96 @@ class ApiService {
       return RegisterResponse.fromJson(response);
     } catch (e) {
       print('❌ Erreur resendCode: $e');
+      rethrow;
+    }
+  }
+
+  // ════════════════════════════════════════════════════
+// MÉTHODE PRIVÉE — Spécifique form-urlencoded (Keycloak)
+// Différente de _post car le body et les headers changent
+// ════════════════════════════════════════════════════
+
+  Future<Map<String, dynamic>> _postForm(
+      String url, // ← on passe l'URL complète directement (pas un endpoint)
+      Map<String, String> fields,
+      ) async {
+    try {
+      final uri = Uri.parse(url);
+
+      print('🌐 POST FORM → $uri');
+      print('📦 Fields → $fields');
+
+      // Uri.https encode automatiquement les caractères spéciaux
+      // ex: "Test@123" devient "Test%40123" dans l'URL
+      final response = await http
+          .post(
+        uri,
+        headers : ApiConfig.formHeaders, // ← headers form, pas JSON
+        // On encode le body en format clé=valeur&clé=valeur
+        body    : fields,  // http.post gère l'encodage automatiquement
+        // quand headers est x-www-form-urlencoded
+      )
+          .timeout(
+        const Duration(seconds: ApiConfig.connectionTimeout),
+        onTimeout: () => throw TimeoutException(
+          'Le serveur ne répond pas.',
+        ),
+      );
+
+      print('📡 Status → ${response.statusCode}');
+      print('📬 Réponse → ${response.body}');
+
+      final data = json.decode(response.body) as Map<String, dynamic>;
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return data;
+      }
+
+      // Keycloak retourne "error_description" pour les erreurs
+      // ex: "Invalid user credentials"
+      final errorMessage = data['error_description'] as String?
+          ?? data['error'] as String?
+          ?? 'Erreur ${response.statusCode}';
+      throw Exception(errorMessage);
+
+    } on SocketException {
+      throw Exception('Pas de connexion internet.');
+    } on TimeoutException catch (e) {
+      throw Exception(e.message);
+    } on FormatException {
+      throw Exception('Réponse invalide du serveur.');
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+// ════════════════════════════════════════════════════
+// MÉTHODE PUBLIQUE — Login
+// ════════════════════════════════════════════════════
+
+  Future<LoginResponse> login({
+    required String username,   // numéro de téléphone
+    required String password,
+  }) async {
+    try {
+      // Keycloak exige ces 4 champs obligatoires en form-urlencoded
+      final fields = {
+        'grant_type' : 'password',  // type d'authentification OAuth2
+        'client_id'  : 'yaa',       // identifiant de l'app dans Keycloak
+        'username'   : username,
+        'password'   : password,
+      };
+
+      // On passe l'URL complète Keycloak, pas l'URL de l'API YAA
+      final response = await _postForm(
+        ApiConfig.getIamUrl(ApiConfig.loginEndpoint),
+        fields,
+      );
+
+      return LoginResponse.fromJson(response);
+
+    } catch (e) {
+      print('❌ Erreur login: $e');
       rethrow;
     }
   }
