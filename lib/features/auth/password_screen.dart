@@ -1,25 +1,28 @@
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/constants.dart';
 import '../../../../core/utils/app_router.dart';
 import '../../../../shared/widgets/widgets.dart';
+import '../../service/api/api_service.dart';
 import '../../shared/widgets/auth_header.dart';
 
-/// Password creation screen — "Créez votre mot de passe"
-/// Two password fields with visibility toggle.
 class PasswordScreen extends StatefulWidget {
-  const PasswordScreen({super.key});
+  final String email;
+
+  const PasswordScreen({super.key, required this.email});
 
   @override
   State<PasswordScreen> createState() => _PasswordScreenState();
 }
 
 class _PasswordScreenState extends State<PasswordScreen> {
-  final _formKey = GlobalKey<FormState>();
-  final _passwordController = TextEditingController();
-  final _confirmController = TextEditingController();
-  bool _obscurePassword = true;
-  bool _obscureConfirm = true;
+  final _formKey             = GlobalKey<FormState>();
+  final _passwordController  = TextEditingController();
+  final _confirmController   = TextEditingController();
+  bool _obscurePassword      = true;
+  bool _obscureConfirm       = true;
+  bool _isLoading            = false;
 
   @override
   void dispose() {
@@ -28,10 +31,31 @@ class _PasswordScreenState extends State<PasswordScreen> {
     super.dispose();
   }
 
-  void _onConfirm() {
-    if (_formKey.currentState?.validate() ?? false) {
-      // TODO: Handle password creation
-      context.pushNamed(RouteNames.location);
+  Future<void> _onConfirm() async {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+
+    setState(() => _isLoading = true);
+
+    try {
+      await ApiService().createPassword(
+        email       : widget.email,
+        newPassword : _passwordController.text,
+      );
+
+      // Inscription complète → on va vers la location
+      if (mounted) context.pushNamed(RouteNames.location);
+
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content         : Text(e.toString().replaceAll('Exception: ', '')),
+            backgroundColor : AppColors.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -44,10 +68,7 @@ class _PasswordScreenState extends State<PasswordScreen> {
           key: _formKey,
           child: Column(
             children: [
-              // ── Header ──────────────────────────────────────────────
               const AuthHeader(),
-
-              // ── Scrollable content ──────────────────────────────────
               Expanded(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.symmetric(
@@ -58,46 +79,42 @@ class _PasswordScreenState extends State<PasswordScreen> {
                     children: [
                       const SizedBox(height: AppDimens.lg),
 
-                      // Title
                       Text(
                         'Créez votre mot de\npasse',
                         style: AppTextStyles.h1.copyWith(
-                          fontSize: 28,
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.primary,
+                          fontSize   : 28,
+                          fontWeight : FontWeight.w800,
+                          color      : AppColors.primary,
                         ),
                       ),
 
                       const SizedBox(height: AppDimens.md),
 
-                      // Subtitle
                       Text(
                         'Choisissez un mot de passe sécurisé pour\nprotéger votre compte.',
                         style: AppTextStyles.bodyMedium.copyWith(
-                          color: AppColors.grey600,
-                          height: 1.5,
+                          color  : AppColors.grey600,
+                          height : 1.5,
                         ),
                       ),
 
                       const SizedBox(height: AppDimens.xxxl),
 
-                      // New password
                       YaaTextField(
-                        controller: _passwordController,
-                        label: 'Nouveau mot de passe',
-                        hint: '••••••••••',
-                        obscureText: _obscurePassword,
-                        textInputAction: TextInputAction.next,
-                        suffixIcon: Icon(
+                        controller      : _passwordController,
+                        label           : 'Nouveau mot de passe',
+                        hint            : '••••••••••',
+                        obscureText     : _obscurePassword,
+                        textInputAction : TextInputAction.next,
+                        suffixIcon      : Icon(
                           _obscurePassword
                               ? Icons.visibility_off_outlined
                               : Icons.visibility_outlined,
-                          color: AppColors.grey500,
-                          size: 22,
+                          color : AppColors.grey500,
+                          size  : 22,
                         ),
-                        onSuffixTap: () {
-                          setState(() => _obscurePassword = !_obscurePassword);
-                        },
+                        onSuffixTap: () =>
+                            setState(() => _obscurePassword = !_obscurePassword),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
                             return 'Veuillez entrer un mot de passe';
@@ -111,24 +128,22 @@ class _PasswordScreenState extends State<PasswordScreen> {
 
                       const SizedBox(height: AppDimens.xl),
 
-                      // Confirm password
                       YaaTextField(
-                        controller: _confirmController,
-                        label: 'Confirmation de mot de passe',
-                        hint: '••••••••••',
-                        obscureText: _obscureConfirm,
-                        textInputAction: TextInputAction.done,
-                        onSubmitted: (_) => _onConfirm(),
-                        suffixIcon: Icon(
+                        controller      : _confirmController,
+                        label           : 'Confirmation de mot de passe',
+                        hint            : '••••••••••',
+                        obscureText     : _obscureConfirm,
+                        textInputAction : TextInputAction.done,
+                        onSubmitted     : (_) => _onConfirm(),
+                        suffixIcon      : Icon(
                           _obscureConfirm
                               ? Icons.visibility_off_outlined
                               : Icons.visibility_outlined,
-                          color: AppColors.grey500,
-                          size: 22,
+                          color : AppColors.grey500,
+                          size  : 22,
                         ),
-                        onSuffixTap: () {
-                          setState(() => _obscureConfirm = !_obscureConfirm);
-                        },
+                        onSuffixTap: () =>
+                            setState(() => _obscureConfirm = !_obscureConfirm),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
                             return 'Veuillez confirmer le mot de passe';
@@ -146,7 +161,7 @@ class _PasswordScreenState extends State<PasswordScreen> {
                 ),
               ),
 
-              // ── Button anchored at bottom ────────────────────────────
+              // Bouton ancré en bas
               Padding(
                 padding: const EdgeInsets.fromLTRB(
                   AppDimens.screenPadding,
@@ -155,8 +170,8 @@ class _PasswordScreenState extends State<PasswordScreen> {
                   AppDimens.xxl,
                 ),
                 child: YaaButton(
-                  label: 'Confirmer',
-                  onPressed: _onConfirm,
+                  label     : _isLoading ? 'Chargement...' : 'Confirmer',
+                  onPressed : _isLoading ? null : _onConfirm,
                 ),
               ),
             ],

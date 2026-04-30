@@ -4,22 +4,26 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/constants/constants.dart';
 import '../../../../core/utils/app_router.dart';
 import '../../../../shared/widgets/widgets.dart';
+import '../../service/api/api_service.dart';
 import '../../shared/widgets/auth_header.dart';
 
 /// OTP verification screen — "Vérifiez votre numéro"
 /// Shows 4 OTP input boxes, custom numeric keypad, resend timer.
 class VerificationScreen extends StatefulWidget {
-  const VerificationScreen({super.key});
+  final String email;
+
+  const VerificationScreen({super.key, required this.email});
 
   @override
   State<VerificationScreen> createState() => _VerificationScreenState();
 }
 
 class _VerificationScreenState extends State<VerificationScreen> {
-  final List<String> _code = ['', '', '', ''];
+  final List<String> _code = ['', '', '', '', '', ''];
   int _activeIndex = 0;
   int _resendSeconds = 30;
   Timer? _timer;
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -46,7 +50,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
   }
 
   void _onKeyTap(String value) {
-    if (_activeIndex < 4) {
+    if (_activeIndex < 6) {
       setState(() {
         _code[_activeIndex] = value;
         _activeIndex++;
@@ -63,11 +67,61 @@ class _VerificationScreenState extends State<VerificationScreen> {
     }
   }
 
-  void _onVerify() {
+  Future<void> _onVerify() async {
     final otp = _code.join();
-    if (otp.length == 4) {
-      // TODO: Verify OTP
-      context.pushNamed(RouteNames.password);
+    if (otp.length != 6) return;
+
+    setState(() => _isLoading = true);
+
+    try {
+      await ApiService().verifyOtp(
+        email : widget.email,
+        otp   : otp,
+      );
+
+      if (mounted) context.pushNamed(
+        RouteNames.password,
+        extra: widget.email,
+      );
+
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content         : Text(e.toString().replaceAll('Exception: ', '')),
+            backgroundColor : AppColors.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _onResendCode() async {
+    try {
+      await ApiService().resendCode(email: widget.email);
+
+      // Succès → on relance le timer
+      _startResendTimer();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content         : Text('Code renvoyé avec succès'),
+            backgroundColor : Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content         : Text(e.toString().replaceAll('Exception: ', '')),
+            backgroundColor : AppColors.error,
+          ),
+        );
+      }
     }
   }
 
@@ -114,10 +168,10 @@ class _VerificationScreenState extends State<VerificationScreen> {
                         children: [
                           const TextSpan(
                             text:
-                            'Veuillez saisir le code à 4 chiffres envoyé\npar SMS au ',
+                            'Veuillez saisir le code à 6 chiffres envoyé\npar E-mail  ',
                           ),
                           TextSpan(
-                            text: '+221 78 123 45 67',
+                            text: widget.email,
                             style: AppTextStyles.labelMedium.copyWith(
                               color: AppColors.dark,
                             ),
@@ -152,7 +206,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
                             ),
                           )
                               : GestureDetector(
-                            onTap: _startResendTimer,
+                            onTap: _onResendCode,
                             child: Text(
                               'Renvoyer le code',
                               style: AppTextStyles.labelMedium.copyWith(
@@ -175,10 +229,10 @@ class _VerificationScreenState extends State<VerificationScreen> {
 
                     // Verify button
                     YaaButton(
-                      label: 'Vérifier',
-                      onPressed: _code.every((c) => c.isNotEmpty)
-                          ? _onVerify
-                          : null,
+                      label     : _isLoading ? 'Vérification...' : 'Vérifier',
+                      onPressed : _isLoading
+                          ? null
+                          : _code.every((c) => c.isNotEmpty) ? _onVerify : null,
                     ),
 
                     const SizedBox(height: AppDimens.xxl),
@@ -194,15 +248,21 @@ class _VerificationScreenState extends State<VerificationScreen> {
 
   // ── OTP Boxes ────────────────────────────────────────────
   Widget _buildOtpBoxes() {
+
+    final screenWidth = MediaQuery.of(context).size.width;
+    final totalMargin = 5 * 2 * 6;        // margin horizontale × 6 boîtes
+    final totalPadding = AppDimens.screenPadding * 2;
+    final boxSize = (screenWidth - totalPadding - totalMargin) / 6;
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
-      children: List.generate(4, (index) {
+      children: List.generate(6, (index) {
         final isFilled = _code[index].isNotEmpty;
         final isActive = index == _activeIndex;
 
         return Container(
-          width: 64,
-          height: 64,
+          width: boxSize,
+          height: boxSize,
           margin: EdgeInsets.symmetric(horizontal: 8),
           decoration: BoxDecoration(
             color: isActive

@@ -4,6 +4,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimens.dart';
 import '../../core/constants/app_text_styles.dart';
 import '../../core/utils/app_router.dart';
+import '../../service/api/api_service.dart';
 import '../../shared/widgets/auth_header.dart';
 import '../../shared/widgets/yaa_button.dart';
 import '../../shared/widgets/yaa_text_field.dart';
@@ -11,7 +12,9 @@ import '../../shared/widgets/yaa_text_field.dart';
 /// Reset password screen — "Réinitialisez votre mot de passe"
 /// Same layout as password creation but with different title.
 class ResetPasswordScreen extends StatefulWidget {
-  const ResetPasswordScreen({super.key});
+  final String email;
+
+  const ResetPasswordScreen({super.key, required this.email});
 
   @override
   State<ResetPasswordScreen> createState() => _ResetPasswordScreenState();
@@ -23,6 +26,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   final _confirmController = TextEditingController();
   bool _obscurePassword = true;
   bool _obscureConfirm = true;
+  bool _isLoading           = false;
 
   @override
   void dispose() {
@@ -31,12 +35,35 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     super.dispose();
   }
 
-  void _onConfirm() {
-    if (_formKey.currentState?.validate() ?? false) {
-      // TODO: Reset password then go to login
-      context.goNamed(RouteNames.login);
+  Future<void> _onConfirm() async {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+
+    setState(() => _isLoading = true);
+
+    try {
+      // Réutilise le même endpoint que la création de mot de passe
+      await ApiService().createPassword(
+        email       : widget.email,
+        newPassword : _passwordController.text,
+      );
+
+      // Succès → retour au login
+      if (mounted) context.goNamed(RouteNames.login);
+
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content         : Text(e.toString().replaceAll('Exception: ', '')),
+            backgroundColor : AppColors.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
+
 
   @override
   Widget build(BuildContext context) {

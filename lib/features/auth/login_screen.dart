@@ -4,6 +4,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimens.dart';
 import '../../core/constants/app_text_styles.dart';
 import '../../core/utils/app_router.dart';
+import '../../service/api/api_service.dart';
 import '../../shared/widgets/auth_header.dart';
 import '../../shared/widgets/phone_number_formatter.dart';
 import '../../shared/widgets/yaa_button.dart';
@@ -25,6 +26,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
+  bool _isLoading           = false;
 
   @override
   void dispose() {
@@ -33,10 +35,37 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  void _onLogin() {
-    if (_formKey.currentState?.validate() ?? false) {
-      // TODO: Handle login
-      context.goNamed(RouteNames.home);
+  Future<void> _onLogin() async {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+
+    setState(() => _isLoading = true);
+
+    try {
+      // Retirer les espaces du téléphone formaté
+      final rawPhone = _phoneController.text.replaceAll(' ', '');
+
+      final response = await ApiService().login(
+        username : rawPhone,
+        password : _passwordController.text,
+      );
+
+      // TODO: Sauvegarder response.accessToken en local storage
+      // On le fera quand on intégrera SharedPreferences / flutter_secure_storage
+      print('✅ Token reçu: ${response.accessToken}');
+
+      if (mounted) context.goNamed(RouteNames.home);
+
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content         : Text(e.toString().replaceAll('Exception: ', '')),
+            backgroundColor : AppColors.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -120,9 +149,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
                       // Login button
                       YaaButton(
-                        label: 'Connexion',
-                        onPressed: _onLogin,
-                        icon: Icons.arrow_forward,
+                        label     : _isLoading ? 'Connexion...' : 'Connexion',
+                        onPressed : _isLoading ? null : _onLogin,
+                        icon      : _isLoading ? null : Icons.arrow_forward,
                       ),
 
                       const SizedBox(height: AppDimens.lg),

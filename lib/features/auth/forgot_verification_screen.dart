@@ -5,12 +5,15 @@ import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimens.dart';
 import '../../core/constants/app_text_styles.dart';
 import '../../core/utils/app_router.dart';
+import '../../service/api/api_service.dart';
 import '../../shared/widgets/auth_header.dart';
 import '../../shared/widgets/yaa_button.dart';
 
 /// OTP verification for forgot password flow — "Code de vérification"
 class ForgotVerificationScreen extends StatefulWidget {
-  const ForgotVerificationScreen({super.key});
+  final String email;
+
+  const ForgotVerificationScreen({super.key, required this.email});
 
   @override
   State<ForgotVerificationScreen> createState() =>
@@ -18,10 +21,11 @@ class ForgotVerificationScreen extends StatefulWidget {
 }
 
 class _ForgotVerificationScreenState extends State<ForgotVerificationScreen> {
-  final List<String> _code = ['', '', '', ''];
+  final List<String> _code = ['', '', '', '', '', ''];
   int _activeIndex = 0;
   int _resendSeconds = 23;
   Timer? _timer;
+  bool _isLoading   = false;
 
   @override
   void initState() {
@@ -48,7 +52,7 @@ class _ForgotVerificationScreenState extends State<ForgotVerificationScreen> {
   }
 
   void _onKeyTap(String value) {
-    if (_activeIndex < 4) {
+    if (_activeIndex < 6) {
       setState(() {
         _code[_activeIndex] = value;
         _activeIndex++;
@@ -65,11 +69,61 @@ class _ForgotVerificationScreenState extends State<ForgotVerificationScreen> {
     }
   }
 
-  void _onVerify() {
+  Future<void> _onVerify() async {
     final otp = _code.join();
-    if (otp.length == 4) {
-      // TODO: Verify OTP
-      context.pushNamed(RouteNames.resetPassword);
+    if (otp.length != 6) return;   // ← 4 → 6
+
+    setState(() => _isLoading = true);
+
+    try {
+      // Réutilise le même endpoint OTP que l'inscription
+      await ApiService().verifyOtp(
+        email : widget.email,
+        otp   : otp,
+      );
+
+      if (mounted) {
+        context.pushNamed(
+          RouteNames.resetPassword,
+          extra: widget.email, // ← on fait suivre l'email
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content         : Text(e.toString().replaceAll('Exception: ', '')),
+            backgroundColor : AppColors.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  // Dans ForgotVerificationScreen — copier exactement cette méthode
+  Future<void> _onResendCode() async {
+    try {
+      await ApiService().resendCode(email: widget.email);
+      _startResendTimer();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content         : Text('Code renvoyé avec succès'),
+            backgroundColor : Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content         : Text(e.toString().replaceAll('Exception: ', '')),
+            backgroundColor : AppColors.error,
+          ),
+        );
+      }
     }
   }
 
@@ -151,7 +205,7 @@ class _ForgotVerificationScreenState extends State<ForgotVerificationScreen> {
                             ),
                           )
                               : GestureDetector(
-                            onTap: _startResendTimer,
+                            onTap: _onResendCode,
                             child: Text(
                               'Renvoyer le code',
                               style:
@@ -193,36 +247,39 @@ class _ForgotVerificationScreenState extends State<ForgotVerificationScreen> {
   }
 
   Widget _buildOtpBoxes() {
+    final screenWidth  = MediaQuery.of(context).size.width;
+    final totalMargin  = 5 * 2 * 6;
+    final totalPadding = AppDimens.screenPadding * 2;
+    final boxSize      = (screenWidth - totalPadding - totalMargin) / 6;
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
-      children: List.generate(4, (index) {
+      children: List.generate(6, (index) { // ← 4 → 6
         final isFilled = _code[index].isNotEmpty;
         final isActive = index == _activeIndex;
 
         return Container(
-          width: 64,
-          height: 64,
-          margin: const EdgeInsets.symmetric(horizontal: 8),
+          width  : boxSize,
+          height : boxSize,
+          margin : const EdgeInsets.symmetric(horizontal: 5),
           decoration: BoxDecoration(
-            color: isActive ? AppColors.primarySurface : AppColors.grey100,
-            borderRadius: BorderRadius.circular(AppDimens.radiusMd),
-            border: Border.all(
-              color: isActive
+            color        : isActive ? AppColors.primarySurface : AppColors.grey100,
+            borderRadius : BorderRadius.circular(AppDimens.radiusMd),
+            border       : Border.all(
+              color : isActive
                   ? AppColors.primary
-                  : isFilled
-                  ? AppColors.grey300
-                  : Colors.transparent,
-              width: isActive ? 1.5 : 1,
+                  : isFilled ? AppColors.grey300 : Colors.transparent,
+              width : isActive ? 1.5 : 1,
             ),
           ),
           child: Center(
             child: Text(
               _code[index],
               style: const TextStyle(
-                fontFamily: 'Archivo',
-                fontSize: 24,
-                fontWeight: FontWeight.w700,
-                color: AppColors.dark,
+                fontFamily : 'Archivo',
+                fontSize   : 20,
+                fontWeight : FontWeight.w700,
+                color      : AppColors.dark,
               ),
             ),
           ),
