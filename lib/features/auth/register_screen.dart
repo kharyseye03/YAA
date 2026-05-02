@@ -220,30 +220,28 @@ extension _StringValidation on String {
 }*/
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/constants.dart';
 import '../../../../core/utils/app_router.dart';
 import '../../../../shared/widgets/widgets.dart';
-import '../../service/api/api_service.dart';
 import '../../shared/widgets/auth_header.dart';
 import '../../shared/widgets/phone_number_formatter.dart';
+import 'providers/auth_notifier.dart';
 
-class RegisterScreen extends StatefulWidget {
+class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
 
   @override
-  State<RegisterScreen> createState() => _RegisterScreenState();
+  ConsumerState<RegisterScreen> createState() => _RegisterScreenState();
 }
 
-class _RegisterScreenState extends State<RegisterScreen> {
-  final _formKey          = GlobalKey<FormState>();
+class _RegisterScreenState extends ConsumerState<RegisterScreen> {
+  final _formKey             = GlobalKey<FormState>();
   final _firstNameController = TextEditingController();
   final _lastNameController  = TextEditingController();
-  final _phoneController  = TextEditingController();
-  final _emailController  = TextEditingController();
-
-  // Contrôle l'état du bouton pendant l'appel API
-  bool _isLoading = false;
+  final _phoneController     = TextEditingController();
+  final _emailController     = TextEditingController();
 
   @override
   void dispose() {
@@ -255,47 +253,29 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   Future<void> _onConfirm() async {
-    // 1. Valider le formulaire avant tout appel réseau
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
-    setState(() => _isLoading = true);
+    final rawPhone = _phoneController.text.replaceAll(' ', '');
+    final email    = _emailController.text.trim();
 
-    try {
-      // 2. Le PhoneTextField formate "77 123 45 67"
-      //    L'API veut "771234567" → on retire les espaces
-      final rawPhone = _phoneController.text.replaceAll(' ', '');
+    final success = await ref.read(authProvider.notifier).register(
+      firstName : _firstNameController.text.trim(),
+      lastName  : _lastNameController.text.trim(),
+      email     : email,
+      telephone : rawPhone,
+    );
 
-      // 3. Appel API via le service — jamais directement ici
-      await ApiService().register(
-        firstName : _firstNameController.text.trim(),
-        lastName  : _lastNameController.text.trim(),
-        email     : _emailController.text.trim(),
-        telephone : rawPhone,
-      );
+    if (!mounted) return;
 
-      // 4. Succès → on navigue vers la vérification OTP
-      //    On passe l'email pour que l'écran OTP sache
-      //    à quelle adresse le code a été envoyé
-      if (mounted) {
-        context.pushNamed(
-          RouteNames.verification,
-          extra: _emailController.text.trim(),
-        );
-      }
-    } catch (e) {
-      // 5. Erreur → on affiche le message dans un SnackBar
-      if (mounted) {
+    if (success) {
+      context.pushNamed(RouteNames.verification, extra: email);
+    } else {
+      final error = ref.read(authProvider).error;
+      if (error != null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content         : Text(e.toString().replaceAll('Exception: ', '')),
-            backgroundColor : AppColors.error,
-          ),
+          SnackBar(content: Text(error), backgroundColor: AppColors.error),
         );
       }
-    } finally {
-      // 6. "finally" s'exécute TOUJOURS, succès ou erreur
-      //    On remet le bouton en état normal
-      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -435,12 +415,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       const SizedBox(height: AppDimens.xxl),
 
                       // ── Bouton ──────────────────────────────
-                      // isLoading=true → le bouton se désactive
-                      // pour éviter les doubles soumissions
-                      YaaButton(
-                        label     : _isLoading ? 'Chargement...' : 'Confirmer',
-                        onPressed : _isLoading ? null : _onConfirm,
-                        icon      : _isLoading ? null : Icons.arrow_forward,
+                      Consumer(
+                        builder: (context, ref, _) {
+                          final isLoading = ref.watch(authProvider).isLoading;
+                          return YaaButton(
+                            label     : isLoading ? 'Chargement...' : 'Confirmer',
+                            onPressed : isLoading ? null : _onConfirm,
+                            icon      : isLoading ? null : Icons.arrow_forward,
+                          );
+                        },
                       ),
 
                       const SizedBox(height: AppDimens.huge),

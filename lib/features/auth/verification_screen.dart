@@ -1,29 +1,28 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/constants.dart';
 import '../../../../core/utils/app_router.dart';
 import '../../../../shared/widgets/widgets.dart';
-import '../../service/api/api_service.dart';
 import '../../shared/widgets/auth_header.dart';
+import 'providers/auth_notifier.dart';
 
 /// OTP verification screen — "Vérifiez votre numéro"
-/// Shows 4 OTP input boxes, custom numeric keypad, resend timer.
-class VerificationScreen extends StatefulWidget {
+class VerificationScreen extends ConsumerStatefulWidget {
   final String email;
 
   const VerificationScreen({super.key, required this.email});
 
   @override
-  State<VerificationScreen> createState() => _VerificationScreenState();
+  ConsumerState<VerificationScreen> createState() => _VerificationScreenState();
 }
 
-class _VerificationScreenState extends State<VerificationScreen> {
+class _VerificationScreenState extends ConsumerState<VerificationScreen> {
   final List<String> _code = ['', '', '', '', '', ''];
   int _activeIndex = 0;
   int _resendSeconds = 30;
   Timer? _timer;
-  bool _isLoading = false;
 
   @override
   void initState() {
@@ -71,55 +70,45 @@ class _VerificationScreenState extends State<VerificationScreen> {
     final otp = _code.join();
     if (otp.length != 6) return;
 
-    setState(() => _isLoading = true);
+    final success = await ref.read(authProvider.notifier).verifyOtp(
+      email: widget.email,
+      otp: otp,
+    );
 
-    try {
-      await ApiService().verifyOtp(
-        email : widget.email,
-        otp   : otp,
-      );
+    if (!mounted) return;
 
-      if (mounted) context.pushNamed(
-        RouteNames.password,
-        extra: widget.email,
-      );
-
-    } catch (e) {
-      if (mounted) {
+    if (success) {
+      context.pushNamed(RouteNames.password, extra: widget.email);
+    } else {
+      final error = ref.read(authProvider).error;
+      if (error != null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content         : Text(e.toString().replaceAll('Exception: ', '')),
-            backgroundColor : AppColors.error,
-          ),
+          SnackBar(content: Text(error), backgroundColor: AppColors.error),
         );
       }
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
     }
   }
 
   Future<void> _onResendCode() async {
-    try {
-      await ApiService().resendCode(email: widget.email);
+    final success = await ref.read(authProvider.notifier).resendCode(
+      email: widget.email,
+    );
 
-      // Succès → on relance le timer
+    if (!mounted) return;
+
+    if (success) {
       _startResendTimer();
-
-      if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Code renvoyé avec succès'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } else {
+      final error = ref.read(authProvider).error;
+      if (error != null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content         : Text('Code renvoyé avec succès'),
-            backgroundColor : Colors.green,
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content         : Text(e.toString().replaceAll('Exception: ', '')),
-            backgroundColor : AppColors.error,
-          ),
+          SnackBar(content: Text(error), backgroundColor: AppColors.error),
         );
       }
     }
@@ -228,11 +217,16 @@ class _VerificationScreenState extends State<VerificationScreen> {
                     const Spacer(),
 
                     // Verify button
-                    YaaButton(
-                      label     : _isLoading ? 'Vérification...' : 'Vérifier',
-                      onPressed : _isLoading
-                          ? null
-                          : _code.every((c) => c.isNotEmpty) ? _onVerify : null,
+                    Consumer(
+                      builder: (context, ref, _) {
+                        final isLoading = ref.watch(authProvider).isLoading;
+                        return YaaButton(
+                          label     : isLoading ? 'Vérification...' : 'Vérifier',
+                          onPressed : isLoading
+                              ? null
+                              : _code.every((c) => c.isNotEmpty) ? _onVerify : null,
+                        );
+                      },
                     ),
 
                     const SizedBox(height: AppDimens.xxl),
@@ -263,7 +257,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
         return Container(
           width: boxSize,
           height: boxSize,
-          margin: EdgeInsets.symmetric(horizontal: 8),
+          margin: const EdgeInsets.symmetric(horizontal: 5),
           decoration: BoxDecoration(
             color: isActive
                 ? AppColors.primarySurface

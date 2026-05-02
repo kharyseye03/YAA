@@ -1,32 +1,31 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimens.dart';
 import '../../core/constants/app_text_styles.dart';
 import '../../core/utils/app_router.dart';
-import '../../service/api/api_service.dart';
 import '../../shared/widgets/auth_header.dart';
 import '../../shared/widgets/yaa_button.dart';
 import '../../shared/widgets/yaa_text_field.dart';
+import 'providers/auth_notifier.dart';
 
 /// Reset password screen — "Réinitialisez votre mot de passe"
-/// Same layout as password creation but with different title.
-class ResetPasswordScreen extends StatefulWidget {
+class ResetPasswordScreen extends ConsumerStatefulWidget {
   final String email;
 
   const ResetPasswordScreen({super.key, required this.email});
 
   @override
-  State<ResetPasswordScreen> createState() => _ResetPasswordScreenState();
+  ConsumerState<ResetPasswordScreen> createState() => _ResetPasswordScreenState();
 }
 
-class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
-  final _formKey = GlobalKey<FormState>();
+class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
+  final _formKey            = GlobalKey<FormState>();
   final _passwordController = TextEditingController();
-  final _confirmController = TextEditingController();
-  bool _obscurePassword = true;
-  bool _obscureConfirm = true;
-  bool _isLoading           = false;
+  final _confirmController  = TextEditingController();
+  bool _obscurePassword     = true;
+  bool _obscureConfirm      = true;
 
   @override
   void dispose() {
@@ -38,29 +37,22 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   Future<void> _onConfirm() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
-    setState(() => _isLoading = true);
+    final success = await ref.read(authProvider.notifier).createPassword(
+      email      : widget.email,
+      newPassword: _passwordController.text,
+    );
 
-    try {
-      // Réutilise le même endpoint que la création de mot de passe
-      await ApiService().createPassword(
-        email       : widget.email,
-        newPassword : _passwordController.text,
-      );
+    if (!mounted) return;
 
-      // Succès → retour au login
-      if (mounted) context.goNamed(RouteNames.login);
-
-    } catch (e) {
-      if (mounted) {
+    if (success) {
+      context.goNamed(RouteNames.login);
+    } else {
+      final error = ref.read(authProvider).error;
+      if (error != null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content         : Text(e.toString().replaceAll('Exception: ', '')),
-            backgroundColor : AppColors.error,
-          ),
+          SnackBar(content: Text(error), backgroundColor: AppColors.error),
         );
       }
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -172,9 +164,14 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                       const Spacer(),
 
                       // Confirm button
-                      YaaButton(
-                        label: 'Confirmer',
-                        onPressed: _onConfirm,
+                      Consumer(
+                        builder: (context, ref, _) {
+                          final isLoading = ref.watch(authProvider).isLoading;
+                          return YaaButton(
+                            label     : isLoading ? 'Chargement...' : 'Confirmer',
+                            onPressed : isLoading ? null : _onConfirm,
+                          );
+                        },
                       ),
 
                       const SizedBox(height: AppDimens.xxl),

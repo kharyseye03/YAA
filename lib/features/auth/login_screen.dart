@@ -1,32 +1,30 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimens.dart';
 import '../../core/constants/app_text_styles.dart';
 import '../../core/utils/app_router.dart';
-import '../../service/api/api_service.dart';
 import '../../shared/widgets/auth_header.dart';
 import '../../shared/widgets/phone_number_formatter.dart';
 import '../../shared/widgets/yaa_button.dart';
 import '../../shared/widgets/yaa_text_field.dart';
-import 'package:flutter/services.dart';
+import 'providers/auth_notifier.dart';
 
 /// Login screen — "Se connecter"
-/// Fields: Numéro de téléphone, Mot de passe
-/// Google sign-in, forgot password link, register link.
-class LoginScreen extends StatefulWidget {
+class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  ConsumerState<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
-  bool _isLoading           = false;
 
   @override
   void dispose() {
@@ -38,34 +36,23 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _onLogin() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
-    setState(() => _isLoading = true);
+    final rawPhone = _phoneController.text.replaceAll(' ', '');
+    final success = await ref.read(authProvider.notifier).login(
+      username: rawPhone,
+      password: _passwordController.text,
+    );
 
-    try {
-      // Retirer les espaces du téléphone formaté
-      final rawPhone = _phoneController.text.replaceAll(' ', '');
+    if (!mounted) return;
 
-      final response = await ApiService().login(
-        username : rawPhone,
-        password : _passwordController.text,
-      );
-
-      // TODO: Sauvegarder response.accessToken en local storage
-      // On le fera quand on intégrera SharedPreferences / flutter_secure_storage
-      print('✅ Token reçu: ${response.accessToken}');
-
-      if (mounted) context.goNamed(RouteNames.home);
-
-    } catch (e) {
-      if (mounted) {
+    if (success) {
+      context.goNamed(RouteNames.home);
+    } else {
+      final error = ref.read(authProvider).error;
+      if (error != null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content         : Text(e.toString().replaceAll('Exception: ', '')),
-            backgroundColor : AppColors.error,
-          ),
+          SnackBar(content: Text(error), backgroundColor: AppColors.error),
         );
       }
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -148,10 +135,15 @@ class _LoginScreenState extends State<LoginScreen> {
                       const SizedBox(height: AppDimens.xxl),
 
                       // Login button
-                      YaaButton(
-                        label     : _isLoading ? 'Connexion...' : 'Connexion',
-                        onPressed : _isLoading ? null : _onLogin,
-                        icon      : _isLoading ? null : Icons.arrow_forward,
+                      Consumer(
+                        builder: (context, ref, _) {
+                          final isLoading = ref.watch(authProvider).isLoading;
+                          return YaaButton(
+                            label     : isLoading ? 'Connexion...' : 'Connexion',
+                            onPressed : isLoading ? null : _onLogin,
+                            icon      : isLoading ? null : Icons.arrow_forward,
+                          );
+                        },
                       ),
 
                       const SizedBox(height: AppDimens.lg),

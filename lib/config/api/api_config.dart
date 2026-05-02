@@ -2,11 +2,11 @@ class ApiConfig {
 
   // ── Keycloak (IAM) ────────────────────────────────────────
   // URL différente car c'est un service complètement séparé
-  static const String iamBaseUrl = 'https://a2e7-41-214-10-114.ngrok-free.app';
+  static const String iamBaseUrl = 'https://5795-41-83-137-24.ngrok-free.app';
   static const String loginEndpoint = '/realms/yaa-delivery/protocol/openid-connect/token';
 
   // 🔧 Mode dev → ngrok
-  static const String baseUrl = 'https://5d19-41-214-10-114.ngrok-free.app/api/v1';
+  static const String baseUrl = 'https://4248-41-83-137-24.ngrok-free.app/api/v1';
 
   // ── Endpoints Auth ────────────────────────────────
   static const String registerEndpoint = '/registrations/client';
@@ -14,6 +14,10 @@ class ApiConfig {
   static const String resetPasswordEndpoint = '/registrations/reset-password';
   static const String forgotPasswordEndpoint = '/registrations/forgot-password';
   static const String resendCodeEndpoint = '/registrations/resend-code';
+
+  // ── Endpoints User ────────────────────────────────
+  static const String userDetailEndpoint    = '/registrations/detail';
+  static const String updateProfileEndpoint = '/registrations/update';
 
   // ── Timeouts (en secondes) ────────────────────────
   static const int connectionTimeout = 30;

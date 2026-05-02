@@ -1,17 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimens.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/utils/app_router.dart';
 import '../../../shared/widgets/yaa_button.dart';
+import '../../user/providers/user_notifier.dart';
 
 /// Personal info view screen (read-only) with "Modifier" button.
-class PersonalInfoScreen extends StatelessWidget {
+class PersonalInfoScreen extends ConsumerWidget {
   const PersonalInfoScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final profile = ref.watch(userProvider).profile;
+
     return Scaffold(
       backgroundColor: AppColors.white,
       body: Column(
@@ -29,15 +33,13 @@ class PersonalInfoScreen extends StatelessWidget {
                     child: const Icon(Icons.person, color: AppColors.grey500, size: 48),
                   ),
                   const SizedBox(height: AppDimens.xxxl),
-                  _buildRow('Prénom', 'Addéline'),
+                  _buildRow('Prénom', profile?.firstName ?? '—'),
                   const Divider(color: AppColors.grey200, height: 1),
-                  _buildRow('Nom', 'Keita'),
+                  _buildRow('Nom', profile?.lastName ?? '—'),
                   const Divider(color: AppColors.grey200, height: 1),
-                  _buildRow('Adresse', 'Ouakam cité avions, Dakar'),
+                  _buildRow('Numéro téléphone', profile?.telephone ?? '—'),
                   const Divider(color: AppColors.grey200, height: 1),
-                  _buildRow('Numéro téléphone', '77 123 45 67'),
-                  const Divider(color: AppColors.grey200, height: 1),
-                  _buildRow('Email', 'akeita@gmail.com'),
+                  _buildRow('Email', profile?.email ?? '—'),
                 ],
               ),
             ),

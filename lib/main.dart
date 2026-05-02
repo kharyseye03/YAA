@@ -1,17 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'core/theme/app_theme.dart';
 import 'core/constants/constants.dart';
 import 'core/utils/app_router.dart';
+import 'features/auth/providers/auth_notifier.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // TODO: Initialize services (Firebase, API client, etc.)
+  final prefs = await SharedPreferences.getInstance();
 
   runApp(
-    const ProviderScope(
-      child: YaaApp(),
+    ProviderScope(
+      overrides: [
+        sharedPreferencesProvider.overrideWithValue(prefs),
+      ],
+      child: const YaaApp(),
     ),
   );
 }

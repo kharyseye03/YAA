@@ -9,6 +9,7 @@ import '../../features/auth/password_screen.dart';
 import '../../features/auth/register_screen.dart';
 import '../../features/auth/reset_password_screen.dart';
 import '../../features/auth/verification_screen.dart';
+import '../../features/auth/providers/auth_notifier.dart';
 import '../../features/screens/cart/cart_screen.dart';
 import '../../features/screens/cart/checkout_screen.dart';
 import '../../features/screens/home/home_screen.dart';
@@ -22,6 +23,20 @@ import '../../features/screens/profile/personal_info_screen.dart';
 import '../../features/screens/profile/terms_screen.dart';
 import '../../features/starter/onboarding/screens/onboarding_screen.dart';
 import '../../features/starter/splash/splash_screen.dart';
+
+// Routes qui nécessitent d'être connecté
+const _protectedRoutes = {
+  '/home', '/product-detail', '/cart', '/checkout',
+  '/orders', '/order-detail', '/orderTracking',
+  '/profile', '/personalInfo', '/editPersonalInfo',
+  '/terms', '/notifications', '/search',
+};
+
+class _RouterNotifier extends ChangeNotifier {
+  _RouterNotifier(Ref ref) {
+    ref.listen(authProvider, (_, __) => notifyListeners());
+  }
+}
 
 /// Route path constants.
 abstract final class RoutePaths {
@@ -98,6 +113,16 @@ final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     initialLocation: RoutePaths.splash,
     debugLogDiagnostics: true,
+    refreshListenable: _RouterNotifier(ref),
+    redirect: (context, state) {
+      final isAuthenticated = ref.read(authProvider).isAuthenticated;
+      final location = state.matchedLocation;
+
+      if (!isAuthenticated && _protectedRoutes.contains(location)) {
+        return RoutePaths.login;
+      }
+      return null;
+    },
     routes: [
       GoRoute(
         path: RoutePaths.splash,

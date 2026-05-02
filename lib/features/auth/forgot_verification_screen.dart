@@ -1,31 +1,31 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimens.dart';
 import '../../core/constants/app_text_styles.dart';
 import '../../core/utils/app_router.dart';
-import '../../service/api/api_service.dart';
 import '../../shared/widgets/auth_header.dart';
 import '../../shared/widgets/yaa_button.dart';
+import 'providers/auth_notifier.dart';
 
 /// OTP verification for forgot password flow — "Code de vérification"
-class ForgotVerificationScreen extends StatefulWidget {
+class ForgotVerificationScreen extends ConsumerStatefulWidget {
   final String email;
 
   const ForgotVerificationScreen({super.key, required this.email});
 
   @override
-  State<ForgotVerificationScreen> createState() =>
+  ConsumerState<ForgotVerificationScreen> createState() =>
       _ForgotVerificationScreenState();
 }
 
-class _ForgotVerificationScreenState extends State<ForgotVerificationScreen> {
+class _ForgotVerificationScreenState extends ConsumerState<ForgotVerificationScreen> {
   final List<String> _code = ['', '', '', '', '', ''];
   int _activeIndex = 0;
   int _resendSeconds = 23;
   Timer? _timer;
-  bool _isLoading   = false;
 
   @override
   void initState() {
@@ -71,57 +71,47 @@ class _ForgotVerificationScreenState extends State<ForgotVerificationScreen> {
 
   Future<void> _onVerify() async {
     final otp = _code.join();
-    if (otp.length != 6) return;   // ← 4 → 6
+    if (otp.length != 6) return;
 
-    setState(() => _isLoading = true);
+    final success = await ref.read(authProvider.notifier).verifyOtp(
+      email: widget.email,
+      otp: otp,
+    );
 
-    try {
-      // Réutilise le même endpoint OTP que l'inscription
-      await ApiService().verifyOtp(
-        email : widget.email,
-        otp   : otp,
-      );
+    if (!mounted) return;
 
-      if (mounted) {
-        context.pushNamed(
-          RouteNames.resetPassword,
-          extra: widget.email, // ← on fait suivre l'email
-        );
-      }
-    } catch (e) {
-      if (mounted) {
+    if (success) {
+      context.pushNamed(RouteNames.resetPassword, extra: widget.email);
+    } else {
+      final error = ref.read(authProvider).error;
+      if (error != null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content         : Text(e.toString().replaceAll('Exception: ', '')),
-            backgroundColor : AppColors.error,
-          ),
+          SnackBar(content: Text(error), backgroundColor: AppColors.error),
         );
       }
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
     }
   }
 
-  // Dans ForgotVerificationScreen — copier exactement cette méthode
   Future<void> _onResendCode() async {
-    try {
-      await ApiService().resendCode(email: widget.email);
+    final success = await ref.read(authProvider.notifier).resendCode(
+      email: widget.email,
+    );
+
+    if (!mounted) return;
+
+    if (success) {
       _startResendTimer();
-      if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Code renvoyé avec succès'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } else {
+      final error = ref.read(authProvider).error;
+      if (error != null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content         : Text('Code renvoyé avec succès'),
-            backgroundColor : Colors.green,
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content         : Text(e.toString().replaceAll('Exception: ', '')),
-            backgroundColor : AppColors.error,
-          ),
+          SnackBar(content: Text(error), backgroundColor: AppColors.error),
         );
       }
     }
@@ -229,10 +219,16 @@ class _ForgotVerificationScreenState extends State<ForgotVerificationScreen> {
                     const Spacer(),
 
                     // Verify button
-                    YaaButton(
-                      label: 'Vérifier',
-                      onPressed:
-                      _code.every((c) => c.isNotEmpty) ? _onVerify : null,
+                    Consumer(
+                      builder: (context, ref, _) {
+                        final isLoading = ref.watch(authProvider).isLoading;
+                        return YaaButton(
+                          label     : isLoading ? 'Vérification...' : 'Vérifier',
+                          onPressed : isLoading
+                              ? null
+                              : _code.every((c) => c.isNotEmpty) ? _onVerify : null,
+                        );
+                      },
                     ),
 
                     const SizedBox(height: AppDimens.xxl),

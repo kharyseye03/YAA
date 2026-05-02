@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import '../../config/api/api_config.dart';
 import '../../model/auth/login_response.dart';
 import '../../model/auth/register_response.dart';
+import '../../model/user/user_profile.dart';
 
 class ApiService {
   // ── Singleton ──────────────────────────────────────
@@ -189,7 +190,139 @@ class ApiService {
     }
   }
 
+    // ════════════════════════════════════════════════════
+  // MÉTHODE PRIVÉE — GET
   // ════════════════════════════════════════════════════
+
+  Future<Map<String, dynamic>> _get(
+    String endpoint, {
+    Map<String, String>? queryParams,
+    String? token,
+  }) async {
+    try {
+      var uri = Uri.parse(ApiConfig.getUrl(endpoint));
+      if (queryParams != null) {
+        uri = uri.replace(queryParameters: queryParams);
+      }
+
+      final headers = {
+        ...ApiConfig.headers,
+        if (token != null) 'Authorization': 'Bearer $token',
+      };
+
+      final response = await http
+          .get(uri, headers: headers)
+          .timeout(
+            const Duration(seconds: ApiConfig.connectionTimeout),
+            onTimeout: () => throw TimeoutException('Le serveur ne répond pas.'),
+          );
+
+      print('📡 GET Status → ${response.statusCode}');
+      print('📬 GET Réponse → ${response.body}');
+
+      if (response.body.isEmpty) {
+        throw Exception('Erreur ${response.statusCode} — réponse vide du serveur.');
+      }
+
+      final data = json.decode(response.body) as Map<String, dynamic>;
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return data;
+      }
+
+      final errorMessage = data['message'] as String? ?? 'Erreur ${response.statusCode}';
+      throw Exception(errorMessage);
+
+    } on SocketException {
+      throw Exception('Pas de connexion internet.');
+    } on TimeoutException catch (e) {
+      throw Exception(e.message);
+    } on FormatException {
+      throw Exception('Réponse invalide du serveur.');
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  // ════════════════════════════════════════════════════
+  // MÉTHODE PUBLIQUE — User Profile
+  // ════════════════════════════════════════════════════
+
+  Future<UserProfile> getUserDetail({
+    required String email,
+    required String token,
+  }) async {
+    try {
+      // Essai 1 : sans token (endpoint possiblement public)
+      final response = await _get(
+        ApiConfig.userDetailEndpoint,
+        queryParams: {'email': email},
+      );
+      return UserProfile.fromJson(response);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  // ════════════════════════════════════════════════════
+  // MÉTHODE PUBLIQUE — Update Profile (multipart form-data)
+  // ════════════════════════════════════════════════════
+
+  Future<void> updateProfile({
+    required String email,
+    required String firstName,
+    required String lastName,
+    required String telephone,
+    required String token,
+    String? imagePath,
+  }) async {
+    try {
+      final uri = Uri.parse(ApiConfig.getUrl(ApiConfig.updateProfileEndpoint));
+      final request = http.MultipartRequest('PUT', uri)
+        ..headers.addAll({
+          'ngrok-skip-browser-warning': 'true',
+          'Authorization': 'Bearer $token',
+        })
+        ..fields['firstName'] = firstName
+        ..fields['lastName']  = lastName
+        ..fields['email']     = email
+        ..fields['telephone'] = telephone;
+
+      if (imagePath != null) {
+        request.files.add(
+          await http.MultipartFile.fromPath('image', imagePath),
+        );
+      }
+
+      print('🌐 PUT multipart → $uri');
+
+      final streamed = await request.send().timeout(
+        const Duration(seconds: ApiConfig.connectionTimeout),
+        onTimeout: () => throw TimeoutException('Le serveur ne répond pas.'),
+      );
+      final response = await http.Response.fromStream(streamed);
+
+      print('📡 Status → ${response.statusCode}');
+      print('📬 Réponse → ${response.body}');
+
+      if (response.statusCode == 200 || response.statusCode == 201) return;
+
+      final data = response.body.isNotEmpty
+          ? json.decode(response.body) as Map<String, dynamic>
+          : <String, dynamic>{};
+      final errorMessage = data['message'] as String? ?? 'Erreur ${response.statusCode}';
+      throw Exception(errorMessage);
+
+    } on SocketException {
+      throw Exception('Pas de connexion internet.');
+    } on TimeoutException catch (e) {
+      throw Exception(e.message);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+// ════════════════════════════════════════════════════
 // MÉTHODE PRIVÉE — Spécifique form-urlencoded (Keycloak)
 // Différente de _post car le body et les headers changent
 // ════════════════════════════════════════════════════
@@ -253,28 +386,41 @@ class ApiService {
 // ════════════════════════════════════════════════════
 
   Future<LoginResponse> login({
-    required String username,   // numéro de téléphone
+    required String username,
     required String password,
   }) async {
     try {
-      // Keycloak exige ces 4 champs obligatoires en form-urlencoded
       final fields = {
-        'grant_type' : 'password',  // type d'authentification OAuth2
-        'client_id'  : 'yaa',       // identifiant de l'app dans Keycloak
+        'grant_type' : 'password',
+        'client_id'  : 'yaa',
         'username'   : username,
         'password'   : password,
       };
-
-      // On passe l'URL complète Keycloak, pas l'URL de l'API YAA
       final response = await _postForm(
         ApiConfig.getIamUrl(ApiConfig.loginEndpoint),
         fields,
       );
-
       return LoginResponse.fromJson(response);
-
     } catch (e) {
       print('❌ Erreur login: $e');
+      rethrow;
+    }
+  }
+
+  Future<LoginResponse> refreshToken({required String refreshToken}) async {
+    try {
+      final fields = {
+        'grant_type'    : 'refresh_token',
+        'client_id'     : 'yaa',
+        'refresh_token' : refreshToken,
+      };
+      final response = await _postForm(
+        ApiConfig.getIamUrl(ApiConfig.loginEndpoint),
+        fields,
+      );
+      return LoginResponse.fromJson(response);
+    } catch (e) {
+      print('❌ Erreur refreshToken: $e');
       rethrow;
     }
   }

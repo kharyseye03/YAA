@@ -1,18 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/constants.dart';
 import '../../../core/utils/app_router.dart';
+import '../../auth/providers/auth_notifier.dart';
 
 /// Splash screen — full blue background with centered logo.
-class SplashScreen extends StatefulWidget {
+class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
 
   @override
-  State<SplashScreen> createState() => _SplashScreenState();
+  ConsumerState<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen>
+class _SplashScreenState extends ConsumerState<SplashScreen>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
   late final Animation<double> _fadeIn;
@@ -42,7 +44,12 @@ class _SplashScreenState extends State<SplashScreen>
   Future<void> _navigateAfterDelay() async {
     await Future.delayed(const Duration(seconds: 2));
     if (!mounted) return;
-    context.goNamed(RouteNames.onboarding);
+    final isAuthenticated = ref.read(authProvider).isAuthenticated;
+    if (isAuthenticated) {
+      context.goNamed(RouteNames.home);
+    } else {
+      context.goNamed(RouteNames.onboarding);
+    }
   }
 
   @override

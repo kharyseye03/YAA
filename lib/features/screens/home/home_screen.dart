@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:yaa/features/screens/home/product_card.dart';
 import 'package:yaa/features/screens/home/promo_banner_carousel.dart';
@@ -8,23 +9,22 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimens.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/utils/app_router.dart';
+import '../../user/providers/user_notifier.dart';
 import '../order/orders_screen.dart';
 import '../profile/profile_screen.dart';
 import 'category_list.dart';
 import 'home_bottom_nav.dart';
 import 'home_header.dart';
 
-
 /// Main home dashboard screen.
-/// Shows header, promo banners, categories, and recent products.
-class HomeScreen extends StatefulWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends ConsumerState<HomeScreen> {
   int _currentNavIndex = 0;
   int _activeCategoryIndex = 0;
 
@@ -126,7 +126,7 @@ class _HomeScreenState extends State<HomeScreen> {
               : _currentNavIndex == 3
               ? _buildSimpleHeader('Mon compte')
               : HomeHeader(
-            userName: 'Gérald charo KEITA',
+            userName: ref.watch(userProvider).profile?.fullName ?? 'Bienvenue',
             onNotificationTap: () => context.goNamed(RouteNames.notifications),
           ),
 
