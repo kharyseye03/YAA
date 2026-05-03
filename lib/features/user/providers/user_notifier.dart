@@ -30,29 +30,30 @@ class UserNotifier extends StateNotifier<UserState> {
   UserNotifier(this._prefs) : super(const UserState());
 
   final SharedPreferences _prefs;
+  static const _imageUrlKey = 'user_image_url';
 
-  void loadProfile() {
+  Future<void> loadProfile() async {
     final token = _prefs.getString('access_token');
-    if (token == null) {
-      debugPrint('⚠️ loadProfile annulé : token manquant');
-      return;
+    if (token == null) return;
+
+    // Email extrait du JWT uniquement pour savoir qui appeler
+    final email = _prefs.getString('user_email') ??
+        AuthNotifier.decodeJwtPayload(token)?['email'] as String? ?? '';
+    if (email.isEmpty) return;
+
+    state = state.copyWith(isLoading: true);
+    try {
+      final profile = await ApiService().getUserDetail(email: email, token: token);
+      // Persister l'image pour un affichage instantané au prochain démarrage
+      if (profile.imageUrl != null) {
+        await _prefs.setString(_imageUrlKey, profile.imageUrl!);
+      }
+      state = state.copyWith(isLoading: false, profile: profile);
+      debugPrint('✅ Profil API : ${profile.fullName} | image: ${profile.imageUrl}');
+    } catch (e) {
+      debugPrint('❌ loadProfile échoué : $e');
+      state = state.copyWith(isLoading: false);
     }
-
-    final payload = AuthNotifier.decodeJwtPayload(token);
-    if (payload == null) {
-      debugPrint('⚠️ loadProfile annulé : JWT invalide');
-      return;
-    }
-
-    final profile = UserProfile(
-      firstName : payload['given_name']  as String? ?? '',
-      lastName  : payload['family_name'] as String? ?? '',
-      email     : payload['email']       as String? ?? '',
-      telephone : payload['preferred_username'] as String? ?? '',
-    );
-
-    debugPrint('✅ Profil depuis JWT : ${profile.fullName} | ${profile.email}');
-    state = state.copyWith(profile: profile);
   }
 
   Future<bool> updateProfile({
@@ -62,9 +63,6 @@ class UserNotifier extends StateNotifier<UserState> {
     required String telephone,
     String? imagePath,
   }) async {
-    final token = _prefs.getString('access_token');
-    if (token == null) return false;
-
     state = state.copyWith(isLoading: true, clearError: true);
     try {
       await ApiService().updateProfile(
@@ -72,18 +70,10 @@ class UserNotifier extends StateNotifier<UserState> {
         firstName : firstName,
         lastName  : lastName,
         telephone : telephone,
-        token     : token,
         imagePath : imagePath,
       );
-
-      final updatedProfile = UserProfile(
-        firstName : firstName,
-        lastName  : lastName,
-        email     : email,
-        telephone : telephone,
-        imageUrl  : imagePath ?? state.profile?.imageUrl,
-      );
-      state = state.copyWith(isLoading: false, profile: updatedProfile);
+      // Recharger depuis l'API pour avoir les données à jour (image incluse)
+      await loadProfile();
       return true;
     } catch (e) {
       state = state.copyWith(

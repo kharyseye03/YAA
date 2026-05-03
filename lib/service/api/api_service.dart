@@ -268,12 +268,11 @@ class ApiService {
   // MÉTHODE PUBLIQUE — Update Profile (multipart form-data)
   // ════════════════════════════════════════════════════
 
-  Future<void> updateProfile({
+  Future<String?> updateProfile({
     required String email,
     required String firstName,
     required String lastName,
     required String telephone,
-    required String token,
     String? imagePath,
   }) async {
     try {
@@ -281,7 +280,6 @@ class ApiService {
       final request = http.MultipartRequest('PUT', uri)
         ..headers.addAll({
           'ngrok-skip-browser-warning': 'true',
-          'Authorization': 'Bearer $token',
         })
         ..fields['firstName'] = firstName
         ..fields['lastName']  = lastName
@@ -305,13 +303,29 @@ class ApiService {
       print('📡 Status → ${response.statusCode}');
       print('📬 Réponse → ${response.body}');
 
-      if (response.statusCode == 200 || response.statusCode == 201) return;
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        if (response.body.isNotEmpty) {
+          try {
+            final data = json.decode(response.body) as Map<String, dynamic>;
+            final fileName = data['imageFileName'] as String?
+                ?? data['image'] as String?
+                ?? data['imageUrl'] as String?;
+            if (fileName != null && fileName.isNotEmpty) {
+              // Si c'est déjà une URL complète, on la retourne telle quelle
+              if (fileName.startsWith('http')) return fileName;
+              return ApiConfig.getImageUrl(fileName);
+            }
+          } catch (_) {}
+        }
+        return null;
+      }
 
-      final data = response.body.isNotEmpty
-          ? json.decode(response.body) as Map<String, dynamic>
-          : <String, dynamic>{};
+      Map<String, dynamic> data = {};
+      if (response.body.isNotEmpty) {
+        try { data = json.decode(response.body) as Map<String, dynamic>; } catch (_) {}
+      }
       final errorMessage = data['message'] as String? ?? 'Erreur ${response.statusCode}';
-      throw Exception(errorMessage);
+      throw Exception('${response.statusCode} $errorMessage');
 
     } on SocketException {
       throw Exception('Pas de connexion internet.');

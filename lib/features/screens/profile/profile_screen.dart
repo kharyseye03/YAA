@@ -5,6 +5,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimens.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/utils/app_router.dart';
+import '../../../shared/widgets/user_avatar.dart';
 import '../../auth/providers/auth_notifier.dart';
 import '../../user/providers/user_notifier.dart';
 
@@ -35,18 +36,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               children: [
                 Stack(
                   children: [
-                    Container(
-                      width: 100,
-                      height: 100,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: AppColors.grey200,
-                        border: Border.all(color: AppColors.grey300, width: 2),
-                      ),
-                      child: user.isLoading
-                          ? const CircularProgressIndicator(strokeWidth: 2)
-                          : const Icon(Icons.person, color: AppColors.grey500, size: 48),
-                    ),
+                    user.isLoading
+                        ? Container(
+                            width: 100, height: 100,
+                            decoration: BoxDecoration(shape: BoxShape.circle, color: AppColors.grey200, border: Border.all(color: AppColors.grey300, width: 2)),
+                            child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                          )
+                        : UserAvatar(imageUrl: profile?.imageUrl),
                     Positioned(
                       bottom: 0,
                       right: 0,

@@ -5,6 +5,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimens.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/utils/app_router.dart';
+import '../../../shared/widgets/user_avatar.dart';
 import '../../../shared/widgets/yaa_button.dart';
 import '../../user/providers/user_notifier.dart';
 
@@ -27,11 +28,7 @@ class PersonalInfoScreen extends ConsumerWidget {
               child: Column(
                 children: [
                   const SizedBox(height: AppDimens.xxxl),
-                  Container(
-                    width: 100, height: 100,
-                    decoration: BoxDecoration(shape: BoxShape.circle, color: AppColors.grey200, border: Border.all(color: AppColors.grey300, width: 2)),
-                    child: const Icon(Icons.person, color: AppColors.grey500, size: 48),
-                  ),
+                  UserAvatar(imageUrl: profile?.imageUrl),
                   const SizedBox(height: AppDimens.xxxl),
                   _buildRow('Prénom', profile?.firstName ?? '—'),
                   const Divider(color: AppColors.grey200, height: 1),

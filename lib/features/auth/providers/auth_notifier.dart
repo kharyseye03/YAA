@@ -164,10 +164,38 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
+  /// Renouvelle le token via Keycloak, sauvegarde les nouveaux tokens.
+  /// Retourne `true` si succès, `false` si échec (→ logout automatique).
+  Future<bool> refreshToken() async {
+    final storedRefreshToken = _prefs.getString(_refreshTokenKey);
+    if (storedRefreshToken == null) {
+      await logout();
+      return false;
+    }
+    try {
+      final response = await ApiService().refreshToken(
+        refreshToken: storedRefreshToken,
+      );
+      await _prefs.setString(_tokenKey, response.accessToken);
+      await _prefs.setString(_refreshTokenKey, response.refreshToken);
+      final emailFromToken = _extractEmailFromJwt(response.accessToken);
+      if (emailFromToken != null) {
+        await _prefs.setString(_emailKey, emailFromToken);
+      }
+      debugPrint('✅ Token rafraîchi avec succès');
+      return true;
+    } catch (e) {
+      debugPrint('❌ Refresh token échoué: $e → déconnexion');
+      await logout();
+      return false;
+    }
+  }
+
   Future<void> logout() async {
     await _prefs.remove(_tokenKey);
     await _prefs.remove(_refreshTokenKey);
     await _prefs.remove(_emailKey);
+    await _prefs.remove('user_image_url');
     state = const AuthState();
   }
 }

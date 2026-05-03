@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimens.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../shared/widgets/user_avatar.dart';
 import '../../../shared/widgets/yaa_button.dart';
 import '../../../shared/widgets/yaa_text_field.dart';
 import '../../user/providers/user_notifier.dart';
@@ -187,16 +188,11 @@ class _EditPersonalInfoScreenState
                       onTap: _showImageSourceSheet,
                       child: Stack(
                         children: [
-                          Container(
-                            width: 100, height: 100,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: AppColors.grey200,
-                              border: Border.all(color: AppColors.grey300, width: 2),
-                            ),
-                            child: _pickedImage != null
-                                ? ClipOval(child: Image.file(_pickedImage!, fit: BoxFit.cover))
-                                : const Icon(Icons.person, color: AppColors.grey500, size: 48),
+                          UserAvatar(
+                            localFile: _pickedImage,
+                            imageUrl: _pickedImage == null
+                                ? ref.read(userProvider).profile?.imageUrl
+                                : null,
                           ),
                           Positioned(
                             bottom: 0, right: 0,

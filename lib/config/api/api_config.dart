@@ -6,7 +6,11 @@ class ApiConfig {
   static const String loginEndpoint = '/realms/yaa-delivery/protocol/openid-connect/token';
 
   // 🔧 Mode dev → ngrok
-  static const String baseUrl = 'https://4248-41-83-137-24.ngrok-free.app/api/v1';
+  static const String _ngrokBaseUrl = 'https://4248-41-83-137-24.ngrok-free.app';
+  static const String baseUrl       = '$_ngrokBaseUrl/api/v1';
+
+
+
 
   // ── Endpoints Auth ────────────────────────────────
   static const String registerEndpoint = '/registrations/client';
@@ -42,4 +46,8 @@ class ApiConfig {
   // Construit l'URL complète : baseUrl + endpoint
   static String getUrl(String endpoint) => '$baseUrl$endpoint';
   static String getIamUrl(String endpoint) => '$iamBaseUrl$endpoint';
+
+  // Construit l'URL d'accès à une image à partir du nom de fichier
+  // ex: getImageUrl('abc.PNG') → 'https://ngrok.../api/v1/files/abc.PNG'
+  static String getImageUrl(String fileName) => '$baseUrl/files/$fileName';
 }
