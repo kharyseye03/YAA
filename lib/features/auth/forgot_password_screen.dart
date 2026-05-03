@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimens.dart';
 import '../../core/constants/app_text_styles.dart';
 import '../../core/utils/app_router.dart';
-import '../../service/api/api_service.dart';
 import '../../shared/widgets/auth_header.dart';
 import '../../shared/widgets/phone_number_formatter.dart';
 import '../../shared/widgets/yaa_button.dart';
 import '../../shared/widgets/yaa_text_field.dart';
-import 'package:flutter/services.dart';
+import 'providers/auth_notifier.dart';
 
 /*
 /// Forgot password screen — "Mot de passe oublié"
@@ -188,18 +189,17 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   }
 }*/
 
-class ForgotPasswordScreen extends StatefulWidget {
+class ForgotPasswordScreen extends ConsumerStatefulWidget {
   const ForgotPasswordScreen({super.key});
 
   @override
-  State<ForgotPasswordScreen> createState() => _ForgotPasswordScreenState();
+  ConsumerState<ForgotPasswordScreen> createState() => _ForgotPasswordScreenState();
 }
 
-class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
-  bool _isPhone = false;           // ← false par défaut : seul email marche
-  final _phoneController  = TextEditingController();
-  final _emailController  = TextEditingController();
-  bool _isLoading         = false; // ← ajouter
+class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
+  bool _isPhone = false;
+  final _phoneController = TextEditingController();
+  final _emailController = TextEditingController();
 
   @override
   void dispose() {
@@ -209,32 +209,24 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   }
 
   Future<void> _onSubmit() async {
-    // Pour l'instant seul l'email est supporté par le backend
     final email = _emailController.text.trim();
     if (email.isEmpty) return;
 
-    setState(() => _isLoading = true);
+    final success = await ref.read(authProvider.notifier).forgotPassword(
+      email: email,
+    );
 
-    try {
-      await ApiService().forgotPassword(email: email);
+    if (!mounted) return;
 
-      if (mounted) {
-        context.pushNamed(
-          RouteNames.forgotVerification,
-          extra: email, // ← on passe l'email à l'écran suivant
-        );
-      }
-    } catch (e) {
-      if (mounted) {
+    if (success) {
+      context.pushNamed(RouteNames.forgotVerification, extra: email);
+    } else {
+      final error = ref.read(authProvider).error;
+      if (error != null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content         : Text(e.toString().replaceAll('Exception: ', '')),
-            backgroundColor : AppColors.error,
-          ),
+          SnackBar(content: Text(error), backgroundColor: AppColors.error),
         );
       }
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -300,10 +292,15 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
                     const Spacer(),
 
-                    YaaButton(
-                      label     : _isLoading ? 'Envoi...' : 'Confirmer',
-                      onPressed : _isLoading ? null : _onSubmit,
-                      icon      : _isLoading ? null : Icons.arrow_forward,
+                    Consumer(
+                      builder: (context, ref, _) {
+                        final isLoading = ref.watch(authProvider).isLoading;
+                        return YaaButton(
+                          label     : isLoading ? 'Envoi...' : 'Confirmer',
+                          onPressed : isLoading ? null : _onSubmit,
+                          icon      : isLoading ? null : Icons.arrow_forward,
+                        );
+                      },
                     ),
 
                     const SizedBox(height: AppDimens.xxl),

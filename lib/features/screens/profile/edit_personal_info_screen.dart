@@ -1,24 +1,43 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimens.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../shared/widgets/user_avatar.dart';
 import '../../../shared/widgets/yaa_button.dart';
 import '../../../shared/widgets/yaa_text_field.dart';
+import '../../user/providers/user_notifier.dart';
 
-/// Edit personal info screen — form with avatar, fields, and save button.
-class EditPersonalInfoScreen extends StatefulWidget {
+class EditPersonalInfoScreen extends ConsumerStatefulWidget {
   const EditPersonalInfoScreen({super.key});
 
   @override
-  State<EditPersonalInfoScreen> createState() => _EditPersonalInfoScreenState();
+  ConsumerState<EditPersonalInfoScreen> createState() =>
+      _EditPersonalInfoScreenState();
 }
 
-class _EditPersonalInfoScreenState extends State<EditPersonalInfoScreen> {
-  final _firstNameController = TextEditingController(text: 'Addéline');
-  final _lastNameController = TextEditingController(text: 'Keita');
-  final _emailController = TextEditingController(text: 'akeita@gmail.com');
-  final _phoneController = TextEditingController(text: '+221 77 123 45 67');
-  final _addressController = TextEditingController(text: 'Ouakam cité avions , Dakar , Sénégal');
+class _EditPersonalInfoScreenState
+    extends ConsumerState<EditPersonalInfoScreen> {
+  final _formKey         = GlobalKey<FormState>();
+  late final TextEditingController _firstNameController;
+  late final TextEditingController _lastNameController;
+  late final TextEditingController _emailController;
+  late final TextEditingController _phoneController;
+
+  File? _pickedImage;
+
+  @override
+  void initState() {
+    super.initState();
+    final profile = ref.read(userProvider).profile;
+    _firstNameController = TextEditingController(text: profile?.firstName ?? '');
+    _lastNameController  = TextEditingController(text: profile?.lastName  ?? '');
+    _emailController     = TextEditingController(text: profile?.email     ?? '');
+    _phoneController     = TextEditingController(text: profile?.telephone ?? '');
+  }
 
   @override
   void dispose() {
@@ -26,12 +45,130 @@ class _EditPersonalInfoScreenState extends State<EditPersonalInfoScreen> {
     _lastNameController.dispose();
     _emailController.dispose();
     _phoneController.dispose();
-    _addressController.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickImage(ImageSource source) async {
+    try {
+      final picker = ImagePicker();
+      final picked = await picker.pickImage(source: source, imageQuality: 80);
+      if (picked != null) setState(() => _pickedImage = File(picked.path));
+    } on PlatformException catch (e) {
+      if (!mounted) return;
+      final message = e.code == 'channel-error'
+          ? 'Caméra non disponible sur ce simulateur. Utilisez un vrai appareil.'
+          : 'Impossible d\'accéder à la ${source == ImageSource.camera ? 'caméra' : 'galerie'} : ${e.message}';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message), backgroundColor: AppColors.error),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erreur : $e'), backgroundColor: AppColors.error),
+      );
+    }
+  }
+
+  void _showImageSourceSheet() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(AppDimens.lg),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40, height: 4,
+                margin: const EdgeInsets.only(bottom: AppDimens.lg),
+                decoration: BoxDecoration(
+                  color: AppColors.grey300,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              Text('Choisir une photo', style: AppTextStyles.h4.copyWith(fontWeight: FontWeight.w700)),
+              const SizedBox(height: AppDimens.xl),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _buildSourceOption(
+                    icon: Icons.photo_library_outlined,
+                    label: 'Galerie',
+                    onTap: () { Navigator.pop(context); _pickImage(ImageSource.gallery); },
+                  ),
+                  _buildSourceOption(
+                    icon: Icons.camera_alt_outlined,
+                    label: 'Caméra',
+                    onTap: () { Navigator.pop(context); _pickImage(ImageSource.camera); },
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppDimens.lg),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSourceOption({required IconData icon, required String label, required VoidCallback onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        children: [
+          Container(
+            width: 64, height: 64,
+            decoration: BoxDecoration(
+              color: AppColors.primarySurface,
+              borderRadius: BorderRadius.circular(AppDimens.radiusMd),
+            ),
+            child: Icon(icon, color: AppColors.primary, size: 28),
+          ),
+          const SizedBox(height: AppDimens.sm),
+          Text(label, style: AppTextStyles.bodySmall.copyWith(fontWeight: FontWeight.w500)),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _onSave() async {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+
+    final success = await ref.read(userProvider.notifier).updateProfile(
+      firstName : _firstNameController.text.trim(),
+      lastName  : _lastNameController.text.trim(),
+      email     : _emailController.text.trim(),
+      telephone : _phoneController.text.trim(),
+      imagePath : _pickedImage?.path,
+    );
+
+    if (!mounted) return;
+
+    if (success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Profil mis à jour avec succès'),
+          backgroundColor: Colors.green,
+        ),
+      );
+      Navigator.of(context).pop();
+    } else {
+      final error = ref.read(userProvider).error;
+      if (error != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(error), backgroundColor: AppColors.error),
+        );
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final isLoading = ref.watch(userProvider).isLoading;
+
     return Scaffold(
       backgroundColor: AppColors.white,
       body: Column(
@@ -40,64 +177,89 @@ class _EditPersonalInfoScreenState extends State<EditPersonalInfoScreen> {
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: AppDimens.screenPadding),
-              child: Column(
-                children: [
-                  const SizedBox(height: AppDimens.xxl),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  children: [
+                    const SizedBox(height: AppDimens.xxl),
 
-                  // Avatar with camera icon
-                  Center(
-                    child: Stack(
-                      children: [
-                        Container(
-                          width: 100, height: 100,
-                          decoration: BoxDecoration(shape: BoxShape.circle, color: AppColors.grey200, border: Border.all(color: AppColors.grey300, width: 2)),
-                          child: const Icon(Icons.person, color: AppColors.grey500, size: 48),
-                        ),
-                        Positioned(
-                          bottom: 0, right: 0,
-                          child: Container(
-                            width: 32, height: 32,
-                            decoration: BoxDecoration(
-                              color: AppColors.white,
-                              shape: BoxShape.circle,
-                              border: Border.all(color: AppColors.grey300, width: 1.5),
-                            ),
-                            child: const Icon(Icons.camera_alt_outlined, color: AppColors.grey600, size: 16),
+                    // ── Avatar ───────────────────────────────
+                    GestureDetector(
+                      onTap: _showImageSourceSheet,
+                      child: Stack(
+                        children: [
+                          UserAvatar(
+                            localFile: _pickedImage,
+                            imageUrl: _pickedImage == null
+                                ? ref.read(userProvider).profile?.imageUrl
+                                : null,
                           ),
-                        ),
-                      ],
+                          Positioned(
+                            bottom: 0, right: 0,
+                            child: Container(
+                              width: 32, height: 32,
+                              decoration: BoxDecoration(
+                                color: AppColors.primary,
+                                shape: BoxShape.circle,
+                                border: Border.all(color: AppColors.white, width: 2),
+                              ),
+                              child: const Icon(Icons.camera_alt_outlined, color: AppColors.white, size: 16),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
 
-                  const SizedBox(height: AppDimens.xxxl),
+                    const SizedBox(height: AppDimens.xxxl),
 
-                  YaaTextField(controller: _firstNameController, label: 'Prénom', textInputAction: TextInputAction.next),
-                  const SizedBox(height: AppDimens.xl),
-                  YaaTextField(controller: _lastNameController, label: 'Nom', textInputAction: TextInputAction.next),
-                  const SizedBox(height: AppDimens.xl),
-                  YaaTextField(controller: _emailController, label: 'Email', keyboardType: TextInputType.emailAddress, textInputAction: TextInputAction.next),
-                  const SizedBox(height: AppDimens.xl),
-                  YaaTextField(controller: _phoneController, label: 'Téléphone', keyboardType: TextInputType.phone, textInputAction: TextInputAction.next),
-                  const SizedBox(height: AppDimens.xl),
-                  YaaTextField(controller: _addressController, label: 'Adresse', textInputAction: TextInputAction.done),
-                  const SizedBox(height: AppDimens.xxl),
-                ],
+                    YaaTextField(
+                      controller: _firstNameController,
+                      label: 'Prénom',
+                      textInputAction: TextInputAction.next,
+                      validator: (v) => v == null || v.trim().isEmpty ? 'Champ requis' : null,
+                    ),
+                    const SizedBox(height: AppDimens.xl),
+                    YaaTextField(
+                      controller: _lastNameController,
+                      label: 'Nom',
+                      textInputAction: TextInputAction.next,
+                      validator: (v) => v == null || v.trim().isEmpty ? 'Champ requis' : null,
+                    ),
+                    const SizedBox(height: AppDimens.xl),
+                    YaaTextField(
+                      controller: _emailController,
+                      label: 'Email',
+                      keyboardType: TextInputType.emailAddress,
+                      textInputAction: TextInputAction.next,
+                      enabled: false,
+                    ),
+                    const SizedBox(height: AppDimens.xl),
+                    YaaTextField(
+                      controller: _phoneController,
+                      label: 'Téléphone',
+                      keyboardType: TextInputType.phone,
+                      textInputAction: TextInputAction.done,
+                      enabled: false,
+                    ),
+                    const SizedBox(height: AppDimens.xxl),
+                  ],
+                ),
               ),
             ),
           ),
 
-          // Save button
+          // ── Bouton Enregistrer ───────────────────────
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: AppDimens.screenPadding, vertical: AppDimens.lg),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppDimens.screenPadding,
+              vertical: AppDimens.lg,
+            ),
             color: AppColors.white,
             child: SafeArea(
               top: false,
               child: YaaButton(
-                label: 'Enrehgistrer',
-                onPressed: () {
-                  // TODO: Save profile
-                  Navigator.of(context).pop();
-                },
+                label: isLoading ? 'Enregistrement...' : 'Enregistrer',
+                onPressed: isLoading ? null : _onSave,
               ),
             ),
           ),
@@ -109,13 +271,32 @@ class _EditPersonalInfoScreenState extends State<EditPersonalInfoScreen> {
   Widget _buildHeader(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.only(left: AppDimens.screenPadding, right: AppDimens.screenPadding, top: MediaQuery.of(context).padding.top + AppDimens.md, bottom: AppDimens.xl),
-      decoration: const BoxDecoration(gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Color(0xFF1652F0), Color(0xFF3B7BF7)])),
-      child: Row(children: [
-        GestureDetector(onTap: () => Navigator.of(context).pop(), child: const Icon(Icons.chevron_left, color: AppColors.white, size: 28)),
-        const SizedBox(width: AppDimens.md),
-        Text('Informations personnelles', style: AppTextStyles.h4.copyWith(color: AppColors.white, fontWeight: FontWeight.w700)),
-      ]),
+      padding: EdgeInsets.only(
+        left: AppDimens.screenPadding,
+        right: AppDimens.screenPadding,
+        top: MediaQuery.of(context).padding.top + AppDimens.md,
+        bottom: AppDimens.xl,
+      ),
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF1652F0), Color(0xFF3B7BF7)],
+        ),
+      ),
+      child: Row(
+        children: [
+          GestureDetector(
+            onTap: () => Navigator.of(context).pop(),
+            child: const Icon(Icons.chevron_left, color: AppColors.white, size: 28),
+          ),
+          const SizedBox(width: AppDimens.md),
+          Text(
+            'Modifier mes informations',
+            style: AppTextStyles.h4.copyWith(color: AppColors.white, fontWeight: FontWeight.w700),
+          ),
+        ],
+      ),
     );
   }
 }

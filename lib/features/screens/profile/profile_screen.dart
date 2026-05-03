@@ -1,23 +1,30 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimens.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/utils/app_router.dart';
+import '../../../shared/widgets/user_avatar.dart';
+import '../../auth/providers/auth_notifier.dart';
+import '../../user/providers/user_notifier.dart';
 
 /// Profile screen — "Mon compte"
-class ProfileScreen extends StatefulWidget {
+class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
 
   @override
-  State<ProfileScreen> createState() => _ProfileScreenState();
+  ConsumerState<ProfileScreen> createState() => _ProfileScreenState();
 }
 
-class _ProfileScreenState extends State<ProfileScreen> {
+class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   bool _notificationsEnabled = true;
 
   @override
   Widget build(BuildContext context) {
+    final user = ref.watch(userProvider);
+    final profile = user.profile;
+
     return SingleChildScrollView(
       child: Column(
         children: [
@@ -29,16 +36,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
               children: [
                 Stack(
                   children: [
-                    Container(
-                      width: 100,
-                      height: 100,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: AppColors.grey200,
-                        border: Border.all(color: AppColors.grey300, width: 2),
-                      ),
-                      child: const Icon(Icons.person, color: AppColors.grey500, size: 48),
-                    ),
+                    user.isLoading
+                        ? Container(
+                            width: 100, height: 100,
+                            decoration: BoxDecoration(shape: BoxShape.circle, color: AppColors.grey200, border: Border.all(color: AppColors.grey300, width: 2)),
+                            child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                          )
+                        : UserAvatar(imageUrl: profile?.imageUrl),
                     Positioned(
                       bottom: 0,
                       right: 0,
@@ -58,9 +62,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ],
                 ),
                 const SizedBox(height: AppDimens.lg),
-                Text('Bernadette Faye', style: AppTextStyles.h3.copyWith(fontWeight: FontWeight.w700)),
+                Text(
+                  profile?.fullName ?? '—',
+                  style: AppTextStyles.h3.copyWith(fontWeight: FontWeight.w700),
+                ),
                 const SizedBox(height: 4),
-                Text('bernadettekeita@gmail.com', style: AppTextStyles.bodySmall.copyWith(color: AppColors.grey500)),
+                Text(
+                  profile?.email ?? '—',
+                  style: AppTextStyles.bodySmall.copyWith(color: AppColors.grey500),
+                ),
               ],
             ),
           ),
@@ -69,8 +79,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
           _buildSectionTitle('INFORMATIONS PERSONNELLES'),
           const SizedBox(height: AppDimens.sm),
-          _buildInfoTile(icon: Icons.mail_outlined, title: 'Adresse e-mail', value: 'bernadette.faye@email.com', onTap: () => context.pushNamed(RouteNames.personalInfo)),
-          _buildInfoTile(icon: Icons.phone_outlined, title: 'Téléphone', value: '+221 78 123 45 67', onTap: () => context.pushNamed(RouteNames.personalInfo)),
+          _buildInfoTile(icon: Icons.mail_outlined, title: 'Adresse e-mail', value: profile?.email ?? '—', onTap: () => context.pushNamed(RouteNames.personalInfo)),
+          _buildInfoTile(icon: Icons.phone_outlined, title: 'Téléphone', value: profile?.telephone ?? '—', onTap: () => context.pushNamed(RouteNames.personalInfo)),
 
           const SizedBox(height: AppDimens.xxl),
 
@@ -88,7 +98,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
             padding: const EdgeInsets.symmetric(horizontal: AppDimens.screenPadding),
             child: Column(
               children: [
-                _buildDangerTile(icon: Icons.logout, label: 'Se déconnecter', onTap: () => context.goNamed(RouteNames.login)),
+                _buildDangerTile(
+                  icon: Icons.logout,
+                  label: 'Se déconnecter',
+                  onTap: () async {
+                    await ref.read(authProvider.notifier).logout();
+                    if (context.mounted) context.goNamed(RouteNames.login);
+                  },
+                ),
                 const SizedBox(height: AppDimens.md),
                 _buildDangerTile(icon: Icons.delete_outline, label: 'Supprimer mon compte', onTap: () {}),
               ],
