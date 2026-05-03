@@ -19,6 +19,10 @@ dependencies:
 
   # ── Network ─────────────────────────────────────────────
   dio: ^5.7.0
+  http: ^1.2.2
+
+  # ── Media ───────────────────────────────────────────────
+  image_picker: ^1.1.2
 
   # ── Data & Serialization ────────────────────────────────
   freezed_annotation: ^2.4.4
@@ -39,6 +43,7 @@ dependencies:
 
   # ── Icons ───────────────────────────────────────────────
   cupertino_icons: ^1.0.8
+  remixicon: ^4.9.3
 
 dev_dependencies:
   flutter_test:
@@ -72,5 +77,4 @@ flutter:
   # ── Assets ──────────────────────────────────────────────
   assets:
     - assets/images/
-    - assets/icons/
-    - assets/svg/
+    - assets/fonts/
