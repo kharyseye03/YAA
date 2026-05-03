@@ -127,6 +127,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ? _buildSimpleHeader('Mon compte')
               : HomeHeader(
             userName: ref.watch(userProvider).profile?.fullName ?? 'Bienvenue',
+            imageUrl: ref.watch(userProvider).profile?.imageUrl,
             onNotificationTap: () => context.goNamed(RouteNames.notifications),
           ),
 

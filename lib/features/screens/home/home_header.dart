@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimens.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../shared/widgets/user_avatar.dart';
 
 /// Top header for the home screen.
 /// Blue gradient with profile avatar, greeting, and notification bell.
@@ -9,11 +10,13 @@ class HomeHeader extends StatelessWidget {
   const HomeHeader({
     super.key,
     required this.userName,
+    this.imageUrl,
     this.onProfileTap,
     this.onNotificationTap,
   });
 
   final String userName;
+  final String? imageUrl;
   final VoidCallback? onProfileTap;
   final VoidCallback? onNotificationTap;
 
@@ -39,31 +42,7 @@ class HomeHeader extends StatelessWidget {
           // Profile avatar
           GestureDetector(
             onTap: onProfileTap,
-            child: Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: AppColors.white.withValues(alpha: 0.4),
-                  width: 2,
-                ),
-              ),
-              child: ClipOval(
-                child: Image.asset(
-                  'assets/images/profile.jpg',
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => Container(
-                    color: AppColors.white.withValues(alpha: 0.2),
-                    child: const Icon(
-                      Icons.person,
-                      color: AppColors.white,
-                      size: 24,
-                    ),
-                  ),
-                ),
-              ),
-            ),
+            child: UserAvatar(imageUrl: imageUrl, size: 48),
           ),
 
           const SizedBox(width: AppDimens.md),
