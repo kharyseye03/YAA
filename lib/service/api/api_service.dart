@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 import '../../config/api/api_config.dart';
 import '../../model/auth/login_response.dart';
 import '../../model/auth/register_response.dart';
@@ -287,8 +288,21 @@ class ApiService {
         ..fields['telephone'] = telephone;
 
       if (imagePath != null) {
+        final ext = imagePath.split('.').last.toLowerCase();
+        final mimeType = switch (ext) {
+          'jpg' || 'jpeg' => 'image/jpeg',
+          'png'           => 'image/png',
+          'gif'           => 'image/gif',
+          'webp'          => 'image/webp',
+          _               => 'image/jpeg',
+        };
+        final parts = mimeType.split('/');
         request.files.add(
-          await http.MultipartFile.fromPath('image', imagePath),
+          await http.MultipartFile.fromPath(
+            'image',
+            imagePath,
+            contentType: MediaType(parts[0], parts[1]),
+          ),
         );
       }
 
