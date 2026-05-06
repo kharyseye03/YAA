@@ -6,6 +6,7 @@ import 'package:http_parser/http_parser.dart';
 import '../../config/api/api_config.dart';
 import '../../model/auth/login_response.dart';
 import '../../model/auth/register_response.dart';
+import '../../model/category/categorie_structure.dart';
 import '../../model/user/user_profile.dart';
 
 class ApiService {
@@ -261,6 +262,23 @@ class ApiService {
       );
       return UserProfile.fromJson(response);
     } catch (e) {
+      rethrow;
+    }
+  }
+
+  // ════════════════════════════════════════════════════
+  // MÉTHODE PUBLIQUE — Catégories
+  // ════════════════════════════════════════════════════
+
+  Future<List<CategorieStructure>> getCategories() async {
+    try {
+      final response = await _get(ApiConfig.categoriesEndpoint);
+      final data = response['data'] as List<dynamic>;
+      return data
+          .map((e) => CategorieStructure.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      print('❌ Erreur getCategories: $e');
       rethrow;
     }
   }

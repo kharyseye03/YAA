@@ -15,6 +15,7 @@ import '../profile/profile_screen.dart';
 import 'category_list.dart';
 import 'home_bottom_nav.dart';
 import 'home_header.dart';
+import 'providers/category_provider.dart';
 
 /// Main home dashboard screen.
 class HomeScreen extends ConsumerStatefulWidget {
@@ -44,29 +45,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       title: 'Livraison rapide',
       description: 'Recevez vos commandes en moins\nde 30 minutes.',
       icon: Icons.flash_on,
-    ),
-  ];
-
-  late final List<CategoryData> _categories = [
-    CategoryData(
-      label: 'Restaurants',
-      icon: Icons.restaurant,
-      onTap: () => setState(() => _activeCategoryIndex = 0),
-    ),
-    CategoryData(
-      label: 'Boutiques',
-      icon: Icons.shopping_bag_outlined,
-      onTap: () => setState(() => _activeCategoryIndex = 1),
-    ),
-    CategoryData(
-      label: 'Pharmacies',
-      icon: Icons.medical_services_outlined,
-      onTap: () => setState(() => _activeCategoryIndex = 2),
-    ),
-    CategoryData(
-      label: 'Supermarché',
-      icon: Icons.store_outlined,
-      onTap: () => setState(() => _activeCategoryIndex = 3),
     ),
   ];
 
@@ -214,13 +192,29 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
           const SizedBox(height: AppDimens.md),
 
-          Padding(
-            padding: const EdgeInsets.symmetric(
-                horizontal: AppDimens.screenPadding),
-            child: CategoryList(
-              categories: _categories,
-              activeIndex: _activeCategoryIndex,
+          ref.watch(categoriesProvider).when(
+            loading: () => const Padding(
+              padding: EdgeInsets.symmetric(horizontal: AppDimens.screenPadding),
+              child: Center(child: CircularProgressIndicator()),
             ),
+            error: (_, __) => const SizedBox.shrink(),
+            data: (apiCategories) {
+              final categories = List.generate(apiCategories.length, (i) {
+                return CategoryData(
+                  label: apiCategories[i].name,
+                  icon: apiCategories[i].iconData,
+                  onTap: () => setState(() => _activeCategoryIndex = i),
+                );
+              });
+              return Padding(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: AppDimens.screenPadding),
+                child: CategoryList(
+                  categories: categories,
+                  activeIndex: _activeCategoryIndex,
+                ),
+              );
+            },
           ),
 
           const SizedBox(height: AppDimens.xxl),

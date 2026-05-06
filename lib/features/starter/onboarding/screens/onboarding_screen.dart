@@ -1,18 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/constants/constants.dart';
 import '../../../../core/utils/app_router.dart';
-import '../../../../shared/widgets/widgets.dart';
-import '../widgets/dot_indicator.dart';
-import '../widgets/onboarding_image_diamonds.dart';
-import '../widgets/onboarding_image_grid.dart';
 import '../widgets/onboarding_page_data.dart';
 
-/// Onboarding screen with swipeable pages.
-///
-/// Pages 0..n-2 use the grid mosaic layout with "Suivant" + "Passer".
-/// Last page uses the diamond mosaic with "Créer un compte" + "Se connecter".
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
 
@@ -21,52 +12,30 @@ class OnboardingScreen extends StatefulWidget {
 }
 
 class _OnboardingScreenState extends State<OnboardingScreen> {
-  late final PageController _pageController;
+  final _pageController = PageController();
   int _currentPage = 0;
 
-  // ── Page Content ──────────────────────────────────────────
   static const _pages = [
     OnboardingPageData(
-      title: 'Tout ce dont vous avez\nbesoin, livré chez vous',
-      description:
-          'Des boutiques locales aux pharmacies,\ncommandez en quelques clics et recevez vos\nproduits rapidement.',
-      images: [
-        'assets/images/img1_ob1.png',
-        'assets/images/img2_ob1.png',
-        'assets/images/img3_ob1.png',
-        'assets/images/img4_ob1.png',
-        'assets/images/img5_ob1.png',
-        'assets/images/img6_ob1.png',
-      ],
+      imageUrl:
+          'https://images.unsplash.com/photo-1553413077-190dd305871c?w=800&q=80',
+      title: 'Votre solution\nde livraison',
+      badge: '🚚  +2500 livraisons réussies',
+      fallbackColor: Color(0xFFD4B896),
     ),
     OnboardingPageData(
-      title: 'Explorez des centaines\nde boutiques',
-      description:
-      'Restaurants, pharmacies, supermarchés\net boutiques — tout est à portée de main.',
-      images: [
-        'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=300',
-        'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=300',
-        'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=300',
-        'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=300',
-        'https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=300',
-        'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=300',
-      ],
+      imageUrl:
+          'https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?w=800&q=80',
+      title: 'Livrez plus\nvite et mieux.',
+      badge: '🏆  Approuvé par 2500+ clients.',
+      fallbackColor: Color(0xFF374151),
     ),
-    // Last page — uses diamond layout
     OnboardingPageData(
-      title: 'Prêt à commander ?',
-      description:
-          'Rejoignez-nous pour simplifier votre\nquotidien et profiter de nos\nmeilleurs services.',
-      images: [
-        'assets/images/img1_ob1.png',
-        'assets/images/img2_ob1.png',
-        'assets/images/img3_ob1.png',
-        'assets/images/img4_ob1.png',
-        'assets/images/img5_ob1.png',
-        'assets/images/img6_ob1.png',
-        'assets/images/img1_ob3.jpg',
-        'assets/images/img2_ob3.png',
-      ],
+      imageUrl:
+          'https://images.unsplash.com/photo-1526367790999-0150786686a2?w=800&q=80',
+      title: 'Livraison rapide\net fiable',
+      badge: 'Envoyez et recevez vos colis\nn\'importe quand, n\'importe où',
+      fallbackColor: Color(0xFF1F2937),
     ),
   ];
 
@@ -75,15 +44,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   @override
   void initState() {
     super.initState();
-    _pageController = PageController();
-
-    SystemChrome.setSystemUIOverlayStyle(
-      const SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.dark,
-        statusBarBrightness: Brightness.light,
-      ),
-    );
+    SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.light,
+      statusBarBrightness: Brightness.dark,
+    ));
   }
 
   @override
@@ -95,17 +60,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   void _nextPage() {
     if (_isLastPage) return;
     _pageController.nextPage(
-      duration: const Duration(milliseconds: 400),
+      duration: const Duration(milliseconds: 350),
       curve: Curves.easeInOut,
     );
-  }
-
-  void _goToLogin() {
-    context.goNamed(RouteNames.login);
-  }
-
-  void _goToRegister() {
-    context.goNamed(RouteNames.register);
   }
 
   void _skip() {
@@ -119,185 +76,222 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.white,
-      body: SafeArea(
-        child: Column(
-          children: [
-            // ── Header: Logo + Passer ────────────────────────
-            _buildHeader(),
+      backgroundColor: Colors.black,
+      body: Stack(
+        children: [
+          // ── Full-screen PageView ──────────────────────────────
+          PageView.builder(
+            controller: _pageController,
+            itemCount: _pages.length,
+            onPageChanged: (i) => setState(() => _currentPage = i),
+            itemBuilder: (_, i) => _buildPage(_pages[i]),
+          ),
 
-            // ── PageView ─────────────────────────────────────
-            Expanded(
-              child: PageView.builder(
-                controller: _pageController,
-                itemCount: _pages.length,
-                onPageChanged: (index) {
-                  setState(() => _currentPage = index);
-                },
-                itemBuilder: (context, index) {
-                  return _buildPage(_pages[index], index);
-                },
+          // ── Top overlay: progress bar + Passer ───────────────
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: SafeArea(
+              bottom: false,
+              child: Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                child: Row(
+                  children: [
+                    // Progress segments
+                    Expanded(
+                      child: Row(
+                        children: List.generate(_pages.length, (i) {
+                          return Expanded(
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 300),
+                              height: 2.5,
+                              margin: EdgeInsets.only(
+                                  right: i < _pages.length - 1 ? 5 : 0),
+                              decoration: BoxDecoration(
+                                color: Colors.white
+                                    .withOpacity(i <= _currentPage ? 1.0 : 0.35),
+                                borderRadius: BorderRadius.circular(2),
+                              ),
+                            ),
+                          );
+                        }),
+                      ),
+                    ),
+
+                    const SizedBox(width: 16),
+
+                    // Skip button
+                    AnimatedOpacity(
+                      opacity: _isLastPage ? 0.0 : 1.0,
+                      duration: const Duration(milliseconds: 200),
+                      child: GestureDetector(
+                        onTap: _skip,
+                        child: const Padding(
+                          padding: EdgeInsets.symmetric(
+                              vertical: 4, horizontal: 2),
+                          child: Text(
+                            'Passer',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-
-            // ── Bottom Section ───────────────────────────────
-            _buildBottomSection(),
-
-            const SizedBox(height: AppDimens.xxl),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
-  // ── Header ───────────────────────────────────────────────
-  Widget _buildHeader() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppDimens.screenPadding,
-        vertical: AppDimens.md,
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          // Logo
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.storefront_outlined,
-                color: AppColors.primary,
-                size: 24,
-              ),
-              const SizedBox(width: AppDimens.sm),
-              Text(
-                'LOGO',
-                style: TextStyle(
-                  fontFamily: 'Archivo',
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.primary,
-                  letterSpacing: 3,
-                ),
-              ),
-            ],
-          ),
+  Widget _buildPage(OnboardingPageData page) {
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
 
-          // "Passer" button — hidden on last page
-          if (!_isLastPage)
-            GestureDetector(
-              onTap: _skip,
+    return Stack(
+      children: [
+        // ── Full-screen background image ──────────────────────
+        Positioned.fill(
+          child: Image.network(
+            page.imageUrl,
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) =>
+                ColoredBox(color: page.fallbackColor),
+            loadingBuilder: (_, child, progress) {
+              if (progress == null) return child;
+              return ColoredBox(color: page.fallbackColor);
+            },
+          ),
+        ),
+
+        // ── Subtle gradient so card blends with image ─────────
+        Positioned(
+          bottom: 0,
+          left: 0,
+          right: 0,
+          height: 120,
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.bottomCenter,
+                end: Alignment.topCenter,
+                colors: [
+                  Colors.white,
+                  Colors.white.withOpacity(0.0),
+                ],
+              ),
+            ),
+          ),
+        ),
+
+        // ── White bottom card ─────────────────────────────────
+        Positioned(
+          bottom: 0,
+          left: 0,
+          right: 0,
+          child: Container(
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(28),
+                topRight: Radius.circular(28),
+              ),
+            ),
+            padding: EdgeInsets.fromLTRB(24, 28, 24, bottomPadding + 24),
+            child: _buildCardContent(page),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCardContent(OnboardingPageData page) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Title
+        Text(
+          page.title,
+          style: const TextStyle(
+            fontSize: 30,
+            fontWeight: FontWeight.w800,
+            color: Color(0xFF111111),
+            height: 1.2,
+            letterSpacing: -0.5,
+          ),
+        ),
+
+        const SizedBox(height: 10),
+
+        // Badge / subtitle
+        Text(
+          page.badge,
+          style: const TextStyle(
+            fontSize: 13,
+            color: Color(0xFF888888),
+            height: 1.45,
+          ),
+        ),
+
+        const SizedBox(height: 28),
+
+        // Buttons
+        if (_isLastPage) ...[
+          _buildButton(
+            'Commencer',
+            onPressed: () => context.goNamed(RouteNames.register),
+          ),
+          const SizedBox(height: 14),
+          GestureDetector(
+            onTap: () => context.goNamed(RouteNames.login),
+            child: const Center(
               child: Text(
-                'Passer',
-                style: AppTextStyles.bodyMedium.copyWith(
-                  color: AppColors.grey600,
+                'J\'ai déjà un compte',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Color(0xFF888888),
+                  fontWeight: FontWeight.w500,
                 ),
               ),
-            )
-          else
-            const SizedBox.shrink(),
-        ],
-      ),
-    );
-  }
-
-  // ── Single Page Content ──────────────────────────────────
-  Widget _buildPage(OnboardingPageData page, int index) {
-    final isLast = index == _pages.length - 1;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppDimens.screenPadding),
-      child: Column(
-        children: [
-          const SizedBox(height: AppDimens.xxxl),
-          // Image layout
-          Expanded(
-            flex: 5,
-            child: index == 2
-                ? OnboardingImageDiamonds(images: page.images)
-                : OnboardingImageGrid(
-              images: page.images,
-              useNetwork: index == 1,
             ),
           ),
-
-          const SizedBox(height: AppDimens.xxl),
-
-          // Title
-          Text(
-            page.title,
-            textAlign: TextAlign.center,
-            style: AppTextStyles.h1.copyWith(
-              fontSize: 26,
-              fontWeight: FontWeight.w800,
-              color: AppColors.dark,
-              height: 1.25,
-            ),
-          ),
-
-          const SizedBox(height: AppDimens.md),
-
-          // Description
-          Text(
-            page.description,
-            textAlign: TextAlign.center,
-            style: AppTextStyles.bodyMedium.copyWith(
-              color: AppColors.grey600,
-              height: 1.6,
-            ),
-          ),
-
-          const Spacer(flex: 1),
-        ],
-      ),
-    );
-  }
-
-  // ── Bottom Section ───────────────────────────────────────
-  Widget _buildBottomSection() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppDimens.screenPadding),
-      child: _isLastPage ? _buildAuthButtons() : _buildNextSection(),
-    );
-  }
-
-  /// Pages 0..n-2: Dot indicator + "Suivant" button
-  Widget _buildNextSection() {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        DotIndicator(
-          count: _pages.length,
-          currentIndex: _currentPage,
-        ),
-        const SizedBox(height: AppDimens.xxl),
-        YaaButton(
-          label: 'Suivant',
-          onPressed: _nextPage,
-          icon: Icons.arrow_forward,
-        ),
+        ] else
+          _buildButton('Suivant', onPressed: _nextPage),
       ],
     );
   }
 
-  /// Last page: "Créer un compte" + "Se connecter"
-  Widget _buildAuthButtons() {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        YaaButton(
-          label: 'Créer un compte',
-          onPressed: _goToRegister,
+  Widget _buildButton(String label, {required VoidCallback onPressed}) {
+    return SizedBox(
+      width: double.infinity,
+      height: 52,
+      child: ElevatedButton(
+        onPressed: onPressed,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFF111111),
+          foregroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+          elevation: 0,
         ),
-        const SizedBox(height: AppDimens.md),
-        YaaButton(
-          label: 'Se connecter',
-          onPressed: _goToLogin,
-          isOutlined: false,
-          backgroundColor: AppColors.primarySurface,
-          foregroundColor: AppColors.primary,
+        child: Text(
+          label,
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.2,
+          ),
         ),
-      ],
+      ),
     );
   }
 }

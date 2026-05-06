@@ -1,12 +1,15 @@
-/// Represents a single onboarding page's content.
+import 'package:flutter/material.dart';
+
 class OnboardingPageData {
+  final String imageUrl;
   final String title;
-  final String description;
-  final List<String> images;
+  final String badge;
+  final Color fallbackColor;
 
   const OnboardingPageData({
+    required this.imageUrl,
     required this.title,
-    required this.description,
-    required this.images,
+    required this.badge,
+    this.fallbackColor = const Color(0xFF2D3748),
   });
 }

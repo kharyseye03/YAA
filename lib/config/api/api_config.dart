@@ -23,6 +23,9 @@ class ApiConfig {
   static const String userDetailEndpoint    = '/registrations/detail';
   static const String updateProfileEndpoint = '/registrations/update';
 
+  // ── Endpoints Catégories ──────────────────────────
+  static const String categoriesEndpoint = '/categorie-structures';
+
   // ── Timeouts (en secondes) ────────────────────────
   static const int connectionTimeout = 30;
   static const int receiveTimeout    = 30;
