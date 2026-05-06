@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/app_text_styles.dart';
 import '../../../../core/utils/app_router.dart';
 import '../widgets/onboarding_page_data.dart';
 
@@ -17,25 +19,22 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   static const _pages = [
     OnboardingPageData(
-      imageUrl:
-          'https://images.unsplash.com/photo-1553413077-190dd305871c?w=800&q=80',
-      title: 'Votre solution\nde livraison',
-      badge: '🚚  +2500 livraisons réussies',
-      fallbackColor: Color(0xFFD4B896),
+      image: 'assets/images/test4.jpeg',
+      title: 'Tout ce dont vous\navez besoin, ici',
+      badge: '🛒  Courses, restos, boutiques — en un seul endroit',
+      imageAlignment: Alignment.topCenter,
     ),
     OnboardingPageData(
-      imageUrl:
-          'https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?w=800&q=80',
-      title: 'Livrez plus\nvite et mieux.',
-      badge: '🏆  Approuvé par 2500+ clients.',
-      fallbackColor: Color(0xFF374151),
+      image: 'assets/images/L1.jpeg',
+      title: 'Livré directement\nchez vous',
+      badge: '🚚  Livraison rapide partout dans votre ville',
+      imageAlignment: Alignment.centerLeft,
     ),
     OnboardingPageData(
-      imageUrl:
-          'https://images.unsplash.com/photo-1526367790999-0150786686a2?w=800&q=80',
-      title: 'Livraison rapide\net fiable',
-      badge: 'Envoyez et recevez vos colis\nn\'importe quand, n\'importe où',
-      fallbackColor: Color(0xFF1F2937),
+      image: 'assets/images/ob3.jpeg',
+      title: 'Des milliers de produits',
+      badge: '🍕  Nourriture, épicerie, vêtements et bien plus',
+      imageAlignment: Alignment.topCenter,
     ),
   ];
 
@@ -76,10 +75,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: AppColors.dark,
       body: Stack(
         children: [
-          // ── Full-screen PageView ──────────────────────────────
+          // ── PageView plein écran ──────────────────────────────
           PageView.builder(
             controller: _pageController,
             itemCount: _pages.length,
@@ -87,7 +86,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             itemBuilder: (_, i) => _buildPage(_pages[i]),
           ),
 
-          // ── Top overlay: progress bar + Passer ───────────────
+          // ── Barre de progression (top) ────────────────────────
           Positioned(
             top: 0,
             left: 0,
@@ -96,53 +95,23 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               bottom: false,
               child: Padding(
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                 child: Row(
-                  children: [
-                    // Progress segments
-                    Expanded(
-                      child: Row(
-                        children: List.generate(_pages.length, (i) {
-                          return Expanded(
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 300),
-                              height: 2.5,
-                              margin: EdgeInsets.only(
-                                  right: i < _pages.length - 1 ? 5 : 0),
-                              decoration: BoxDecoration(
-                                color: Colors.white
-                                    .withOpacity(i <= _currentPage ? 1.0 : 0.35),
-                                borderRadius: BorderRadius.circular(2),
-                              ),
-                            ),
-                          );
-                        }),
-                      ),
-                    ),
-
-                    const SizedBox(width: 16),
-
-                    // Skip button
-                    AnimatedOpacity(
-                      opacity: _isLastPage ? 0.0 : 1.0,
-                      duration: const Duration(milliseconds: 200),
-                      child: GestureDetector(
-                        onTap: _skip,
-                        child: const Padding(
-                          padding: EdgeInsets.symmetric(
-                              vertical: 4, horizontal: 2),
-                          child: Text(
-                            'Passer',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
+                  children: List.generate(_pages.length, (i) {
+                    return Expanded(
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 300),
+                        height: 2.5,
+                        margin: EdgeInsets.only(
+                            right: i < _pages.length - 1 ? 6 : 0),
+                        decoration: BoxDecoration(
+                          color: Colors.white
+                              .withOpacity(i <= _currentPage ? 1.0 : 0.35),
+                          borderRadius: BorderRadius.circular(2),
                         ),
                       ),
-                    ),
-                  ],
+                    );
+                  }),
                 ),
               ),
             ),
@@ -152,78 +121,81 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 
+  // ═══════════════════════════════════════════════════════════
+  // STYLE NETFLIX — Image plein écran + overlay sombre + texte blanc
+  // ═══════════════════════════════════════════════════════════
+
   Widget _buildPage(OnboardingPageData page) {
-    final bottomPadding = MediaQuery.of(context).padding.bottom;
+    final safeBottom = MediaQuery.of(context).padding.bottom;
 
     return Stack(
       children: [
-        // ── Full-screen background image ──────────────────────
+        // 1. Image plein écran
         Positioned.fill(
-          child: Image.network(
-            page.imageUrl,
+          child: Image.asset(
+            page.image,
             fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) =>
-                ColoredBox(color: page.fallbackColor),
-            loadingBuilder: (_, child, progress) {
-              if (progress == null) return child;
-              return ColoredBox(color: page.fallbackColor);
-            },
+            alignment: page.imageAlignment,
           ),
         ),
 
-        // ── Subtle gradient so card blends with image ─────────
+        // 2. Overlay noir semi-transparent sur toute l'image
+        Positioned.fill(
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: Colors.black.withOpacity(0.45),
+            ),
+          ),
+        ),
+
+        // 3. Dégradé noir en bas pour faire ressortir le texte
         Positioned(
           bottom: 0,
           left: 0,
           right: 0,
-          height: 120,
           child: DecoratedBox(
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                begin: Alignment.bottomCenter,
-                end: Alignment.topCenter,
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
                 colors: [
-                  Colors.white,
-                  Colors.white.withOpacity(0.0),
+                  Colors.transparent,
+                  Colors.black.withOpacity(0.75),
                 ],
+                stops: const [0.0, 1.0],
               ),
             ),
+            child: SizedBox(height: 320),
           ),
         ),
 
-        // ── White bottom card ─────────────────────────────────
+        // 4. Contenu texte + boutons en bas
         Positioned(
           bottom: 0,
           left: 0,
           right: 0,
-          child: Container(
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(28),
-                topRight: Radius.circular(28),
-              ),
-            ),
-            padding: EdgeInsets.fromLTRB(24, 28, 24, bottomPadding + 24),
-            child: _buildCardContent(page),
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(24, 0, 24, safeBottom + 24),
+            child: _buildContent(page),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildCardContent(OnboardingPageData page) {
+  Widget _buildContent(OnboardingPageData page) {
     return Column(
       mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        // Title
+        // Titre blanc
         Text(
           page.title,
-          style: const TextStyle(
-            fontSize: 30,
+          textAlign: TextAlign.center,
+          style: AppTextStyles.h1.copyWith(
+            fontSize: 32,
             fontWeight: FontWeight.w800,
-            color: Color(0xFF111111),
+            color: Colors.white,
             height: 1.2,
             letterSpacing: -0.5,
           ),
@@ -231,53 +203,62 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
         const SizedBox(height: 10),
 
-        // Badge / subtitle
+        // Badge / sous-titre blanc atténué
         Text(
           page.badge,
-          style: const TextStyle(
-            fontSize: 13,
-            color: Color(0xFF888888),
-            height: 1.45,
+          textAlign: TextAlign.center,
+          style: AppTextStyles.bodySmall.copyWith(
+            color: Colors.white.withOpacity(0.75),
+            height: 1.5,
           ),
         ),
 
-        const SizedBox(height: 28),
+        const SizedBox(height: 32),
 
-        // Buttons
-        if (_isLastPage) ...[
-          _buildButton(
-            'Commencer',
-            onPressed: () => context.goNamed(RouteNames.register),
-          ),
-          const SizedBox(height: 14),
+        // Bouton principal
+        _buildPrimaryButton(
+          _isLastPage ? 'Commencer' : 'Suivant',
+          onPressed: _isLastPage
+              ? () => context.goNamed(RouteNames.register)
+              : _nextPage,
+        ),
+
+        const SizedBox(height: 14),
+
+        // Bouton secondaire
+        if (_isLastPage)
+          _buildSecondaryButton(
+            'J\'ai déjà un compte',
+            onPressed: () => context.goNamed(RouteNames.login),
+          )
+        else
           GestureDetector(
-            onTap: () => context.goNamed(RouteNames.login),
-            child: const Center(
+            onTap: _skip,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 6),
               child: Text(
-                'J\'ai déjà un compte',
+                'Passer',
                 style: TextStyle(
-                  fontSize: 14,
-                  color: Color(0xFF888888),
-                  fontWeight: FontWeight.w500,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white.withOpacity(0.7),
                 ),
               ),
             ),
           ),
-        ] else
-          _buildButton('Suivant', onPressed: _nextPage),
       ],
     );
   }
 
-  Widget _buildButton(String label, {required VoidCallback onPressed}) {
+  Widget _buildPrimaryButton(String label, {required VoidCallback onPressed}) {
     return SizedBox(
       width: double.infinity,
       height: 52,
       child: ElevatedButton(
         onPressed: onPressed,
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF111111),
-          foregroundColor: Colors.white,
+          backgroundColor: AppColors.primary,
+          foregroundColor: AppColors.white,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
           ),
@@ -294,4 +275,77 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       ),
     );
   }
+
+  Widget _buildSecondaryButton(String label,
+      {required VoidCallback onPressed}) {
+    return SizedBox(
+      width: double.infinity,
+      height: 48,
+      child: OutlinedButton(
+        onPressed: onPressed,
+        style: OutlinedButton.styleFrom(
+          foregroundColor: Colors.white,
+          side: BorderSide(color: Colors.white.withOpacity(0.5), width: 1.5),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+        ),
+        child: Text(
+          label,
+          style: const TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // ANCIEN STYLE — Dégradé blanc arc en bas (carte blanche)
+  // Conservé en commentaire pour référence
+  // ═══════════════════════════════════════════════════════════
+
+  // Widget _buildPageArcStyle(OnboardingPageData page) {
+  //   final safeBottom = MediaQuery.of(context).padding.bottom;
+  //   return Stack(
+  //     children: [
+  //       Positioned.fill(
+  //         child: Image.asset(page.image, fit: BoxFit.cover, alignment: page.imageAlignment),
+  //       ),
+  //       Positioned(
+  //         bottom: 0, left: 0, right: 0,
+  //         child: Container(
+  //           height: 280,
+  //           decoration: BoxDecoration(
+  //             gradient: LinearGradient(
+  //               begin: Alignment.topCenter,
+  //               end: Alignment.bottomCenter,
+  //               colors: [
+  //                 Colors.white.withOpacity(0.0),
+  //                 Colors.white.withOpacity(0.55),
+  //                 Colors.white.withOpacity(0.92),
+  //                 Colors.white,
+  //               ],
+  //               stops: [0.0, 0.28, 0.50, 0.68],
+  //             ),
+  //             borderRadius: BorderRadius.only(
+  //               topLeft: Radius.circular(44),
+  //               topRight: Radius.circular(44),
+  //             ),
+  //           ),
+  //           child: Column(
+  //             mainAxisAlignment: MainAxisAlignment.end,
+  //             children: [
+  //               Padding(
+  //                 padding: EdgeInsets.fromLTRB(24, 0, 24, safeBottom + 20),
+  //                 child: _buildContentArcStyle(page),
+  //               ),
+  //             ],
+  //           ),
+  //         ),
+  //       ),
+  //     ],
+  //   );
+  // }
 }

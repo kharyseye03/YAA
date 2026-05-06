@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 
 class OnboardingPageData {
-  final String imageUrl;
+  final String image;
   final String title;
   final String badge;
-  final Color fallbackColor;
+  final Alignment imageAlignment;
 
   const OnboardingPageData({
-    required this.imageUrl,
+    required this.image,
     required this.title,
     required this.badge,
-    this.fallbackColor = const Color(0xFF2D3748),
+    this.imageAlignment = Alignment.center,
   });
 }
