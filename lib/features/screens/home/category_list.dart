@@ -1,23 +1,23 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
-import '../../../core/constants/app_dimens.dart';
 import '../../../core/constants/app_text_styles.dart';
 
-/// Data model for a category item.
 class CategoryData {
   final String label;
-  final IconData icon;
+  final IconData? icon;
+  final String? imageUrl;
+  final Color color;
   final VoidCallback? onTap;
 
   const CategoryData({
     required this.label,
-    required this.icon,
+    this.icon,
+    this.imageUrl,
+    this.color = AppColors.primary,
     this.onTap,
   });
 }
 
-/// Horizontal row of category buttons.
-/// The first one is highlighted (active).
 class CategoryList extends StatelessWidget {
   const CategoryList({
     super.key,
@@ -30,32 +30,24 @@ class CategoryList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: List.generate(categories.length, (index) {
-        final category = categories[index];
-        final isActive = index == activeIndex;
-
-        return Expanded(
-          child: Padding(
-            padding: EdgeInsets.only(
-              right: index == categories.length - 1 ? 0 : AppDimens.sm,
-            ),
-            child: _CategoryButton(
-              data: category,
-              isActive: isActive,
-            ),
-          ),
-        );
-      }),
+    return SizedBox(
+      height: 88,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 2),
+        itemCount: categories.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 16),
+        itemBuilder: (_, i) => _CategoryItem(
+          data: categories[i],
+          isActive: i == activeIndex,
+        ),
+      ),
     );
   }
 }
 
-class _CategoryButton extends StatelessWidget {
-  const _CategoryButton({
-    required this.data,
-    required this.isActive,
-  });
+class _CategoryItem extends StatelessWidget {
+  const _CategoryItem({required this.data, required this.isActive});
 
   final CategoryData data;
   final bool isActive;
@@ -64,33 +56,64 @@ class _CategoryButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: data.onTap,
-      child: Column(
-        children: [
-          Container(
-            height: 64,
-            decoration: BoxDecoration(
-              color:
-              isActive ? AppColors.primary : AppColors.primarySurface,
-              borderRadius: BorderRadius.circular(AppDimens.radiusMd),
-            ),
-            child: Center(
-              child: Icon(
-                data.icon,
-                color: isActive ? AppColors.white : AppColors.primary,
-                size: 28,
+      child: SizedBox(
+        width: 68,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              width: 58,
+              height: 58,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: isActive
+                    ? data.color
+                    : data.color.withOpacity(0.12),
+                boxShadow: isActive
+                    ? [
+                        BoxShadow(
+                          color: data.color.withOpacity(0.35),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ]
+                    : null,
+              ),
+              child: ClipOval(
+                child: data.imageUrl != null
+                    ? Image.network(
+                        data.imageUrl!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Icon(
+                          data.icon ?? Icons.category_outlined,
+                          color: isActive ? Colors.white : data.color,
+                          size: 26,
+                        ),
+                      )
+                    : Icon(
+                        data.icon ?? Icons.category_outlined,
+                        color: isActive ? Colors.white : data.color,
+                        size: 26,
+                      ),
               ),
             ),
-          ),
-          const SizedBox(height: AppDimens.sm),
-          Text(
-            data.label,
-            style: AppTextStyles.bodySmall.copyWith(
-              color: AppColors.dark,
-              fontWeight: FontWeight.w500,
+
+            const SizedBox(height: 6),
+
+            Text(
+              data.label,
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppTextStyles.bodySmall.copyWith(
+                fontSize: 11.5,
+                fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
+                color: isActive ? data.color : AppColors.grey700,
+              ),
             ),
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

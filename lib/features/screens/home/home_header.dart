@@ -1,94 +1,96 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimens.dart';
 import '../../../core/constants/app_text_styles.dart';
-import '../../../shared/widgets/user_avatar.dart';
 
-/// Top header for the home screen.
-/// Blue gradient with profile avatar, greeting, and notification bell.
 class HomeHeader extends StatelessWidget {
   const HomeHeader({
     super.key,
-    required this.userName,
-    this.imageUrl,
-    this.onProfileTap,
+    this.location = 'Dakar, Sénégal',
     this.onNotificationTap,
   });
 
-  final String userName;
-  final String? imageUrl;
-  final VoidCallback? onProfileTap;
+  final String location;
   final VoidCallback? onNotificationTap;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFF1652F0), Color(0xFF08399A)],
-        ),
-      ),
+      color: Colors.white,
       padding: EdgeInsets.only(
         left: AppDimens.screenPadding,
         right: AppDimens.screenPadding,
         top: MediaQuery.of(context).padding.top + AppDimens.sm,
-        bottom: AppDimens.xl,
+        bottom: AppDimens.lg,
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Profile avatar
-          GestureDetector(
-            onTap: onProfileTap,
-            child: UserAvatar(imageUrl: imageUrl, size: 48),
-          ),
-
-          const SizedBox(width: AppDimens.md),
-
-          // Greeting
+          // ── Localisation (gauche) ────────────────────────────
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Text(
-                  'Bonjour',
-                  style: AppTextStyles.bodyMedium.copyWith(
-                    color: AppColors.white.withValues(alpha: 0.85),
-                  ),
+                Icon(
+                  LucideIcons.mapPin,
+                  color: AppColors.black,
+                  size: 20,
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  userName,
-                  style: AppTextStyles.labelLarge.copyWith(
-                    color: AppColors.white,
-                    fontWeight: FontWeight.w700,
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Votre position',
+                        style: AppTextStyles.bodySmall.copyWith(
+                          color: AppColors.grey500,
+                          fontSize: 11,
+                        ),
+                      ),
+                      const SizedBox(height: 1),
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              location,
+                              style: AppTextStyles.labelLarge.copyWith(
+                                color: AppColors.dark,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 14,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(width: 3),
+                          Icon(
+                            LucideIcons.chevronDown,
+                            color: AppColors.dark,
+                            size: 14,
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
-                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
           ),
 
-          // Notification bell
+          // ── Notification (droite) ────────────────────────────
           GestureDetector(
             onTap: onNotificationTap,
             behavior: HitTestBehavior.opaque,
             child: Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(AppDimens.radiusMd),
-                border: Border.all(
-                  color: AppColors.white.withValues(alpha: 0.3),
-                  width: 1.2,
-                ),
-              ),
-              child: const Icon(
-                Icons.notifications_none_outlined,
-                color: AppColors.white,
-                size: 22,
+              width: 42,
+              height: 42,
+              child: Icon(
+                LucideIcons.bell,
+                color: AppColors.dark,
+                size: 20,
               ),
             ),
           ),

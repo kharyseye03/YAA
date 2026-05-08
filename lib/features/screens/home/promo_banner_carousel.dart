@@ -1,22 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimens.dart';
 import '../../../core/constants/app_text_styles.dart';
 
-/// Data model for a promo banner slide.
 class PromoBannerData {
   final String title;
-  final String description;
+  final String subtitle;
+  final String badge;
   final IconData icon;
+  final List<Color> gradient;
 
   const PromoBannerData({
     required this.title,
-    required this.description,
+    required this.subtitle,
+    required this.badge,
     required this.icon,
+    required this.gradient,
   });
 }
 
-/// Swipeable promo banner carousel with dot indicators.
 class PromoBannerCarousel extends StatefulWidget {
   const PromoBannerCarousel({
     super.key,
@@ -32,8 +35,14 @@ class PromoBannerCarousel extends StatefulWidget {
 }
 
 class _PromoBannerCarouselState extends State<PromoBannerCarousel> {
-  final _controller = PageController(viewportFraction: 1);
-  int _currentPage = 0;
+  late final PageController _controller;
+  int _currentPage = 1;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = PageController(viewportFraction: 0.88, initialPage: 1);
+  }
 
   @override
   void dispose() {
@@ -45,39 +54,39 @@ class _PromoBannerCarouselState extends State<PromoBannerCarousel> {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        // PageView
+        // ── Cartes ──────────────────────────────────────────────
         SizedBox(
-          height: 110,
+          height: 130,
           child: PageView.builder(
             controller: _controller,
             itemCount: widget.banners.length,
             onPageChanged: (i) => setState(() => _currentPage = i),
-            itemBuilder: (context, index) {
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4),
-                child: _PromoBanner(
-                  data: widget.banners[index],
-                  onTap: () => widget.onBannerTap?.call(index),
-                ),
-              );
-            },
+            itemBuilder: (_, i) => Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 6),
+              child: _BannerCard(
+                data: widget.banners[i],
+                onTap: () => widget.onBannerTap?.call(i),
+              ),
+            ),
           ),
         ),
 
         const SizedBox(height: AppDimens.md),
 
-        // Dots
+        // ── Dots ────────────────────────────────────────────────
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: List.generate(widget.banners.length, (index) {
-            final isActive = index == _currentPage;
+          children: List.generate(widget.banners.length, (i) {
+            final isActive = i == _currentPage;
             return AnimatedContainer(
               duration: const Duration(milliseconds: 300),
               margin: const EdgeInsets.symmetric(horizontal: 3),
-              width: isActive ? 18 : 6,
+              width: isActive ? 20 : 6,
               height: 6,
               decoration: BoxDecoration(
-                color: isActive ? AppColors.primary : AppColors.grey300,
+                color: isActive
+                    ? widget.banners[_currentPage].gradient.first
+                    : AppColors.grey300,
                 borderRadius: BorderRadius.circular(AppDimens.radiusFull),
               ),
             );
@@ -88,8 +97,8 @@ class _PromoBannerCarouselState extends State<PromoBannerCarousel> {
   }
 }
 
-class _PromoBanner extends StatelessWidget {
-  const _PromoBanner({required this.data, this.onTap});
+class _BannerCard extends StatelessWidget {
+  const _BannerCard({required this.data, this.onTap});
 
   final PromoBannerData data;
   final VoidCallback? onTap;
@@ -99,60 +108,112 @@ class _PromoBanner extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(AppDimens.lg),
         decoration: BoxDecoration(
-          gradient: const LinearGradient(
+          gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [
-              Color(0xFF1652F0),
-              Color(0xFF08399A),
-            ],
+            colors: data.gradient,
           ),
-          borderRadius: BorderRadius.circular(AppDimens.radiusLg),
+          borderRadius: BorderRadius.circular(18),
         ),
-        child: Row(
+        child: Stack(
           children: [
-            // Text
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    data.title,
-                    style: AppTextStyles.labelLarge.copyWith(
-                      color: AppColors.white,
-                      fontSize: 17,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    data.description,
-                    style: AppTextStyles.bodySmall.copyWith(
-                      color: AppColors.white.withValues(alpha: 0.85),
-                      height: 1.4,
-                    ),
-                  ),
-                ],
+            // ── Cercles décoratifs en arrière-plan ─────────────
+            Positioned(
+              right: -18,
+              top: -18,
+              child: Container(
+                width: 100,
+                height: 100,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white.withOpacity(0.08),
+                ),
+              ),
+            ),
+            Positioned(
+              right: 30,
+              bottom: -30,
+              child: Container(
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white.withOpacity(0.06),
+                ),
               ),
             ),
 
-            const SizedBox(width: AppDimens.md),
+            // ── Contenu ────────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(18, 14, 14, 14),
+              child: Row(
+                children: [
+                  // Texte
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        // Badge promo
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.22),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            data.badge,
+                            style: const TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                              letterSpacing: 0.3,
+                            ),
+                          ),
+                        ),
 
-            // Icon circle
-            Container(
-              width: 54,
-              height: 54,
-              decoration: const BoxDecoration(
-                color: AppColors.white,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                data.icon,
-                color: AppColors.primary,
-                size: 28,
+                        const SizedBox(height: 7),
+
+                        Text(
+                          data.title,
+                          style: AppTextStyles.labelLarge.copyWith(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                            height: 1.2,
+                          ),
+                        ),
+
+                        const SizedBox(height: 4),
+
+                        Text(
+                          data.subtitle,
+                          style: AppTextStyles.bodySmall.copyWith(
+                            color: Colors.white.withOpacity(0.85),
+                            fontSize: 11.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Icône dans cercle blanc
+                  Container(
+                    width: 52,
+                    height: 52,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      data.icon,
+                      color: Colors.white,
+                      size: 26,
+                    ),
+                  ),
+                ],
               ),
             ),
           ],

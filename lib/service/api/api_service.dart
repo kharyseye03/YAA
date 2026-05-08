@@ -6,6 +6,7 @@ import 'package:http_parser/http_parser.dart';
 import '../../config/api/api_config.dart';
 import '../../model/auth/login_response.dart';
 import '../../model/auth/register_response.dart';
+import '../../model/category/categorie_structure.dart';
 import '../../model/user/user_profile.dart';
 
 class ApiService {
@@ -261,6 +262,54 @@ class ApiService {
       );
       return UserProfile.fromJson(response);
     } catch (e) {
+      rethrow;
+    }
+  }
+
+  // ════════════════════════════════════════════════════
+  // MÉTHODE PUBLIQUE — Catégories
+  // ════════════════════════════════════════════════════
+
+  Future<List<dynamic>> _getList(String endpoint, {String? token}) async {
+    try {
+      var uri = Uri.parse(ApiConfig.getUrl(endpoint));
+      final headers = {
+        ...ApiConfig.headers,
+        if (token != null) 'Authorization': 'Bearer $token',
+      };
+      final response = await http
+          .get(uri, headers: headers)
+          .timeout(const Duration(seconds: ApiConfig.connectionTimeout),
+              onTimeout: () => throw TimeoutException('Le serveur ne répond pas.'));
+
+      print('📡 GET Status → ${response.statusCode}');
+      print('📬 GET Réponse → ${response.body}');
+
+      if (response.body.isEmpty) {
+        throw Exception('Erreur ${response.statusCode} — réponse vide du serveur.');
+      }
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return json.decode(response.body) as List<dynamic>;
+      }
+      throw Exception('Erreur ${response.statusCode}');
+    } on SocketException {
+      throw Exception('Pas de connexion internet.');
+    } on TimeoutException catch (e) {
+      throw Exception(e.message);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<List<CategorieStructure>> getCategories() async {
+    try {
+      final response = await _get(ApiConfig.categoriesEndpoint);
+      final data = response['data'] as List<dynamic>;
+      return data
+          .map((e) => CategorieStructure.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      print('❌ Erreur getCategories: $e');
       rethrow;
     }
   }

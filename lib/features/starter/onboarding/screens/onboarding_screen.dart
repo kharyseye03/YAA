@@ -1,18 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/constants/constants.dart';
+import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/app_text_styles.dart';
 import '../../../../core/utils/app_router.dart';
-import '../../../../shared/widgets/widgets.dart';
-import '../widgets/dot_indicator.dart';
-import '../widgets/onboarding_image_diamonds.dart';
-import '../widgets/onboarding_image_grid.dart';
 import '../widgets/onboarding_page_data.dart';
 
-/// Onboarding screen with swipeable pages.
-///
-/// Pages 0..n-2 use the grid mosaic layout with "Suivant" + "Passer".
-/// Last page uses the diamond mosaic with "Créer un compte" + "Se connecter".
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
 
@@ -21,52 +14,27 @@ class OnboardingScreen extends StatefulWidget {
 }
 
 class _OnboardingScreenState extends State<OnboardingScreen> {
-  late final PageController _pageController;
+  final _pageController = PageController();
   int _currentPage = 0;
 
-  // ── Page Content ──────────────────────────────────────────
   static const _pages = [
     OnboardingPageData(
-      title: 'Tout ce dont vous avez\nbesoin, livré chez vous',
-      description:
-          'Des boutiques locales aux pharmacies,\ncommandez en quelques clics et recevez vos\nproduits rapidement.',
-      images: [
-        'assets/images/img1_ob1.png',
-        'assets/images/img2_ob1.png',
-        'assets/images/img3_ob1.png',
-        'assets/images/img4_ob1.png',
-        'assets/images/img5_ob1.png',
-        'assets/images/img6_ob1.png',
-      ],
+      image: 'assets/images/test4.jpeg',
+      title: 'Tout ce dont vous\navez besoin, ici',
+      badge: '🛒  Courses, restos, boutiques — en un seul endroit',
+      imageAlignment: Alignment.topCenter,
     ),
     OnboardingPageData(
-      title: 'Explorez des centaines\nde boutiques',
-      description:
-      'Restaurants, pharmacies, supermarchés\net boutiques — tout est à portée de main.',
-      images: [
-        'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=300',
-        'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=300',
-        'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=300',
-        'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=300',
-        'https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=300',
-        'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=300',
-      ],
+      image: 'assets/images/L1.jpeg',
+      title: 'Livré directement\nchez vous',
+      badge: '🚚  Livraison rapide partout dans votre ville',
+      imageAlignment: Alignment.centerLeft,
     ),
-    // Last page — uses diamond layout
     OnboardingPageData(
-      title: 'Prêt à commander ?',
-      description:
-          'Rejoignez-nous pour simplifier votre\nquotidien et profiter de nos\nmeilleurs services.',
-      images: [
-        'assets/images/img1_ob1.png',
-        'assets/images/img2_ob1.png',
-        'assets/images/img3_ob1.png',
-        'assets/images/img4_ob1.png',
-        'assets/images/img5_ob1.png',
-        'assets/images/img6_ob1.png',
-        'assets/images/img1_ob3.jpg',
-        'assets/images/img2_ob3.png',
-      ],
+      image: 'assets/images/ob3.jpeg',
+      title: 'Des milliers de produits',
+      badge: '🍕  Nourriture, épicerie, vêtements et bien plus',
+      imageAlignment: Alignment.topCenter,
     ),
   ];
 
@@ -75,15 +43,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   @override
   void initState() {
     super.initState();
-    _pageController = PageController();
-
-    SystemChrome.setSystemUIOverlayStyle(
-      const SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.dark,
-        statusBarBrightness: Brightness.light,
-      ),
-    );
+    SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.light,
+      statusBarBrightness: Brightness.dark,
+    ));
   }
 
   @override
@@ -95,17 +59,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   void _nextPage() {
     if (_isLastPage) return;
     _pageController.nextPage(
-      duration: const Duration(milliseconds: 400),
+      duration: const Duration(milliseconds: 350),
       curve: Curves.easeInOut,
     );
-  }
-
-  void _goToLogin() {
-    context.goNamed(RouteNames.login);
-  }
-
-  void _goToRegister() {
-    context.goNamed(RouteNames.register);
   }
 
   void _skip() {
@@ -119,185 +75,277 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.white,
-      body: SafeArea(
-        child: Column(
-          children: [
-            // ── Header: Logo + Passer ────────────────────────
-            _buildHeader(),
+      backgroundColor: AppColors.dark,
+      body: Stack(
+        children: [
+          // ── PageView plein écran ──────────────────────────────
+          PageView.builder(
+            controller: _pageController,
+            itemCount: _pages.length,
+            onPageChanged: (i) => setState(() => _currentPage = i),
+            itemBuilder: (_, i) => _buildPage(_pages[i]),
+          ),
 
-            // ── PageView ─────────────────────────────────────
-            Expanded(
-              child: PageView.builder(
-                controller: _pageController,
-                itemCount: _pages.length,
-                onPageChanged: (index) {
-                  setState(() => _currentPage = index);
-                },
-                itemBuilder: (context, index) {
-                  return _buildPage(_pages[index], index);
-                },
+          // ── Barre de progression (top) ────────────────────────
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: SafeArea(
+              bottom: false,
+              child: Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                child: Row(
+                  children: List.generate(_pages.length, (i) {
+                    return Expanded(
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 300),
+                        height: 2.5,
+                        margin: EdgeInsets.only(
+                            right: i < _pages.length - 1 ? 6 : 0),
+                        decoration: BoxDecoration(
+                          color: Colors.white
+                              .withOpacity(i <= _currentPage ? 1.0 : 0.35),
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                    );
+                  }),
+                ),
               ),
             ),
-
-            // ── Bottom Section ───────────────────────────────
-            _buildBottomSection(),
-
-            const SizedBox(height: AppDimens.xxl),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
-  // ── Header ───────────────────────────────────────────────
-  Widget _buildHeader() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppDimens.screenPadding,
-        vertical: AppDimens.md,
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          // Logo
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.storefront_outlined,
-                color: AppColors.primary,
-                size: 24,
-              ),
-              const SizedBox(width: AppDimens.sm),
-              Text(
-                'LOGO',
-                style: TextStyle(
-                  fontFamily: 'Archivo',
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.primary,
-                  letterSpacing: 3,
-                ),
-              ),
-            ],
-          ),
+  // ═══════════════════════════════════════════════════════════
+  // STYLE NETFLIX — Image plein écran + overlay sombre + texte blanc
+  // ═══════════════════════════════════════════════════════════
 
-          // "Passer" button — hidden on last page
-          if (!_isLastPage)
-            GestureDetector(
-              onTap: _skip,
+  Widget _buildPage(OnboardingPageData page) {
+    final safeBottom = MediaQuery.of(context).padding.bottom;
+
+    return Stack(
+      children: [
+        // 1. Image plein écran
+        Positioned.fill(
+          child: Image.asset(
+            page.image,
+            fit: BoxFit.cover,
+            alignment: page.imageAlignment,
+          ),
+        ),
+
+        // 2. Overlay noir semi-transparent sur toute l'image
+        Positioned.fill(
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: Colors.black.withOpacity(0.45),
+            ),
+          ),
+        ),
+
+        // 3. Dégradé noir en bas pour faire ressortir le texte
+        Positioned(
+          bottom: 0,
+          left: 0,
+          right: 0,
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.transparent,
+                  Colors.black.withOpacity(0.75),
+                ],
+                stops: const [0.0, 1.0],
+              ),
+            ),
+            child: SizedBox(height: 320),
+          ),
+        ),
+
+        // 4. Contenu texte + boutons en bas
+        Positioned(
+          bottom: 0,
+          left: 0,
+          right: 0,
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(24, 0, 24, safeBottom + 24),
+            child: _buildContent(page),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildContent(OnboardingPageData page) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        // Titre blanc
+        Text(
+          page.title,
+          textAlign: TextAlign.center,
+          style: AppTextStyles.h1.copyWith(
+            fontSize: 32,
+            fontWeight: FontWeight.w800,
+            color: Colors.white,
+            height: 1.2,
+            letterSpacing: -0.5,
+          ),
+        ),
+
+        const SizedBox(height: 10),
+
+        // Badge / sous-titre blanc atténué
+        Text(
+          page.badge,
+          textAlign: TextAlign.center,
+          style: AppTextStyles.bodySmall.copyWith(
+            color: Colors.white.withOpacity(0.75),
+            height: 1.5,
+          ),
+        ),
+
+        const SizedBox(height: 32),
+
+        // Bouton principal
+        _buildPrimaryButton(
+          _isLastPage ? 'Commencer' : 'Suivant',
+          onPressed: _isLastPage
+              ? () => context.goNamed(RouteNames.register)
+              : _nextPage,
+        ),
+
+        const SizedBox(height: 14),
+
+        // Bouton secondaire
+        if (_isLastPage)
+          _buildSecondaryButton(
+            'J\'ai déjà un compte',
+            onPressed: () => context.goNamed(RouteNames.login),
+          )
+        else
+          GestureDetector(
+            onTap: _skip,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 6),
               child: Text(
                 'Passer',
-                style: AppTextStyles.bodyMedium.copyWith(
-                  color: AppColors.grey600,
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white.withOpacity(0.7),
                 ),
               ),
-            )
-          else
-            const SizedBox.shrink(),
-        ],
-      ),
-    );
-  }
-
-  // ── Single Page Content ──────────────────────────────────
-  Widget _buildPage(OnboardingPageData page, int index) {
-    final isLast = index == _pages.length - 1;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppDimens.screenPadding),
-      child: Column(
-        children: [
-          const SizedBox(height: AppDimens.xxxl),
-          // Image layout
-          Expanded(
-            flex: 5,
-            child: index == 2
-                ? OnboardingImageDiamonds(images: page.images)
-                : OnboardingImageGrid(
-              images: page.images,
-              useNetwork: index == 1,
             ),
           ),
-
-          const SizedBox(height: AppDimens.xxl),
-
-          // Title
-          Text(
-            page.title,
-            textAlign: TextAlign.center,
-            style: AppTextStyles.h1.copyWith(
-              fontSize: 26,
-              fontWeight: FontWeight.w800,
-              color: AppColors.dark,
-              height: 1.25,
-            ),
-          ),
-
-          const SizedBox(height: AppDimens.md),
-
-          // Description
-          Text(
-            page.description,
-            textAlign: TextAlign.center,
-            style: AppTextStyles.bodyMedium.copyWith(
-              color: AppColors.grey600,
-              height: 1.6,
-            ),
-          ),
-
-          const Spacer(flex: 1),
-        ],
-      ),
-    );
-  }
-
-  // ── Bottom Section ───────────────────────────────────────
-  Widget _buildBottomSection() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppDimens.screenPadding),
-      child: _isLastPage ? _buildAuthButtons() : _buildNextSection(),
-    );
-  }
-
-  /// Pages 0..n-2: Dot indicator + "Suivant" button
-  Widget _buildNextSection() {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        DotIndicator(
-          count: _pages.length,
-          currentIndex: _currentPage,
-        ),
-        const SizedBox(height: AppDimens.xxl),
-        YaaButton(
-          label: 'Suivant',
-          onPressed: _nextPage,
-          icon: Icons.arrow_forward,
-        ),
       ],
     );
   }
 
-  /// Last page: "Créer un compte" + "Se connecter"
-  Widget _buildAuthButtons() {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        YaaButton(
-          label: 'Créer un compte',
-          onPressed: _goToRegister,
+  Widget _buildPrimaryButton(String label, {required VoidCallback onPressed}) {
+    return SizedBox(
+      width: double.infinity,
+      height: 52,
+      child: ElevatedButton(
+        onPressed: onPressed,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.primary,
+          foregroundColor: AppColors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+          elevation: 0,
         ),
-        const SizedBox(height: AppDimens.md),
-        YaaButton(
-          label: 'Se connecter',
-          onPressed: _goToLogin,
-          isOutlined: false,
-          backgroundColor: AppColors.primarySurface,
-          foregroundColor: AppColors.primary,
+        child: Text(
+          label,
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.2,
+          ),
         ),
-      ],
+      ),
     );
   }
+
+  Widget _buildSecondaryButton(String label,
+      {required VoidCallback onPressed}) {
+    return SizedBox(
+      width: double.infinity,
+      height: 48,
+      child: OutlinedButton(
+        onPressed: onPressed,
+        style: OutlinedButton.styleFrom(
+          foregroundColor: Colors.white,
+          side: BorderSide(color: Colors.white.withOpacity(0.5), width: 1.5),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+        ),
+        child: Text(
+          label,
+          style: const TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // ANCIEN STYLE — Dégradé blanc arc en bas (carte blanche)
+  // Conservé en commentaire pour référence
+  // ═══════════════════════════════════════════════════════════
+
+  // Widget _buildPageArcStyle(OnboardingPageData page) {
+  //   final safeBottom = MediaQuery.of(context).padding.bottom;
+  //   return Stack(
+  //     children: [
+  //       Positioned.fill(
+  //         child: Image.asset(page.image, fit: BoxFit.cover, alignment: page.imageAlignment),
+  //       ),
+  //       Positioned(
+  //         bottom: 0, left: 0, right: 0,
+  //         child: Container(
+  //           height: 280,
+  //           decoration: BoxDecoration(
+  //             gradient: LinearGradient(
+  //               begin: Alignment.topCenter,
+  //               end: Alignment.bottomCenter,
+  //               colors: [
+  //                 Colors.white.withOpacity(0.0),
+  //                 Colors.white.withOpacity(0.55),
+  //                 Colors.white.withOpacity(0.92),
+  //                 Colors.white,
+  //               ],
+  //               stops: [0.0, 0.28, 0.50, 0.68],
+  //             ),
+  //             borderRadius: BorderRadius.only(
+  //               topLeft: Radius.circular(44),
+  //               topRight: Radius.circular(44),
+  //             ),
+  //           ),
+  //           child: Column(
+  //             mainAxisAlignment: MainAxisAlignment.end,
+  //             children: [
+  //               Padding(
+  //                 padding: EdgeInsets.fromLTRB(24, 0, 24, safeBottom + 20),
+  //                 child: _buildContentArcStyle(page),
+  //               ),
+  //             ],
+  //           ),
+  //         ),
+  //       ),
+  //     ],
+  //   );
+  // }
 }

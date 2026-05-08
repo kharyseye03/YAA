@@ -1,12 +1,15 @@
-/// Represents a single onboarding page's content.
+import 'package:flutter/material.dart';
+
 class OnboardingPageData {
+  final String image;
   final String title;
-  final String description;
-  final List<String> images;
+  final String badge;
+  final Alignment imageAlignment;
 
   const OnboardingPageData({
+    required this.image,
     required this.title,
-    required this.description,
-    required this.images,
+    required this.badge,
+    this.imageAlignment = Alignment.center,
   });
 }

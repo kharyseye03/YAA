@@ -36,6 +36,8 @@ dependencies:
   cached_network_image: ^3.4.1
   shimmer: ^3.0.0
   flutter_screenutil: ^5.9.3
+  lucide_icons: ^0.257.0
+  phosphor_flutter: ^2.1.0
 
   # ── Utils ───────────────────────────────────────────────
   intl: ^0.19.0
@@ -78,3 +80,4 @@ flutter:
   assets:
     - assets/images/
     - assets/fonts/
+    - assets/icones/

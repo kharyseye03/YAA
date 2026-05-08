@@ -2,14 +2,12 @@ class ApiConfig {
 
   // ── Keycloak (IAM) ────────────────────────────────────────
   // URL différente car c'est un service complètement séparé
-  static const String iamBaseUrl = 'https://5795-41-83-137-24.ngrok-free.app';
+  static const String iamBaseUrl = 'https://6059-41-214-10-114.ngrok-free.app';
   static const String loginEndpoint = '/realms/yaa-delivery/protocol/openid-connect/token';
 
   // 🔧 Mode dev → ngrok
-  static const String _ngrokBaseUrl = 'https://4248-41-83-137-24.ngrok-free.app';
+  static const String _ngrokBaseUrl = 'https://2800-41-214-10-114.ngrok-free.app';
   static const String baseUrl       = '$_ngrokBaseUrl/api/v1';
-
-
 
 
   // ── Endpoints Auth ────────────────────────────────
@@ -22,6 +20,9 @@ class ApiConfig {
   // ── Endpoints User ────────────────────────────────
   static const String userDetailEndpoint    = '/registrations/detail';
   static const String updateProfileEndpoint = '/registrations/update';
+
+  // ── Endpoints Catégories ──────────────────────────
+  static const String categoriesEndpoint = '/categorie-structures';
 
   // ── Timeouts (en secondes) ────────────────────────
   static const int connectionTimeout = 30;
@@ -46,8 +47,5 @@ class ApiConfig {
   // Construit l'URL complète : baseUrl + endpoint
   static String getUrl(String endpoint) => '$baseUrl$endpoint';
   static String getIamUrl(String endpoint) => '$iamBaseUrl$endpoint';
-
-  // Construit l'URL d'accès à une image à partir du nom de fichier
-  // ex: getImageUrl('abc.PNG') → 'https://ngrok.../api/v1/files/abc.PNG'
   static String getImageUrl(String fileName) => '$baseUrl/files/$fileName';
 }
