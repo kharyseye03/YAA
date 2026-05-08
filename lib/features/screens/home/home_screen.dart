@@ -2,14 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:yaa/features/screens/home/product_card.dart';
+import 'package:yaa/features/screens/home/restaurant_card.dart';
 import 'package:yaa/features/screens/home/promo_banner_carousel.dart';
 import 'package:yaa/features/screens/home/search_bar_widget.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimens.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/utils/app_router.dart';
-import '../../user/providers/user_notifier.dart';
 import '../order/orders_screen.dart';
 import '../profile/profile_screen.dart';
 import 'category_list.dart';
@@ -32,53 +33,109 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   // ── Mock Data ────────────────────────────────────────────
   final _banners = const [
     PromoBannerData(
-      title: 'Besoin d\'un livreur ?',
-      description: 'Lancez une annonce et fixez votre prix\nde livraison.',
-      icon: Icons.directions_bike,
+      badge: '🔥 OFFRE DU JOUR',
+      title: 'Restos & Fast-food\nlivrés chez vous',
+      subtitle: '-10% sur votre 1ère commande',
+      icon: LucideIcons.utensils,
+      gradient: [Color(0xFFFF6B35), Color(0xFFCC4400)],
     ),
     PromoBannerData(
-      title: 'Offres du jour',
-      description: 'Découvrez les meilleures offres\nsur vos produits préférés.',
-      icon: Icons.local_offer,
+      badge: '⚡ LIVRAISON EXPRESS',
+      title: 'Courses & Épicerie\nen 30 minutes',
+      subtitle: 'Disponible 7j/7 dans votre ville',
+      icon: LucideIcons.shoppingCart,
+      gradient: [Color(0xFF1652F0), Color(0xFF0E3BB8)],
     ),
     PromoBannerData(
-      title: 'Livraison rapide',
-      description: 'Recevez vos commandes en moins\nde 30 minutes.',
-      icon: Icons.flash_on,
+      badge: '✨ NOUVEAUTÉS',
+      title: 'Mode & Boutiques\nlocales',
+      subtitle: 'Découvrez les tendances du moment',
+      icon: LucideIcons.shoppingBag,
+      gradient: [Color(0xFF9B59B6), Color(0xFF6C3483)],
+    ),
+    PromoBannerData(
+      badge: '💊 SANTÉ',
+      title: 'Pharmacies proches\nde vous',
+      subtitle: 'Médicaments livrés rapidement',
+      icon: LucideIcons.cross,
+      gradient: [Color(0xFF27AE60), Color(0xFF1A7A40)],
     ),
   ];
 
-  // ── Mock Data par catégorie ─────────────────────────────
-  final Map<int, List<ProductData>> _productsByCategory = {
-    // Restaurants
-    0: const [
-      ProductData(name: 'Crudité salade', price: 12000, rating: 4.8, imageUrl: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400'),
-      ProductData(name: 'Truffle Beef Burger', price: 2500, rating: 4.5, imageUrl: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400'),
-      ProductData(name: 'Charcoal Kebabs', price: 5000, rating: 4.9, imageUrl: 'https://images.unsplash.com/photo-1529193591184-b1d58069ecdd?w=400'),
-      ProductData(name: 'Spaguetti', price: 1000, rating: 4.7, imageUrl: 'https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?w=400'),
-    ],
-    // Boutiques
-    1: const [
-      ProductData(name: 'Polo en cuire', price: 12000, rating: 4.8, imageUrl: 'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=400'),
-      ProductData(name: 'Ensembles pull', price: 25000, rating: 4.5, imageUrl: 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=400'),
-      ProductData(name: 'Pull noir en cuire', price: 15000, rating: 4.9, imageUrl: 'https://images.unsplash.com/photo-1544022613-e87ca75a784a?w=400'),
-      ProductData(name: 'Sack à main', price: 10000, rating: 4.7, imageUrl: 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=400'),
-    ],
-    // Pharmacies
-    2: const [
-      ProductData(name: 'Siro deux couleur', price: 1200, rating: 4.8, imageUrl: 'https://images.unsplash.com/photo-1584308666544-ada528ea88e4?w=400'),
-      ProductData(name: 'CAC1000 ml', price: 2500, rating: 4.5, imageUrl: 'https://images.unsplash.com/photo-1471864190281-a93a3070b6de?w=400'),
-      ProductData(name: 'CAC1000 ml', price: 1500, rating: 4.9, imageUrl: 'https://images.unsplash.com/photo-1587854692152-cbe660dbde88?w=400'),
-      ProductData(name: 'Siro deux couleur', price: 1000, rating: 4.7, imageUrl: 'https://images.unsplash.com/photo-1607619056574-7b8d3ee536b2?w=400'),
-    ],
-    // Supermarché
-    3: const [
-      ProductData(name: 'Pack légumes', price: 12000, rating: 4.8, imageUrl: 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=400'),
-      ProductData(name: 'Gel de douche', price: 25000, rating: 4.5, imageUrl: 'https://images.unsplash.com/photo-1556228578-0d85b1a4d571?w=400'),
-      ProductData(name: 'Patte', price: 15000, rating: 4.9, imageUrl: 'https://images.unsplash.com/photo-1553531384-cc64ac80f931?w=400'),
-      ProductData(name: 'Joués', price: 10000, rating: 4.7, imageUrl: 'https://images.unsplash.com/photo-1567306226416-28f0efdc88ce?w=400'),
-    ],
-  };
+  // ── Mock : Restaurants proches ──────────────────────────
+  final _restaurants = const [
+    RestaurantData(
+      name: 'Chez Fatou',
+      cuisine: 'Cuisine locale',
+      rating: 4.8,
+      deliveryTime: '20-30 min',
+      imageUrl: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=400',
+    ),
+    RestaurantData(
+      name: 'Pizza Palace',
+      cuisine: 'Pizzeria',
+      rating: 4.5,
+      deliveryTime: '25-35 min',
+      imageUrl: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400',
+    ),
+    RestaurantData(
+      name: 'Burger House',
+      cuisine: 'Fast-food',
+      rating: 4.6,
+      deliveryTime: '15-25 min',
+      imageUrl: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400',
+    ),
+    RestaurantData(
+      name: 'Le Grill d\'Or',
+      cuisine: 'Grillades',
+      rating: 4.7,
+      deliveryTime: '30-40 min',
+      imageUrl: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=400',
+    ),
+    RestaurantData(
+      name: 'Sushi Garden',
+      cuisine: 'Japonais',
+      rating: 4.9,
+      deliveryTime: '35-50 min',
+      imageUrl: 'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=400',
+    ),
+  ];
+
+  // ── Mock : Top vente ────────────────────────────────────
+  final _topSelling = const [
+    ProductData(
+      name: 'Assiette du jour',
+      subtitle: 'Chez Fatou Restaurant',
+      price: 3500,
+      rating: 4.9,
+      imageUrl: 'assets/images/food.jpeg',
+      isAsset: true,
+    ),
+    ProductData(
+      name: 'Pack Skincare',
+      subtitle: 'AURA Boutique',
+      price: 18000,
+      rating: 4.8,
+      imageUrl: 'assets/images/tv1.jpeg',
+      isAsset: true,
+    ),
+    ProductData(
+      name: 'Basket Homme',
+      subtitle: 'SneakerZone',
+      price: 25000,
+      rating: 4.7,
+      imageUrl: 'assets/images/tv3.jpeg',
+      isAsset: true,
+    ),
+    ProductData(
+      name: 'Produit Bébé',
+      subtitle: 'BabyShop Dakar',
+      price: 5500,
+      rating: 4.6,
+      imageUrl: 'assets/images/tv4.jpeg',
+      isAsset: true,
+    ),
+  ];
 
   @override
   void initState() {
@@ -95,7 +152,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.scaffold,
+      backgroundColor: Colors.white,
       body: Column(
         children: [
           // ── Header (blue) ─────────────────────────────────
@@ -104,8 +161,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               : _currentNavIndex == 3
               ? _buildSimpleHeader('Mon compte')
               : HomeHeader(
-            userName: ref.watch(userProvider).profile?.fullName ?? 'Bienvenue',
-            imageUrl: ref.watch(userProvider).profile?.imageUrl,
             onNotificationTap: () => context.goNamed(RouteNames.notifications),
           ),
 
@@ -121,12 +176,44 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         ],
       ),
 
+      // ── Panier flottant ─────────────────────────────────
+      floatingActionButton: Transform.translate(
+        offset: const Offset(0, 10),
+        child: _buildCartFAB(),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+
       // ── Bottom navigation ───────────────────────────────
       bottomNavigationBar: HomeBottomNav(
         currentIndex: _currentNavIndex,
-        cartItemCount: 0,
         onTap: (index) => setState(() => _currentNavIndex = index),
-        onCartTap: () => context.pushNamed(RouteNames.cart),
+      ),
+    );
+  }
+
+  Widget _buildCartFAB() {
+    return GestureDetector(
+      onTap: () => context.pushNamed(RouteNames.cart),
+      child: Container(
+        width: 52,
+        height: 52,
+        decoration: BoxDecoration(
+          color: AppColors.primary,
+          shape: BoxShape.circle,
+          border: Border.all(color: Colors.white, width: 2),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.1),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: const Icon(
+          Icons.shopping_cart_outlined,
+          color: Colors.white,
+          size: 22,
+        ),
       ),
     );
   }
@@ -178,6 +265,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             const SizedBox(height: AppDimens.xxl),
           ],
 
+// Search bar
+          Padding(
+            padding: const EdgeInsets.symmetric(
+                horizontal: AppDimens.screenPadding),
+            child: const SearchBarWidget(),
+          ),
+
+          const SizedBox(height: AppDimens.xxl),
+
 // Categories section
           Padding(
             padding: const EdgeInsets.symmetric(
@@ -199,16 +295,27 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
             error: (_, __) => const SizedBox.shrink(),
             data: (apiCategories) {
+              const palette = [
+                AppColors.restaurant,
+                AppColors.primary,
+                AppColors.pharmacy,
+                AppColors.boutique,
+                AppColors.supermarket,
+                AppColors.secondary,
+              ];
               final categories = List.generate(apiCategories.length, (i) {
+                final cat = apiCategories[i];
                 return CategoryData(
-                  label: apiCategories[i].name,
-                  icon: apiCategories[i].iconData,
+                  label: cat.name,
+                  imageUrl: cat.imageFileName != null
+                      ? 'https://2800-41-214-10-114.ngrok-free.app/api/v1/files/${cat.imageFileName}'
+                      : null,
+                  color: palette[i % palette.length],
                   onTap: () => setState(() => _activeCategoryIndex = i),
                 );
               });
               return Padding(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: AppDimens.screenPadding),
+                padding: const EdgeInsets.only(left: AppDimens.screenPadding),
                 child: CategoryList(
                   categories: categories,
                   activeIndex: _activeCategoryIndex,
@@ -219,67 +326,206 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
           const SizedBox(height: AppDimens.xxl),
 
-// Search bar — visible only in search mode
-          if (_currentNavIndex == 1) ...[
-            Padding(
+// ── Section : Restaurants proches ──────────────────────
+          _buildSectionHeader('Restaurants proches', onSeeAll: () {}),
+          const SizedBox(height: AppDimens.md),
+          SizedBox(
+            height: 200,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(
                   horizontal: AppDimens.screenPadding),
-              child: SearchBarWidget(
-                onFilterTap: () {
-// TODO: Open filter
-                },
-              ),
-            ),
-            const SizedBox(height: AppDimens.xxl),
-          ],
-
-// Recent publications section
-          Padding(
-            padding: const EdgeInsets.symmetric(
-                horizontal: AppDimens.screenPadding),
-            child: Text(
-              'Publication récente',
-              style: AppTextStyles.h3.copyWith(
-                fontWeight: FontWeight.w700,
+              itemCount: _restaurants.length,
+              separatorBuilder: (_, __) => const SizedBox(width: AppDimens.md),
+              itemBuilder: (_, i) => RestaurantCard(
+                restaurant: _restaurants[i],
+                onTap: () {},
               ),
             ),
           ),
 
-          const SizedBox(height: AppDimens.md),
+          const SizedBox(height: AppDimens.lg),
 
-// Products grid
-          Builder(
-            builder: (context) {
-              final products =
-                  _productsByCategory[_activeCategoryIndex] ?? [];
-              return Padding(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: AppDimens.screenPadding),
-                child: GridView.builder(
-                  padding: EdgeInsets.zero,
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: products.length,
-                  gridDelegate:
-                  const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    mainAxisSpacing: AppDimens.lg,
-                    crossAxisSpacing: AppDimens.md,
-                    childAspectRatio: 0.72,
+// ── Section : Top vente ─────────────────────────────────
+          _buildSectionHeader('Top vente', onSeeAll: () {}),
+          const SizedBox(height: AppDimens.md),
+          SizedBox(
+            height: 220,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(
+                  horizontal: AppDimens.screenPadding),
+              itemCount: _topSelling.length,
+              separatorBuilder: (_, __) => const SizedBox(width: AppDimens.md),
+              itemBuilder: (_, i) => _buildTopSellingCard(_topSelling[i]),
+            ),
+          ),
+
+          const SizedBox(height: AppDimens.xxl),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTopSellingCard(ProductData product) {
+    return GestureDetector(
+      onTap: () => context.pushNamed(RouteNames.productDetail),
+      child: Container(
+        width: 155,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(AppDimens.radiusLg),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.07),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ── Image + cœur ──────────────────────────────
+            Stack(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(10, 10, 10, 0),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(AppDimens.radiusMd),
+                    child: product.isAsset
+                        ? Image.asset(
+                            product.imageUrl,
+                            height: 100,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                          )
+                        : Image.network(
+                            product.imageUrl,
+                            height: 100,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => Container(
+                              height: 100,
+                              color: AppColors.grey200,
+                              child: const Icon(Icons.image_outlined,
+                                  color: AppColors.grey400, size: 28),
+                            ),
+                          ),
                   ),
-                  itemBuilder: (context, index) {
-                    return ProductCard(
-                      product: products[index],
-                      onTap: () =>
-                          context.pushNamed(RouteNames.productDetail),
-                      onAddTap: () {
-                      // TODO: Add to cart
-                      },
-                    );
-                  },
                 ),
-              );
-            },
+                // Cœur
+                Positioned(
+                  top: 6,
+                  right: 6,
+                  child: Icon(
+                    Icons.favorite_border,
+                    size: 18,
+                    color: AppColors.grey400,
+                  ),
+                ),
+              ],
+            ),
+
+            // ── Infos ─────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    product.name,
+                    style: AppTextStyles.labelMedium.copyWith(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
+                      color: AppColors.dark,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  if (product.subtitle != null) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      product.subtitle!,
+                      style: AppTextStyles.bodySmall.copyWith(
+                        fontSize: 11,
+                        color: AppColors.grey500,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        '${product.price} F',
+                        style: AppTextStyles.labelMedium.copyWith(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 13,
+                          color: AppColors.dark,
+                        ),
+                      ),
+                      Container(
+                        width: 28,
+                        height: 28,
+                        decoration: const BoxDecoration(
+                          color: AppColors.dark,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.add,
+                          color: Colors.white,
+                          size: 18,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(String title, {VoidCallback? onSeeAll}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppDimens.screenPadding),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Text(
+            title,
+            style: AppTextStyles.h3.copyWith(fontWeight: FontWeight.w700),
+          ),
+          GestureDetector(
+            onTap: onSeeAll,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+              decoration: BoxDecoration(
+                color: AppColors.grey100,
+                borderRadius: BorderRadius.circular(AppDimens.radiusFull),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Tous',
+                    style: AppTextStyles.bodySmall.copyWith(
+                      color: AppColors.dark,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 12,
+                    ),
+                  ),
+                  const SizedBox(width: 3),
+                  Icon(Icons.chevron_right, size: 15, color: AppColors.dark),
+                ],
+              ),
+            ),
           ),
         ],
       ),

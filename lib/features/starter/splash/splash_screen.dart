@@ -17,18 +17,14 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
 
-  // Logo : fade + scale avec rebond élastique
   late final Animation<double> _logoFade;
   late final Animation<double> _logoScale;
-
-  // Spinner : apparaît après le logo
   late final Animation<double> _spinnerFade;
 
   @override
   void initState() {
     super.initState();
 
-    // Fond blanc → icônes de status bar sombres
     SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
       statusBarIconBrightness: Brightness.dark,
@@ -40,7 +36,6 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
       duration: const Duration(milliseconds: 1400),
     );
 
-    // Logo fade : 0→1 sur les 60% premiers
     _logoFade = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
         parent: _controller,
@@ -48,7 +43,6 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
       ),
     );
 
-    // Logo scale : 0.75→1.0 avec un léger rebond
     _logoScale = Tween<double>(begin: 0.75, end: 1.0).animate(
       CurvedAnimation(
         parent: _controller,
@@ -56,7 +50,6 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
       ),
     );
 
-    // Spinner fade : apparaît entre 65% et 100%
     _spinnerFade = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
         parent: _controller,
@@ -136,3 +129,42 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     );
   }
 }
+
+// ── Style bg.jpeg (à tester plus tard) ─────────────────────────────────────
+// Stack(
+//   children: [
+//     Column(
+//       children: [
+//         SizedBox(
+//           height: size.height * 0.55,
+//           width: double.infinity,
+//           child: ShaderMask(
+//             shaderCallback: (rect) => const LinearGradient(
+//               begin: Alignment.topCenter,
+//               end: Alignment.bottomCenter,
+//               colors: [Colors.white, Colors.transparent],
+//               stops: [0.55, 1.0],
+//             ).createShader(rect),
+//             blendMode: BlendMode.dstIn,
+//             child: Image.asset(
+//               'assets/images/bg.jpeg',
+//               fit: BoxFit.cover,
+//               alignment: Alignment.topCenter,
+//             ),
+//           ),
+//         ),
+//         Expanded(child: Container(color: Colors.white)),
+//       ],
+//     ),
+//     SafeArea(
+//       child: Column(
+//         children: [
+//           const Spacer(),
+//           Center(child: Image.asset('assets/images/logo.jpeg', width: 180)),
+//           const Spacer(),
+//           // spinner...
+//         ],
+//       ),
+//     ),
+//   ],
+// )

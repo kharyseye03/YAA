@@ -6,15 +6,19 @@ import '../../../core/constants/app_text_styles.dart';
 /// Data model for a product card.
 class ProductData {
   final String name;
+  final String? subtitle;
   final int price;
   final double rating;
   final String imageUrl;
+  final bool isAsset;
 
   const ProductData({
     required this.name,
+    this.subtitle,
     required this.price,
     required this.rating,
     required this.imageUrl,
+    this.isAsset = false,
   });
 }
 
