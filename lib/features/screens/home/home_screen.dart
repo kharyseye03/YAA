@@ -17,6 +17,7 @@ import 'category_list.dart';
 import 'home_bottom_nav.dart';
 import 'home_header.dart';
 import 'providers/category_provider.dart';
+import '../category/category_screen.dart';
 
 /// Main home dashboard screen.
 class HomeScreen extends ConsumerStatefulWidget {
@@ -176,17 +177,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         ],
       ),
 
-      // ── Panier flottant ─────────────────────────────────
-      floatingActionButton: Transform.translate(
-        offset: const Offset(0, 10),
-        child: _buildCartFAB(),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      extendBody: true,
 
       // ── Bottom navigation ───────────────────────────────
       bottomNavigationBar: HomeBottomNav(
         currentIndex: _currentNavIndex,
         onTap: (index) => setState(() => _currentNavIndex = index),
+        onCartTap: () => context.pushNamed(RouteNames.cart),
       ),
     );
   }
@@ -249,7 +246,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   Widget _buildHomeContent() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.only(bottom: AppDimens.lg),
+      padding: const EdgeInsets.only(bottom: 90),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -311,7 +308,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       ? 'https://2800-41-214-10-114.ngrok-free.app/api/v1/files/${cat.imageFileName}'
                       : null,
                   color: palette[i % palette.length],
-                  onTap: () => setState(() => _activeCategoryIndex = i),
+                  onTap: () {
+                    setState(() => _activeCategoryIndex = i);
+                    context.pushNamed(
+                      RouteNames.category,
+                      extra: CategoryScreenArgs(
+                        categoryName: cat.name,
+                        categoryId: cat.id,
+                      ),
+                    );
+                  },
                 );
               });
               return Padding(

@@ -20,6 +20,7 @@ import '../../features/screens/order/orders_screen.dart';
 import '../../features/screens/product/product_detail_screen.dart';
 import '../../features/screens/profile/edit_personal_info_screen.dart';
 import '../../features/screens/profile/personal_info_screen.dart';
+import '../../features/screens/category/category_screen.dart';
 import '../../features/screens/profile/terms_screen.dart';
 import '../../features/starter/onboarding/screens/onboarding_screen.dart';
 import '../../features/starter/splash/splash_screen.dart';
@@ -106,6 +107,7 @@ abstract final class RouteNames {
   static const String editPersonalInfo = 'editPersonalInfo';
   static const String terms = 'terms';
   static const String notifications = 'notifications';
+  static const String category = 'category';
 }
 
 /// GoRouter provider for Riverpod.
@@ -248,6 +250,13 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: RoutePaths.notifications,
         name: RouteNames.notifications,
         builder: (context, state) => const NotificationsScreen(),
+      ),
+      GoRoute(
+        path: '/category',
+        name: RouteNames.category,
+        builder: (context, state) => CategoryScreen(
+          args: state.extra as CategoryScreenArgs,
+        ),
       ),
     ],
 

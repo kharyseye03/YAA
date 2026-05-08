@@ -7,60 +7,87 @@ class HomeBottomNav extends StatelessWidget {
     super.key,
     required this.currentIndex,
     required this.onTap,
+    required this.onCartTap,
   });
 
   final int currentIndex;
   final ValueChanged<int> onTap;
+  final VoidCallback onCartTap;
 
   @override
   Widget build(BuildContext context) {
-    return BottomAppBar(
-      shape: const CircularNotchedRectangle(),
-      notchMargin: 8,
-      color: Colors.white,
-      elevation: 8,
-      shadowColor: Colors.black.withValues(alpha: 0.08),
-      child: SizedBox(
-        height: 60,
+    return Container(
+      color: Colors.transparent,
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+      child: Container(
+        height: 68,
+        decoration: BoxDecoration(
+          color: const Color(0xFF1A1A2E),
+          borderRadius: BorderRadius.circular(40),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.18),
+              blurRadius: 24,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
         child: Row(
           children: [
-            // ── Home ────────────────────────────────────────────
+            _NavItem(
+              icon: RemixIcons.home_6_fill,
+              inactiveIcon: RemixIcons.home_6_line,
+              isActive: currentIndex == 0,
+              onTap: () => onTap(0),
+            ),
+            _NavItem(
+              icon: RemixIcons.search_2_fill,
+              inactiveIcon: RemixIcons.search_2_line,
+              isActive: currentIndex == 1,
+              onTap: () => onTap(1),
+            ),
+
+            // ── Cart central ─────────────────────────────────
             Expanded(
-              child: _NavItem(
-                icon: RemixIcons.home_6_line,
-                isActive: currentIndex == 0,
-                onTap: () => onTap(0),
+              child: GestureDetector(
+                onTap: onCartTap,
+                behavior: HitTestBehavior.opaque,
+                child: Center(
+                  child: Container(
+                    width: 46,
+                    height: 46,
+                    decoration: BoxDecoration(
+                      color: AppColors.primary,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.primary.withValues(alpha: 0.4),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      Icons.shopping_bag_outlined,
+                      color: Colors.white,
+                      size: 22,
+                    ),
+                  ),
+                ),
               ),
             ),
 
-            // ── Search ──────────────────────────────────────────
-            Expanded(
-              child: _NavItem(
-                icon: RemixIcons.search_2_line,
-                isActive: currentIndex == 1,
-                onTap: () => onTap(1),
-              ),
+            _NavItem(
+              icon: Icons.receipt_long,
+              inactiveIcon: Icons.receipt_long_outlined,
+              isActive: currentIndex == 2,
+              onTap: () => onTap(2),
             ),
-
-            // ── Spacer pour le FAB ───────────────────────────────
-            const SizedBox(width: 72),
-
-            // ── Orders ──────────────────────────────────────────
-            Expanded(
-              child: _NavItem(
-                icon: Icons.receipt_long_outlined,
-                isActive: currentIndex == 2,
-                onTap: () => onTap(2),
-              ),
-            ),
-
-            // ── Profile ─────────────────────────────────────────
-            Expanded(
-              child: _NavItem(
-                icon: RemixIcons.user_3_line,
-                isActive: currentIndex == 3,
-                onTap: () => onTap(3),
-              ),
+            _NavItem(
+              icon: RemixIcons.user_3_fill,
+              inactiveIcon: RemixIcons.user_3_line,
+              isActive: currentIndex == 3,
+              onTap: () => onTap(3),
             ),
           ],
         ),
@@ -72,24 +99,38 @@ class HomeBottomNav extends StatelessWidget {
 class _NavItem extends StatelessWidget {
   const _NavItem({
     required this.icon,
+    required this.inactiveIcon,
     required this.isActive,
     required this.onTap,
   });
 
   final IconData icon;
+  final IconData inactiveIcon;
   final bool isActive;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: Center(
-        child: Icon(
-          icon,
-          size: 26,
-          color: isActive ? AppColors.primary : AppColors.grey500,
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
+        child: Center(
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            decoration: BoxDecoration(
+              color: isActive
+                  ? Colors.white.withValues(alpha: 0.12)
+                  : Colors.transparent,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Icon(
+              isActive ? icon : inactiveIcon,
+              size: 22,
+              color: isActive ? Colors.white : Colors.white.withValues(alpha: 0.4),
+            ),
+          ),
         ),
       ),
     );
