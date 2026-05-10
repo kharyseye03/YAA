@@ -7,447 +7,438 @@ import '../../../core/utils/app_router.dart';
 import '../../../shared/widgets/yaa_button.dart';
 import '../../../shared/widgets/yaa_text_field.dart';
 
-/// Cart screen showing a summary of items, description field,
-/// add more button, and order button.
 class CartScreen extends StatelessWidget {
-  const CartScreen({super.key});
+  const CartScreen({super.key, this.onAddMore});
+
+  final VoidCallback? onAddMore;
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.scaffold,
-      body: Column(
-        children: [
-          // ── Header gradient ──────────────────────────────
-          _buildHeader(context),
+    final top = MediaQuery.of(context).padding.top;
 
-          // ── Content ─────────────────────────────────────
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppDimens.screenPadding,
+    return Column(
+      children: [
+        // ── Header blanc ────────────────────────────────
+        Padding(
+          padding: EdgeInsets.only(
+            top: top + 12,
+            left: AppDimens.screenPadding,
+            right: AppDimens.screenPadding,
+            bottom: 16,
+          ),
+          child: Row(
+            children: [
+              Text(
+                'Mon panier',
+                style: AppTextStyles.h3.copyWith(
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.dark,
+                ),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: AppDimens.lg),
-
-                  // Total card
-                  _buildTotalCard(),
-
-                  const SizedBox(height: AppDimens.lg),
-
-                  // Delivery address
-                  _buildDeliveryAddress(),
-
-                  const SizedBox(height: AppDimens.xxl),
-
-                  // Vos articles
-                  Text(
-                    'Vos articles',
-                    style: AppTextStyles.h4.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 12, vertical: 5),
+                decoration: BoxDecoration(
+                  color: AppColors.grey100,
+                  borderRadius:
+                      BorderRadius.circular(AppDimens.radiusFull),
+                ),
+                child: Text(
+                  '3 articles',
+                  style: AppTextStyles.labelSmall.copyWith(
+                    color: AppColors.grey600,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 12,
                   ),
+                ),
+              ),
+            ],
+          ),
+        ),
 
-                  const SizedBox(height: AppDimens.md),
+        const Divider(height: 1, color: AppColors.grey200),
 
-                  // Cart items
-                  _buildCartItem(
-                    name: 'Truffle Beef Burger',
-                    description: 'Bœuf Wagyu, truffe noire, f...',
-                    price: '2500F cfa',
-                    quantity: 1,
-                    imageUrl:
-                    'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=200',
-                  ),
-
-                  const SizedBox(height: AppDimens.md),
-
-                  _buildCartItem(
-                    name: 'Frites à la Truffe',
-                    description: 'Parmesan 24 mois, persil f...',
-                    price: '2000F cfa',
-                    quantity: 2,
-                    imageUrl:
-                    'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=200',
-                  ),
-
-                  const SizedBox(height: AppDimens.md),
-
-                  _buildCartItem(
-                    name: 'Limonade Maison',
-                    description: 'Citron jaune, menthe fraîche',
-                    price: '1500F cfa',
-                    quantity: 1,
-                    imageUrl:
-                    'https://images.unsplash.com/photo-1621263764928-df1444c5e859?w=200',
-                  ),
-
-                  const SizedBox(height: AppDimens.xxl),
-
-                  // Description
-                  Text(
-                    'Description',
-                    style: AppTextStyles.labelLarge.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-
-                  const SizedBox(height: AppDimens.sm),
-
-                  YaaTextField(
-                    hint: 'Description suplémentaire',
-                    maxLines: 3,
-                  ),
-
-                  const SizedBox(height: AppDimens.xxl),
-
-                  // Add more items
-                  Center(
-                    child: GestureDetector(
-                      onTap: () => Navigator.of(context).pop(),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Container(
-                            width: 28,
-                            height: 28,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: AppColors.primary,
-                                width: 1.5,
-                              ),
-                            ),
-                            child: const Icon(Icons.add,
-                                size: 16, color: AppColors.primary),
+        // ── Contenu scrollable ──────────────────────────
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(
+              AppDimens.screenPadding,
+              20,
+              AppDimens.screenPadding,
+              120,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // ── Résumé total ───────────────────────
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Total à payer',
+                          style: AppTextStyles.bodySmall.copyWith(
+                            color: AppColors.grey500,
+                            fontSize: 12,
                           ),
-                          const SizedBox(width: AppDimens.sm),
+                        ),
+                        const SizedBox(height: 2),
+                        const Text(
+                          '8 000 F',
+                          style: TextStyle(
+                            fontFamily: 'Archivo',
+                            fontSize: 30,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.dark,
+                          ),
+                        ),
+                      ],
+                    ),
+                    Row(
+                      children: [
+                        _Chip(Icons.access_time_outlined, '20-30 min'),
+                        const SizedBox(width: 8),
+                        _Chip(Icons.directions_bike_outlined, '2 000 F'),
+                      ],
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 20),
+                const Divider(height: 1, color: AppColors.grey200),
+                const SizedBox(height: 20),
+
+                // ── Adresse ────────────────────────────
+                Row(
+                  children: [
+                    Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: AppColors.primarySurface,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(Icons.location_on_outlined,
+                          color: AppColors.primary, size: 18),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
                           Text(
-                            'Ajouter d\'autres articles',
+                            'Adresse de livraison',
+                            style: AppTextStyles.bodySmall.copyWith(
+                              color: AppColors.grey500,
+                              fontSize: 11,
+                            ),
+                          ),
+                          Text(
+                            '15 Rue de la Paix, Dakar',
                             style: AppTextStyles.labelMedium.copyWith(
-                              color: AppColors.primary,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 13,
+                              color: AppColors.dark,
                             ),
                           ),
                         ],
                       ),
                     ),
+                    const Icon(Icons.chevron_right,
+                        size: 18, color: AppColors.grey400),
+                  ],
+                ),
+
+                const SizedBox(height: 20),
+                const Divider(height: 1, color: AppColors.grey200),
+                const SizedBox(height: 20),
+
+                // ── Articles ───────────────────────────
+                Text(
+                  'Articles',
+                  style: AppTextStyles.labelMedium.copyWith(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                    color: AppColors.grey500,
+                    letterSpacing: 0.4,
                   ),
+                ),
 
-                  const SizedBox(height: AppDimens.xxl),
-                ],
-              ),
+                const SizedBox(height: 16),
+
+                _CartItem(
+                  name: 'Truffle Beef Burger',
+                  description: 'Bœuf Wagyu, truffe noire',
+                  price: 2500,
+                  quantity: 1,
+                  imageUrl:
+                      'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=200',
+                ),
+                const Divider(height: 24, color: AppColors.grey200),
+                _CartItem(
+                  name: 'Frites à la Truffe',
+                  description: 'Parmesan 24 mois, persil frais',
+                  price: 2000,
+                  quantity: 2,
+                  imageUrl:
+                      'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=200',
+                ),
+                const Divider(height: 24, color: AppColors.grey200),
+                _CartItem(
+                  name: 'Limonade Maison',
+                  description: 'Citron jaune, menthe fraîche',
+                  price: 1500,
+                  quantity: 1,
+                  imageUrl:
+                      'https://images.unsplash.com/photo-1621263764928-df1444c5e859?w=200',
+                ),
+
+                const SizedBox(height: 24),
+
+                // ── Ajouter des articles ───────────────
+                GestureDetector(
+                  onTap: onAddMore,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        width: 26,
+                        height: 26,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                              color: AppColors.primary, width: 1.5),
+                        ),
+                        child: const Icon(Icons.add,
+                            size: 14, color: AppColors.primary),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Ajouter d\'autres articles',
+                        style: AppTextStyles.labelMedium.copyWith(
+                          color: AppColors.primary,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 24),
+                const Divider(height: 1, color: AppColors.grey200),
+                const SizedBox(height: 20),
+
+                // ── Note ──────────────────────────────
+                Text(
+                  'Note pour le livreur',
+                  style: AppTextStyles.labelMedium.copyWith(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                    color: AppColors.grey500,
+                    letterSpacing: 0.4,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                YaaTextField(
+                  hint: 'Instructions supplémentaires…',
+                  maxLines: 3,
+                ),
+              ],
             ),
           ),
-
-          // ── Bottom button ─────────────────────────────
-          Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppDimens.screenPadding,
-              vertical: AppDimens.lg,
-            ),
-            color: AppColors.white,
-            child: SafeArea(
-              top: false,
-              child: YaaButton(
-                label: 'Commander',
-                onPressed: () {
-                  context.pushNamed(RouteNames.checkout);
-                },
-                icon: Icons.arrow_forward,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHeader(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.only(
-        left: AppDimens.screenPadding,
-        right: AppDimens.screenPadding,
-        top: MediaQuery.of(context).padding.top + AppDimens.md,
-        bottom: AppDimens.xl,
-      ),
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Color(0xFF1652F0),
-            Color(0xFF08399A)
-          ],
         ),
-      ),
-      child: Row(
-        children: [
-          GestureDetector(
-            onTap: () => Navigator.of(context).pop(),
-            child: Container(
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                color: AppColors.white.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(AppDimens.radiusMd),
-              ),
-              child: const Icon(
-                Icons.chevron_left,
-                color: AppColors.white,
-                size: 28,
-              ),
-            ),
+
+        // ── Bouton Commander fixe ───────────────────────
+        Container(
+          padding: EdgeInsets.only(
+            left: AppDimens.screenPadding,
+            right: AppDimens.screenPadding,
+            top: 12,
+            bottom: MediaQuery.of(context).padding.bottom + 12,
           ),
-          const SizedBox(width: AppDimens.md),
-          Text(
-            'Panier',
-            style: AppTextStyles.h4.copyWith(
-              color: AppColors.white,
-              fontWeight: FontWeight.w700,
-            ),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            border: Border(top: BorderSide(color: AppColors.grey200)),
           ),
-        ],
-      ),
+          child: YaaButton(
+            label: 'Commander · 8 000 F',
+            onPressed: () => context.pushNamed(RouteNames.checkout),
+            icon: Icons.arrow_forward,
+          ),
+        ),
+      ],
     );
   }
+}
 
-  Widget _buildTotalCard() {
-    return Container(
-      padding: const EdgeInsets.all(AppDimens.lg),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(AppDimens.radiusMd),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.black.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Total label + badge
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Total à payer',
-                style: AppTextStyles.bodySmall.copyWith(
-                  color: AppColors.primary,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              Container(
-                width: 28,
-                height: 28,
-                decoration: const BoxDecoration(
-                  color: AppColors.primary,
-                  shape: BoxShape.circle,
-                ),
-                child: const Center(
-                  child: Text(
-                    '4',
-                    style: TextStyle(
-                      fontFamily: 'Archivo',
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.white,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
+// ── Chip info ─────────────────────────────────────────────
+class _Chip extends StatelessWidget {
+  const _Chip(this.icon, this.label);
+  final IconData icon;
+  final String label;
 
-          const SizedBox(height: AppDimens.xs),
-
-          // Total price
-          Text(
-            '8000F cfa',
-            style: TextStyle(
-              fontFamily: 'Archivo',
-              fontSize: 30,
-              fontWeight: FontWeight.w800,
-              color: AppColors.dark,
-            ),
-          ),
-
-          const SizedBox(height: AppDimens.md),
-
-          // Info chips
-          Row(
-            children: [
-              _buildChip('3 articles'),
-              const SizedBox(width: AppDimens.sm),
-              _buildChip('Livraison 2000F'),
-              const SizedBox(width: AppDimens.sm),
-              _buildChip('20-30 min'),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildChip(String label) {
+  @override
+  Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color: AppColors.grey100,
         borderRadius: BorderRadius.circular(AppDimens.radiusFull),
       ),
-      child: Text(
-        label,
-        style: AppTextStyles.caption.copyWith(
-          color: AppColors.grey700,
-          fontWeight: FontWeight.w500,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDeliveryAddress() {
-    return Container(
-      padding: const EdgeInsets.all(AppDimens.lg),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(AppDimens.radiusMd),
-        border: Border.all(color: AppColors.grey200),
-      ),
       child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.location_on_outlined,
-              color: AppColors.primary, size: 22),
-          const SizedBox(width: AppDimens.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Adresse de livraison',
-                  style: AppTextStyles.bodySmall.copyWith(
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  '15 Rue de la Paix, Conakry',
-                  style: AppTextStyles.bodyMedium.copyWith(
-                    color: AppColors.dark,
-                  ),
-                ),
-              ],
+          Icon(icon, size: 12, color: AppColors.grey600),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: AppTextStyles.bodySmall.copyWith(
+              fontSize: 11,
+              color: AppColors.grey600,
+              fontWeight: FontWeight.w500,
             ),
           ),
-          const Icon(Icons.chevron_right,
-              color: AppColors.grey400, size: 22),
         ],
       ),
     );
   }
+}
 
-  Widget _buildCartItem({
-    required String name,
-    required String description,
-    required String price,
-    required int quantity,
-    required String imageUrl,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(AppDimens.md),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(AppDimens.radiusMd),
-        border: Border.all(color: AppColors.grey200),
-      ),
-      child: Row(
-        children: [
-          // Image
-          ClipRRect(
-            borderRadius: BorderRadius.circular(AppDimens.radiusSm),
-            child: Image.network(
-              imageUrl,
-              width: 60,
-              height: 60,
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Container(
-                width: 60,
-                height: 60,
-                color: AppColors.grey200,
-                child: const Icon(Icons.image_outlined,
-                    color: AppColors.grey400),
+// ── Article panier ────────────────────────────────────────
+class _CartItem extends StatefulWidget {
+  const _CartItem({
+    required this.name,
+    required this.description,
+    required this.price,
+    required this.quantity,
+    required this.imageUrl,
+  });
+
+  final String name;
+  final String description;
+  final int price;
+  final int quantity;
+  final String imageUrl;
+
+  @override
+  State<_CartItem> createState() => _CartItemState();
+}
+
+class _CartItemState extends State<_CartItem> {
+  late int _qty;
+
+  @override
+  void initState() {
+    super.initState();
+    _qty = widget.quantity;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(10),
+          child: Image.network(
+            widget.imageUrl,
+            width: 56,
+            height: 56,
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => Container(
+              width: 56,
+              height: 56,
+              color: AppColors.grey100,
+              child: const Icon(Icons.image_outlined,
+                  color: AppColors.grey400, size: 20),
+            ),
+          ),
+        ),
+        const SizedBox(width: 14),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                widget.name,
+                style: AppTextStyles.labelMedium.copyWith(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 14,
+                  color: AppColors.dark,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 2),
+              Text(
+                widget.description,
+                style: AppTextStyles.bodySmall.copyWith(
+                  color: AppColors.grey500,
+                  fontSize: 12,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                '${widget.price} F',
+                style: AppTextStyles.labelMedium.copyWith(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 13,
+                  color: AppColors.dark,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 12),
+        // Sélecteur quantité
+        Row(
+          children: [
+            GestureDetector(
+              onTap: () {
+                if (_qty > 1) setState(() => _qty--);
+              },
+              child: Container(
+                width: 28,
+                height: 28,
+                decoration: BoxDecoration(
+                  color: AppColors.grey100,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.remove,
+                    size: 14, color: AppColors.dark),
               ),
             ),
-          ),
-
-          const SizedBox(width: AppDimens.md),
-
-          // Name, description, price
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  name,
-                  style: AppTextStyles.labelMedium.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              child: Text(
+                '$_qty',
+                style: AppTextStyles.labelMedium.copyWith(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 14,
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  description,
-                  style: AppTextStyles.caption.copyWith(
-                    color: AppColors.grey600,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  price,
-                  style: AppTextStyles.labelMedium.copyWith(
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
+              ),
             ),
-          ),
-
-          const SizedBox(width: AppDimens.md),
-
-          // Quantity selector
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: AppColors.grey100,
-              borderRadius: BorderRadius.circular(AppDimens.radiusSm),
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.remove, size: 14, color: AppColors.grey700),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  child: Text(
-                    quantity.toString(),
-                    style: AppTextStyles.labelSmall.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
+            GestureDetector(
+              onTap: () => setState(() => _qty++),
+              child: Container(
+                width: 28,
+                height: 28,
+                decoration: const BoxDecoration(
+                  color: AppColors.primary,
+                  shape: BoxShape.circle,
                 ),
-                const Icon(Icons.add, size: 14, color: AppColors.grey700),
-              ],
+                child: const Icon(Icons.add,
+                    size: 14, color: Colors.white),
+              ),
             ),
-          ),
-        ],
-      ),
+          ],
+        ),
+      ],
     );
   }
 }

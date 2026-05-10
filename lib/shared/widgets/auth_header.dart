@@ -3,7 +3,7 @@ import 'package:remixicon/remixicon.dart';
 import '../../../../core/constants/constants.dart';
 
 /// Reusable header for auth screens.
-/// Shows a back arrow on the left and "Français" language selector on the right.
+/// Shows "Français" language selector on the right.
 class AuthHeader extends StatelessWidget {
   const AuthHeader({
     super.key,
@@ -20,29 +20,8 @@ class AuthHeader extends StatelessWidget {
         vertical: AppDimens.md,
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        mainAxisAlignment: MainAxisAlignment.end,
         children: [
-          // Back button
-          GestureDetector(
-            onTap: onBack ?? () => Navigator.of(context).pop(),
-            child: Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: AppColors.grey300,
-                  width: 1,
-                ),
-              ),
-              child: const Icon(
-                Icons.arrow_back,
-                size: 20,
-                color: AppColors.dark,
-              ),
-            ),
-          ),
-
           // Language selector
           Row(
             mainAxisSize: MainAxisSize.min,

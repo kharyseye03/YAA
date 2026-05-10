@@ -2,11 +2,11 @@ class ApiConfig {
 
   // ── Keycloak (IAM) ────────────────────────────────────────
   // URL différente car c'est un service complètement séparé
-  static const String iamBaseUrl = 'https://6059-41-214-10-114.ngrok-free.app';
+  static const String iamBaseUrl = 'https://57e6-41-83-137-24.ngrok-free.app';
   static const String loginEndpoint = '/realms/yaa-delivery/protocol/openid-connect/token';
 
   // 🔧 Mode dev → ngrok
-  static const String _ngrokBaseUrl = 'https://2800-41-214-10-114.ngrok-free.app';
+  static const String _ngrokBaseUrl = 'https://331c-41-83-137-24.ngrok-free.app';
   static const String baseUrl       = '$_ngrokBaseUrl/api/v1';
 
 

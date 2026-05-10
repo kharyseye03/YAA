@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:lucide_icons/lucide_icons.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimens.dart';
 import '../../../core/constants/app_text_styles.dart';
@@ -144,6 +143,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
               separatorBuilder: (_, __) => const SizedBox(height: AppDimens.lg),
               itemBuilder: (_, i) => _FullWidthRestaurantCard(
                 restaurant: _items[i],
+                categoryName: widget.args.categoryName,
               ),
             ),
           ),
@@ -253,14 +253,18 @@ class _FilterData {
 }
 
 class _FullWidthRestaurantCard extends StatelessWidget {
-  const _FullWidthRestaurantCard({required this.restaurant});
+  const _FullWidthRestaurantCard({
+    required this.restaurant,
+    required this.categoryName,
+  });
 
   final RestaurantData restaurant;
+  final String categoryName;
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () => showRestaurantBottomSheet(context, restaurant),
+      onTap: () => showRestaurantBottomSheet(context, restaurant, categoryType: categoryName),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -276,6 +280,7 @@ class _FullWidthRestaurantCard extends StatelessWidget {
                   fit: BoxFit.cover,
                   errorBuilder: (_, __, ___) => Container(
                     height: 160,
+                    width: double.infinity,
                     color: AppColors.grey200,
                     child: const Icon(Icons.storefront_outlined,
                         color: AppColors.grey400, size: 48),

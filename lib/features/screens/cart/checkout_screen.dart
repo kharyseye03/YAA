@@ -8,10 +8,6 @@ import '../../../shared/widgets/phone_number_formatter.dart';
 import '../../../shared/widgets/yaa_button.dart';
 import '../../../shared/widgets/yaa_text_field.dart';
 
-
-/// Checkout / Payment screen — "Paiement"
-/// Toggle between "Carte bancaire" and "Mobile money",
-/// shows different payment form for each.
 class CheckoutScreen extends StatefulWidget {
   const CheckoutScreen({super.key});
 
@@ -20,7 +16,7 @@ class CheckoutScreen extends StatefulWidget {
 }
 
 class _CheckoutScreenState extends State<CheckoutScreen> {
-  bool _isCard = false;
+  int _paymentTab = 0; // 0 = Mobile money · 1 = Carte
   int _selectedProvider = 0;
 
   final _nameController = TextEditingController();
@@ -43,445 +39,187 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final top = MediaQuery.of(context).padding.top;
+
     return Scaffold(
-      backgroundColor: AppColors.scaffold,
+      backgroundColor: Colors.white,
       body: Column(
         children: [
-          // ── Header ──────────────────────────────────────
-          _buildHeader(context),
-
-          // ── Content ─────────────────────────────────────
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppDimens.screenPadding,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: AppDimens.lg),
-
-                  // Total card (reused from cart)
-                  _buildTotalCard(),
-
-                  const SizedBox(height: AppDimens.xxl),
-
-                  // Informations personnelles
-                  Text(
-                    'Informations personnelles',
-                    style: AppTextStyles.labelLarge.copyWith(
-                      color: AppColors.primary,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-
-                  const SizedBox(height: AppDimens.lg),
-
-                  YaaTextField(
-                    controller: _nameController,
-                    label: 'Prénom et nom',
-                    hint: 'Ex: Birima Diop',
-                  ),
-
-                  const SizedBox(height: AppDimens.lg),
-
-                  PhoneTextField(controller: _phoneController),
-
-                  const SizedBox(height: AppDimens.xxl),
-
-                  // Informations de paiement
-                  Text(
-                    'Informations de paiement',
-                    style: AppTextStyles.labelLarge.copyWith(
-                      color: AppColors.primary,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-
-                  const SizedBox(height: AppDimens.md),
-
-                  // Payment method toggle
-                  _buildPaymentToggle(),
-
-                  const SizedBox(height: AppDimens.md),
-
-                  // Payment form
-                  _isCard
-                      ? _buildCardForm()
-                      : _buildMobileMoneyProviders(),
-
-                  const SizedBox(height: AppDimens.xxl),
-                ],
-              ),
+          // ── Header blanc ──────────────────────────────
+          Padding(
+            padding: EdgeInsets.only(
+              top: top + 12,
+              left: AppDimens.screenPadding,
+              right: AppDimens.screenPadding,
+              bottom: 16,
             ),
-          ),
-
-          // ── Bottom buttons ────────────────────────────
-          Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppDimens.screenPadding,
-              vertical: AppDimens.lg,
-            ),
-            color: AppColors.white,
-            child: SafeArea(
-              top: false,
-              child: Row(
-                children: [
-                  // Annuler
-                  Expanded(
-                    child: YaaButton(
-                      label: 'Annuler',
-                      onPressed: () => Navigator.of(context).pop(),
-                      isOutlined: true,
-                      foregroundColor: AppColors.primary,
-                    ),
-                  ),
-                  const SizedBox(width: AppDimens.md),
-                  // Payer
-                  Expanded(
-                    child: YaaButton(
-                      label: 'Payer',
-                      onPressed: () => _showOrderSuccessSheet(),
-                      icon: Icons.arrow_forward,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHeader(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.only(
-        left: AppDimens.screenPadding,
-        right: AppDimens.screenPadding,
-        top: MediaQuery.of(context).padding.top + AppDimens.md,
-        bottom: AppDimens.xl,
-      ),
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Color(0xFF1652F0),
-            Color(0xFF08399A)
-          ],
-        ),
-      ),
-      child: Row(
-        children: [
-          GestureDetector(
-            onTap: () => Navigator.of(context).pop(),
-            child: Container(
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                color: AppColors.white.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(AppDimens.radiusMd),
-              ),
-              child: const Icon(
-                Icons.chevron_left,
-                color: AppColors.white,
-                size: 28,
-              ),
-            ),
-          ),
-          const SizedBox(width: AppDimens.md),
-          Text(
-            'Paiement',
-            style: AppTextStyles.h4.copyWith(
-              color: AppColors.white,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTotalCard() {
-    return Container(
-      padding: const EdgeInsets.all(AppDimens.lg),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(AppDimens.radiusMd),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.black.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Total à payer',
-                style: AppTextStyles.bodySmall.copyWith(
-                  color: AppColors.primary,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              Container(
-                width: 28,
-                height: 28,
-                decoration: const BoxDecoration(
-                  color: AppColors.primary,
-                  shape: BoxShape.circle,
-                ),
-                child: const Center(
-                  child: Text(
-                    '4',
-                    style: TextStyle(
-                      fontFamily: 'Archivo',
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.white,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppDimens.xs),
-          const Text(
-            '8000F cfa',
-            style: TextStyle(
-              fontFamily: 'Archivo',
-              fontSize: 30,
-              fontWeight: FontWeight.w800,
-              color: AppColors.dark,
-            ),
-          ),
-          const SizedBox(height: AppDimens.md),
-          Row(
-            children: [
-              _buildChip('3 articles'),
-              const SizedBox(width: AppDimens.sm),
-              _buildChip('Livraison 2000F'),
-              const SizedBox(width: AppDimens.sm),
-              _buildChip('20-30 min'),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildChip(String label) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: AppColors.grey100,
-        borderRadius: BorderRadius.circular(AppDimens.radiusFull),
-      ),
-      child: Text(
-        label,
-        style: AppTextStyles.caption.copyWith(
-          color: AppColors.grey700,
-          fontWeight: FontWeight.w500,
-        ),
-      ),
-    );
-  }
-
-  // ── Payment Toggle ───────────────────────────────────────
-  Widget _buildPaymentToggle() {
-    return Row(
-      children: [
-        Expanded(
-          child: _buildPaymentTab(
-            icon: Icons.credit_card,
-            label: 'Carte bancaire',
-            isActive: _isCard,
-            onTap: () => setState(() => _isCard = true),
-          ),
-        ),
-        const SizedBox(width: AppDimens.md),
-        Expanded(
-          child: _buildPaymentTab(
-            icon: Icons.phone_android,
-            label: 'Mobile money',
-            isActive: !_isCard,
-            onTap: () => setState(() => _isCard = false),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildPaymentTab({
-    required IconData icon,
-    required String label,
-    required bool isActive,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 250),
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppDimens.md,
-          vertical: AppDimens.md,
-        ),
-        decoration: BoxDecoration(
-          color: isActive ? AppColors.primarySurface : AppColors.white,
-          borderRadius: BorderRadius.circular(AppDimens.radiusMd),
-          border: Border.all(
-            color: isActive ? AppColors.primary : AppColors.grey300,
-            width: isActive ? 1.5 : 1,
-          ),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon,
-                size: 18,
-                color:
-                isActive ? AppColors.primary : AppColors.grey600),
-            const SizedBox(width: 8),
-            Text(
-              label,
-              style: AppTextStyles.labelSmall.copyWith(
-                color:
-                isActive ? AppColors.primary : AppColors.grey600,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // ── Mobile Money Providers ───────────────────────────────
-  Widget _buildMobileMoneyProviders() {
-    final providers = [
-      {'name': 'Wave', 'image': 'assets/images/wave2.webp'},
-      {'name': 'Yas money', 'image': 'assets/images/yas2.webp'},
-      {'name': 'Orange money', 'image': 'assets/images/om.webp'},
-      {'name': 'Kay pay', 'image': 'assets/images/kpay.webp'},
-    ];
-
-    return GridView.builder(
-      padding: EdgeInsets.zero,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        mainAxisSpacing: AppDimens.md,
-        crossAxisSpacing: AppDimens.md,
-        childAspectRatio: 1.6,
-      ),
-      itemCount: providers.length,
-      itemBuilder: (context, index) {
-        final provider = providers[index];
-        final isSelected = _selectedProvider == index;
-
-        return GestureDetector(
-          onTap: () => setState(() => _selectedProvider = index),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            decoration: BoxDecoration(
-              color: AppColors.white,
-              borderRadius: BorderRadius.circular(AppDimens.radiusMd),
-              border: Border.all(
-                color: isSelected
-                    ? AppColors.primary
-                    : AppColors.grey300,
-                width: isSelected ? 1.5 : 1,
-              ),
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+            child: Row(
               children: [
-                Image.asset(
-                  provider['image'] as String,
-                  height: 32,
-                  fit: BoxFit.contain,
-                  errorBuilder: (context, error, stackTrace) =>
-                  const Icon(Icons.payment, size: 28, color: AppColors.grey600),
+                GestureDetector(
+                  onTap: () => Navigator.of(context).pop(),
+                  child: Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: AppColors.grey100,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.arrow_back_ios_new_rounded,
+                        size: 16, color: AppColors.dark),
+                  ),
                 ),
-                const SizedBox(height: AppDimens.sm),
+                const SizedBox(width: 14),
                 Text(
-                  provider['name'] as String,
-                  style: AppTextStyles.bodySmall.copyWith(
-                    color: isSelected ? AppColors.primary : AppColors.dark,
-                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                  'Paiement',
+                  style: AppTextStyles.h4.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.dark,
+                  ),
+                ),
+                const Spacer(),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 12, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: AppColors.grey100,
+                    borderRadius:
+                        BorderRadius.circular(AppDimens.radiusFull),
+                  ),
+                  child: Text(
+                    '8 000 F',
+                    style: AppTextStyles.labelSmall.copyWith(
+                      color: AppColors.dark,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
+                    ),
                   ),
                 ),
               ],
             ),
           ),
-        );
-      },
+
+          const Divider(height: 1, color: AppColors.grey200),
+
+          // ── Contenu ───────────────────────────────────
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.only(bottom: 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // ── Récapitulatif ─────────────────────
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                        AppDimens.screenPadding, 20,
+                        AppDimens.screenPadding, 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _SectionLabel('Récapitulatif'),
+                        const SizedBox(height: 16),
+                        _PriceRow(label: 'Sous-total', value: '6 000 F'),
+                        const SizedBox(height: 10),
+                        _PriceRow(label: 'Frais de livraison', value: '2 000 F'),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          child: const Divider(
+                              height: 1, color: AppColors.grey200),
+                        ),
+                        _PriceRow(
+                            label: 'Total', value: '8 000 F', isTotal: true),
+                      ],
+                    ),
+                  ),
+
+                  const Divider(height: 1, color: AppColors.grey200),
+
+                  // ── Infos personnelles ────────────────
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                        AppDimens.screenPadding, 20,
+                        AppDimens.screenPadding, 20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _SectionLabel('Informations personnelles'),
+                        const SizedBox(height: 16),
+                        YaaTextField(
+                          controller: _nameController,
+                          label: 'Prénom et nom',
+                          hint: 'Ex: Birima Diop',
+                          textInputAction: TextInputAction.next,
+                        ),
+                        const SizedBox(height: AppDimens.lg),
+                        PhoneTextField(
+                          controller: _phoneController,
+                          textInputAction: TextInputAction.next,
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const Divider(height: 1, color: AppColors.grey200),
+
+                  // ── Mode de paiement ──────────────────
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                        AppDimens.screenPadding, 20,
+                        AppDimens.screenPadding, 0),
+                    child: _SectionLabel('Mode de paiement'),
+                  ),
+
+                  // Tabs Mobile money / Carte
+                  _PaymentTabs(
+                    current: _paymentTab,
+                    onTap: (i) => setState(() => _paymentTab = i),
+                  ),
+
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                        AppDimens.screenPadding, 20,
+                        AppDimens.screenPadding, 24),
+                    child: _paymentTab == 0
+                        ? _MobileMoneyList(
+                            selected: _selectedProvider,
+                            onSelect: (i) =>
+                                setState(() => _selectedProvider = i),
+                          )
+                        : _CardForm(
+                            nameCtrl: _cardNameController,
+                            numberCtrl: _cardNumberController,
+                            expiryCtrl: _expiryController,
+                            cvvCtrl: _cvvController,
+                          ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // ── Bouton Payer fixe ─────────────────────────
+          Container(
+            padding: EdgeInsets.only(
+              left: AppDimens.screenPadding,
+              right: AppDimens.screenPadding,
+              top: 12,
+              bottom: MediaQuery.of(context).padding.bottom + 12,
+            ),
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              border: Border(top: BorderSide(color: AppColors.grey200)),
+            ),
+            child: YaaButton(
+              label: 'Payer · 8 000 F',
+              onPressed: _showSuccessSheet,
+              icon: Icons.lock_outline_rounded,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
-  // ── Card Form ────────────────────────────────────────────
-  Widget _buildCardForm() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        YaaTextField(
-          controller: _cardNameController,
-          label: 'Nom sur la carte',
-          hint: 'Lamine wade',
-          textInputAction: TextInputAction.next,
-        ),
-
-        const SizedBox(height: AppDimens.lg),
-
-        YaaTextField(
-          controller: _cardNumberController,
-          label: 'Numéro de carte',
-          hint: '1234 5678 9012 3456',
-          keyboardType: TextInputType.number,
-          prefixIcon: Icons.credit_card,
-          textInputAction: TextInputAction.next,
-        ),
-
-        const SizedBox(height: AppDimens.lg),
-
-        // Expiry + CVV side by side
-        Row(
-          children: [
-            Expanded(
-              child: YaaTextField(
-                controller: _expiryController,
-                label: 'Date d\'expiration',
-                hint: 'MM/AA',
-                keyboardType: TextInputType.datetime,
-                textInputAction: TextInputAction.next,
-              ),
-            ),
-            const SizedBox(width: AppDimens.md),
-            Expanded(
-              child: YaaTextField(
-                controller: _cvvController,
-                label: 'CVV',
-                hint: '123',
-                keyboardType: TextInputType.number,
-                obscureText: true,
-                textInputAction: TextInputAction.done,
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  void _showOrderSuccessSheet() {
+  void _showSuccessSheet() {
     showModalBottomSheet(
       context: context,
       backgroundColor: AppColors.white,
@@ -499,8 +237,295 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   }
 }
 
-// ── Bottom sheet : commande enregistrée ────────────────────────────────────
+// ── Label de section ──────────────────────────────────────
+class _SectionLabel extends StatelessWidget {
+  const _SectionLabel(this.text);
+  final String text;
 
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text,
+      style: AppTextStyles.labelMedium.copyWith(
+        fontWeight: FontWeight.w700,
+        fontSize: 13,
+        color: AppColors.grey500,
+        letterSpacing: 0.4,
+      ),
+    );
+  }
+}
+
+// ── Ligne prix ────────────────────────────────────────────
+class _PriceRow extends StatelessWidget {
+  const _PriceRow({
+    required this.label,
+    required this.value,
+    this.isTotal = false,
+  });
+  final String label;
+  final String value;
+  final bool isTotal;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: isTotal
+              ? AppTextStyles.labelMedium.copyWith(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 15,
+                  color: AppColors.dark,
+                )
+              : AppTextStyles.bodyMedium.copyWith(
+                  color: AppColors.grey500,
+                  fontSize: 13,
+                ),
+        ),
+        Text(
+          value,
+          style: isTotal
+              ? AppTextStyles.labelMedium.copyWith(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 16,
+                  color: AppColors.dark,
+                )
+              : AppTextStyles.bodyMedium.copyWith(
+                  color: AppColors.dark,
+                  fontSize: 13,
+                ),
+        ),
+      ],
+    );
+  }
+}
+
+// ── Tabs Mobile money / Carte ─────────────────────────────
+class _PaymentTabs extends StatelessWidget {
+  const _PaymentTabs({required this.current, required this.onTap});
+  final int current;
+  final ValueChanged<int> onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    const labels = ['Mobile Money', 'Carte bancaire'];
+    const icons = [Icons.phone_android_outlined, Icons.credit_card_outlined];
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Row(
+          children: List.generate(2, (i) {
+            final active = i == current;
+            return Expanded(
+              child: GestureDetector(
+                onTap: () => onTap(i),
+                behavior: HitTestBehavior.opaque,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        icons[i],
+                        size: 16,
+                        color: active
+                            ? AppColors.dark
+                            : AppColors.grey400,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        labels[i],
+                        style: AppTextStyles.labelMedium.copyWith(
+                          fontSize: 13,
+                          fontWeight: active
+                              ? FontWeight.w700
+                              : FontWeight.w500,
+                          color: active
+                              ? AppColors.dark
+                              : AppColors.grey400,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          }),
+        ),
+        Stack(
+          children: [
+            Container(height: 1, color: AppColors.grey200),
+            AnimatedAlign(
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeInOut,
+              alignment: current == 0
+                  ? Alignment.centerLeft
+                  : Alignment.centerRight,
+              child: FractionallySizedBox(
+                widthFactor: 0.5,
+                child: Container(height: 2, color: AppColors.dark),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+// ── Liste Mobile Money ────────────────────────────────────
+class _MobileMoneyList extends StatelessWidget {
+  const _MobileMoneyList({required this.selected, required this.onSelect});
+  final int selected;
+  final ValueChanged<int> onSelect;
+
+  static const _providers = [
+    ('Wave', 'assets/images/wave2.webp'),
+    ('Yas Money', 'assets/images/yas2.webp'),
+    ('Orange Money', 'assets/images/om.webp'),
+    ('Kay Pay', 'assets/images/kpay.webp'),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: List.generate(_providers.length, (i) {
+        final (name, img) = _providers[i];
+        final active = i == selected;
+        return Column(
+          children: [
+            GestureDetector(
+              onTap: () => onSelect(i),
+              behavior: HitTestBehavior.opaque,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: AppColors.grey100,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(10),
+                        child: Image.asset(
+                          img,
+                          fit: BoxFit.contain,
+                          errorBuilder: (_, __, ___) => const Icon(
+                              Icons.payment,
+                              color: AppColors.grey400),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Text(
+                        name,
+                        style: AppTextStyles.labelMedium.copyWith(
+                          fontWeight: active
+                              ? FontWeight.w700
+                              : FontWeight.w500,
+                          fontSize: 14,
+                          color: AppColors.dark,
+                        ),
+                      ),
+                    ),
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      width: 22,
+                      height: 22,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: active
+                              ? AppColors.dark
+                              : AppColors.grey300,
+                          width: active ? 6 : 1.5,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            if (i < _providers.length - 1)
+              const Divider(height: 1, color: AppColors.grey200),
+          ],
+        );
+      }),
+    );
+  }
+}
+
+// ── Formulaire carte ──────────────────────────────────────
+class _CardForm extends StatelessWidget {
+  const _CardForm({
+    required this.nameCtrl,
+    required this.numberCtrl,
+    required this.expiryCtrl,
+    required this.cvvCtrl,
+  });
+  final TextEditingController nameCtrl;
+  final TextEditingController numberCtrl;
+  final TextEditingController expiryCtrl;
+  final TextEditingController cvvCtrl;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        YaaTextField(
+          controller: nameCtrl,
+          label: 'Nom sur la carte',
+          hint: 'Lamine Wade',
+          textInputAction: TextInputAction.next,
+        ),
+        const SizedBox(height: AppDimens.lg),
+        YaaTextField(
+          controller: numberCtrl,
+          label: 'Numéro de carte',
+          hint: '1234 5678 9012 3456',
+          keyboardType: TextInputType.number,
+          prefixIcon: Icons.credit_card_outlined,
+          textInputAction: TextInputAction.next,
+        ),
+        const SizedBox(height: AppDimens.lg),
+        Row(
+          children: [
+            Expanded(
+              child: YaaTextField(
+                controller: expiryCtrl,
+                label: 'Expiration',
+                hint: 'MM/AA',
+                keyboardType: TextInputType.datetime,
+                textInputAction: TextInputAction.next,
+              ),
+            ),
+            const SizedBox(width: AppDimens.md),
+            Expanded(
+              child: YaaTextField(
+                controller: cvvCtrl,
+                label: 'CVV',
+                hint: '···',
+                keyboardType: TextInputType.number,
+                obscureText: true,
+                textInputAction: TextInputAction.done,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+// ── Bottom sheet succès ───────────────────────────────────
 class _OrderSuccessSheet extends StatefulWidget {
   const _OrderSuccessSheet({required this.onContinue});
   final VoidCallback onContinue;
@@ -514,114 +539,89 @@ class _OrderSuccessSheetState extends State<_OrderSuccessSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(
-          AppDimens.screenPadding,
-          16,
-          AppDimens.screenPadding,
-          AppDimens.xxl,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Drag handle
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+          AppDimens.screenPadding, 16, AppDimens.screenPadding, AppDimens.xxl),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 36, height: 4,
+            decoration: BoxDecoration(
                 color: AppColors.grey300,
-                borderRadius: BorderRadius.circular(2),
-              ),
+                borderRadius: BorderRadius.circular(2)),
+          ),
+
+          const SizedBox(height: AppDimens.xxl),
+
+          Container(
+            width: 80, height: 80,
+            decoration: const BoxDecoration(
+                shape: BoxShape.circle, color: AppColors.primarySurface),
+            child: const Icon(Icons.check_rounded,
+                size: 40, color: AppColors.primary),
+          ),
+
+          const SizedBox(height: AppDimens.xl),
+
+          Text(
+            'Commande enregistrée !',
+            style: AppTextStyles.h3.copyWith(
+              fontWeight: FontWeight.w800,
+              color: AppColors.dark,
             ),
+          ),
 
-            const SizedBox(height: AppDimens.xxl),
+          const SizedBox(height: 8),
 
-            // Double cercle succès
-            Container(
-              width: 110,
-              height: 110,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppColors.primarySurface,
-              ),
-              child: Center(
-                child: Container(
-                  width: 70,
-                  height: 70,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: AppColors.primary.withValues(alpha: 0.12),
-                  ),
-                  child: const Icon(
-                    Icons.check_circle_outline_rounded,
-                    size: 36,
-                    color: AppColors.primary,
+          Text(
+            'Votre commande a bien été reçue.',
+            style: AppTextStyles.bodyMedium.copyWith(
+              color: AppColors.grey500,
+            ),
+          ),
+
+          const SizedBox(height: AppDimens.xxl),
+          const Divider(color: AppColors.grey200, height: 1),
+          const SizedBox(height: AppDimens.lg),
+
+          Text(
+            'Notez votre expérience',
+            style: AppTextStyles.bodyMedium.copyWith(
+              color: AppColors.grey500,
+            ),
+          ),
+
+          const SizedBox(height: AppDimens.md),
+
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(5, (i) {
+              return GestureDetector(
+                onTap: () {
+                  setState(() => _rating = i + 1);
+                  Future.delayed(
+                    const Duration(milliseconds: 600),
+                    widget.onContinue,
+                  );
+                },
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 6),
+                  child: Icon(
+                    i < _rating ? Icons.star_rounded : Icons.star_outline_rounded,
+                    size: 38,
+                    color: i < _rating
+                        ? const Color(0xFFFFC107)
+                        : AppColors.grey300,
                   ),
                 ),
-              ),
-            ),
+              );
+            }),
+          ),
 
-            const SizedBox(height: AppDimens.xl),
-
-            // Titre
-            Text(
-              'Votre commande a été bien\nenregistrée',
-              textAlign: TextAlign.center,
-              style: AppTextStyles.h4.copyWith(
-                fontWeight: FontWeight.w700,
-                color: AppColors.dark,
-              ),
-            ),
-
-            const SizedBox(height: AppDimens.xl),
-
-            // Séparateur
-            const Divider(color: AppColors.grey200),
-
-            const SizedBox(height: AppDimens.lg),
-
-            // Rating
-            Text(
-              'Notez votre expérience',
-              style: AppTextStyles.bodyMedium.copyWith(
-                color: AppColors.grey600,
-              ),
-            ),
-
-            const SizedBox(height: AppDimens.md),
-
-            // Étoiles
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(5, (index) {
-                return GestureDetector(
-                  onTap: () {
-                    setState(() => _rating = index + 1);
-                    // Redirige après une courte pause
-                    Future.delayed(
-                      const Duration(milliseconds: 600),
-                      widget.onContinue,
-                    );
-                  },
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 6),
-                    child: Icon(
-                      index < _rating ? Icons.star : Icons.star_border,
-                      size: 36,
-                      color: AppColors.primary,
-                    ),
-                  ),
-                );
-              }),
-            ),
-
-            const SizedBox(height: AppDimens.xl),
-          ],
-        ),
+          const SizedBox(height: AppDimens.xl),
+        ],
       ),
     );
   }
-
 }

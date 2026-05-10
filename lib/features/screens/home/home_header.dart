@@ -35,7 +35,7 @@ class HomeHeader extends StatelessWidget {
               children: [
                 Icon(
                   LucideIcons.mapPin,
-                  color: AppColors.black,
+                  color: AppColors.primary,
                   size: 20,
                 ),
                 const SizedBox(width: 8),
@@ -68,7 +68,7 @@ class HomeHeader extends StatelessWidget {
                           const SizedBox(width: 3),
                           Icon(
                             LucideIcons.chevronDown,
-                            color: AppColors.dark,
+                            color: AppColors.primary,
                             size: 14,
                           ),
                         ],

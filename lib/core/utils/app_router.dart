@@ -22,6 +22,7 @@ import '../../features/screens/profile/edit_personal_info_screen.dart';
 import '../../features/screens/profile/personal_info_screen.dart';
 import '../../features/screens/category/category_screen.dart';
 import '../../features/screens/profile/terms_screen.dart';
+import '../../features/screens/search/search_screen.dart';
 import '../../features/starter/onboarding/screens/onboarding_screen.dart';
 import '../../features/starter/splash/splash_screen.dart';
 
@@ -257,6 +258,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => CategoryScreen(
           args: state.extra as CategoryScreenArgs,
         ),
+      ),
+      GoRoute(
+        path: RoutePaths.search,
+        name: RouteNames.search,
+        builder: (context, state) => const SearchScreen(),
       ),
     ],
 
