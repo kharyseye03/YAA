@@ -9,7 +9,6 @@ import '../../../shared/widgets/user_avatar.dart';
 import '../../auth/providers/auth_notifier.dart';
 import '../../user/providers/user_notifier.dart';
 
-/// Profile screen — "Mon compte"
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
 
@@ -22,15 +21,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final top = MediaQuery.of(context).padding.top;
     final user = ref.watch(userProvider);
     final profile = user.profile;
 
     return SingleChildScrollView(
       child: Column(
         children: [
-          const SizedBox(height: AppDimens.xxl),
+          SizedBox(height: top + 24),
 
-          // Avatar + Name
+          // ── Photo + nom ───────────────────────────────
           Center(
             child: Column(
               children: [
@@ -38,159 +38,274 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   children: [
                     user.isLoading
                         ? Container(
-                            width: 100, height: 100,
-                            decoration: BoxDecoration(shape: BoxShape.circle, color: AppColors.grey200, border: Border.all(color: AppColors.grey300, width: 2)),
-                            child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                            width: 88,
+                            height: 88,
+                            decoration: const BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: AppColors.grey100,
+                            ),
+                            child: const Center(
+                              child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: AppColors.primary),
+                            ),
                           )
                         : UserAvatar(imageUrl: profile?.imageUrl),
                     Positioned(
                       bottom: 0,
                       right: 0,
                       child: GestureDetector(
-                        onTap: () => context.pushNamed(RouteNames.editPersonalInfo),
+                        onTap: () => context.pushNamed(
+                            RouteNames.editPersonalInfo),
                         child: Container(
-                          width: 32,
-                          height: 32,
-                          decoration: const BoxDecoration(
-                            color: AppColors.primary,
+                          width: 28,
+                          height: 28,
+                          decoration: BoxDecoration(
+                            color: AppColors.dark,
                             shape: BoxShape.circle,
+                            border: Border.all(
+                                color: Colors.white, width: 2),
                           ),
-                          child: const Icon(Icons.edit, color: AppColors.white, size: 16),
+                          child: const Icon(Icons.edit_rounded,
+                              color: Colors.white, size: 13),
                         ),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: AppDimens.lg),
+
+                const SizedBox(height: 14),
+
                 Text(
                   profile?.fullName ?? '—',
-                  style: AppTextStyles.h3.copyWith(fontWeight: FontWeight.w700),
+                  style: AppTextStyles.h3.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.dark,
+                  ),
                 ),
+
                 const SizedBox(height: 4),
+
                 Text(
                   profile?.email ?? '—',
-                  style: AppTextStyles.bodySmall.copyWith(color: AppColors.grey500),
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: AppColors.grey400,
+                    fontSize: 13,
+                  ),
                 ),
               ],
             ),
           ),
 
-          const SizedBox(height: AppDimens.xxxl),
+          const SizedBox(height: 36),
+          const Divider(height: 1, color: AppColors.grey200),
 
-          _buildSectionTitle('INFORMATIONS PERSONNELLES'),
-          const SizedBox(height: AppDimens.sm),
-          _buildInfoTile(icon: Icons.mail_outlined, title: 'Adresse e-mail', value: profile?.email ?? '—', onTap: () => context.pushNamed(RouteNames.personalInfo)),
-          _buildInfoTile(icon: Icons.phone_outlined, title: 'Téléphone', value: profile?.telephone ?? '—', onTap: () => context.pushNamed(RouteNames.personalInfo)),
-
-          const SizedBox(height: AppDimens.xxl),
-
-          _buildSectionTitle('PRÉFÉRENCES'),
-          const SizedBox(height: AppDimens.sm),
-          _buildInfoTile(icon: Icons.language, title: 'Langue', value: 'Français (France)', trailing: const Icon(Icons.translate, color: AppColors.grey500, size: 22)),
-          _buildToggleTile(icon: Icons.notifications_none_outlined, title: 'Notifications', value: _notificationsEnabled, onChanged: (val) => setState(() => _notificationsEnabled = val)),
-          _buildInfoTile(icon: Icons.description_outlined, title: 'Conditions d\'utilisations', onTap: () => context.pushNamed(RouteNames.terms)),
-
-          const SizedBox(height: AppDimens.xxl),
-
-          _buildSectionTitle('ZONE DE DANGER'),
-          const SizedBox(height: AppDimens.sm),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppDimens.screenPadding),
-            child: Column(
-              children: [
-                _buildDangerTile(
-                  icon: Icons.logout,
-                  label: 'Se déconnecter',
-                  onTap: () async {
-                    await ref.read(authProvider.notifier).logout();
-                    if (context.mounted) context.goNamed(RouteNames.login);
-                  },
-                ),
-                const SizedBox(height: AppDimens.md),
-                _buildDangerTile(icon: Icons.delete_outline, label: 'Supprimer mon compte', onTap: () {}),
-              ],
-            ),
+          // ── Infos personnelles ────────────────────────
+          _Row(
+            icon: Icons.person_outline_rounded,
+            label: 'Informations personnelles',
+            onTap: () => context.pushNamed(RouteNames.personalInfo),
+          ),
+          const _Divider(),
+          _Row(
+            icon: Icons.location_on_outlined,
+            label: 'Adresse de livraison',
+            onTap: () {},
+          ),
+          const _Divider(),
+          _Row(
+            icon: Icons.phone_outlined,
+            label: profile?.telephone ?? 'Téléphone',
+            subtitle: profile?.telephone != null ? null : 'Non renseigné',
+            onTap: () => context.pushNamed(RouteNames.personalInfo),
           ),
 
-          const SizedBox(height: AppDimens.huge),
+          const SizedBox(height: 8),
+          const Divider(height: 1, color: AppColors.grey200),
+          const SizedBox(height: 8),
+
+          // ── Préférences ───────────────────────────────
+          _ToggleRow(
+            icon: Icons.notifications_none_rounded,
+            label: 'Notifications',
+            value: _notificationsEnabled,
+            onChanged: (v) => setState(() => _notificationsEnabled = v),
+          ),
+          const _Divider(),
+          _Row(
+            icon: Icons.language_rounded,
+            label: 'Langue',
+            subtitle: 'Français',
+            onTap: () {},
+          ),
+          const _Divider(),
+          _Row(
+            icon: Icons.description_outlined,
+            label: 'Conditions d\'utilisation',
+            onTap: () => context.pushNamed(RouteNames.terms),
+          ),
+
+          const SizedBox(height: 8),
+          const Divider(height: 1, color: AppColors.grey200),
+          const SizedBox(height: 8),
+
+          // ── Déconnexion ───────────────────────────────
+          _Row(
+            icon: Icons.logout_rounded,
+            label: 'Se déconnecter',
+            labelColor: AppColors.error,
+            iconColor: AppColors.error,
+            onTap: () async {
+              await ref.read(authProvider.notifier).logout();
+              if (context.mounted) context.goNamed(RouteNames.login);
+            },
+          ),
+          const _Divider(),
+          _Row(
+            icon: Icons.delete_outline_rounded,
+            label: 'Supprimer mon compte',
+            labelColor: AppColors.error,
+            iconColor: AppColors.error,
+            onTap: () {},
+          ),
+
+          const SizedBox(height: 80),
         ],
       ),
     );
   }
+}
 
-  Widget _buildSectionTitle(String title) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppDimens.screenPadding),
-      child: Align(
-        alignment: Alignment.centerLeft,
-        child: Text(title, style: AppTextStyles.overline.copyWith(color: AppColors.grey500, letterSpacing: 1.5, fontWeight: FontWeight.w600)),
-      ),
-    );
-  }
+// ── Ligne simple ──────────────────────────────────────────
+class _Row extends StatelessWidget {
+  const _Row({
+    required this.icon,
+    required this.label,
+    this.subtitle,
+    this.labelColor,
+    this.iconColor,
+    this.onTap,
+  });
 
-  Widget _buildInfoTile({required IconData icon, required String title, String? value, Widget? trailing, VoidCallback? onTap}) {
+  final IconData icon;
+  final String label;
+  final String? subtitle;
+  final Color? labelColor;
+  final Color? iconColor;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: AppDimens.screenPadding, vertical: AppDimens.md),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppDimens.screenPadding,
+          vertical: 14,
+        ),
         child: Row(
           children: [
-            Container(
-              width: 40, height: 40,
-              decoration: BoxDecoration(color: AppColors.primarySurface, borderRadius: BorderRadius.circular(AppDimens.radiusMd)),
-              child: Icon(icon, color: AppColors.primary, size: 20),
-            ),
-            const SizedBox(width: AppDimens.md),
+            Icon(icon,
+                size: 20,
+                color: iconColor ?? AppColors.grey600),
+            const SizedBox(width: 16),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: AppTextStyles.bodySmall.copyWith(color: AppColors.grey500)),
-                  if (value != null) ...[const SizedBox(height: 2), Text(value, style: AppTextStyles.labelMedium.copyWith(fontWeight: FontWeight.w600))],
+                  Text(
+                    label,
+                    style: AppTextStyles.labelMedium.copyWith(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: labelColor ?? AppColors.dark,
+                    ),
+                  ),
+                  if (subtitle != null) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle!,
+                      style: AppTextStyles.bodySmall.copyWith(
+                        color: AppColors.grey400,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
-            trailing ?? (onTap != null ? const Icon(Icons.chevron_right, color: AppColors.grey400, size: 22) : const SizedBox.shrink()),
+            if (onTap != null && labelColor == null)
+              const Icon(Icons.chevron_right,
+                  size: 18, color: AppColors.grey300),
           ],
         ),
       ),
     );
   }
+}
 
-  Widget _buildToggleTile({required IconData icon, required String title, required bool value, required ValueChanged<bool> onChanged}) {
+// ── Ligne avec toggle ─────────────────────────────────────
+class _ToggleRow extends StatelessWidget {
+  const _ToggleRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.onChanged,
+  });
+
+  final IconData icon;
+  final String label;
+  final bool value;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppDimens.screenPadding, vertical: AppDimens.md),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppDimens.screenPadding,
+        vertical: 10,
+      ),
       child: Row(
         children: [
-          Container(
-            width: 40, height: 40,
-            decoration: BoxDecoration(color: AppColors.primarySurface, borderRadius: BorderRadius.circular(AppDimens.radiusMd)),
-            child: Icon(icon, color: AppColors.primary, size: 20),
+          Icon(icon, size: 20, color: AppColors.grey600),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Text(
+              label,
+              style: AppTextStyles.labelMedium.copyWith(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: AppColors.dark,
+              ),
+            ),
           ),
-          const SizedBox(width: AppDimens.md),
-          Expanded(child: Text(title, style: AppTextStyles.labelMedium.copyWith(fontWeight: FontWeight.w600))),
-          Switch(value: value, onChanged: onChanged, activeColor: AppColors.primary),
+          Transform.scale(
+            scale: 0.85,
+            child: Switch(
+              value: value,
+              onChanged: onChanged,
+              activeThumbColor: Colors.white,
+              activeTrackColor: AppColors.dark,
+              trackOutlineColor:
+                  WidgetStateProperty.all(Colors.transparent),
+            ),
+          ),
         ],
       ),
     );
   }
+}
 
-  Widget _buildDangerTile({required IconData icon, required String label, required VoidCallback onTap}) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(AppDimens.lg),
-        decoration: BoxDecoration(color: AppColors.error.withValues(alpha: 0.06), borderRadius: BorderRadius.circular(AppDimens.radiusMd)),
-        child: Row(
-          children: [
-            Icon(icon, color: AppColors.error, size: 22),
-            const SizedBox(width: AppDimens.md),
-            Text(label, style: AppTextStyles.labelMedium.copyWith(color: AppColors.error, fontWeight: FontWeight.w600)),
-          ],
-        ),
-      ),
+// ── Divider interne ───────────────────────────────────────
+class _Divider extends StatelessWidget {
+  const _Divider();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Padding(
+      padding: EdgeInsets.only(left: 52),
+      child: Divider(height: 1, color: AppColors.grey200),
     );
   }
 }

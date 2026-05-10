@@ -11,12 +11,14 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimens.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/utils/app_router.dart';
+import '../cart/cart_screen.dart';
 import '../order/orders_screen.dart';
 import '../profile/profile_screen.dart';
 import 'category_list.dart';
 import 'home_bottom_nav.dart';
 import 'home_header.dart';
 import 'providers/category_provider.dart';
+import '../../../config/api/api_config.dart';
 import '../category/category_screen.dart';
 
 /// Main home dashboard screen.
@@ -156,22 +158,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       backgroundColor: Colors.white,
       body: Column(
         children: [
-          // ── Header (blue) ─────────────────────────────────
-          _currentNavIndex == 2
-              ? _buildSimpleHeader('Commandes')
-              : _currentNavIndex == 3
-              ? _buildSimpleHeader('Mon compte')
-              : HomeHeader(
-            onNotificationTap: () => context.goNamed(RouteNames.notifications),
-          ),
+          // ── Header ───────────────────────────────────────
+          if (_currentNavIndex == 0)
+            HomeHeader(
+              onNotificationTap: () => context.goNamed(RouteNames.notifications),
+            ),
 
-          // ── Scrollable content ────────────────────────────
-          // ── Content based on tab ────────────────────────
+          // ── Content based on tab ─────────────────────────
           Expanded(
-            child: _currentNavIndex == 2
+            child: _currentNavIndex == 1
                 ? const OrdersScreen()
+                : _currentNavIndex == 2
+                ? _buildFavoritesPlaceholder()
                 : _currentNavIndex == 3
                 ? const ProfileScreen()
+                : _currentNavIndex == 4
+                ? CartScreen(onAddMore: () => setState(() => _currentNavIndex = 0))
                 : _buildHomeContent(),
           ),
         ],
@@ -183,34 +185,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       bottomNavigationBar: HomeBottomNav(
         currentIndex: _currentNavIndex,
         onTap: (index) => setState(() => _currentNavIndex = index),
-        onCartTap: () => context.pushNamed(RouteNames.cart),
-      ),
-    );
-  }
-
-  Widget _buildCartFAB() {
-    return GestureDetector(
-      onTap: () => context.pushNamed(RouteNames.cart),
-      child: Container(
-        width: 52,
-        height: 52,
-        decoration: BoxDecoration(
-          color: AppColors.primary,
-          shape: BoxShape.circle,
-          border: Border.all(color: Colors.white, width: 2),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.1),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: const Icon(
-          Icons.shopping_cart_outlined,
-          color: Colors.white,
-          size: 22,
-        ),
+        onCartTap: () => setState(() => _currentNavIndex = 4),
       ),
     );
   }
@@ -266,7 +241,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           Padding(
             padding: const EdgeInsets.symmetric(
                 horizontal: AppDimens.screenPadding),
-            child: const SearchBarWidget(),
+            child: SearchBarWidget(
+              onTap: () => context.pushNamed(RouteNames.search),
+            ),
           ),
 
           const SizedBox(height: AppDimens.xxl),
@@ -305,7 +282,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 return CategoryData(
                   label: cat.name,
                   imageUrl: cat.imageFileName != null
-                      ? 'https://2800-41-214-10-114.ngrok-free.app/api/v1/files/${cat.imageFileName}'
+                      ? ApiConfig.getImageUrl(cat.imageFileName!)
                       : null,
                   color: palette[i % palette.length],
                   onTap: () {
@@ -333,7 +310,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           const SizedBox(height: AppDimens.xxl),
 
 // ── Section : Restaurants proches ──────────────────────
-          _buildSectionHeader('Restaurants proches', onSeeAll: () {}),
+          _buildSectionHeader('Restaurants proches', onSeeAll: () {
+            final cats = ref.read(categoriesProvider).value;
+            if (cats != null && cats.isNotEmpty) {
+              final restaurant = cats.first;
+              context.pushNamed(
+                RouteNames.category,
+                extra: CategoryScreenArgs(
+                  categoryName: restaurant.name,
+                  categoryId: restaurant.id,
+                ),
+              );
+            }
+          }),
           const SizedBox(height: AppDimens.md),
           SizedBox(
             height: 200,
@@ -353,7 +342,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           const SizedBox(height: AppDimens.lg),
 
 // ── Section : Top vente ─────────────────────────────────
-          _buildSectionHeader('Top vente', onSeeAll: () {}),
+          _buildSectionHeader('Top vente'),
           const SizedBox(height: AppDimens.md),
           SizedBox(
             height: 220,
@@ -420,14 +409,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           ),
                   ),
                 ),
-                // Cœur
+                // Flamme top vente
                 Positioned(
                   top: 6,
                   right: 6,
                   child: Icon(
-                    Icons.favorite_border,
+                    LucideIcons.flame,
                     size: 18,
-                    color: AppColors.grey400,
+                    color: Color(0xFFFF6B35),
                   ),
                 ),
               ],
@@ -477,7 +466,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         width: 28,
                         height: 28,
                         decoration: const BoxDecoration(
-                          color: AppColors.dark,
+                          color: AppColors.primary,
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(
@@ -497,6 +486,35 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
+  Widget _buildFavoritesPlaceholder() {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.favorite_border_rounded,
+              size: 64, color: AppColors.grey300),
+          const SizedBox(height: AppDimens.lg),
+          Text(
+            'Aucun favori pour l\'instant',
+            style: AppTextStyles.h3.copyWith(
+              color: AppColors.dark,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: AppDimens.sm),
+          Text(
+            'Ajoutez des restaurants ou produits\nque vous aimez pour les retrouver ici.',
+            textAlign: TextAlign.center,
+            style: AppTextStyles.bodyMedium.copyWith(
+              color: AppColors.grey500,
+              height: 1.5,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildSectionHeader(String title, {VoidCallback? onSeeAll}) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppDimens.screenPadding),
@@ -508,31 +526,32 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             title,
             style: AppTextStyles.h3.copyWith(fontWeight: FontWeight.w700),
           ),
-          GestureDetector(
-            onTap: onSeeAll,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-              decoration: BoxDecoration(
-                color: AppColors.grey100,
-                borderRadius: BorderRadius.circular(AppDimens.radiusFull),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'Tous',
-                    style: AppTextStyles.bodySmall.copyWith(
-                      color: AppColors.dark,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 12,
+          if (onSeeAll != null)
+            GestureDetector(
+              onTap: onSeeAll,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                decoration: BoxDecoration(
+                  color: AppColors.grey100,
+                  borderRadius: BorderRadius.circular(AppDimens.radiusFull),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Tous',
+                      style: AppTextStyles.bodySmall.copyWith(
+                        color: AppColors.dark,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 12,
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 3),
-                  Icon(Icons.chevron_right, size: 15, color: AppColors.dark),
-                ],
+                    const SizedBox(width: 3),
+                    Icon(Icons.chevron_right, size: 15, color: AppColors.dark),
+                  ],
+                ),
               ),
             ),
-          ),
         ],
       ),
     );

@@ -41,8 +41,8 @@ class HomeBottomNav extends StatelessWidget {
               onTap: () => onTap(0),
             ),
             _NavItem(
-              icon: RemixIcons.search_2_fill,
-              inactiveIcon: RemixIcons.search_2_line,
+              icon: Icons.receipt_long,
+              inactiveIcon: Icons.receipt_long_outlined,
               isActive: currentIndex == 1,
               onTap: () => onTap(1),
             ),
@@ -53,11 +53,14 @@ class HomeBottomNav extends StatelessWidget {
                 onTap: onCartTap,
                 behavior: HitTestBehavior.opaque,
                 child: Center(
-                  child: Container(
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
                     width: 46,
                     height: 46,
                     decoration: BoxDecoration(
-                      color: AppColors.primary,
+                      color: currentIndex == 4
+                          ? Colors.white
+                          : AppColors.primary,
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
@@ -67,9 +70,11 @@ class HomeBottomNav extends StatelessWidget {
                         ),
                       ],
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.shopping_bag_outlined,
-                      color: Colors.white,
+                      color: currentIndex == 4
+                          ? AppColors.primary
+                          : Colors.white,
                       size: 22,
                     ),
                   ),
@@ -78,8 +83,8 @@ class HomeBottomNav extends StatelessWidget {
             ),
 
             _NavItem(
-              icon: Icons.receipt_long,
-              inactiveIcon: Icons.receipt_long_outlined,
+              icon: RemixIcons.heart_3_fill,
+              inactiveIcon: RemixIcons.heart_3_line,
               isActive: currentIndex == 2,
               onTap: () => onTap(2),
             ),
@@ -119,12 +124,7 @@ class _NavItem extends StatelessWidget {
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 200),
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-            decoration: BoxDecoration(
-              color: isActive
-                  ? Colors.white.withValues(alpha: 0.12)
-                  : Colors.transparent,
-              borderRadius: BorderRadius.circular(20),
-            ),
+            decoration: const BoxDecoration(),
             child: Icon(
               isActive ? icon : inactiveIcon,
               size: 22,

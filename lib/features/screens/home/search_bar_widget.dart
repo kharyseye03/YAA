@@ -16,7 +16,7 @@ class SearchBarWidget extends StatelessWidget {
       child: Container(
         height: 50,
         decoration: BoxDecoration(
-          color: AppColors.grey100,
+          color: AppColors.primarySurface,
           borderRadius: BorderRadius.circular(AppDimens.radiusFull),
         ),
         child: Row(
