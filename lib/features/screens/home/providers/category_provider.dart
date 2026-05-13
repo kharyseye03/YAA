@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../model/category/categorie_produit.dart';
 import '../../../../model/category/categorie_structure.dart';
 import '../../../../model/category/produit_detail.dart';
 import '../../../../model/category/structure.dart';
@@ -22,4 +23,9 @@ final structureDetailProvider =
 final produitDetailProvider =
     FutureProvider.family<ProduitDetail, int>((ref, produitId) {
   return ApiService().getProduitDetail(produitId);
+});
+
+final categorieProduitProvider =
+    FutureProvider.family<List<CategorieProduit>, int>((ref, structureId) {
+  return ApiService().getCategorieProduits(structureId);
 });

@@ -24,6 +24,7 @@ class ApiConfig {
   static const String structuresEndpoint = '/structures';
   static String structureDetailUrl(int id) => '$baseUrl/structures/$id';
   static String produitDetailUrl(int id) => '$baseUrl/produits/$id';
+  static const String categorieProduitEndpoint = '/categories-produit/search';
 
   // ── Timeouts (en secondes) ────────────────────────
   static const int connectionTimeout = 30;

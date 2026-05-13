@@ -6,6 +6,7 @@ import 'package:http_parser/http_parser.dart';
 import '../../config/api/api_config.dart';
 import '../../model/auth/login_response.dart';
 import '../../model/auth/register_response.dart';
+import '../../model/category/categorie_produit.dart';
 import '../../model/category/categorie_structure.dart';
 import '../../model/category/structure.dart';
 import '../../model/category/produit_detail.dart';
@@ -367,6 +368,20 @@ class ApiService {
       throw Exception('Réponse invalide du serveur.');
     } catch (e) {
       print('❌ Erreur getStructureDetail: $e');
+      rethrow;
+    }
+  }
+
+  Future<List<CategorieProduit>> getCategorieProduits(int structureId) async {
+    try {
+      final list = await _getList(
+        '${ApiConfig.categorieProduitEndpoint}/$structureId',
+      );
+      return list
+          .map((e) => CategorieProduit.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      print('❌ Erreur getCategorieProduits: $e');
       rethrow;
     }
   }

@@ -4,15 +4,11 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimens.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../model/category/categorie_produit.dart';
 import '../../../model/category/structure_detail.dart';
 import '../home/providers/category_provider.dart';
 import '../home/restaurant_card.dart';
 import 'product_bottom_sheet.dart';
-
-class _MenuTab {
-  final String label;
-  const _MenuTab(this.label);
-}
 
 // ── Entry point ───────────────────────────────────────────
 void showRestaurantBottomSheet(
@@ -49,47 +45,19 @@ class _RestaurantSheet extends ConsumerStatefulWidget {
   ConsumerState<_RestaurantSheet> createState() => _RestaurantSheetState();
 }
 
-const _restaurantTabs = [
-  _MenuTab('Populaire'), _MenuTab('Entrées'), _MenuTab('Plats'),
-  _MenuTab('Desserts'), _MenuTab('Boissons'),
-];
-const _pharmacieTabs = [
-  _MenuTab('Populaire'), _MenuTab('Médicaments'), _MenuTab('Parapharmacie'),
-  _MenuTab('Vitamines'), _MenuTab('Bébé'),
-];
-const _superMarcheTabs = [
-  _MenuTab('Populaire'), _MenuTab('Épicerie'), _MenuTab('Fruits & Légumes'),
-  _MenuTab('Boissons'), _MenuTab('Hygiène'),
-];
-const _boutiqueTabs = [
-  _MenuTab('Populaire'), _MenuTab('Vêtements'), _MenuTab('Chaussures'),
-  _MenuTab('Accessoires'), _MenuTab('Électronique'),
-];
-
 class _RestaurantSheetState extends ConsumerState<_RestaurantSheet> {
   int _activeTab = 0;
+  List<GlobalKey>? _sectionKeys;
 
-  List<_MenuTab> get _tabs {
-    switch (widget.categoryType) {
-      case 'pharmacie': return _pharmacieTabs;
-      case 'supermarché':
-      case 'supermarche': return _superMarcheTabs;
-      case 'boutique': return _boutiqueTabs;
-      default: return _restaurantTabs;
+  void _initKeys(int count) {
+    if (_sectionKeys == null || _sectionKeys!.length != count) {
+      _sectionKeys = List.generate(count, (_) => GlobalKey());
     }
-  }
-
-  late final List<GlobalKey> _sectionKeys;
-
-  @override
-  void initState() {
-    super.initState();
-    _sectionKeys = List.generate(_tabs.length, (_) => GlobalKey());
   }
 
   void _scrollToSection(int index) {
     setState(() => _activeTab = index);
-    final ctx = _sectionKeys[index].currentContext;
+    final ctx = _sectionKeys?[index].currentContext;
     if (ctx != null) {
       Scrollable.ensureVisible(
         ctx,
@@ -101,6 +69,8 @@ class _RestaurantSheetState extends ConsumerState<_RestaurantSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final tabsAsync = ref.watch(categorieProduitProvider(widget.structureId));
+
     return DraggableScrollableSheet(
       initialChildSize: 0.96,
       minChildSize: 0.5,
@@ -122,21 +92,34 @@ class _RestaurantSheetState extends ConsumerState<_RestaurantSheet> {
               ),
             ),
             Expanded(
-              child: CustomScrollView(
-                controller: scrollController,
-                slivers: [
-                  SliverToBoxAdapter(child: _buildHeader()),
-                  SliverToBoxAdapter(child: _buildRestaurantInfo()),
-                  SliverPersistentHeader(
-                    pinned: true,
-                    delegate: _TabsDelegate(
-                      height: 43,
-                      child: _buildTabs(),
-                    ),
+              child: tabsAsync.when(
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (e, _) => Center(
+                  child: Text(
+                    e.toString().replaceAll('Exception: ', ''),
+                    style: AppTextStyles.bodyMedium
+                        .copyWith(color: AppColors.error),
                   ),
-                  ..._buildAllSections(),
-                  const SliverToBoxAdapter(child: SizedBox(height: 100)),
-                ],
+                ),
+                data: (tabs) {
+                  _initKeys(tabs.length);
+                  return CustomScrollView(
+                    controller: scrollController,
+                    slivers: [
+                      SliverToBoxAdapter(child: _buildHeader()),
+                      SliverToBoxAdapter(child: _buildRestaurantInfo()),
+                      SliverPersistentHeader(
+                        pinned: true,
+                        delegate: _TabsDelegate(
+                          height: 43,
+                          child: _buildTabs(tabs),
+                        ),
+                      ),
+                      ..._buildAllSections(tabs),
+                      const SliverToBoxAdapter(child: SizedBox(height: 100)),
+                    ],
+                  );
+                },
               ),
             ),
             _buildDeliveryBar(),
@@ -146,26 +129,26 @@ class _RestaurantSheetState extends ConsumerState<_RestaurantSheet> {
     );
   }
 
-  List<Widget> _buildAllSections() {
-    return _tabs.asMap().entries.expand((entry) {
+  List<Widget> _buildAllSections(List<CategorieProduit> tabs) {
+    return tabs.asMap().entries.expand((entry) {
       final i = entry.key;
       final tab = entry.value;
 
       final sectionTitle = SliverToBoxAdapter(
         child: Padding(
-          key: _sectionKeys[i],
+          key: _sectionKeys![i],
           padding: const EdgeInsets.fromLTRB(
               AppDimens.screenPadding, AppDimens.lg,
               AppDimens.screenPadding, 0),
           child: Text(
-            tab.label,
+            tab.nom,
             style: AppTextStyles.h3.copyWith(fontWeight: FontWeight.w700),
           ),
         ),
       );
 
-      // Onglet "Populaire" → produits réels depuis l'API
-      if (i == 0) {
+      // Onglet "Populaire" (categorie == null) → produits depuis l'API structure
+      if (tab.categorie == null) {
         final detail = ref.watch(structureDetailProvider(widget.structureId));
         return <Widget>[
           sectionTitle,
@@ -182,7 +165,8 @@ class _RestaurantSheetState extends ConsumerState<_RestaurantSheet> {
                 child: Center(
                   child: Text(
                     e.toString().replaceAll('Exception: ', ''),
-                    style: AppTextStyles.bodyMedium.copyWith(color: AppColors.error),
+                    style: AppTextStyles.bodyMedium
+                        .copyWith(color: AppColors.error),
                     textAlign: TextAlign.center,
                   ),
                 ),
@@ -207,7 +191,8 @@ class _RestaurantSheetState extends ConsumerState<_RestaurantSheet> {
                         AppDimens.screenPadding, 0),
                     sliver: SliverGrid(
                       delegate: SliverChildBuilderDelegate(
-                        (_, j) => _ApiMenuItemCard(produit: detail.produits[j]),
+                        (_, j) =>
+                            _ApiMenuItemCard(produit: detail.produits[j]),
                         childCount: detail.produits.length,
                       ),
                       gridDelegate:
@@ -223,8 +208,8 @@ class _RestaurantSheetState extends ConsumerState<_RestaurantSheet> {
         ];
       }
 
-      // Autres onglets → vide en attendant l'API
-      return <Widget>[sectionTitle];
+      // Autres onglets → masqués tant qu'il n'y a pas de produits
+      return <Widget>[];
     }).toList();
   }
 
@@ -312,7 +297,7 @@ class _RestaurantSheetState extends ConsumerState<_RestaurantSheet> {
     );
   }
 
-  Widget _buildTabs() {
+  Widget _buildTabs(List<CategorieProduit> tabs) {
     return Container(
       color: Colors.white,
       child: Column(
@@ -324,7 +309,7 @@ class _RestaurantSheetState extends ConsumerState<_RestaurantSheet> {
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(
                   horizontal: AppDimens.screenPadding),
-              itemCount: _tabs.length,
+              itemCount: tabs.length,
               separatorBuilder: (_, __) => const SizedBox(width: AppDimens.xl),
               itemBuilder: (_, i) {
                 final isActive = i == _activeTab;
@@ -334,7 +319,7 @@ class _RestaurantSheetState extends ConsumerState<_RestaurantSheet> {
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
                       Text(
-                        _tabs[i].label.toUpperCase(),
+                        tabs[i].nom.toUpperCase(),
                         style: AppTextStyles.bodySmall.copyWith(
                           fontSize: 12,
                           fontWeight:
