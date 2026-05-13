@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Guide Google Maps API — YAA Delivery</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      font-size: 15px;
+      line-height: 1.7;
+      color: #1a1a1a;
+      background: #f5f5f5;
+    }
+    .page {
+      max-width: 860px;
+      margin: 40px auto;
+      background: #fff;
+      padding: 60px 70px;
+      border-radius: 8px;
+      box-shadow: 0 2px 20px rgba(0,0,0,0.08);
+    }
+    h1 {
+      font-size: 26px;
+      font-weight: 800;
+      color: #111;
+      margin-bottom: 6px;
+      border-bottom: 3px solid #4285F4;
+      padding-bottom: 14px;
+    }
+    .subtitle {
+      color: #666;
+      font-size: 13px;
+      margin-bottom: 36px;
+    }
+    h2 {
+      font-size: 18px;
+      font-weight: 700;
+      color: #111;
+      margin: 36px 0 14px;
+      padding-left: 12px;
+      border-left: 4px solid #4285F4;
+    }
+    h3 {
+      font-size: 15px;
+      font-weight: 700;
+      color: #333;
+      margin: 22px 0 10px;
+    }
+    p { margin-bottom: 12px; }
+    ul, ol {
+      margin: 10px 0 14px 22px;
+    }
+    li { margin-bottom: 6px; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 14px 0 20px;
+      font-size: 14px;
+    }
+    th {
+      background: #4285F4;
+      color: #fff;
+      padding: 10px 14px;
+      text-align: left;
+      font-weight: 600;
+    }
+    td {
+      padding: 9px 14px;
+      border-bottom: 1px solid #eee;
+    }
+    tr:nth-child(even) td { background: #f9f9f9; }
+    .warning {
+      background: #fff8e1;
+      border-left: 4px solid #f9a825;
+      padding: 12px 16px;
+      border-radius: 4px;
+      margin: 14px 0;
+      font-size: 14px;
+    }
+    .tip {
+      background: #e8f5e9;
+      border-left: 4px solid #43a047;
+      padding: 12px 16px;
+      border-radius: 4px;
+      margin: 14px 0;
+      font-size: 14px;
+    }
+    .checklist {
+      list-style: none;
+      margin-left: 0;
+    }
+    .checklist li::before {
+      content: '☐  ';
+      color: #4285F4;
+      font-size: 16px;
+    }
+    code {
+      background: #f0f0f0;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-family: monospace;
+      font-size: 13px;
+    }
+    .code-block {
+      background: #1e1e1e;
+      color: #d4d4d4;
+      padding: 16px 20px;
+      border-radius: 6px;
+      font-family: monospace;
+      font-size: 13px;
+      margin: 14px 0;
+      line-height: 1.8;
+    }
+    .recap {
+      background: #e3f2fd;
+      border-radius: 8px;
+      padding: 20px 24px;
+      margin-top: 20px;
+    }
+    .recap ol { margin-left: 18px; }
+    .recap li { margin-bottom: 8px; font-weight: 500; }
+    hr {
+      border: none;
+      border-top: 1px solid #eee;
+      margin: 32px 0;
+    }
+    .footer {
+      text-align: center;
+      color: #aaa;
+      font-size: 12px;
+      margin-top: 40px;
+    }
+    @media print {
+      body { background: white; }
+      .page { box-shadow: none; margin: 0; padding: 40px 50px; }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <h1>Guide : Google Maps API pour une application de livraison</h1>
+  <p class="subtitle">Document de configuration — Projet YAA Delivery</p>
+
+  <!-- POURQUOI GOOGLE MAPS -->
+  <h2>Pourquoi Google Maps ?</h2>
+  <p>Pour une application de livraison, <strong>Google Maps est la solution recommandée</strong>. C'est la plateforme utilisée par Uber, Bolt, Glovo et la quasi-totalité des applications de livraison dans le monde.</p>
+
+  <table>
+    <tr>
+      <th>Critère</th>
+      <th>Google Maps</th>
+      <th>Mapbox</th>
+      <th>OpenStreetMap</th>
+    </tr>
+    <tr><td>Couverture Afrique de l'Ouest</td><td>✅ Excellente</td><td>✅ Bonne</td><td>⚠️ Partielle</td></tr>
+    <tr><td>Autocomplétion d'adresses</td><td>✅</td><td>✅</td><td>⚠️ Limitée</td></tr>
+    <tr><td>Précision des données</td><td>✅ Très haute</td><td>✅ Haute</td><td>⚠️ Variable</td></tr>
+    <tr><td>Facilité d'intégration</td><td>✅</td><td>✅</td><td>⚠️</td></tr>
+    <tr><td>Fiabilité</td><td>✅ Maximale</td><td>✅</td><td>⚠️</td></tr>
+  </table>
+
+  <!-- APIS NECESSAIRES -->
+  <h2>APIs à activer pour une app de livraison</h2>
+
+  <table>
+    <tr><th>API</th><th>Utilité dans l'application</th></tr>
+    <tr><td><strong>Maps SDK for Android</strong></td><td>Afficher la carte sur Android</td></tr>
+    <tr><td><strong>Maps SDK for iOS</strong></td><td>Afficher la carte sur iPhone</td></tr>
+    <tr><td><strong>Places API</strong></td><td>Autocomplétion lors de la saisie d'une adresse</td></tr>
+    <tr><td><strong>Geocoding API</strong></td><td>Convertir une adresse en coordonnées GPS</td></tr>
+    <tr><td><strong>Directions API</strong></td><td>Calculer l'itinéraire livreur → client</td></tr>
+    <tr><td><strong>Distance Matrix API</strong></td><td>Estimer le temps et la distance de livraison</td></tr>
+  </table>
+
+  <hr/>
+
+  <!-- ETAPE 1 -->
+  <h2>Étape 1 — Créer un compte Google Cloud</h2>
+
+  <h3>1.1 &nbsp;Aller sur Google Cloud Console</h3>
+  <p>Rendez-vous sur : <strong>https://console.cloud.google.com</strong></p>
+  <p>Connectez-vous avec un compte Gmail <strong>professionnel</strong> lié à l'entreprise.</p>
+
+  <div class="warning">
+    ⚠️ <strong>Important :</strong> Utilisez un compte Google que vous contrôlerez durablement. Si le titulaire du compte quitte l'entreprise, l'accès aux APIs peut être compromis.
+  </div>
+
+  <h3>1.2 &nbsp;Accepter les conditions d'utilisation</h3>
+  <p>Lors de la première connexion, acceptez les conditions d'utilisation de Google Cloud.</p>
+
+  <hr/>
+
+  <!-- ETAPE 2 -->
+  <h2>Étape 2 — Configurer la facturation</h2>
+
+  <div class="tip">
+    💡 Google offre un crédit mensuel de <strong>200 $ USD</strong> qui couvre largement les besoins d'une application en phase de démarrage. Vous ne payez que si vous dépassez ce crédit.
+  </div>
+
+  <h3>2.1 &nbsp;Créer un compte de facturation</h3>
+  <ol>
+    <li>Dans le menu de gauche → <strong>"Facturation"</strong></li>
+    <li>Cliquez sur <strong>"Créer un compte de facturation"</strong></li>
+    <li>Renseignez le nom (ex : <em>YAA Delivery</em>), le pays, et ajoutez une carte bancaire internationale (Visa / Mastercard)</li>
+  </ol>
+
+  <h3>2.2 &nbsp;Estimation des coûts</h3>
+  <table>
+    <tr><th>API</th><th>Prix</th><th>Inclus dans le crédit gratuit</th></tr>
+    <tr><td>Maps SDK (affichage carte)</td><td>7 $ / 1 000 chargements</td><td>~28 500 chargements/mois</td></tr>
+    <tr><td>Places Autocomplete</td><td>2,83 $ / 1 000 requêtes</td><td>~70 700 requêtes/mois</td></tr>
+    <tr><td>Geocoding</td><td>5 $ / 1 000 requêtes</td><td>~40 000 requêtes/mois</td></tr>
+    <tr><td>Directions</td><td>5 $ / 1 000 requêtes</td><td>~40 000 requêtes/mois</td></tr>
+  </table>
+
+  <div class="tip">
+    💡 Pour une application avec moins de 10 000 utilisateurs actifs par mois, le crédit de 200 $/mois couvre généralement la totalité des coûts.
+  </div>
+
+  <hr/>
+
+  <!-- ETAPE 3 -->
+  <h2>Étape 3 — Créer un projet Google Cloud</h2>
+  <ol>
+    <li>En haut de la console, cliquez sur le <strong>sélecteur de projet</strong> (à côté du logo Google Cloud)</li>
+    <li>Cliquez sur <strong>"Nouveau projet"</strong></li>
+    <li>Nom du projet : <code>YAA-Delivery</code></li>
+    <li>Cliquez sur <strong>"Créer"</strong> et attendez quelques secondes</li>
+    <li>Sélectionnez ce projet dans le sélecteur en haut</li>
+    <li>Allez dans <strong>Facturation → Mes projets</strong> → associez-le à votre compte de facturation</li>
+  </ol>
+
+  <hr/>
+
+  <!-- ETAPE 4 -->
+  <h2>Étape 4 — Activer les APIs</h2>
+  <ol>
+    <li>Menu de gauche → <strong>"APIs et services"</strong> → <strong>"Bibliothèque"</strong></li>
+    <li>Recherchez et activez chacune de ces APIs en cliquant sur <strong>"Activer"</strong> :</li>
+  </ol>
+  <ul class="checklist">
+    <li>Maps SDK for Android</li>
+    <li>Maps SDK for iOS</li>
+    <li>Places API</li>
+    <li>Geocoding API</li>
+    <li>Directions API</li>
+    <li>Distance Matrix API</li>
+  </ul>
+
+  <hr/>
+
+  <!-- ETAPE 5 -->
+  <h2>Étape 5 — Créer les clés API</h2>
+
+  <h3>5.1 &nbsp;Clé pour Android</h3>
+  <ol>
+    <li>Menu → <strong>"APIs et services"</strong> → <strong>"Identifiants"</strong></li>
+    <li>Cliquez sur <strong>"+ Créer des identifiants"</strong> → <strong>"Clé API"</strong></li>
+    <li>Cliquez sur <strong>"Modifier la clé"</strong> (icône crayon)</li>
+    <li>Renommez-la : <code>YAA Android Key</code></li>
+    <li>Sous <strong>"Restrictions d'application"</strong> → sélectionnez <strong>"Applications Android"</strong></li>
+    <li>Ajoutez le nom du package et l'empreinte SHA-1 <em>(à demander au développeur)</em></li>
+    <li>Sous <strong>"Restrictions d'API"</strong> → cochez les 5 APIs listées à l'étape 4</li>
+    <li>Cliquez sur <strong>"Enregistrer"</strong></li>
+  </ol>
+
+  <h3>5.2 &nbsp;Clé pour iOS</h3>
+  <p>Même procédure, avec ces différences :</p>
+  <ul>
+    <li>Nom : <code>YAA iOS Key</code></li>
+    <li>Restriction : <strong>"Applications iOS"</strong></li>
+    <li>Bundle ID : à demander au développeur (ex : <code>com.yaa.delivery</code>)</li>
+  </ul>
+
+  <h3>5.3 &nbsp;Clé pour le serveur <em>(optionnel)</em></h3>
+  <ul>
+    <li>Nom : <code>YAA Server Key</code></li>
+    <li>Restriction : <strong>"Adresses IP"</strong> → ajouter l'IP du serveur backend</li>
+  </ul>
+
+  <hr/>
+
+  <!-- ETAPE 6 -->
+  <h2>Étape 6 — Sécuriser les clés API</h2>
+
+  <div class="warning">
+    ⚠️ <strong>Ne partagez jamais vos clés API publiquement.</strong> Ne les envoyez pas par email en clair, et ne les publiez jamais sur GitHub ou tout autre dépôt de code.
+  </div>
+
+  <h3>Configurer une alerte de budget</h3>
+  <ol>
+    <li>Menu → <strong>"Facturation"</strong> → <strong>"Budgets et alertes"</strong></li>
+    <li>Cliquez sur <strong>"Créer un budget"</strong></li>
+    <li>Définissez un montant seuil (ex : 50 $) et votre adresse email</li>
+    <li>Google vous alertera automatiquement si vos coûts approchent ce seuil</li>
+  </ol>
+
+  <h3>En cas de fuite d'une clé</h3>
+  <p>Retournez sur la console → <strong>Identifiants</strong> → cliquez sur la clé concernée → <strong>"Regénérer la clé"</strong>. L'ancienne clé sera immédiatement invalidée.</p>
+
+  <hr/>
+
+  <!-- ETAPE 7 -->
+  <h2>Étape 7 — Transmettre les informations au développeur</h2>
+
+  <p>Une fois toutes les étapes terminées, transmettez les clés à votre développeur via un <strong>canal sécurisé</strong> (gestionnaire de mots de passe, message privé chiffré — pas par email ordinaire) :</p>
+
+  <div class="code-block">
+    Clé Android : AIzaSy...<br/>
+    Clé iOS &nbsp;&nbsp;&nbsp;&nbsp;: AIzaSy...<br/>
+    Clé Serveur : AIzaSy... (si applicable)
+  </div>
+
+  <div class="warning">
+    ⚠️ Le développeur intégrera ces clés dans les fichiers de configuration sécurisés de l'application. Ces clés ne doivent <strong>jamais</strong> apparaître dans le code source versionné (Git / GitHub).
+  </div>
+
+  <hr/>
+
+  <!-- RECAP -->
+  <h2>Récapitulatif des étapes</h2>
+  <div class="recap">
+    <ol>
+      <li>Créer un compte sur <strong>console.cloud.google.com</strong></li>
+      <li>Configurer la facturation (carte bancaire internationale)</li>
+      <li>Créer un projet <strong>YAA-Delivery</strong></li>
+      <li>Activer les <strong>6 APIs</strong> listées</li>
+      <li>Créer <strong>2 clés API</strong> (Android + iOS) et les restreindre</li>
+      <li>Configurer une <strong>alerte de budget</strong> (ex : 50 $)</li>
+      <li>Transmettre les clés au développeur de façon sécurisée</li>
+    </ol>
+  </div>
+
+  <hr/>
+
+  <h2>Support</h2>
+  <ul>
+    <li>Documentation officielle : <strong>https://developers.google.com/maps/documentation</strong></li>
+    <li>Support Google Cloud : <strong>https://cloud.google.com/support</strong></li>
+  </ul>
+
+  <p class="footer">Document préparé pour le projet YAA Delivery</p>
+
+</div>
+</body>
+</html>

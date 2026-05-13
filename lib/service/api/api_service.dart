@@ -6,7 +6,11 @@ import 'package:http_parser/http_parser.dart';
 import '../../config/api/api_config.dart';
 import '../../model/auth/login_response.dart';
 import '../../model/auth/register_response.dart';
+import '../../model/category/categorie_produit.dart';
 import '../../model/category/categorie_structure.dart';
+import '../../model/category/structure.dart';
+import '../../model/category/produit_detail.dart';
+import '../../model/category/structure_detail.dart';
 import '../../model/user/user_profile.dart';
 
 class ApiService {
@@ -270,9 +274,16 @@ class ApiService {
   // MÉTHODE PUBLIQUE — Catégories
   // ════════════════════════════════════════════════════
 
-  Future<List<dynamic>> _getList(String endpoint, {String? token}) async {
+  Future<List<dynamic>> _getList(
+    String endpoint, {
+    Map<String, String>? queryParams,
+    String? token,
+  }) async {
     try {
       var uri = Uri.parse(ApiConfig.getUrl(endpoint));
+      if (queryParams != null) {
+        uri = uri.replace(queryParameters: queryParams);
+      }
       final headers = {
         ...ApiConfig.headers,
         if (token != null) 'Authorization': 'Bearer $token',
@@ -310,6 +321,93 @@ class ApiService {
           .toList();
     } catch (e) {
       print('❌ Erreur getCategories: $e');
+      rethrow;
+    }
+  }
+
+  Future<List<Structure>> getStructuresByCategory(int categorieId) async {
+    try {
+      final list = await _getList(
+        ApiConfig.structuresEndpoint,
+        queryParams: {'categorieId': categorieId.toString()},
+      );
+      return list
+          .map((e) => Structure.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      print('❌ Erreur getStructuresByCategory: $e');
+      rethrow;
+    }
+  }
+
+  Future<StructureDetail> getStructureDetail(int id) async {
+    try {
+      final uri = Uri.parse(ApiConfig.structureDetailUrl(id));
+      final response = await http
+          .get(uri, headers: ApiConfig.headers)
+          .timeout(const Duration(seconds: ApiConfig.connectionTimeout),
+              onTimeout: () => throw TimeoutException('Le serveur ne répond pas.'));
+
+      print('📡 GET Status → ${response.statusCode}');
+      print('📬 GET Réponse → ${response.body}');
+
+      if (response.body.isEmpty) {
+        throw Exception('Réponse vide du serveur.');
+      }
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return StructureDetail.fromJson(
+            json.decode(response.body) as Map<String, dynamic>);
+      }
+      final data = json.decode(response.body) as Map<String, dynamic>;
+      throw Exception(data['message'] as String? ?? 'Erreur ${response.statusCode}');
+    } on SocketException {
+      throw Exception('Pas de connexion internet.');
+    } on TimeoutException catch (e) {
+      throw Exception(e.message);
+    } on FormatException {
+      throw Exception('Réponse invalide du serveur.');
+    } catch (e) {
+      print('❌ Erreur getStructureDetail: $e');
+      rethrow;
+    }
+  }
+
+  Future<List<CategorieProduit>> getCategorieProduits(int structureId) async {
+    try {
+      final list = await _getList(
+        '${ApiConfig.categorieProduitEndpoint}/$structureId',
+      );
+      return list
+          .map((e) => CategorieProduit.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      print('❌ Erreur getCategorieProduits: $e');
+      rethrow;
+    }
+  }
+
+  Future<ProduitDetail> getProduitDetail(int id) async {
+    try {
+      final uri = Uri.parse(ApiConfig.produitDetailUrl(id));
+      final response = await http
+          .get(uri, headers: ApiConfig.headers)
+          .timeout(const Duration(seconds: ApiConfig.connectionTimeout),
+              onTimeout: () => throw TimeoutException('Le serveur ne répond pas.'));
+
+      if (response.body.isEmpty) throw Exception('Réponse vide du serveur.');
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return ProduitDetail.fromJson(
+            json.decode(response.body) as Map<String, dynamic>);
+      }
+      final data = json.decode(response.body) as Map<String, dynamic>;
+      throw Exception(data['message'] as String? ?? 'Erreur ${response.statusCode}');
+    } on SocketException {
+      throw Exception('Pas de connexion internet.');
+    } on TimeoutException catch (e) {
+      throw Exception(e.message);
+    } on FormatException {
+      throw Exception('Réponse invalide du serveur.');
+    } catch (e) {
       rethrow;
     }
   }

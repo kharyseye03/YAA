@@ -253,8 +253,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             padding: const EdgeInsets.symmetric(
                 horizontal: AppDimens.screenPadding),
             child: Text(
-              'Catégories',
-              style: AppTextStyles.h3.copyWith(
+              'Explorer par catégorie',
+              style: AppTextStyles.h4.copyWith(
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -310,7 +310,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           const SizedBox(height: AppDimens.xxl),
 
 // ── Section : Restaurants proches ──────────────────────
-          _buildSectionHeader('Restaurants proches', onSeeAll: () {
+          _buildSectionHeader('Autour de vous', onSeeAll: () {
             final cats = ref.read(categoriesProvider).value;
             if (cats != null && cats.isNotEmpty) {
               final restaurant = cats.first;
@@ -342,7 +342,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           const SizedBox(height: AppDimens.lg),
 
 // ── Section : Top vente ─────────────────────────────────
-          _buildSectionHeader('Top vente'),
+          _buildSectionHeader('Coup de cœur'),
           const SizedBox(height: AppDimens.md),
           SizedBox(
             height: 220,
@@ -524,7 +524,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         children: [
           Text(
             title,
-            style: AppTextStyles.h3.copyWith(fontWeight: FontWeight.w700),
+            style: AppTextStyles.h4.copyWith(fontWeight: FontWeight.w700),
           ),
           if (onSeeAll != null)
             GestureDetector(
