@@ -1,10 +1,8 @@
 class ApiConfig {
 
   // ── Keycloak (IAM) ────────────────────────────────────────
-  // URL différente car c'est un service complètement séparé
   static const String iamBaseUrl = 'https://57e6-41-83-137-24.ngrok-free.app';
   static const String loginEndpoint = '/realms/yaa-delivery/protocol/openid-connect/token';
-
   // 🔧 Mode dev → ngrok
   static const String _ngrokBaseUrl = 'https://331c-41-83-137-24.ngrok-free.app';
   static const String baseUrl       = '$_ngrokBaseUrl/api/v1';
@@ -23,14 +21,15 @@ class ApiConfig {
 
   // ── Endpoints Catégories ──────────────────────────
   static const String categoriesEndpoint = '/categorie-structures';
+  static const String structuresEndpoint = '/structures';
+  static String structureDetailUrl(int id) => '$baseUrl/structures/$id';
+  static String produitDetailUrl(int id) => '$baseUrl/produits/$id';
 
   // ── Timeouts (en secondes) ────────────────────────
   static const int connectionTimeout = 30;
   static const int receiveTimeout    = 30;
 
   // ── Headers ───────────────────────────────────────
-  // "get" car les headers peuvent changer selon l'état
-  // de l'app (ex: ajouter un token plus tard)
   static Map<String, String> get headers => {
     'Content-Type'               : 'application/json',
     'Accept'                     : 'application/json',

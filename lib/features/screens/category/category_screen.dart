@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimens.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../home/providers/category_provider.dart';
 import '../home/restaurant_card.dart';
 import 'restaurant_bottom_sheet.dart';
 
@@ -17,61 +19,17 @@ class CategoryScreenArgs {
   });
 }
 
-class CategoryScreen extends StatefulWidget {
+class CategoryScreen extends ConsumerStatefulWidget {
   const CategoryScreen({super.key, required this.args});
 
   final CategoryScreenArgs args;
 
   @override
-  State<CategoryScreen> createState() => _CategoryScreenState();
+  ConsumerState<CategoryScreen> createState() => _CategoryScreenState();
 }
 
-class _CategoryScreenState extends State<CategoryScreen> {
+class _CategoryScreenState extends ConsumerState<CategoryScreen> {
   int _activeFilter = 0;
-
-  // ── Mock data par catégorie ───────────────────────────
-  static const _mockRestaurants = [
-    RestaurantData(name: 'Chez Fatou', cuisine: 'Cuisine locale', rating: 4.8, deliveryTime: '20-30 min', imageUrl: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800'),
-    RestaurantData(name: 'Pizza Palace', cuisine: 'Pizzeria', rating: 4.5, deliveryTime: '25-35 min', imageUrl: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=800'),
-    RestaurantData(name: 'Burger House', cuisine: 'Fast-food', rating: 4.6, deliveryTime: '15-25 min', imageUrl: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=800'),
-    RestaurantData(name: 'Le Grill d\'Or', cuisine: 'Grillades', rating: 4.7, deliveryTime: '30-40 min', imageUrl: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=800'),
-    RestaurantData(name: 'Sushi Garden', cuisine: 'Japonais', rating: 4.9, deliveryTime: '35-50 min', imageUrl: 'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=800'),
-    RestaurantData(name: 'Brioche Dorée', cuisine: 'Boulangerie', rating: 4.3, deliveryTime: '20-35 min', imageUrl: 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=800'),
-  ];
-
-  static const _mockPharmacies = [
-    RestaurantData(name: 'Pharmacie Centrale', cuisine: 'Médicaments', rating: 4.7, deliveryTime: '15-25 min', imageUrl: 'https://images.unsplash.com/photo-1584308666544-ada528ea88e4?w=800'),
-    RestaurantData(name: 'Pharmacie du Plateau', cuisine: 'Parapharmacie', rating: 4.5, deliveryTime: '20-30 min', imageUrl: 'https://images.unsplash.com/photo-1471864190281-a93a3070b6de?w=800'),
-    RestaurantData(name: 'Pharmacie Fann', cuisine: 'Médicaments', rating: 4.8, deliveryTime: '25-35 min', imageUrl: 'https://images.unsplash.com/photo-1587854692152-cbe660dbde88?w=800'),
-    RestaurantData(name: 'Pharmacie Liberté', cuisine: 'Parapharmacie', rating: 4.4, deliveryTime: '20-30 min', imageUrl: 'https://images.unsplash.com/photo-1607619056574-7b8d3ee536b2?w=800'),
-    RestaurantData(name: 'Pharmacie Mermoz', cuisine: 'Médicaments', rating: 4.6, deliveryTime: '30-40 min', imageUrl: 'https://images.unsplash.com/photo-1576671414121-aa2d60f93631?w=800'),
-  ];
-
-  static const _mockSupermarchs = [
-    RestaurantData(name: 'Casino Supermarché', cuisine: 'Épicerie', rating: 4.5, deliveryTime: '25-40 min', imageUrl: 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=800'),
-    RestaurantData(name: 'Auchan Dakar', cuisine: 'Grande surface', rating: 4.7, deliveryTime: '30-45 min', imageUrl: 'https://images.unsplash.com/photo-1604719312566-8912e9227c6a?w=800'),
-    RestaurantData(name: 'City Dia', cuisine: 'Épicerie fine', rating: 4.4, deliveryTime: '20-35 min', imageUrl: 'https://images.unsplash.com/photo-1578916171728-46686eac8d58?w=800'),
-    RestaurantData(name: 'Marché du Terroir', cuisine: 'Produits locaux', rating: 4.8, deliveryTime: '35-50 min', imageUrl: 'https://images.unsplash.com/photo-1488459716781-31db52582fe9?w=800'),
-    RestaurantData(name: 'FreshMart', cuisine: 'Bio & Naturel', rating: 4.6, deliveryTime: '20-30 min', imageUrl: 'https://images.unsplash.com/photo-1534723452862-4c874986ebad?w=800'),
-  ];
-
-  static const _mockBoutiques = [
-    RestaurantData(name: 'AURA Fashion', cuisine: 'Vêtements & Mode', rating: 4.8, deliveryTime: '30-45 min', imageUrl: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=800'),
-    RestaurantData(name: 'SneakerZone', cuisine: 'Chaussures', rating: 4.6, deliveryTime: '25-40 min', imageUrl: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800'),
-    RestaurantData(name: 'Maison Dakar', cuisine: 'Décoration', rating: 4.5, deliveryTime: '35-50 min', imageUrl: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=800'),
-    RestaurantData(name: 'BabyShop', cuisine: 'Puériculture', rating: 4.7, deliveryTime: '20-35 min', imageUrl: 'https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?w=800'),
-    RestaurantData(name: 'Tech & Co', cuisine: 'Électronique', rating: 4.4, deliveryTime: '30-45 min', imageUrl: 'https://images.unsplash.com/photo-1491933382434-500287f9b54b?w=800'),
-  ];
-
-  List<RestaurantData> get _items {
-    switch (widget.args.categoryName.toLowerCase()) {
-      case 'pharmacie': return _mockPharmacies;
-      case 'supermarché':
-      case 'supermarche': return _mockSupermarchs;
-      case 'boutique': return _mockBoutiques;
-      default: return _mockRestaurants;
-    }
-  }
 
   List<_FilterData> get _filters {
     switch (widget.args.categoryName.toLowerCase()) {
@@ -132,19 +90,49 @@ class _CategoryScreenState extends State<CategoryScreen> {
           _buildFilters(),
           const SizedBox(height: AppDimens.md),
           Expanded(
-            child: ListView.separated(
-              padding: const EdgeInsets.fromLTRB(
-                AppDimens.screenPadding,
-                0,
-                AppDimens.screenPadding,
-                AppDimens.xxl,
+            child: ref.watch(structuresProvider(widget.args.categoryId)).when(
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (e, _) => Center(
+                child: Text(
+                  e.toString().replaceAll('Exception: ', ''),
+                  style: AppTextStyles.bodyMedium.copyWith(color: AppColors.error),
+                  textAlign: TextAlign.center,
+                ),
               ),
-              itemCount: _items.length,
-              separatorBuilder: (_, __) => const SizedBox(height: AppDimens.lg),
-              itemBuilder: (_, i) => _FullWidthRestaurantCard(
-                restaurant: _items[i],
-                categoryName: widget.args.categoryName,
-              ),
+              data: (structures) => structures.isEmpty
+                  ? Center(
+                      child: Text(
+                        'Aucun établissement pour cette catégorie',
+                        style: AppTextStyles.bodyMedium
+                            .copyWith(color: AppColors.grey500),
+                        textAlign: TextAlign.center,
+                      ),
+                    )
+                  : ListView.separated(
+                      padding: const EdgeInsets.fromLTRB(
+                        AppDimens.screenPadding,
+                        0,
+                        AppDimens.screenPadding,
+                        AppDimens.xxl,
+                      ),
+                      itemCount: structures.length,
+                      separatorBuilder: (_, __) =>
+                          const SizedBox(height: AppDimens.lg),
+                      itemBuilder: (_, i) {
+                        final s = structures[i];
+                        return _FullWidthRestaurantCard(
+                          restaurant: RestaurantData(
+                            name: s.name,
+                            cuisine: s.adresse,
+                            rating: s.nombreEtoile.toDouble(),
+                            deliveryTime: s.tempsLivraison,
+                            imageUrl: s.logoUrl,
+                          ),
+                          structureId: s.id,
+                          categoryName: widget.args.categoryName,
+                        );
+                      },
+                    ),
             ),
           ),
         ],
@@ -255,16 +243,23 @@ class _FilterData {
 class _FullWidthRestaurantCard extends StatelessWidget {
   const _FullWidthRestaurantCard({
     required this.restaurant,
+    required this.structureId,
     required this.categoryName,
   });
 
   final RestaurantData restaurant;
+  final int structureId;
   final String categoryName;
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () => showRestaurantBottomSheet(context, restaurant, categoryType: categoryName),
+      onTap: () => showRestaurantBottomSheet(
+        context,
+        restaurant,
+        structureId: structureId,
+        categoryType: categoryName,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
