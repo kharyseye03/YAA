@@ -386,6 +386,16 @@ class ApiService {
     }
   }
 
+  Future<List<Produit>> getProduitsByStructure() async {
+    try {
+      final list = await _getList(ApiConfig.produitsByStructureEndpoint);
+      return list.map((e) => Produit.fromJson(e as Map<String, dynamic>)).toList();
+    } catch (e) {
+      print('❌ Erreur getProduitsByStructure: $e');
+      rethrow;
+    }
+  }
+
   Future<ProduitDetail> getProduitDetail(int id) async {
     try {
       final uri = Uri.parse(ApiConfig.produitDetailUrl(id));

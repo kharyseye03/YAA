@@ -1,10 +1,10 @@
 class ApiConfig {
 
   // ── Keycloak (IAM) ────────────────────────────────────────
-  static const String iamBaseUrl = 'https://57e6-41-83-137-24.ngrok-free.app';
+  static const String iamBaseUrl = 'https://813d-41-83-137-24.ngrok-free.app';
   static const String loginEndpoint = '/realms/yaa-delivery/protocol/openid-connect/token';
   // 🔧 Mode dev → ngrok
-  static const String _ngrokBaseUrl = 'https://331c-41-83-137-24.ngrok-free.app';
+  static const String _ngrokBaseUrl = 'https://e878-41-83-137-24.ngrok-free.app';
   static const String baseUrl       = '$_ngrokBaseUrl/api/v1';
 
 
@@ -25,6 +25,7 @@ class ApiConfig {
   static String structureDetailUrl(int id) => '$baseUrl/structures/$id';
   static String produitDetailUrl(int id) => '$baseUrl/produits/$id';
   static const String categorieProduitEndpoint = '/categories-produit/search';
+  static const String produitsByStructureEndpoint = '/produits/structure';
 
   // ── Timeouts (en secondes) ────────────────────────
   static const int connectionTimeout = 30;
