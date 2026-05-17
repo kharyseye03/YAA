@@ -147,12 +147,12 @@ class _RestaurantSheetState extends ConsumerState<_RestaurantSheet> {
         ),
       );
 
-      // Onglet "Populaire" (categorie == null) → produits depuis l'API structure
+      // Onglet "Populaire" (categorie == null) → produits via /produits/structure/{id}
       if (tab.categorie == null) {
-        final detail = ref.watch(structureDetailProvider(widget.structureId));
+        final produitsAsync = ref.watch(produitsByStructureProvider);
         return <Widget>[
           sectionTitle,
-          detail.when(
+          produitsAsync.when(
             loading: () => const SliverToBoxAdapter(
               child: Padding(
                 padding: EdgeInsets.all(AppDimens.xl),
@@ -172,7 +172,7 @@ class _RestaurantSheetState extends ConsumerState<_RestaurantSheet> {
                 ),
               ),
             ),
-            data: (detail) => detail.produits.isEmpty
+            data: (produits) => produits.isEmpty
                 ? SliverToBoxAdapter(
                     child: Padding(
                       padding: const EdgeInsets.all(AppDimens.xl),
@@ -192,8 +192,8 @@ class _RestaurantSheetState extends ConsumerState<_RestaurantSheet> {
                     sliver: SliverGrid(
                       delegate: SliverChildBuilderDelegate(
                         (_, j) =>
-                            _ApiMenuItemCard(produit: detail.produits[j]),
-                        childCount: detail.produits.length,
+                            _ApiMenuItemCard(produit: produits[j]),
+                        childCount: produits.length,
                       ),
                       gridDelegate:
                           const SliverGridDelegateWithFixedCrossAxisCount(
