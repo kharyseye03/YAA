@@ -1,24 +1,47 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimens.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/utils/app_router.dart';
+import '../../../features/cart/providers/cart_notifier.dart';
 import '../../../shared/widgets/restaurant_sheet.dart';
 import '../../../shared/widgets/yaa_button.dart';
-/// Product detail screen.
-/// Full-width image (rounded bottom corners), name, price, rating,
-/// description, restaurant info, and "Ajouter au panier" button.
-class ProductDetailScreen extends StatefulWidget {
+
+class ProductDetailScreen extends ConsumerStatefulWidget {
   const ProductDetailScreen({super.key});
 
   @override
-  State<ProductDetailScreen> createState() => _ProductDetailScreenState();
+  ConsumerState<ProductDetailScreen> createState() =>
+      _ProductDetailScreenState();
 }
 
-class _ProductDetailScreenState extends State<ProductDetailScreen> {
+class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
   bool _isFavorite = false;
+
+  // TODO: remplacer par le vrai produitId reçu en paramètre de navigation
+  static const int _produitId = 1;
+
+  Future<void> _addToCart() async {
+    final success = await ref.read(cartProvider.notifier).addToCart(
+          produitId : _produitId,
+          quantite  : 1,
+        );
+    if (!mounted) return;
+    if (success) {
+      context.pushNamed(RouteNames.cart);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content         : Text(ref.read(cartProvider).error ?? 'Erreur lors de l\'ajout'),
+          backgroundColor : AppColors.error,
+          duration        : const Duration(seconds: 2),
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -145,10 +168,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             child: SafeArea(
               top: false,
               child: YaaButton(
-                label: 'Ajouter au panier — 2500F',
-                onPressed: () {
-                  context.pushNamed(RouteNames.cart);
-                },
+                label: ref.watch(cartProvider).isAdding
+                    ? 'Ajout en cours...'
+                    : 'Ajouter au panier — 2500F',
+                onPressed: ref.watch(cartProvider).isAdding
+                    ? null
+                    : () => _addToCart(),
               ),
             ),
           ),

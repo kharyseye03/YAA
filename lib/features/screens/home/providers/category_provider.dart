@@ -30,6 +30,7 @@ final categorieProduitProvider =
   return ApiService().getCategorieProduits(structureId);
 });
 
-final produitsByStructureProvider = FutureProvider<List<Produit>>((ref) {
-  return ApiService().getProduitsByStructure();
+final produitsByStructureProvider =
+    FutureProvider.family<List<Produit>, int>((ref, structureId) {
+  return ApiService().getProduitsByStructure(structureId);
 });
