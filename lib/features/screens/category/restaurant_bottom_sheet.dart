@@ -149,7 +149,7 @@ class _RestaurantSheetState extends ConsumerState<_RestaurantSheet> {
 
       // Onglet "Populaire" (categorie == null) → produits via /produits/structure/{id}
       if (tab.categorie == null) {
-        final produitsAsync = ref.watch(produitsByStructureProvider);
+        final produitsAsync = ref.watch(produitsByStructureProvider(widget.structureId));
         return <Widget>[
           sectionTitle,
           produitsAsync.when(
