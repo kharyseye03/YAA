@@ -340,7 +340,6 @@ class ApiService {
     try {
       final uri = Uri.parse(ApiConfig.getUrl(ApiConfig.updateProfileEndpoint));
       final request = http.MultipartRequest('PUT', uri)
-        ..headers.addAll({'ngrok-skip-browser-warning': 'true'})
         ..fields['firstName'] = firstName
         ..fields['lastName']  = lastName
         ..fields['email']     = email
