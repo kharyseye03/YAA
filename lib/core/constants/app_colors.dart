@@ -4,10 +4,10 @@ import 'dart:ui';
 /// All colors used across the app should be referenced from here.
 abstract final class AppColors {
   // ── Primary ──────────────────────────────────────────────
-  static const Color primary = Color(0xFF1652F0);
-  static const Color primaryLight = Color(0xFF4D7DF7);
-  static const Color primaryDark = Color(0xFF0E3BB8);
-  static const Color primarySurface = Color(0xFFE8EEFE);
+  static const Color primary = Color(0xFF1A1A2E);
+  static const Color primaryLight = Color(0xFF2A2A45);
+  static const Color primaryDark = Color(0xFF121220);
+  static const Color primarySurface = Color(0xFFF0F1F7);
 
   // ── Secondary / Accent ───────────────────────────────────
   static const Color secondary = Color(0xFFFF6B35);
@@ -44,8 +44,14 @@ abstract final class AppColors {
   static const Color infoLight = Color(0xFFE9F0FD);
 
   // ── Category Colors ──────────────────────────────────────
-  static const Color restaurant = Color(0xFFFF6B35);
-  static const Color pharmacy = Color(0xFF27AE60);
-  static const Color boutique = Color(0xFF9B59B6);
-  static const Color supermarket = Color(0xFF1652F0);
+  static const Color restaurant  = Color(0xFFFF6B35);
+  static const Color pharmacy    = Color(0xFF27AE60);
+  static const Color boutique    = Color(0xFF9B59B6);
+  static const Color supermarket = Color(0xFF1A1A2E);
+
+  // Aliases YAA_PRO-style
+  static const Color catRestaurant   = Color(0xFFFF6B35);
+  static const Color catPharmacie    = Color(0xFF27AE60);
+  static const Color catBoutique     = Color(0xFF9B59B6);
+  static const Color catSupermarche  = Color(0xFF1A1A2E);
 }

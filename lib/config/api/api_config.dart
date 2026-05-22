@@ -2,14 +2,12 @@ class ApiConfig {
 
   // ── Keycloak (IAM) ────────────────────────────────────────
   // URL différente car c'est un service complètement séparé
-  static const String iamBaseUrl = 'https://813d-41-83-137-24.ngrok-free.app';
+  static const String iamBaseUrl = 'http://10.3.20.91:8181';
   static const String loginEndpoint = '/realms/yaa-delivery/protocol/openid-connect/token';
 
-  // 🔧 Mode dev → ngrok
-  static const String _ngrokBaseUrl = 'https://e878-41-83-137-24.ngrok-free.app';
-  static const String baseUrl       = '$_ngrokBaseUrl/api/v1';
-
-
+  // 🔧 Backend AWS EC2
+  static const String _backendBaseUrl = 'http://10.3.20.91:8081';
+  static const String baseUrl         = '$_backendBaseUrl/api/v1';
 
 
   // ── Endpoints Auth ────────────────────────────────
@@ -40,19 +38,15 @@ class ApiConfig {
   static const int receiveTimeout    = 30;
 
   // ── Headers ───────────────────────────────────────
-  // "get" car les headers peuvent changer selon l'état
-  // de l'app (ex: ajouter un token plus tard)
   static Map<String, String> get headers => {
-    'Content-Type'               : 'application/json',
-    'Accept'                     : 'application/json',
-    'ngrok-skip-browser-warning' : 'true',
+    'Content-Type' : 'application/json',
+    'Accept'       : 'application/json',
   };
 
   // ── Headers Form (spécifique Keycloak) ───────────────────
   // Keycloak n'accepte pas JSON → on lui envoie du form-urlencoded
   static Map<String, String> get formHeaders => {
-    'Content-Type'               : 'application/x-www-form-urlencoded',
-    'ngrok-skip-browser-warning' : 'true',
+    'Content-Type' : 'application/x-www-form-urlencoded',
   };
 
   // Construit l'URL complète : baseUrl + endpoint
@@ -60,6 +54,5 @@ class ApiConfig {
   static String getIamUrl(String endpoint) => '$iamBaseUrl$endpoint';
 
   // Construit l'URL d'accès à une image à partir du nom de fichier
-  // ex: getImageUrl('abc.PNG') → 'https://ngrok.../api/v1/files/abc.PNG'
   static String getImageUrl(String fileName) => '$baseUrl/files/$fileName';
 }

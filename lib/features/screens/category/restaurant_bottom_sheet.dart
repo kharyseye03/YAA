@@ -6,7 +6,11 @@ import '../../../core/constants/app_dimens.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../model/category/categorie_produit.dart';
 import '../../../model/category/structure_detail.dart';
-import '../home/providers/category_provider.dart';
+import '../../../features/cart/providers/cart_notifier.dart';
+import '../home/providers/category_provider.dart' show
+    categorieProduitProvider,
+    produitsByStructureProvider,
+    ProduitQueryParams;
 import '../home/restaurant_card.dart';
 import 'product_bottom_sheet.dart';
 
@@ -21,12 +25,10 @@ void showRestaurantBottomSheet(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
-    builder: (_) => ProviderScope(
-      child: _RestaurantSheet(
-        restaurant: restaurant,
-        structureId: structureId,
-        categoryType: categoryType.toLowerCase(),
-      ),
+    builder: (_) => _RestaurantSheet(
+      restaurant: restaurant,
+      structureId: structureId,
+      categoryType: categoryType.toLowerCase(),
     ),
   );
 }
@@ -131,7 +133,7 @@ class _RestaurantSheetState extends ConsumerState<_RestaurantSheet> {
 
   List<Widget> _buildAllSections(List<CategorieProduit> tabs) {
     return tabs.asMap().entries.expand((entry) {
-      final i = entry.key;
+      final i   = entry.key;
       final tab = entry.value;
 
       final sectionTitle = SliverToBoxAdapter(
@@ -147,69 +149,71 @@ class _RestaurantSheetState extends ConsumerState<_RestaurantSheet> {
         ),
       );
 
-      // Onglet "Populaire" (categorie == null) → produits via /produits/structure/{id}
-      if (tab.categorie == null) {
-        final produitsAsync = ref.watch(produitsByStructureProvider(widget.structureId));
-        return <Widget>[
-          sectionTitle,
-          produitsAsync.when(
-            loading: () => const SliverToBoxAdapter(
-              child: Padding(
-                padding: EdgeInsets.all(AppDimens.xl),
-                child: Center(child: CircularProgressIndicator()),
-              ),
+      // "Populaire" → tous les produits de la structure (sans filtre catégorie)
+      // Autres onglets → filtrés par categorieProduitId
+      final isPopulaire = tab.nom.toLowerCase() == 'populaire';
+      final params = ProduitQueryParams(
+        structureId        : widget.structureId,
+        categorieProduitId : isPopulaire ? null : tab.id,
+      );
+
+      final produitsAsync = ref.watch(produitsByStructureProvider(params));
+
+      return <Widget>[
+        sectionTitle,
+        produitsAsync.when(
+          loading: () => const SliverToBoxAdapter(
+            child: Padding(
+              padding: EdgeInsets.all(AppDimens.xl),
+              child: Center(child: CircularProgressIndicator()),
             ),
-            error: (e, _) => SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.all(AppDimens.xl),
-                child: Center(
-                  child: Text(
-                    e.toString().replaceAll('Exception: ', ''),
-                    style: AppTextStyles.bodyMedium
-                        .copyWith(color: AppColors.error),
-                    textAlign: TextAlign.center,
-                  ),
+          ),
+          error: (e, _) => SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.all(AppDimens.xl),
+              child: Center(
+                child: Text(
+                  e.toString().replaceAll('Exception: ', ''),
+                  style: AppTextStyles.bodyMedium
+                      .copyWith(color: AppColors.error),
+                  textAlign: TextAlign.center,
                 ),
               ),
             ),
-            data: (produits) => produits.isEmpty
-                ? SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.all(AppDimens.xl),
-                      child: Center(
-                        child: Text(
-                          'Aucun produit disponible',
-                          style: AppTextStyles.bodyMedium
-                              .copyWith(color: AppColors.grey500),
-                        ),
-                      ),
-                    ),
-                  )
-                : SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(
-                        AppDimens.screenPadding, AppDimens.md,
-                        AppDimens.screenPadding, 0),
-                    sliver: SliverGrid(
-                      delegate: SliverChildBuilderDelegate(
-                        (_, j) =>
-                            _ApiMenuItemCard(produit: produits[j]),
-                        childCount: produits.length,
-                      ),
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        crossAxisSpacing: AppDimens.md,
-                        mainAxisSpacing: AppDimens.md,
-                        childAspectRatio: 0.82,
+          ),
+          data: (produits) => produits.isEmpty
+              ? SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.all(AppDimens.xl),
+                    child: Center(
+                      child: Text(
+                        'Aucun produit disponible',
+                        style: AppTextStyles.bodyMedium
+                            .copyWith(color: AppColors.grey500),
                       ),
                     ),
                   ),
-          ),
-        ];
-      }
-
-      // Autres onglets → masqués tant qu'il n'y a pas de produits
-      return <Widget>[];
+                )
+              : SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(
+                      AppDimens.screenPadding, AppDimens.md,
+                      AppDimens.screenPadding, 0),
+                  sliver: SliverGrid(
+                    delegate: SliverChildBuilderDelegate(
+                      (_, j) => _ApiMenuItemCard(produit: produits[j]),
+                      childCount: produits.length,
+                    ),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      crossAxisSpacing: AppDimens.md,
+                      mainAxisSpacing: AppDimens.md,
+                      childAspectRatio: 0.82,
+                    ),
+                  ),
+                ),
+        ),
+      ];
     }).toList();
   }
 
@@ -417,68 +421,198 @@ class _TabsDelegate extends SliverPersistentHeaderDelegate {
 }
 
 // ── Carte produit (données API) ───────────────────────────
-class _ApiMenuItemCard extends StatelessWidget {
+class _ApiMenuItemCard extends ConsumerStatefulWidget {
   const _ApiMenuItemCard({required this.produit});
   final Produit produit;
 
   @override
+  ConsumerState<_ApiMenuItemCard> createState() => _ApiMenuItemCardState();
+}
+
+class _ApiMenuItemCardState extends ConsumerState<_ApiMenuItemCard> {
+  int  _qty       = 0;
+  bool _isLoading = false;
+
+  Future<void> _add() async {
+    setState(() { _qty++; _isLoading = true; });
+    final success = await ref.read(cartProvider.notifier).addToCart(
+      produitId : widget.produit.id,
+      quantite  : 1,
+    );
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+    if (!success) {
+      setState(() => _qty = (_qty - 1).clamp(0, 99));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content         : Text(ref.read(cartProvider).error ?? 'Erreur'),
+        backgroundColor : AppColors.error,
+        duration        : const Duration(seconds: 2),
+      ));
+    }
+  }
+
+  void _remove() {
+    if (_qty > 0) setState(() => _qty--);
+  }
+
+  @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () => showProductBottomSheet(context, produit.id),
+      onTap: () => showProductBottomSheet(context, widget.produit.id),
       child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          child: Stack(
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(AppDimens.radiusLg),
-                child: Image.network(
-                  produit.imageUrl,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => Container(
-                    color: AppColors.grey200,
-                    child: const Icon(Icons.image_outlined,
-                        color: AppColors.grey400),
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Stack(
+              children: [
+                // ── Image ────────────────────────────────
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(AppDimens.radiusLg),
+                  child: Image.network(
+                    widget.produit.imageUrl,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Container(
+                      color: AppColors.grey200,
+                      child: const Icon(Icons.image_outlined,
+                          color: AppColors.grey400),
+                    ),
                   ),
                 ),
-              ),
-              Positioned(
-                bottom: 8,
-                right: 8,
-                child: Container(
-                  width: 32,
-                  height: 32,
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
+
+                // ── Contrôle quantité (bas-droite) ───────
+                Positioned(
+                  bottom: 8,
+                  right : 8,
+                  child : AnimatedSwitcher(
+                    duration       : const Duration(milliseconds: 200),
+                    switchInCurve  : Curves.easeOut,
+                    switchOutCurve : Curves.easeIn,
+                    transitionBuilder: (child, anim) => ScaleTransition(
+                      scale: anim, child: child,
+                    ),
+                    child: _qty == 0
+                        // ── Bouton + simple ──────────────
+                        ? GestureDetector(
+                            key    : const ValueKey('add'),
+                            onTap  : _isLoading ? null : _add,
+                            child  : Container(
+                              width  : 32,
+                              height : 32,
+                              decoration: const BoxDecoration(
+                                color : Colors.white,
+                                shape : BoxShape.circle,
+                              ),
+                              child: _isLoading
+                                  ? const Padding(
+                                      padding: EdgeInsets.all(6),
+                                      child: CircularProgressIndicator(
+                                        strokeWidth : 2,
+                                        color       : AppColors.primary,
+                                      ),
+                                    )
+                                  : const Icon(Icons.add,
+                                      size: 20, color: AppColors.dark),
+                            ),
+                          )
+                        // ── Pill − qty + ─────────────────
+                        : GestureDetector(
+                            key      : const ValueKey('stepper'),
+                            behavior : HitTestBehavior.opaque,
+                            onTap    : () {}, // absorbe le tap de la carte
+                            child    : Container(
+                              height: 32,
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 6),
+                              decoration: BoxDecoration(
+                                color        : Colors.white,
+                                borderRadius : BorderRadius.circular(
+                                    AppDimens.radiusFull),
+                                boxShadow    : [
+                                  BoxShadow(
+                                    color     : Colors.black
+                                        .withValues(alpha: 0.10),
+                                    blurRadius: 6,
+                                    offset    : const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  // bouton −
+                                  GestureDetector(
+                                    onTap: _remove,
+                                    child: const Padding(
+                                      padding: EdgeInsets.symmetric(
+                                          horizontal: 4),
+                                      child: Icon(Icons.remove_rounded,
+                                          size: 16,
+                                          color: AppColors.dark),
+                                    ),
+                                  ),
+                                  // quantité
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 2),
+                                    child: _isLoading
+                                        ? const SizedBox(
+                                            width : 14,
+                                            height: 14,
+                                            child : CircularProgressIndicator(
+                                              strokeWidth : 2,
+                                              color       : AppColors.primary,
+                                            ),
+                                          )
+                                        : Text(
+                                            '$_qty',
+                                            style: AppTextStyles.labelSmall
+                                                .copyWith(
+                                              fontWeight : FontWeight.w700,
+                                              fontSize   : 13,
+                                              color      : AppColors.dark,
+                                            ),
+                                          ),
+                                  ),
+                                  // bouton +
+                                  GestureDetector(
+                                    onTap: _isLoading ? null : _add,
+                                    child: const Padding(
+                                      padding: EdgeInsets.symmetric(
+                                          horizontal: 4),
+                                      child: Icon(Icons.add_rounded,
+                                          size: 16,
+                                          color: AppColors.primary),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
                   ),
-                  child: const Icon(Icons.add, size: 20, color: AppColors.dark),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          '${produit.prix.toInt()} F',
-          style: AppTextStyles.labelMedium.copyWith(
-            fontWeight: FontWeight.w800,
-            fontSize: 15,
-            color: AppColors.dark,
+          const SizedBox(height: 6),
+          Text(
+            '${widget.produit.prix.toInt()} F',
+            style: AppTextStyles.labelMedium.copyWith(
+              fontWeight: FontWeight.w800,
+              fontSize: 15,
+              color: AppColors.dark,
+            ),
           ),
-        ),
-        Text(
-          produit.nom,
-          style: AppTextStyles.bodySmall.copyWith(
-            fontSize: 13,
-            color: AppColors.dark,
+          Text(
+            widget.produit.nom,
+            style: AppTextStyles.bodySmall.copyWith(
+              fontSize: 13,
+              color: AppColors.dark,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-      ],
+        ],
       ),
     );
   }
