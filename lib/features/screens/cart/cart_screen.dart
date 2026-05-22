@@ -77,6 +77,29 @@ class _CartScreenState extends ConsumerState<CartScreen> {
 
         const Divider(height: 1, color: AppColors.grey200),
 
+        // ── Erreur ─────────────────────────────────────
+        if (cartState.error != null)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(
+                horizontal: AppDimens.screenPadding, vertical: 10),
+            color: AppColors.errorLight,
+            child: Row(
+              children: [
+                const Icon(Icons.error_outline_rounded,
+                    color: AppColors.error, size: 16),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    cartState.error!,
+                    style: AppTextStyles.bodySmall
+                        .copyWith(color: AppColors.error),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
         // ── Contenu scrollable ──────────────────────────
         Expanded(
           child: cartState.isLoading
@@ -282,9 +305,13 @@ class _CartScreenState extends ConsumerState<CartScreen> {
             border : Border(top: BorderSide(color: AppColors.grey200)),
           ),
           child: YaaButton(
-            label     : 'Commander · ${cart?.montantTotal.toStringAsFixed(0) ?? '0'} F',
-            onPressed : () => context.pushNamed(RouteNames.checkout),
-            icon      : Icons.arrow_forward,
+            label     : lignes.isEmpty
+                ? 'Panier vide'
+                : 'Commander · ${total.toStringAsFixed(0)} F',
+            onPressed : lignes.isEmpty
+                ? null
+                : () => context.pushNamed(RouteNames.checkout),
+            icon      : lignes.isEmpty ? null : Icons.arrow_forward,
           ),
         ),
       ],
@@ -364,7 +391,9 @@ class _CartItemState extends State<_CartItem> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                widget.item.nom,
+                widget.item.nom.isNotEmpty
+                    ? widget.item.nom
+                    : 'Produit #${widget.item.produitId}',
                 style: AppTextStyles.labelMedium.copyWith(
                   fontWeight : FontWeight.w700,
                   fontSize   : 14,

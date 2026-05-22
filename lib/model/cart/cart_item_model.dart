@@ -10,16 +10,18 @@ class CartItemModel {
     required this.nom,
     required this.quantite,
     required this.prixUnitaire,
-    required this.sousTotal,
+    this.sousTotal = 0.0,
   });
 
   factory CartItemModel.fromJson(Map<String, dynamic> json) {
+    final prix     = (json['prixUnitaire'] as num?)?.toDouble() ?? 0.0;
+    final quantite = (json['quantite']     as num?)?.toInt()    ?? 1;
     return CartItemModel(
       produitId    : (json['produitId']    as num).toInt(),
       nom          : json['nom']           as String? ?? '',
-      quantite     : (json['quantite']     as num).toInt(),
-      prixUnitaire : (json['prixUnitaire'] as num).toDouble(),
-      sousTotal    : (json['sousTotal']    as num).toDouble(),
+      quantite     : quantite,
+      prixUnitaire : prix,
+      sousTotal    : (json['sousTotal']    as num?)?.toDouble() ?? prix * quantite,
     );
   }
 }

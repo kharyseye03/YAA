@@ -54,12 +54,21 @@ class ApiService {
       print('📡 Status → ${response.statusCode}');
       print('📬 Réponse → ${response.body}');
 
-      final data = json.decode(response.body) as Map<String, dynamic>;
-
       if (response.statusCode == 200 || response.statusCode == 201) {
+        if (response.body.isEmpty) return {};
+        final data = json.decode(response.body) as Map<String, dynamic>;
         return data;
       }
 
+      if (response.statusCode == 401) {
+        throw Exception('Session expirée. Veuillez vous reconnecter.');
+      }
+
+      if (response.body.isEmpty) {
+        throw Exception('Erreur ${response.statusCode}');
+      }
+
+      final data = json.decode(response.body) as Map<String, dynamic>;
       final errorMessage = data['message'] as String? ?? 'Erreur ${response.statusCode}';
       throw Exception(errorMessage);
 
@@ -542,8 +551,11 @@ class ApiService {
         {'produitId': produitId, 'quantite': quantite},
       ];
       final response = await _post(ApiConfig.cartEndpoint, body, token: token);
-      final data = response['data'] as Map<String, dynamic>;
-      return CartModel.fromJson(data);
+      // Le backend peut retourner le panier directement ou dans un champ 'data'
+      final cartJson = response.containsKey('lignes')
+          ? response
+          : (response['data'] as Map<String, dynamic>? ?? response);
+      return CartModel.fromJson(cartJson);
     } catch (e) {
       print('❌ Erreur addToCart: $e');
       rethrow;
@@ -559,4 +571,5 @@ class ApiService {
       rethrow;
     }
   }
+
 }

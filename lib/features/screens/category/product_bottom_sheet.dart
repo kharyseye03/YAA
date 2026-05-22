@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimens.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../features/cart/providers/cart_notifier.dart';
 import '../home/providers/category_provider.dart';
 
 void showProductBottomSheet(BuildContext context, int produitId) {
@@ -12,9 +13,7 @@ void showProductBottomSheet(BuildContext context, int produitId) {
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
-    builder: (_) => ProviderScope(
-      child: _ProductSheet(produitId: produitId),
-    ),
+    builder: (_) => _ProductSheet(produitId: produitId),
   );
 }
 
@@ -449,37 +448,79 @@ class _ProductSheetState extends ConsumerState<_ProductSheet> {
           // ── Bouton Ajouter ───────────────────────────
           Expanded(
             child: GestureDetector(
-              onTap: () {
-                HapticFeedback.mediumImpact();
-                Navigator.of(context).pop();
-              },
+              onTap: ref.watch(cartProvider).isAdding
+                  ? null
+                  : () async {
+                      HapticFeedback.mediumImpact();
+                      final success = await ref
+                          .read(cartProvider.notifier)
+                          .addToCart(
+                            produitId : widget.produitId,
+                            quantite  : _quantity,
+                          );
+                      if (!context.mounted) return;
+                      if (success) {
+                        Navigator.of(context).pop();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content         : Text('Ajouté au panier ✓'),
+                            backgroundColor : AppColors.primary,
+                            duration        : Duration(seconds: 2),
+                          ),
+                        );
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              ref.read(cartProvider).error ??
+                                  'Erreur lors de l\'ajout',
+                            ),
+                            backgroundColor : AppColors.error,
+                            duration        : const Duration(seconds: 2),
+                          ),
+                        );
+                      }
+                    },
               child: Container(
                 height: 54,
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [AppColors.primaryLight, AppColors.primary],
+                  gradient: LinearGradient(
+                    colors: ref.watch(cartProvider).isAdding
+                        ? [AppColors.grey400, AppColors.grey400]
+                        : [AppColors.primaryLight, AppColors.primary],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
                   borderRadius:
                       BorderRadius.circular(AppDimens.radiusFull),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.primary.withValues(alpha: 0.35),
-                      blurRadius: 14,
-                      offset: const Offset(0, 5),
-                    ),
-                  ],
+                  boxShadow: ref.watch(cartProvider).isAdding
+                      ? null
+                      : [
+                          BoxShadow(
+                            color: AppColors.primary.withValues(alpha: 0.35),
+                            blurRadius: 14,
+                            offset: const Offset(0, 5),
+                          ),
+                        ],
                 ),
                 alignment: Alignment.center,
-                child: Text(
-                  'Ajouter  •  $total F',
-                  style: AppTextStyles.labelMedium.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 15,
-                  ),
-                ),
+                child: ref.watch(cartProvider).isAdding
+                    ? const SizedBox(
+                        width  : 22,
+                        height : 22,
+                        child  : CircularProgressIndicator(
+                          strokeWidth : 2.5,
+                          color       : Colors.white,
+                        ),
+                      )
+                    : Text(
+                        'Ajouter  •  $total F',
+                        style: AppTextStyles.labelMedium.copyWith(
+                          color      : Colors.white,
+                          fontWeight : FontWeight.w700,
+                          fontSize   : 15,
+                        ),
+                      ),
               ),
             ),
           ),
