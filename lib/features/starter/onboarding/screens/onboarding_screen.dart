@@ -21,19 +21,19 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     OnboardingPageData(
       image: 'assets/images/test4.jpeg',
       title: 'Tout ce dont vous\navez besoin, ici',
-      badge: '🛒  Courses, restos, boutiques — en un seul endroit',
+      badge: 'Courses, restos, boutiques — en un seul endroit',
       imageAlignment: Alignment.topCenter,
     ),
     OnboardingPageData(
       image: 'assets/images/L1.jpeg',
       title: 'Livré directement\nchez vous',
-      badge: '🚚  Livraison rapide partout dans votre ville',
+      badge: 'Livraison rapide partout dans votre ville',
       imageAlignment: Alignment.centerLeft,
     ),
     OnboardingPageData(
       image: 'assets/images/ob3.jpeg',
       title: 'Des milliers de produits',
-      badge: '🍕  Nourriture, épicerie, vêtements et bien plus',
+      badge: 'Nourriture, épicerie, vêtements et bien plus',
       imageAlignment: Alignment.topCenter,
     ),
   ];
@@ -207,7 +207,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         Text(
           page.badge,
           textAlign: TextAlign.center,
-          style: AppTextStyles.bodySmall.copyWith(
+          style: AppTextStyles.bodyMedium.copyWith(
             color: Colors.white.withOpacity(0.75),
             height: 1.5,
           ),
@@ -257,7 +257,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       child: ElevatedButton(
         onPressed: onPressed,
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary,
+          backgroundColor: AppColors.secondary,
           foregroundColor: AppColors.white,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),

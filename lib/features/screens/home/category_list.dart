@@ -6,6 +6,7 @@ class CategoryData {
   final String label;
   final IconData? icon;
   final String? imageUrl;
+  final String? fallbackAsset;
   final Color color;
   final VoidCallback? onTap;
 
@@ -13,6 +14,7 @@ class CategoryData {
     required this.label,
     this.icon,
     this.imageUrl,
+    this.fallbackAsset,
     this.color = AppColors.primary,
     this.onTap,
   });
@@ -85,11 +87,20 @@ class _CategoryItem extends StatelessWidget {
                     ? Image.network(
                         data.imageUrl!,
                         fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => Icon(
-                          data.icon ?? Icons.category_outlined,
-                          color: isActive ? Colors.white : data.color,
-                          size: 26,
-                        ),
+                        errorBuilder: (_, __, ___) =>
+                            data.fallbackAsset != null
+                                ? Image.asset(
+                                    data.fallbackAsset!,
+                                    fit: BoxFit.cover,
+                                    width: double.infinity,
+                                    height: double.infinity,
+                                  )
+                                : Icon(
+                                    data.icon ?? Icons.category_outlined,
+                                    color:
+                                        isActive ? Colors.white : data.color,
+                                    size: 26,
+                                  ),
                       )
                     : Icon(
                         data.icon ?? Icons.category_outlined,

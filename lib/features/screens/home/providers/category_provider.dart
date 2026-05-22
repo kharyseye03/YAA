@@ -6,6 +6,26 @@ import '../../../../model/category/structure.dart';
 import '../../../../model/category/structure_detail.dart'; // contient aussi Produit
 import '../../../../service/api/api_service.dart';
 
+// ── Paramètres pour filtrer les produits ──────────────────────────
+class ProduitQueryParams {
+  final int structureId;
+  final int? categorieProduitId;
+
+  const ProduitQueryParams({
+    required this.structureId,
+    this.categorieProduitId,
+  });
+
+  @override
+  bool operator ==(Object other) =>
+      other is ProduitQueryParams &&
+      other.structureId == structureId &&
+      other.categorieProduitId == categorieProduitId;
+
+  @override
+  int get hashCode => Object.hash(structureId, categorieProduitId);
+}
+
 final categoriesProvider = FutureProvider<List<CategorieStructure>>((ref) {
   return ApiService().getCategories();
 });
@@ -31,6 +51,9 @@ final categorieProduitProvider =
 });
 
 final produitsByStructureProvider =
-    FutureProvider.family<List<Produit>, int>((ref, structureId) {
-  return ApiService().getProduitsByStructure(structureId);
+    FutureProvider.family<List<Produit>, ProduitQueryParams>((ref, params) {
+  return ApiService().getProduitsByStructure(
+    params.structureId,
+    categorieProduitId: params.categorieProduitId,
+  );
 });

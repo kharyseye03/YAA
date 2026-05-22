@@ -480,11 +480,20 @@ class ApiService {
     }
   }
 
-  Future<List<Produit>> getProduitsByStructure(int structureId) async {
+  Future<List<Produit>> getProduitsByStructure(
+    int structureId, {
+    int? categorieProduitId,
+  }) async {
     try {
+      final params = <String, String>{
+        'idStructure': structureId.toString(),
+      };
+      if (categorieProduitId != null) {
+        params['categorieProduitId'] = categorieProduitId.toString();
+      }
       final list = await _getList(
         ApiConfig.produitsByStructureEndpoint,
-        queryParams: {'structureId': structureId.toString()},
+        queryParams: params,
       );
       return list.map((e) => Produit.fromJson(e as Map<String, dynamic>)).toList();
     } catch (e) {

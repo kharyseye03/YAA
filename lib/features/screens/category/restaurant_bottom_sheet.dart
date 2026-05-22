@@ -6,7 +6,10 @@ import '../../../core/constants/app_dimens.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../model/category/categorie_produit.dart';
 import '../../../model/category/structure_detail.dart';
-import '../home/providers/category_provider.dart';
+import '../home/providers/category_provider.dart' show
+    categorieProduitProvider,
+    produitsByStructureProvider,
+    ProduitQueryParams;
 import '../home/restaurant_card.dart';
 import 'product_bottom_sheet.dart';
 
@@ -131,7 +134,7 @@ class _RestaurantSheetState extends ConsumerState<_RestaurantSheet> {
 
   List<Widget> _buildAllSections(List<CategorieProduit> tabs) {
     return tabs.asMap().entries.expand((entry) {
-      final i = entry.key;
+      final i   = entry.key;
       final tab = entry.value;
 
       final sectionTitle = SliverToBoxAdapter(
@@ -147,69 +150,71 @@ class _RestaurantSheetState extends ConsumerState<_RestaurantSheet> {
         ),
       );
 
-      // Onglet "Populaire" (categorie == null) → produits via /produits/structure/{id}
-      if (tab.categorie == null) {
-        final produitsAsync = ref.watch(produitsByStructureProvider(widget.structureId));
-        return <Widget>[
-          sectionTitle,
-          produitsAsync.when(
-            loading: () => const SliverToBoxAdapter(
-              child: Padding(
-                padding: EdgeInsets.all(AppDimens.xl),
-                child: Center(child: CircularProgressIndicator()),
-              ),
+      // "Populaire" → tous les produits de la structure (sans filtre catégorie)
+      // Autres onglets → filtrés par categorieProduitId
+      final isPopulaire = tab.nom.toLowerCase() == 'populaire';
+      final params = ProduitQueryParams(
+        structureId        : widget.structureId,
+        categorieProduitId : isPopulaire ? null : tab.id,
+      );
+
+      final produitsAsync = ref.watch(produitsByStructureProvider(params));
+
+      return <Widget>[
+        sectionTitle,
+        produitsAsync.when(
+          loading: () => const SliverToBoxAdapter(
+            child: Padding(
+              padding: EdgeInsets.all(AppDimens.xl),
+              child: Center(child: CircularProgressIndicator()),
             ),
-            error: (e, _) => SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.all(AppDimens.xl),
-                child: Center(
-                  child: Text(
-                    e.toString().replaceAll('Exception: ', ''),
-                    style: AppTextStyles.bodyMedium
-                        .copyWith(color: AppColors.error),
-                    textAlign: TextAlign.center,
-                  ),
+          ),
+          error: (e, _) => SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.all(AppDimens.xl),
+              child: Center(
+                child: Text(
+                  e.toString().replaceAll('Exception: ', ''),
+                  style: AppTextStyles.bodyMedium
+                      .copyWith(color: AppColors.error),
+                  textAlign: TextAlign.center,
                 ),
               ),
             ),
-            data: (produits) => produits.isEmpty
-                ? SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.all(AppDimens.xl),
-                      child: Center(
-                        child: Text(
-                          'Aucun produit disponible',
-                          style: AppTextStyles.bodyMedium
-                              .copyWith(color: AppColors.grey500),
-                        ),
-                      ),
-                    ),
-                  )
-                : SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(
-                        AppDimens.screenPadding, AppDimens.md,
-                        AppDimens.screenPadding, 0),
-                    sliver: SliverGrid(
-                      delegate: SliverChildBuilderDelegate(
-                        (_, j) =>
-                            _ApiMenuItemCard(produit: produits[j]),
-                        childCount: produits.length,
-                      ),
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        crossAxisSpacing: AppDimens.md,
-                        mainAxisSpacing: AppDimens.md,
-                        childAspectRatio: 0.82,
+          ),
+          data: (produits) => produits.isEmpty
+              ? SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.all(AppDimens.xl),
+                    child: Center(
+                      child: Text(
+                        'Aucun produit disponible',
+                        style: AppTextStyles.bodyMedium
+                            .copyWith(color: AppColors.grey500),
                       ),
                     ),
                   ),
-          ),
-        ];
-      }
-
-      // Autres onglets → masqués tant qu'il n'y a pas de produits
-      return <Widget>[];
+                )
+              : SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(
+                      AppDimens.screenPadding, AppDimens.md,
+                      AppDimens.screenPadding, 0),
+                  sliver: SliverGrid(
+                    delegate: SliverChildBuilderDelegate(
+                      (_, j) => _ApiMenuItemCard(produit: produits[j]),
+                      childCount: produits.length,
+                    ),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      crossAxisSpacing: AppDimens.md,
+                      mainAxisSpacing: AppDimens.md,
+                      childAspectRatio: 0.82,
+                    ),
+                  ),
+                ),
+        ),
+      ];
     }).toList();
   }
 

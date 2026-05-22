@@ -277,14 +277,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 AppColors.supermarket,
                 AppColors.secondary,
               ];
+              const categoryFallbacks = {
+                'restaurant'  : 'assets/images/food.jpeg',
+                'boutique'    : 'assets/images/cat2.jpeg',
+                'pharmacie'   : 'assets/images/cat3.jpeg',
+                'supermarché' : 'assets/images/cat4.jpeg',
+              };
               final categories = List.generate(apiCategories.length, (i) {
                 final cat = apiCategories[i];
                 return CategoryData(
-                  label: cat.name,
-                  imageUrl: cat.imageFileName != null
+                  label         : cat.name,
+                  imageUrl      : cat.imageFileName != null
                       ? ApiConfig.getImageUrl(cat.imageFileName!)
                       : null,
-                  color: palette[i % palette.length],
+                  fallbackAsset : categoryFallbacks[cat.name.toLowerCase()],
+                  color         : palette[i % palette.length],
                   onTap: () {
                     setState(() => _activeCategoryIndex = i);
                     context.pushNamed(
