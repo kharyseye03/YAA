@@ -83,6 +83,63 @@ class ApiService {
     }
   }
 
+  Future<void> _delete(
+    String endpoint, {
+    Map<String, String>? queryParams,
+    String? token,
+  }) async {
+    try {
+      var uri = Uri.parse(ApiConfig.getUrl(endpoint));
+      if (queryParams != null) {
+        uri = uri.replace(queryParameters: queryParams);
+      }
+
+      print('🌐 DELETE → $uri');
+
+      final headers = {
+        ...ApiConfig.headers,
+        if (token != null) 'Authorization': 'Bearer $token',
+      };
+
+      final response = await http.delete(
+        uri,
+        headers: headers,
+      ).timeout(
+        const Duration(seconds: ApiConfig.connectionTimeout),
+        onTimeout: () => throw TimeoutException('Le serveur ne répond pas.'),
+      );
+
+      print('📡 DELETE Status → ${response.statusCode}');
+      print('📬 DELETE Réponse → ${response.body}');
+
+      if (response.statusCode == 200 ||
+          response.statusCode == 201 ||
+          response.statusCode == 204) {
+        return; // succès
+      }
+
+      if (response.statusCode == 401) {
+        throw Exception('Session expirée. Veuillez vous reconnecter.');
+      }
+
+      if (response.body.isEmpty) {
+        throw Exception('Erreur ${response.statusCode}');
+      }
+
+      final data = json.decode(response.body) as Map<String, dynamic>;
+      throw Exception(data['message'] as String? ?? 'Erreur ${response.statusCode}');
+
+    } on SocketException {
+      throw Exception('Pas de connexion internet.');
+    } on TimeoutException catch (e) {
+      throw Exception(e.message);
+    } on FormatException {
+      throw Exception('Réponse invalide du serveur.');
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   Future<Map<String, dynamic>> _get(
     String endpoint, {
     Map<String, String>? queryParams,
@@ -541,7 +598,7 @@ class ApiService {
   // MÉTHODES PUBLIQUES — Panier
   // ════════════════════════════════════════════════════
 
-  Future<CartModel> addToCart({
+  Future<void> addToCart({
     required int produitId,
     required int quantite,
     String? token,
@@ -550,12 +607,9 @@ class ApiService {
       final body = [
         {'produitId': produitId, 'quantite': quantite},
       ];
-      final response = await _post(ApiConfig.cartEndpoint, body, token: token);
-      // Le backend peut retourner le panier directement ou dans un champ 'data'
-      final cartJson = response.containsKey('lignes')
-          ? response
-          : (response['data'] as Map<String, dynamic>? ?? response);
-      return CartModel.fromJson(cartJson);
+      await _post(ApiConfig.cartEndpoint, body, token: token);
+      // On n'essaie pas de parser la réponse — le CartNotifier
+      // recharge le panier complet via getCart() juste après.
     } catch (e) {
       print('❌ Erreur addToCart: $e');
       rethrow;
@@ -568,6 +622,34 @@ class ApiService {
       return CartModel.fromJson(response);
     } catch (e) {
       print('❌ Erreur getCart: $e');
+      rethrow;
+    }
+  }
+
+  /// Supprime une ligne du panier
+  Future<void> deleteCartLine({required int idLigne, String? token}) async {
+    try {
+      await _delete(
+        ApiConfig.cartDeleteLineEndpoint,
+        queryParams: {'idLigne': idLigne.toString()},
+        token: token,
+      );
+    } catch (e) {
+      print('❌ Erreur deleteCartLine: $e');
+      rethrow;
+    }
+  }
+
+  /// Vide entièrement le panier
+  Future<void> clearEntireCart({required int idPanier, String? token}) async {
+    try {
+      await _delete(
+        ApiConfig.cartClearEndpoint,
+        queryParams: {'idPanier': idPanier.toString()},
+        token: token,
+      );
+    } catch (e) {
+      print('❌ Erreur clearEntireCart: $e');
       rethrow;
     }
   }

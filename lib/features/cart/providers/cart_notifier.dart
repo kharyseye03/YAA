@@ -108,11 +108,14 @@ class CartNotifier extends StateNotifier<CartState> {
     state = state.copyWith(isAdding: true, clearError: true);
     try {
       final token = await _getValidToken();
-      final cart  = await ApiService().addToCart(
+      await ApiService().addToCart(
         produitId : produitId,
         quantite  : quantite,
         token     : token,
       );
+      // Recharge le panier depuis le serveur pour avoir
+      // le vrai total, les noms et tous les champs à jour
+      final cart = await ApiService().getCart(token: token);
       state = state.copyWith(isAdding: false, cart: cart);
       return true;
     } catch (e) {
@@ -122,6 +125,37 @@ class CartNotifier extends StateNotifier<CartState> {
         error: e.toString().replaceAll('Exception: ', ''),
       );
       return false;
+    }
+  }
+
+  /// Supprime une ligne du panier (swipe-to-delete)
+  Future<void> removeItem(int idLigne) async {
+    try {
+      final token = await _getValidToken();
+      await ApiService().deleteCartLine(idLigne: idLigne, token: token);
+      final cart = await ApiService().getCart(token: token);
+      state = state.copyWith(cart: cart, clearError: true);
+    } catch (e) {
+      debugPrint('❌ removeItem: $e');
+      state = state.copyWith(
+        error: e.toString().replaceAll('Exception: ', ''),
+      );
+    }
+  }
+
+  /// Vide entièrement le panier
+  Future<void> clearCartFromServer() async {
+    final idPanier = state.cart?.id;
+    if (idPanier == null) return;
+    try {
+      final token = await _getValidToken();
+      await ApiService().clearEntireCart(idPanier: idPanier, token: token);
+      state = state.copyWith(cart: null, clearError: true);
+    } catch (e) {
+      debugPrint('❌ clearCartFromServer: $e');
+      state = state.copyWith(
+        error: e.toString().replaceAll('Exception: ', ''),
+      );
     }
   }
 

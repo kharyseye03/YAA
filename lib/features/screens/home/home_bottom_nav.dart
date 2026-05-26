@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:remixicon/remixicon.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../features/cart/providers/cart_notifier.dart';
 
-class HomeBottomNav extends StatelessWidget {
+class HomeBottomNav extends ConsumerWidget {
   const HomeBottomNav({
     super.key,
     required this.currentIndex,
@@ -15,7 +17,8 @@ class HomeBottomNav extends StatelessWidget {
   final VoidCallback onCartTap;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final cartCount = ref.watch(cartProvider).cart?.totalArticles ?? 0;
     return Container(
       color: Colors.transparent,
       padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
@@ -53,30 +56,61 @@ class HomeBottomNav extends StatelessWidget {
                 onTap: onCartTap,
                 behavior: HitTestBehavior.opaque,
                 child: Center(
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    width: 46,
-                    height: 46,
-                    decoration: BoxDecoration(
-                      color: currentIndex == 4
-                          ? Colors.white
-                          : AppColors.primary,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.primary.withValues(alpha: 0.4),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        width: 46,
+                        height: 46,
+                        decoration: BoxDecoration(
+                          color: currentIndex == 4
+                              ? Colors.white
+                              : AppColors.primary,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.primary.withValues(alpha: 0.4),
+                              blurRadius: 12,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                    child: Icon(
-                      Icons.shopping_bag_outlined,
-                      color: currentIndex == 4
-                          ? AppColors.primary
-                          : Colors.white,
-                      size: 22,
-                    ),
+                        child: Icon(
+                          Icons.shopping_bag_outlined,
+                          color: currentIndex == 4
+                              ? AppColors.primary
+                              : Colors.white,
+                          size: 22,
+                        ),
+                      ),
+                      // ── Badge rouge ────────────────────────
+                      if (cartCount > 0)
+                        Positioned(
+                          top  : -4,
+                          right: -4,
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: const BoxDecoration(
+                              color : Colors.red,
+                              shape : BoxShape.circle,
+                            ),
+                            constraints: const BoxConstraints(
+                              minWidth : 18,
+                              minHeight: 18,
+                            ),
+                            child: Text(
+                              cartCount > 9 ? '9+' : '$cartCount',
+                              style: const TextStyle(
+                                color     : Colors.white,
+                                fontSize  : 10,
+                                fontWeight: FontWeight.w700,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
                 ),
               ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../config/api/api_config.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimens.dart';
@@ -24,6 +25,31 @@ class _CartScreenState extends ConsumerState<CartScreen> {
   void initState() {
     super.initState();
     Future.microtask(() => ref.read(cartProvider.notifier).loadCart());
+  }
+
+  Future<void> _confirmClearCart(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape        : RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title        : const Text('Vider le panier'),
+        content      : const Text('Êtes-vous sûr de vouloir supprimer tous les articles ?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Annuler'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            style: TextButton.styleFrom(foregroundColor: AppColors.error),
+            child: const Text('Vider'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true && mounted) {
+      ref.read(cartProvider.notifier).clearCartFromServer();
+    }
   }
 
   @override
@@ -71,6 +97,25 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                   ),
                 ),
               ),
+              if (lignes.isNotEmpty) ...[
+                const SizedBox(width: 8),
+                GestureDetector(
+                  onTap: () => _confirmClearCart(context),
+                  child: Container(
+                    width  : 34,
+                    height : 34,
+                    decoration: BoxDecoration(
+                      color        : AppColors.errorLight,
+                      borderRadius : BorderRadius.circular(10),
+                    ),
+                    child: const Icon(
+                      Icons.delete_outline_rounded,
+                      color : AppColors.error,
+                      size  : 18,
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
         ),
@@ -115,38 +160,25 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // ── Résumé total ───────────────────────
-                      Row(
-                        mainAxisAlignment  : MainAxisAlignment.spaceBetween,
-                        crossAxisAlignment : CrossAxisAlignment.end,
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Total à payer',
-                                style: AppTextStyles.bodySmall.copyWith(
-                                  color    : AppColors.grey500,
-                                  fontSize : 12,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                '${total.toStringAsFixed(0)} F',
-                                style: const TextStyle(
-                                  fontFamily : 'Archivo',
-                                  fontSize   : 30,
-                                  fontWeight : FontWeight.w800,
-                                  color      : AppColors.dark,
-                                ),
-                              ),
-                            ],
+                          Text(
+                            'Total à payer',
+                            style: AppTextStyles.bodySmall.copyWith(
+                              color    : AppColors.grey500,
+                              fontSize : 12,
+                            ),
                           ),
-                          Row(
-                            children: [
-                              _Chip(Icons.access_time_outlined, '20-30 min'),
-                              const SizedBox(width: 8),
-                              _Chip(Icons.directions_bike_outlined, '2 000 F'),
-                            ],
+                          const SizedBox(height: 2),
+                          Text(
+                            '${total.toStringAsFixed(0)} F',
+                            style: const TextStyle(
+                              fontFamily : 'Archivo',
+                              fontSize   : 30,
+                              fontWeight : FontWeight.w800,
+                              color      : AppColors.dark,
+                            ),
                           ),
                         ],
                       ),
@@ -201,14 +233,35 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                       const SizedBox(height: 20),
 
                       // ── Articles ───────────────────────────
-                      Text(
-                        'Articles',
-                        style: AppTextStyles.labelMedium.copyWith(
-                          fontWeight  : FontWeight.w700,
-                          fontSize    : 13,
-                          color       : AppColors.grey500,
-                          letterSpacing: 0.4,
-                        ),
+                      Row(
+                        children: [
+                          Text(
+                            'Articles',
+                            style: AppTextStyles.labelMedium.copyWith(
+                              fontWeight  : FontWeight.w700,
+                              fontSize    : 13,
+                              color       : AppColors.grey500,
+                              letterSpacing: 0.4,
+                            ),
+                          ),
+                          if (lignes.isNotEmpty) ...[
+                            const Spacer(),
+                            Row(
+                              children: [
+                                const Icon(Icons.swipe_left_outlined,
+                                    size: 12, color: AppColors.grey400),
+                                const SizedBox(width: 4),
+                                Text(
+                                  'Glisser pour supprimer',
+                                  style: AppTextStyles.bodySmall.copyWith(
+                                    fontSize : 11,
+                                    color    : AppColors.grey400,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ],
                       ),
 
                       const SizedBox(height: 16),
@@ -227,46 +280,36 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                         )
                       else
                         ...List.generate(lignes.length, (i) {
+                          final item = lignes[i];
                           return Column(
                             children: [
-                              _CartItem(item: lignes[i]),
+                              Dismissible(
+                                key       : ValueKey(item.id),
+                                direction : DismissDirection.endToStart,
+                                background: Container(
+                                  alignment   : Alignment.centerRight,
+                                  padding     : const EdgeInsets.only(right: 16),
+                                  decoration  : BoxDecoration(
+                                    color        : AppColors.error,
+                                    borderRadius : BorderRadius.circular(12),
+                                  ),
+                                  child: const Icon(
+                                    Icons.delete_outline_rounded,
+                                    color : Colors.white,
+                                    size  : 24,
+                                  ),
+                                ),
+                                onDismissed: (_) {
+                                  ref.read(cartProvider.notifier).removeItem(item.id);
+                                },
+                                child: _CartItem(item: item),
+                              ),
                               if (i < lignes.length - 1)
                                 const Divider(
                                     height: 24, color: AppColors.grey200),
                             ],
                           );
                         }),
-
-                      const SizedBox(height: 24),
-
-                      // ── Ajouter des articles ───────────────
-                      GestureDetector(
-                        onTap: widget.onAddMore,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Container(
-                              width  : 26,
-                              height : 26,
-                              decoration: BoxDecoration(
-                                shape  : BoxShape.circle,
-                                border : Border.all(
-                                    color: AppColors.primary, width: 1.5),
-                              ),
-                              child: const Icon(Icons.add,
-                                  size: 14, color: AppColors.primary),
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              'Ajouter d\'autres articles',
-                              style: AppTextStyles.labelMedium.copyWith(
-                                color    : AppColors.primary,
-                                fontSize : 13,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
 
                       const SizedBox(height: 24),
                       const Divider(height: 1, color: AppColors.grey200),
@@ -305,13 +348,16 @@ class _CartScreenState extends ConsumerState<CartScreen> {
             border : Border(top: BorderSide(color: AppColors.grey200)),
           ),
           child: YaaButton(
-            label     : lignes.isEmpty
+            label           : lignes.isEmpty
                 ? 'Panier vide'
                 : 'Commander · ${total.toStringAsFixed(0)} F',
-            onPressed : lignes.isEmpty
+            onPressed       : lignes.isEmpty
                 ? null
                 : () => context.pushNamed(RouteNames.checkout),
-            icon      : lignes.isEmpty ? null : Icons.arrow_forward,
+            icon            : lignes.isEmpty ? null : Icons.arrow_forward,
+            backgroundColor : lignes.isEmpty
+                ? AppColors.grey300
+                : AppColors.secondary,
           ),
         ),
       ],
@@ -377,13 +423,26 @@ class _CartItemState extends State<_CartItem> {
       children: [
         ClipRRect(
           borderRadius: BorderRadius.circular(10),
-          child: Container(
-            width  : 56,
-            height : 56,
-            color  : AppColors.grey100,
-            child  : const Icon(Icons.fastfood_outlined,
-                color: AppColors.grey400, size: 24),
-          ),
+          child: widget.item.image != null
+              ? Image.network(
+                  ApiConfig.getImageUrl(widget.item.image!),
+                  width     : 56,
+                  height    : 56,
+                  fit       : BoxFit.cover,
+                  errorBuilder: (_, __, ___) => Container(
+                    width : 56, height: 56,
+                    color : AppColors.grey100,
+                    child : const Icon(Icons.fastfood_outlined,
+                        color: AppColors.grey400, size: 24),
+                  ),
+                )
+              : Container(
+                  width : 56,
+                  height: 56,
+                  color : AppColors.grey100,
+                  child : const Icon(Icons.fastfood_outlined,
+                      color: AppColors.grey400, size: 24),
+                ),
         ),
         const SizedBox(width: 14),
         Expanded(

@@ -208,7 +208,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: RoutePaths.cart,
         name: RouteNames.cart,
-        builder: (context, state) => const CartScreen(),
+        builder: (context, state) => const Scaffold(
+          backgroundColor: Colors.white,
+          body: CartScreen(),
+        ),
       ),
       GoRoute(
         path: RoutePaths.checkout,
