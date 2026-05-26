@@ -2,7 +2,7 @@ class ApiConfig {
 
   // ── Keycloak (IAM) ────────────────────────────────────────
   // URL différente car c'est un service complètement séparé
-  static const String iamBaseUrl = 'http://10.3.20.91:8181';
+  static const String iamBaseUrl = 'http://10.3.20.91:8080';
   static const String loginEndpoint = '/realms/yaa-delivery/protocol/openid-connect/token';
 
   // 🔧 Backend AWS EC2
@@ -30,8 +30,10 @@ class ApiConfig {
   static String produitDetailUrl(int id)   => '$baseUrl/produits/$id';
 
   // ── Endpoints Panier ──────────────────────────────
-  static const String cartEndpoint       = '/paniers';
-  static const String cartClientEndpoint = '/paniers/client';
+  static const String cartEndpoint            = '/paniers';
+  static const String cartClientEndpoint      = '/paniers/client';
+  static const String cartDeleteLineEndpoint  = '/paniers/delete-ligne-panier';
+  static const String cartClearEndpoint       = '/paniers/vider-panier';
 
   // ── Timeouts (en secondes) ────────────────────────
   static const int connectionTimeout = 30;

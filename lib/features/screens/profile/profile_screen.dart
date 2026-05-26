@@ -156,6 +156,45 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             labelColor: AppColors.error,
             iconColor: AppColors.error,
             onTap: () async {
+              final confirm = await showDialog<bool>(
+                context: context,
+                builder: (_) => AlertDialog(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  title: const Text(
+                    'Se déconnecter',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 17,
+                    ),
+                  ),
+                  content: const Text(
+                    'Êtes-vous sûr de vouloir vous déconnecter ?',
+                    style: TextStyle(fontSize: 14, color: Color(0xFF666666)),
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(false),
+                      child: const Text(
+                        'Annuler',
+                        style: TextStyle(color: Color(0xFF666666)),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(true),
+                      child: const Text(
+                        'Se déconnecter',
+                        style: TextStyle(
+                          color: AppColors.error,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+              if (confirm != true) return;
               await ref.read(authProvider.notifier).logout();
               if (context.mounted) context.goNamed(RouteNames.login);
             },

@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimens.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../core/utils/app_router.dart';
 import '../../../model/category/categorie_produit.dart';
 import '../../../model/category/structure_detail.dart';
 import '../../../features/cart/providers/cart_notifier.dart';
@@ -50,6 +52,12 @@ class _RestaurantSheet extends ConsumerStatefulWidget {
 class _RestaurantSheetState extends ConsumerState<_RestaurantSheet> {
   int _activeTab = 0;
   List<GlobalKey>? _sectionKeys;
+
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(() => ref.read(cartProvider.notifier).loadCart());
+  }
 
   void _initKeys(int count) {
     if (_sectionKeys == null || _sectionKeys!.length != count) {
@@ -124,10 +132,98 @@ class _RestaurantSheetState extends ConsumerState<_RestaurantSheet> {
                 },
               ),
             ),
-            _buildDeliveryBar(),
+            _buildCartPill(),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildCartPill() {
+    final cartState = ref.watch(cartProvider);
+    final count     = cartState.cart?.totalArticles ?? 0;
+    final total     = cartState.cart?.montantTotal   ?? 0.0;
+    final bottom    = MediaQuery.of(context).padding.bottom;
+
+    return AnimatedContainer(
+      duration  : const Duration(milliseconds: 300),
+      curve     : Curves.easeOut,
+      color     : Colors.white,
+      padding   : EdgeInsets.fromLTRB(
+        AppDimens.screenPadding,
+        count > 0 ? 10 : 0,
+        AppDimens.screenPadding,
+        count > 0 ? bottom + 12 : 0,
+      ),
+      height: count > 0 ? bottom + 74 : 0,
+      child: count > 0
+          ? GestureDetector(
+              onTap: () {
+                Navigator.of(context).pop();
+                context.goNamed(RouteNames.cart);
+              },
+              child: Container(
+                height : 52,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                decoration: BoxDecoration(
+                  color        : AppColors.primary,
+                  borderRadius : BorderRadius.circular(AppDimens.radiusFull),
+                  boxShadow    : [
+                    BoxShadow(
+                      color     : AppColors.primary.withValues(alpha: 0.30),
+                      blurRadius: 12,
+                      offset    : const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    // ── Badge articles ─────────────────
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 9, vertical: 3),
+                      decoration: BoxDecoration(
+                        color        : Colors.white.withValues(alpha: 0.20),
+                        borderRadius : BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        '$count',
+                        style: AppTextStyles.labelSmall.copyWith(
+                          color      : Colors.white,
+                          fontWeight : FontWeight.w800,
+                          fontSize   : 12,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    // ── Label ──────────────────────────
+                    Expanded(
+                      child: Text(
+                        'Voir mon panier',
+                        style: AppTextStyles.labelMedium.copyWith(
+                          color      : Colors.white,
+                          fontWeight : FontWeight.w700,
+                          fontSize   : 14,
+                        ),
+                      ),
+                    ),
+                    // ── Prix ───────────────────────────
+                    Text(
+                      '${total.toStringAsFixed(0)} F',
+                      style: AppTextStyles.labelMedium.copyWith(
+                        color      : Colors.white,
+                        fontWeight : FontWeight.w800,
+                        fontSize   : 14,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    const Icon(Icons.arrow_forward_ios_rounded,
+                        size: 14, color: Colors.white),
+                  ],
+                ),
+              ),
+            )
+          : const SizedBox.shrink(),
     );
   }
 
@@ -354,50 +450,6 @@ class _RestaurantSheetState extends ConsumerState<_RestaurantSheet> {
     );
   }
 
-  Widget _buildDeliveryBar() {
-    return Container(
-      padding: EdgeInsets.only(
-        left: AppDimens.screenPadding,
-        right: AppDimens.screenPadding,
-        top: AppDimens.md,
-        bottom: MediaQuery.of(context).padding.bottom + AppDimens.md,
-      ),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(top: BorderSide(color: AppColors.grey200)),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.directions_walk, size: 22, color: AppColors.dark),
-          const SizedBox(width: AppDimens.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'Livraison F 1 000 · ${widget.restaurant.deliveryTime}',
-                  style: AppTextStyles.bodySmall.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.dark,
-                    fontSize: 13,
-                  ),
-                ),
-                Text(
-                  'Frais de service 0 F',
-                  style: AppTextStyles.bodySmall.copyWith(
-                    color: AppColors.grey500,
-                    fontSize: 12,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const Icon(Icons.chevron_right, color: AppColors.dark),
-        ],
-      ),
-    );
-  }
 }
 
 // ── Delegate pour onglets sticky ──────────────────────────
@@ -421,56 +473,25 @@ class _TabsDelegate extends SliverPersistentHeaderDelegate {
 }
 
 // ── Carte produit (données API) ───────────────────────────
-class _ApiMenuItemCard extends ConsumerStatefulWidget {
+class _ApiMenuItemCard extends StatelessWidget {
   const _ApiMenuItemCard({required this.produit});
   final Produit produit;
 
   @override
-  ConsumerState<_ApiMenuItemCard> createState() => _ApiMenuItemCardState();
-}
-
-class _ApiMenuItemCardState extends ConsumerState<_ApiMenuItemCard> {
-  int  _qty       = 0;
-  bool _isLoading = false;
-
-  Future<void> _add() async {
-    setState(() { _qty++; _isLoading = true; });
-    final success = await ref.read(cartProvider.notifier).addToCart(
-      produitId : widget.produit.id,
-      quantite  : 1,
-    );
-    if (!mounted) return;
-    setState(() => _isLoading = false);
-    if (!success) {
-      setState(() => _qty = (_qty - 1).clamp(0, 99));
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content         : Text(ref.read(cartProvider).error ?? 'Erreur'),
-        backgroundColor : AppColors.error,
-        duration        : const Duration(seconds: 2),
-      ));
-    }
-  }
-
-  void _remove() {
-    if (_qty > 0) setState(() => _qty--);
-  }
-
-  @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () => showProductBottomSheet(context, widget.produit.id),
+      onTap: () => showProductBottomSheet(context, produit.id),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Expanded(
-            child: Stack(
-              children: [
-                // ── Image ────────────────────────────────
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(AppDimens.radiusLg),
-                  child: Image.network(
-                    widget.produit.imageUrl,
-                    width: double.infinity,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(AppDimens.radiusLg),
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  Image.network(
+                    produit.imageUrl,
                     fit: BoxFit.cover,
                     errorBuilder: (_, __, ___) => Container(
                       color: AppColors.grey200,
@@ -478,136 +499,38 @@ class _ApiMenuItemCardState extends ConsumerState<_ApiMenuItemCard> {
                           color: AppColors.grey400),
                     ),
                   ),
-                ),
-
-                // ── Contrôle quantité (bas-droite) ───────
-                Positioned(
-                  bottom: 8,
-                  right : 8,
-                  child : AnimatedSwitcher(
-                    duration       : const Duration(milliseconds: 200),
-                    switchInCurve  : Curves.easeOut,
-                    switchOutCurve : Curves.easeIn,
-                    transitionBuilder: (child, anim) => ScaleTransition(
-                      scale: anim, child: child,
+                  Positioned(
+                    bottom: 8,
+                    right : 8,
+                    child : Container(
+                      width      : 32,
+                      height     : 32,
+                      decoration : const BoxDecoration(
+                        color : AppColors.secondary,
+                        shape : BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.add,
+                          size: 18, color: Colors.white),
                     ),
-                    child: _qty == 0
-                        // ── Bouton + simple ──────────────
-                        ? GestureDetector(
-                            key    : const ValueKey('add'),
-                            onTap  : _isLoading ? null : _add,
-                            child  : Container(
-                              width  : 32,
-                              height : 32,
-                              decoration: const BoxDecoration(
-                                color : Colors.white,
-                                shape : BoxShape.circle,
-                              ),
-                              child: _isLoading
-                                  ? const Padding(
-                                      padding: EdgeInsets.all(6),
-                                      child: CircularProgressIndicator(
-                                        strokeWidth : 2,
-                                        color       : AppColors.primary,
-                                      ),
-                                    )
-                                  : const Icon(Icons.add,
-                                      size: 20, color: AppColors.dark),
-                            ),
-                          )
-                        // ── Pill − qty + ─────────────────
-                        : GestureDetector(
-                            key      : const ValueKey('stepper'),
-                            behavior : HitTestBehavior.opaque,
-                            onTap    : () {}, // absorbe le tap de la carte
-                            child    : Container(
-                              height: 32,
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 6),
-                              decoration: BoxDecoration(
-                                color        : Colors.white,
-                                borderRadius : BorderRadius.circular(
-                                    AppDimens.radiusFull),
-                                boxShadow    : [
-                                  BoxShadow(
-                                    color     : Colors.black
-                                        .withValues(alpha: 0.10),
-                                    blurRadius: 6,
-                                    offset    : const Offset(0, 2),
-                                  ),
-                                ],
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  // bouton −
-                                  GestureDetector(
-                                    onTap: _remove,
-                                    child: const Padding(
-                                      padding: EdgeInsets.symmetric(
-                                          horizontal: 4),
-                                      child: Icon(Icons.remove_rounded,
-                                          size: 16,
-                                          color: AppColors.dark),
-                                    ),
-                                  ),
-                                  // quantité
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 2),
-                                    child: _isLoading
-                                        ? const SizedBox(
-                                            width : 14,
-                                            height: 14,
-                                            child : CircularProgressIndicator(
-                                              strokeWidth : 2,
-                                              color       : AppColors.primary,
-                                            ),
-                                          )
-                                        : Text(
-                                            '$_qty',
-                                            style: AppTextStyles.labelSmall
-                                                .copyWith(
-                                              fontWeight : FontWeight.w700,
-                                              fontSize   : 13,
-                                              color      : AppColors.dark,
-                                            ),
-                                          ),
-                                  ),
-                                  // bouton +
-                                  GestureDetector(
-                                    onTap: _isLoading ? null : _add,
-                                    child: const Padding(
-                                      padding: EdgeInsets.symmetric(
-                                          horizontal: 4),
-                                      child: Icon(Icons.add_rounded,
-                                          size: 16,
-                                          color: AppColors.primary),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
           const SizedBox(height: 6),
           Text(
-            '${widget.produit.prix.toInt()} F',
+            '${produit.prix.toInt()} F',
             style: AppTextStyles.labelMedium.copyWith(
               fontWeight: FontWeight.w800,
-              fontSize: 15,
-              color: AppColors.dark,
+              fontSize  : 15,
+              color     : AppColors.dark,
             ),
           ),
           Text(
-            widget.produit.nom,
+            produit.nom,
             style: AppTextStyles.bodySmall.copyWith(
               fontSize: 13,
-              color: AppColors.dark,
+              color   : AppColors.dark,
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,

@@ -26,9 +26,10 @@ class _ProductSheet extends ConsumerStatefulWidget {
 }
 
 class _ProductSheetState extends ConsumerState<_ProductSheet> {
-  int _quantity = 1;
-  bool _isFavorite = false;
-  int _selectedSize = 1;
+  int  _quantity     = 1;
+  bool _isFavorite   = false;
+  int  _selectedSize = 1;
+  bool _added        = false; // état succès du bouton
 
   static const _sizes = ['Petite', 'Normale', 'Grande'];
   static const _sizeMultipliers = [0.8, 1.0, 1.3];
@@ -448,7 +449,7 @@ class _ProductSheetState extends ConsumerState<_ProductSheet> {
           // ── Bouton Ajouter ───────────────────────────
           Expanded(
             child: GestureDetector(
-              onTap: ref.watch(cartProvider).isAdding
+              onTap: (ref.watch(cartProvider).isAdding || _added)
                   ? null
                   : () async {
                       HapticFeedback.mediumImpact();
@@ -460,14 +461,12 @@ class _ProductSheetState extends ConsumerState<_ProductSheet> {
                           );
                       if (!context.mounted) return;
                       if (success) {
+                        HapticFeedback.mediumImpact();
+                        setState(() => _added = true);
+                        await Future.delayed(
+                            const Duration(milliseconds: 900));
+                        if (!context.mounted) return;
                         Navigator.of(context).pop();
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content         : Text('Ajouté au panier ✓'),
-                            backgroundColor : AppColors.primary,
-                            duration        : Duration(seconds: 2),
-                          ),
-                        );
                       } else {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
@@ -481,46 +480,69 @@ class _ProductSheetState extends ConsumerState<_ProductSheet> {
                         );
                       }
                     },
-              child: Container(
-                height: 54,
+              child: AnimatedContainer(
+                duration : const Duration(milliseconds: 300),
+                curve    : Curves.easeOut,
+                height   : 54,
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: ref.watch(cartProvider).isAdding
-                        ? [AppColors.grey400, AppColors.grey400]
-                        : [AppColors.primaryLight, AppColors.primary],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius:
+                  color: _added
+                      ? const Color(0xFF27AE60)           // vert succès
+                      : ref.watch(cartProvider).isAdding
+                          ? AppColors.grey400
+                          : null,
+                  gradient: (_added || ref.watch(cartProvider).isAdding)
+                      ? null
+                      : const LinearGradient(
+                          colors: [AppColors.primaryLight, AppColors.primary],
+                          begin  : Alignment.topLeft,
+                          end    : Alignment.bottomRight,
+                        ),
+                  borderRadius :
                       BorderRadius.circular(AppDimens.radiusFull),
-                  boxShadow: ref.watch(cartProvider).isAdding
+                  boxShadow: (_added || ref.watch(cartProvider).isAdding)
                       ? null
                       : [
                           BoxShadow(
-                            color: AppColors.primary.withValues(alpha: 0.35),
+                            color     : AppColors.primary.withValues(alpha: 0.35),
                             blurRadius: 14,
-                            offset: const Offset(0, 5),
+                            offset    : const Offset(0, 5),
                           ),
                         ],
                 ),
                 alignment: Alignment.center,
                 child: ref.watch(cartProvider).isAdding
                     ? const SizedBox(
-                        width  : 22,
-                        height : 22,
-                        child  : CircularProgressIndicator(
+                        width : 22, height: 22,
+                        child : CircularProgressIndicator(
                           strokeWidth : 2.5,
                           color       : Colors.white,
                         ),
                       )
-                    : Text(
-                        'Ajouter  •  $total F',
-                        style: AppTextStyles.labelMedium.copyWith(
-                          color      : Colors.white,
-                          fontWeight : FontWeight.w700,
-                          fontSize   : 15,
-                        ),
-                      ),
+                    : _added
+                        ? Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.check_circle_rounded,
+                                  color: Colors.white, size: 20),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Ajouté au panier !',
+                                style: AppTextStyles.labelMedium.copyWith(
+                                  color      : Colors.white,
+                                  fontWeight : FontWeight.w700,
+                                  fontSize   : 15,
+                                ),
+                              ),
+                            ],
+                          )
+                        : Text(
+                            'Ajouter  •  $total F',
+                            style: AppTextStyles.labelMedium.copyWith(
+                              color      : Colors.white,
+                              fontWeight : FontWeight.w700,
+                              fontSize   : 15,
+                            ),
+                          ),
               ),
             ),
           ),
