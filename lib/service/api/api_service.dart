@@ -166,16 +166,17 @@ class ApiService {
       print('📡 GET Status → ${response.statusCode}');
       print('📬 GET Réponse → ${response.body}');
 
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        // Corps vide en succès = réponse valide (ex. panier vide)
+        if (response.body.isEmpty) return {};
+        return json.decode(response.body) as Map<String, dynamic>;
+      }
+
       if (response.body.isEmpty) {
-        throw Exception('Erreur ${response.statusCode} — réponse vide du serveur.');
+        throw Exception('Erreur ${response.statusCode}');
       }
 
       final data = json.decode(response.body) as Map<String, dynamic>;
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        return data;
-      }
-
       final errorMessage = data['message'] as String? ?? 'Erreur ${response.statusCode}';
       throw Exception(errorMessage);
 
@@ -616,9 +617,11 @@ class ApiService {
     }
   }
 
-  Future<CartModel> getCart({String? token}) async {
+  /// Retourne null si aucun panier actif (réponse vide)
+  Future<CartModel?> getCart({String? token}) async {
     try {
       final response = await _get(ApiConfig.cartClientEndpoint, token: token);
+      if (response.isEmpty) return null; // pas de panier actif
       return CartModel.fromJson(response);
     } catch (e) {
       print('❌ Erreur getCart: $e');
