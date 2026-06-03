@@ -250,17 +250,19 @@ class _EditPersonalInfoScreenState
 
           // ── Bouton Enregistrer ───────────────────────
           Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppDimens.screenPadding,
-              vertical: AppDimens.lg,
+            padding: EdgeInsets.only(
+              left   : AppDimens.screenPadding,
+              right  : AppDimens.screenPadding,
+              top    : 12,
+              bottom : MediaQuery.of(context).padding.bottom + 12,
             ),
-            color: AppColors.white,
-            child: SafeArea(
-              top: false,
-              child: YaaButton(
-                label: isLoading ? 'Enregistrement...' : 'Enregistrer',
-                onPressed: isLoading ? null : _onSave,
-              ),
+            decoration: const BoxDecoration(
+              color  : Colors.white,
+              border : Border(top: BorderSide(color: AppColors.grey200)),
+            ),
+            child: YaaButton(
+              label     : isLoading ? 'Enregistrement...' : 'Enregistrer',
+              onPressed : isLoading ? null : _onSave,
             ),
           ),
         ],
@@ -269,34 +271,48 @@ class _EditPersonalInfoScreenState
   }
 
   Widget _buildHeader(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.only(
-        left: AppDimens.screenPadding,
-        right: AppDimens.screenPadding,
-        top: MediaQuery.of(context).padding.top + AppDimens.md,
-        bottom: AppDimens.xl,
-      ),
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFF1652F0), Color(0xFF3B7BF7)],
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Padding(
+          padding: EdgeInsets.only(
+            top    : MediaQuery.of(context).padding.top + 12,
+            left   : AppDimens.screenPadding,
+            right  : AppDimens.screenPadding,
+            bottom : 16,
+          ),
+          child: Row(
+            children: [
+              GestureDetector(
+                onTap    : () => Navigator.of(context).pop(),
+                behavior : HitTestBehavior.opaque,
+                child: Container(
+                  width  : 38,
+                  height : 38,
+                  decoration: BoxDecoration(
+                    color        : AppColors.grey100,
+                    borderRadius : BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    Icons.chevron_left_rounded,
+                    color : AppColors.dark,
+                    size  : 22,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                'Modifier mes informations',
+                style: AppTextStyles.h3.copyWith(
+                  fontWeight : FontWeight.w800,
+                  color      : AppColors.dark,
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
-      child: Row(
-        children: [
-          GestureDetector(
-            onTap: () => Navigator.of(context).pop(),
-            child: const Icon(Icons.chevron_left, color: AppColors.white, size: 28),
-          ),
-          const SizedBox(width: AppDimens.md),
-          Text(
-            'Modifier mes informations',
-            style: AppTextStyles.h4.copyWith(color: AppColors.white, fontWeight: FontWeight.w700),
-          ),
-        ],
-      ),
+        const Divider(height: 1, color: AppColors.grey200),
+      ],
     );
   }
 }

@@ -135,11 +135,11 @@ class CartNotifier extends StateNotifier<CartState> {
     }
   }
 
-  /// Supprime une ligne du panier (swipe-to-delete)
-  Future<void> removeItem(int idLigne) async {
+  /// Supprime un produit du panier via son produitId
+  Future<void> removeItem(int produitId) async {
     try {
       final token = await _getValidToken();
-      await ApiService().deleteCartLine(idLigne: idLigne, token: token);
+      await ApiService().deleteCartLine(idLigne: produitId, token: token);
       final cart = await ApiService().getCart(token: token);
       state = state.copyWith(cart: cart, clearError: true);
     } catch (e) {

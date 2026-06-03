@@ -8,6 +8,7 @@ import '../../../core/constants/app_text_styles.dart';
 import '../../../core/utils/app_router.dart';
 import '../../../features/cart/providers/cart_notifier.dart';
 import '../../../model/cart/cart_item_model.dart';
+import '../../../model/cart/cart_structure_model.dart';
 import '../../../shared/widgets/yaa_button.dart';
 import '../../../shared/widgets/yaa_text_field.dart';
 
@@ -31,18 +32,18 @@ class _CartScreenState extends ConsumerState<CartScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape        : RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title        : const Text('Vider le panier'),
-        content      : const Text('Êtes-vous sûr de vouloir supprimer tous les articles ?'),
-        actions: [
+        shape   : RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title   : const Text('Vider le panier'),
+        content : const Text('Êtes-vous sûr de vouloir supprimer tous les articles ?'),
+        actions : [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
             child: const Text('Annuler'),
           ),
           TextButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            style: TextButton.styleFrom(foregroundColor: AppColors.error),
-            child: const Text('Vider'),
+            onPressed : () => Navigator.of(ctx).pop(true),
+            style     : TextButton.styleFrom(foregroundColor: AppColors.error),
+            child     : const Text('Vider'),
           ),
         ],
       ),
@@ -59,10 +60,11 @@ class _CartScreenState extends ConsumerState<CartScreen> {
     final lignes    = cart?.lignes ?? [];
     final total     = cart?.montantTotal ?? 0.0;
     final count     = cart?.totalArticles ?? 0;
+    final isEmpty   = lignes.isEmpty;
 
     return Column(
       children: [
-        // ── Header blanc ────────────────────────────────
+        // ── Header ──────────────────────────────────────────
         Padding(
           padding: EdgeInsets.only(
             top    : MediaQuery.of(context).padding.top + 12,
@@ -97,7 +99,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                   ),
                 ),
               ),
-              if (lignes.isNotEmpty) ...[
+              if (!isEmpty) ...[
                 const SizedBox(width: 8),
                 GestureDetector(
                   onTap: () => _confirmClearCart(context),
@@ -122,14 +124,14 @@ class _CartScreenState extends ConsumerState<CartScreen> {
 
         const Divider(height: 1, color: AppColors.grey200),
 
-        // ── Erreur ─────────────────────────────────────
+        // ── Erreur ──────────────────────────────────────────
         if (cartState.error != null)
           Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(
+            width   : double.infinity,
+            padding : const EdgeInsets.symmetric(
                 horizontal: AppDimens.screenPadding, vertical: 10),
-            color: AppColors.errorLight,
-            child: Row(
+            color   : AppColors.errorLight,
+            child   : Row(
               children: [
                 const Icon(Icons.error_outline_rounded,
                     color: AppColors.error, size: 16),
@@ -137,15 +139,14 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                 Expanded(
                   child: Text(
                     cartState.error!,
-                    style: AppTextStyles.bodySmall
-                        .copyWith(color: AppColors.error),
+                    style: AppTextStyles.bodySmall.copyWith(color: AppColors.error),
                   ),
                 ),
               ],
             ),
           ),
 
-        // ── Contenu scrollable ──────────────────────────
+        // ── Contenu scrollable ───────────────────────────────
         Expanded(
           child: cartState.isLoading
               ? const Center(child: CircularProgressIndicator())
@@ -159,35 +160,30 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // ── Résumé total ───────────────────────
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Total à payer',
-                            style: AppTextStyles.bodySmall.copyWith(
-                              color    : AppColors.grey500,
-                              fontSize : 12,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            '${total.toStringAsFixed(0)} F',
-                            style: const TextStyle(
-                              fontFamily : 'Archivo',
-                              fontSize   : 30,
-                              fontWeight : FontWeight.w800,
-                              color      : AppColors.dark,
-                            ),
-                          ),
-                        ],
+                      // ── Résumé total ─────────────────────────
+                      Text(
+                        'Total à payer',
+                        style: AppTextStyles.bodySmall.copyWith(
+                          color    : AppColors.grey500,
+                          fontSize : 12,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '${total.toStringAsFixed(0)} F',
+                        style: const TextStyle(
+                          fontFamily : 'Archivo',
+                          fontSize   : 30,
+                          fontWeight : FontWeight.w800,
+                          color      : AppColors.dark,
+                        ),
                       ),
 
                       const SizedBox(height: 20),
                       const Divider(height: 1, color: AppColors.grey200),
                       const SizedBox(height: 20),
 
-                      // ── Adresse ────────────────────────────
+                      // ── Adresse de livraison ─────────────────
                       Row(
                         children: [
                           Container(
@@ -232,33 +228,29 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                       const Divider(height: 1, color: AppColors.grey200),
                       const SizedBox(height: 20),
 
-                      // ── Articles ───────────────────────────
+                      // ── Label Articles + hint swipe ───────────
                       Row(
                         children: [
                           Text(
                             'Articles',
                             style: AppTextStyles.labelMedium.copyWith(
-                              fontWeight  : FontWeight.w700,
-                              fontSize    : 13,
-                              color       : AppColors.grey500,
+                              fontWeight   : FontWeight.w700,
+                              fontSize     : 13,
+                              color        : AppColors.grey500,
                               letterSpacing: 0.4,
                             ),
                           ),
-                          if (lignes.isNotEmpty) ...[
+                          if (!isEmpty) ...[
                             const Spacer(),
-                            Row(
-                              children: [
-                                const Icon(Icons.swipe_left_outlined,
-                                    size: 12, color: AppColors.grey400),
-                                const SizedBox(width: 4),
-                                Text(
-                                  'Glisser pour supprimer',
-                                  style: AppTextStyles.bodySmall.copyWith(
-                                    fontSize : 11,
-                                    color    : AppColors.grey400,
-                                  ),
-                                ),
-                              ],
+                            const Icon(Icons.swipe_left_outlined,
+                                size: 12, color: AppColors.grey400),
+                            const SizedBox(width: 4),
+                            Text(
+                              'Glisser pour supprimer',
+                              style: AppTextStyles.bodySmall.copyWith(
+                                fontSize : 11,
+                                color    : AppColors.grey400,
+                              ),
                             ),
                           ],
                         ],
@@ -266,47 +258,74 @@ class _CartScreenState extends ConsumerState<CartScreen> {
 
                       const SizedBox(height: 16),
 
-                      if (lignes.isEmpty)
+                      // ── Panier vide ───────────────────────────
+                      if (isEmpty)
                         Center(
                           child: Padding(
                             padding: const EdgeInsets.symmetric(vertical: 24),
                             child: Text(
                               'Votre panier est vide',
                               style: AppTextStyles.bodyMedium.copyWith(
-                                color: AppColors.grey500,
-                              ),
+                                  color: AppColors.grey500),
                             ),
                           ),
                         )
+
+                      // ── Groupes par structure ─────────────────
                       else
-                        ...List.generate(lignes.length, (i) {
-                          final item = lignes[i];
+                        ...List.generate(lignes.length, (gi) {
+                          final group = lignes[gi];
                           return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Dismissible(
-                                key       : ValueKey(item.id),
-                                direction : DismissDirection.endToStart,
-                                background: Container(
-                                  alignment   : Alignment.centerRight,
-                                  padding     : const EdgeInsets.only(right: 16),
-                                  decoration  : BoxDecoration(
-                                    color        : AppColors.error,
-                                    borderRadius : BorderRadius.circular(12),
-                                  ),
-                                  child: const Icon(
-                                    Icons.delete_outline_rounded,
-                                    color : Colors.white,
-                                    size  : 24,
-                                  ),
-                                ),
-                                onDismissed: (_) {
-                                  ref.read(cartProvider.notifier).removeItem(item.id);
-                                },
-                                child: _CartItem(item: item),
-                              ),
-                              if (i < lignes.length - 1)
+                              // En-tête structure
+                              _StructureHeader(group: group),
+                              const SizedBox(height: 12),
+
+                              // Produits de cette structure
+                              ...List.generate(group.produits.length, (pi) {
+                                final item = group.produits[pi];
+                                return Column(
+                                  children: [
+                                    Dismissible(
+                                      key       : ValueKey(
+                                          '${group.structureId}_${item.produitId}'),
+                                      direction : DismissDirection.endToStart,
+                                      background: Container(
+                                        alignment : Alignment.centerRight,
+                                        padding   : const EdgeInsets.only(right: 16),
+                                        decoration: BoxDecoration(
+                                          color        : AppColors.error,
+                                          borderRadius : BorderRadius.circular(12),
+                                        ),
+                                        child: const Icon(
+                                          Icons.delete_outline_rounded,
+                                          color : Colors.white,
+                                          size  : 24,
+                                        ),
+                                      ),
+                                      onDismissed: (_) {
+                                        ref
+                                            .read(cartProvider.notifier)
+                                            .removeItem(item.produitId);
+                                      },
+                                      child: _CartItem(item: item),
+                                    ),
+                                    if (pi < group.produits.length - 1)
+                                      const Divider(
+                                          height: 24,
+                                          color: AppColors.grey200),
+                                  ],
+                                );
+                              }),
+
+                              // Séparateur entre structures
+                              if (gi < lignes.length - 1) ...[
+                                const SizedBox(height: 16),
                                 const Divider(
-                                    height: 24, color: AppColors.grey200),
+                                    height: 1, color: AppColors.grey200),
+                                const SizedBox(height: 16),
+                              ],
                             ],
                           );
                         }),
@@ -315,7 +334,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                       const Divider(height: 1, color: AppColors.grey200),
                       const SizedBox(height: 20),
 
-                      // ── Note ──────────────────────────────
+                      // ── Note pour le livreur ──────────────────
                       Text(
                         'Note pour le livreur',
                         style: AppTextStyles.labelMedium.copyWith(
@@ -335,7 +354,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                 ),
         ),
 
-        // ── Bouton Commander fixe ───────────────────────
+        // ── Bouton Commander fixe ────────────────────────────
         Container(
           padding: EdgeInsets.only(
             left   : AppDimens.screenPadding,
@@ -348,16 +367,14 @@ class _CartScreenState extends ConsumerState<CartScreen> {
             border : Border(top: BorderSide(color: AppColors.grey200)),
           ),
           child: YaaButton(
-            label           : lignes.isEmpty
+            label           : isEmpty
                 ? 'Panier vide'
                 : 'Commander · ${total.toStringAsFixed(0)} F',
-            onPressed       : lignes.isEmpty
+            onPressed       : isEmpty
                 ? null
                 : () => context.pushNamed(RouteNames.checkout),
-            icon            : lignes.isEmpty ? null : Icons.arrow_forward,
-            backgroundColor : lignes.isEmpty
-                ? AppColors.grey300
-                : AppColors.secondary,
+            icon            : isEmpty ? null : Icons.arrow_forward,
+            backgroundColor : isEmpty ? AppColors.grey300 : AppColors.secondary,
           ),
         ),
       ],
@@ -365,43 +382,65 @@ class _CartScreenState extends ConsumerState<CartScreen> {
   }
 }
 
-// ── Chip info ─────────────────────────────────────────────
-class _Chip extends StatelessWidget {
-  const _Chip(this.icon, this.label);
-  final IconData icon;
-  final String label;
+// ── En-tête de groupe structure ───────────────────────────────
+class _StructureHeader extends StatelessWidget {
+  const _StructureHeader({required this.group});
+  final CartStructureModel group;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color        : AppColors.grey100,
-        borderRadius : BorderRadius.circular(AppDimens.radiusFull),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 12, color: AppColors.grey600),
-          const SizedBox(width: 4),
-          Text(
-            label,
-            style: AppTextStyles.bodySmall.copyWith(
-              fontSize   : 11,
-              color      : AppColors.grey600,
-              fontWeight : FontWeight.w500,
-            ),
+    return Row(
+      children: [
+        Container(
+          width  : 32,
+          height : 32,
+          decoration: BoxDecoration(
+            color        : AppColors.primarySurface,
+            borderRadius : BorderRadius.circular(8),
           ),
-        ],
-      ),
+          child: const Icon(Icons.storefront_outlined,
+              size: 16, color: AppColors.primary),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                group.nomStructure,
+                style: AppTextStyles.labelMedium.copyWith(
+                  fontWeight : FontWeight.w700,
+                  fontSize   : 13,
+                  color      : AppColors.dark,
+                ),
+              ),
+              if (group.adresseStructure.isNotEmpty)
+                Text(
+                  group.adresseStructure,
+                  style: AppTextStyles.bodySmall.copyWith(
+                    fontSize : 11,
+                    color    : AppColors.grey500,
+                  ),
+                ),
+            ],
+          ),
+        ),
+        Text(
+          '${group.sousTotal.toStringAsFixed(0)} F',
+          style: AppTextStyles.labelSmall.copyWith(
+            fontWeight : FontWeight.w700,
+            color      : AppColors.dark,
+            fontSize   : 13,
+          ),
+        ),
+      ],
     );
   }
 }
 
-// ── Article panier ────────────────────────────────────────
+// ── Article panier ────────────────────────────────────────────
 class _CartItem extends StatefulWidget {
   const _CartItem({required this.item});
-
   final CartItemModel item;
 
   @override
@@ -426,23 +465,12 @@ class _CartItemState extends State<_CartItem> {
           child: widget.item.image != null
               ? Image.network(
                   ApiConfig.getImageUrl(widget.item.image!),
-                  width     : 56,
-                  height    : 56,
-                  fit       : BoxFit.cover,
-                  errorBuilder: (_, __, ___) => Container(
-                    width : 56, height: 56,
-                    color : AppColors.grey100,
-                    child : const Icon(Icons.fastfood_outlined,
-                        color: AppColors.grey400, size: 24),
-                  ),
+                  width  : 56,
+                  height : 56,
+                  fit    : BoxFit.cover,
+                  errorBuilder: (_, __, ___) => _placeholder(),
                 )
-              : Container(
-                  width : 56,
-                  height: 56,
-                  color : AppColors.grey100,
-                  child : const Icon(Icons.fastfood_outlined,
-                      color: AppColors.grey400, size: 24),
-                ),
+              : _placeholder(),
         ),
         const SizedBox(width: 14),
         Expanded(
@@ -474,19 +502,14 @@ class _CartItemState extends State<_CartItem> {
           ),
         ),
         const SizedBox(width: 12),
+        // Sélecteur quantité
         Row(
           children: [
-            GestureDetector(
-              onTap: () { if (_qty > 1) setState(() => _qty--); },
-              child: Container(
-                width  : 28,
-                height : 28,
-                decoration: BoxDecoration(
-                  color : AppColors.grey100,
-                  shape : BoxShape.circle,
-                ),
-                child: const Icon(Icons.remove, size: 14, color: AppColors.dark),
-              ),
+            _QtyButton(
+              icon  : Icons.remove,
+              color : AppColors.grey100,
+              iconColor: AppColors.dark,
+              onTap : () { if (_qty > 1) setState(() => _qty--); },
             ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 10),
@@ -498,21 +521,50 @@ class _CartItemState extends State<_CartItem> {
                 ),
               ),
             ),
-            GestureDetector(
-              onTap: () => setState(() => _qty++),
-              child: Container(
-                width  : 28,
-                height : 28,
-                decoration: const BoxDecoration(
-                  color : AppColors.primary,
-                  shape : BoxShape.circle,
-                ),
-                child: const Icon(Icons.add, size: 14, color: Colors.white),
-              ),
+            _QtyButton(
+              icon     : Icons.add,
+              color    : AppColors.primary,
+              iconColor: Colors.white,
+              onTap    : () => setState(() => _qty++),
             ),
           ],
         ),
       ],
+    );
+  }
+
+  Widget _placeholder() => Container(
+        width  : 56,
+        height : 56,
+        color  : AppColors.grey100,
+        child  : const Icon(Icons.fastfood_outlined,
+            color: AppColors.grey400, size: 24),
+      );
+}
+
+class _QtyButton extends StatelessWidget {
+  const _QtyButton({
+    required this.icon,
+    required this.color,
+    required this.iconColor,
+    required this.onTap,
+  });
+
+  final IconData  icon;
+  final Color     color;
+  final Color     iconColor;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width  : 28,
+        height : 28,
+        decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        child  : Icon(icon, size: 14, color: iconColor),
+      ),
     );
   }
 }
