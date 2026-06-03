@@ -288,8 +288,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                                 return Column(
                                   children: [
                                     Dismissible(
-                                      key       : ValueKey(
-                                          '${group.structureId}_${item.produitId}'),
+                                      key       : ValueKey(item.id),
                                       direction : DismissDirection.endToStart,
                                       background: Container(
                                         alignment : Alignment.centerRight,
@@ -307,7 +306,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                                       onDismissed: (_) {
                                         ref
                                             .read(cartProvider.notifier)
-                                            .removeItem(item.produitId);
+                                            .removeItem(item.id);
                                       },
                                       child: _CartItem(item: item),
                                     ),
