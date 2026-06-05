@@ -27,11 +27,12 @@ class CartState {
     CartModel? cart,
     String? error,
     bool clearError = false,
+    bool clearCart  = false,   // ← permet de mettre cart à null explicitement
   }) {
     return CartState(
       isLoading : isLoading ?? this.isLoading,
       isAdding  : isAdding  ?? this.isAdding,
-      cart      : cart      ?? this.cart,
+      cart      : clearCart ? null : (cart ?? this.cart),
       error     : clearError ? null : (error ?? this.error),
     );
   }
@@ -94,7 +95,13 @@ class CartNotifier extends StateNotifier<CartState> {
     try {
       final token = await _getValidToken();
       final cart  = await ApiService().getCart(token: token);
-      state = state.copyWith(isLoading: false, cart: cart);
+      // cart == null → pas de panier actif (corps vide du serveur) : état normal
+      state = state.copyWith(
+        isLoading : false,
+        cart      : cart,
+        clearCart : cart == null,
+        clearError: true,
+      );
     } catch (e) {
       debugPrint('❌ loadCart: $e');
       state = state.copyWith(
@@ -128,7 +135,7 @@ class CartNotifier extends StateNotifier<CartState> {
     }
   }
 
-  /// Supprime une ligne du panier (swipe-to-delete)
+  /// Supprime une ligne du panier via son id (idLigne)
   Future<void> removeItem(int idLigne) async {
     try {
       final token = await _getValidToken();
@@ -150,7 +157,8 @@ class CartNotifier extends StateNotifier<CartState> {
     try {
       final token = await _getValidToken();
       await ApiService().clearEntireCart(idPanier: idPanier, token: token);
-      state = state.copyWith(cart: null, clearError: true);
+      // Recharge depuis le serveur → loadCart gère le corps vide (panier vidé)
+      await loadCart();
     } catch (e) {
       debugPrint('❌ clearCartFromServer: $e');
       state = state.copyWith(

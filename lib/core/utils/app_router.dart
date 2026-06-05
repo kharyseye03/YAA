@@ -216,7 +216,9 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: RoutePaths.checkout,
         name: RouteNames.checkout,
-        builder: (context, state) => const CheckoutScreen(),
+        builder: (context, state) => CheckoutScreen(
+          modeLivraison: state.extra as String? ?? 'GROUPAGE',
+        ),
       ),
       // ── Orders ─────────────────────────────────────────────
       GoRoute(

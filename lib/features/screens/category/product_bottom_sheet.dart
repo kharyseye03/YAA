@@ -486,7 +486,7 @@ class _ProductSheetState extends ConsumerState<_ProductSheet> {
                 height   : 54,
                 decoration: BoxDecoration(
                   color: _added
-                      ? const Color(0xFF27AE60)           // vert succès
+                      ? const Color(0xFF27AE60)
                       : ref.watch(cartProvider).isAdding
                           ? AppColors.grey400
                           : null,

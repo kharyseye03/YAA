@@ -7,6 +7,7 @@ import '../../config/api/api_config.dart';
 import '../../model/auth/login_response.dart';
 import '../../model/auth/register_response.dart';
 import '../../model/cart/cart_model.dart';
+import '../../model/transaction/transaction_model.dart';
 import '../../model/category/categorie_produit.dart';
 import '../../model/category/categorie_structure.dart';
 import '../../model/category/structure.dart';
@@ -166,16 +167,17 @@ class ApiService {
       print('📡 GET Status → ${response.statusCode}');
       print('📬 GET Réponse → ${response.body}');
 
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        // Corps vide en succès = réponse valide (ex. panier vide)
+        if (response.body.isEmpty) return {};
+        return json.decode(response.body) as Map<String, dynamic>;
+      }
+
       if (response.body.isEmpty) {
-        throw Exception('Erreur ${response.statusCode} — réponse vide du serveur.');
+        throw Exception('Erreur ${response.statusCode}');
       }
 
       final data = json.decode(response.body) as Map<String, dynamic>;
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        return data;
-      }
-
       final errorMessage = data['message'] as String? ?? 'Erreur ${response.statusCode}';
       throw Exception(errorMessage);
 
@@ -616,9 +618,11 @@ class ApiService {
     }
   }
 
-  Future<CartModel> getCart({String? token}) async {
+  /// Retourne null si aucun panier actif (réponse vide)
+  Future<CartModel?> getCart({String? token}) async {
     try {
       final response = await _get(ApiConfig.cartClientEndpoint, token: token);
+      if (response.isEmpty) return null; // pas de panier actif
       return CartModel.fromJson(response);
     } catch (e) {
       print('❌ Erreur getCart: $e');
@@ -636,6 +640,58 @@ class ApiService {
       );
     } catch (e) {
       print('❌ Erreur deleteCartLine: $e');
+      rethrow;
+    }
+  }
+
+  // ════════════════════════════════════════════════════
+  // MÉTHODES PUBLIQUES — Transactions
+  // ════════════════════════════════════════════════════
+
+  /// Crée une transaction (commande) — retourne les infos pour le paiement
+  Future<TransactionModel> createTransaction({
+    required int    panierId,
+    required String modeLivraison,
+    required String adresseLivraison,
+    required String telephoneClient,
+    String          description = '',
+    String?         token,
+  }) async {
+    try {
+      final body = {
+        'panierId'         : panierId,
+        'description'      : description,
+        'modeLivraison'    : modeLivraison,
+        'adresseLivraison' : adresseLivraison,
+        'telephoneClient'  : telephoneClient,
+        'latitude'         : 0.1,
+        'longitude'        : 0.1,
+      };
+      final response = await _post(
+          ApiConfig.transactionEndpoint, body, token: token);
+      return TransactionModel.fromJson(response);
+    } catch (e) {
+      print('❌ Erreur createTransaction: $e');
+      rethrow;
+    }
+  }
+
+  /// Procède au paiement d'une transaction existante
+  Future<void> payTransaction({
+    required int    id,
+    required String reference,
+    required String modePaiement,
+    String?         token,
+  }) async {
+    try {
+      final body = {
+        'id'          : id,
+        'reference'   : reference,
+        'modePaiement': modePaiement,
+      };
+      await _post(ApiConfig.payTransactionEndpoint, body, token: token);
+    } catch (e) {
+      print('❌ Erreur payTransaction: $e');
       rethrow;
     }
   }
