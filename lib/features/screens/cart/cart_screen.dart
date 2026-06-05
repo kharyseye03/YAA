@@ -53,6 +53,33 @@ class _CartScreenState extends ConsumerState<CartScreen> {
     }
   }
 
+  void _handleCommander(BuildContext context) {
+    final cart = ref.read(cartProvider).cart;
+    if (cart == null) return;
+
+    if (cart.multipleLivraison) {
+      // Plusieurs structures → demander le mode de livraison
+      showModalBottomSheet(
+        context            : context,
+        isScrollControlled : true,
+        backgroundColor    : Colors.transparent,
+        builder            : (_) => _DeliveryModeSheet(
+          lignes : cart.lignes,
+          onConfirm: (mode) {
+            Navigator.of(context).pop();
+            context.pushNamed(
+              RouteNames.checkout,
+              extra: mode == DeliveryMode.groupee ? 'GROUPAGE' : 'INDIVIDUEL',
+            );
+          },
+        ),
+      );
+    } else {
+      // Une seule structure → direct au checkout (groupage par défaut)
+      context.pushNamed(RouteNames.checkout, extra: 'GROUPAGE');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final cartState = ref.watch(cartProvider);
@@ -331,23 +358,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
 
                       const SizedBox(height: 24),
                       const Divider(height: 1, color: AppColors.grey200),
-                      const SizedBox(height: 20),
 
-                      // ── Note pour le livreur ──────────────────
-                      Text(
-                        'Note pour le livreur',
-                        style: AppTextStyles.labelMedium.copyWith(
-                          fontWeight   : FontWeight.w700,
-                          fontSize     : 13,
-                          color        : AppColors.grey500,
-                          letterSpacing: 0.4,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      YaaTextField(
-                        hint     : 'Instructions supplémentaires…',
-                        maxLines : 3,
-                      ),
                     ],
                   ),
                 ),
@@ -369,9 +380,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
             label           : isEmpty
                 ? 'Panier vide'
                 : 'Commander · ${total.toStringAsFixed(0)} F',
-            onPressed       : isEmpty
-                ? null
-                : () => context.pushNamed(RouteNames.checkout),
+            onPressed       : isEmpty ? null : () => _handleCommander(context),
             icon            : isEmpty ? null : Icons.arrow_forward,
             backgroundColor : isEmpty ? AppColors.grey300 : AppColors.secondary,
           ),
@@ -539,6 +548,242 @@ class _CartItemState extends State<_CartItem> {
         child  : const Icon(Icons.fastfood_outlined,
             color: AppColors.grey400, size: 24),
       );
+}
+
+// ── Bottom sheet choix mode de livraison ─────────────────────
+enum DeliveryMode { individuelle, groupee }
+
+class _DeliveryModeSheet extends StatefulWidget {
+  const _DeliveryModeSheet({
+    required this.lignes,
+    required this.onConfirm,
+  });
+
+  final List<CartStructureModel>               lignes;
+  final ValueChanged<DeliveryMode> onConfirm;
+
+  @override
+  State<_DeliveryModeSheet> createState() => _DeliveryModeSheetState();
+}
+
+class _DeliveryModeSheetState extends State<_DeliveryModeSheet> {
+  DeliveryMode _selected = DeliveryMode.groupee;
+
+  @override
+  Widget build(BuildContext context) {
+    final bottomPad = MediaQuery.of(context).padding.bottom;
+
+    return Container(
+      decoration: const BoxDecoration(
+        color        : Colors.white,
+        borderRadius : BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      padding: EdgeInsets.fromLTRB(
+          AppDimens.screenPadding, 0,
+          AppDimens.screenPadding, bottomPad + 16),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // ── Poignée ────────────────────────────────────────
+          const SizedBox(height: 12),
+          Container(
+            width: 40, height: 4,
+            decoration: BoxDecoration(
+              color        : AppColors.grey300,
+              borderRadius : BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          // ── Titre ──────────────────────────────────────────
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              'Mode de livraison',
+              style: AppTextStyles.h3.copyWith(
+                fontWeight : FontWeight.w800,
+                color      : AppColors.dark,
+              ),
+            ),
+          ),
+          const SizedBox(height: 4),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              'Vous avez commandé dans ${widget.lignes.length} établissements différents.',
+              style: AppTextStyles.bodySmall.copyWith(color: AppColors.grey500),
+            ),
+          ),
+
+          const SizedBox(height: 20),
+
+          // ── Option : Livraison groupée ──────────────────────
+          _ModeCard(
+            selected    : _selected == DeliveryMode.groupee,
+            icon        : Icons.local_shipping_outlined,
+            title       : 'Livraison groupée',
+            description : 'Un seul livreur récupère toutes vos commandes. '
+                'Plus simple, délai unique.',
+            onTap       : () => setState(() => _selected = DeliveryMode.groupee),
+          ),
+
+          const SizedBox(height: 12),
+
+          // ── Option : Livraison individuelle ────────────────
+          _ModeCard(
+            selected    : _selected == DeliveryMode.individuelle,
+            icon        : Icons.move_to_inbox_outlined,
+            title       : 'Livraison individuelle',
+            description : 'Un livreur par établissement — '
+                '${widget.lignes.length} livraisons séparées.',
+            badge       : '${widget.lignes.length} livraisons',
+            onTap       : () =>
+                setState(() => _selected = DeliveryMode.individuelle),
+          ),
+
+          const SizedBox(height: 24),
+
+          // ── Bouton confirmer ────────────────────────────────
+          YaaButton(
+            label           : 'Confirmer et commander',
+            onPressed       : () => widget.onConfirm(_selected),
+            icon            : Icons.arrow_forward,
+            backgroundColor : AppColors.secondary,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Carte option de mode ──────────────────────────────────────
+class _ModeCard extends StatelessWidget {
+  const _ModeCard({
+    required this.selected,
+    required this.icon,
+    required this.title,
+    required this.description,
+    required this.onTap,
+    this.badge,
+  });
+
+  final bool     selected;
+  final IconData icon;
+  final String   title;
+  final String   description;
+  final String?  badge;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap    : onTap,
+      behavior : HitTestBehavior.opaque,
+      child: AnimatedContainer(
+        duration  : const Duration(milliseconds: 200),
+        padding   : const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color        : selected
+              ? AppColors.secondary.withValues(alpha: 0.06)
+              : Colors.white,
+          borderRadius : BorderRadius.circular(14),
+          border       : Border.all(
+            color : selected ? AppColors.secondary : AppColors.grey200,
+            width : selected ? 2 : 1,
+          ),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Icône
+            Container(
+              width  : 42,
+              height : 42,
+              decoration: BoxDecoration(
+                color        : selected
+                    ? AppColors.secondary.withValues(alpha: 0.12)
+                    : AppColors.grey100,
+                borderRadius : BorderRadius.circular(12),
+              ),
+              child: Icon(
+                icon,
+                size  : 20,
+                color : selected ? AppColors.secondary : AppColors.grey600,
+              ),
+            ),
+            const SizedBox(width: 12),
+
+            // Texte
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        title,
+                        style: AppTextStyles.labelMedium.copyWith(
+                          fontWeight : FontWeight.w700,
+                          color      : AppColors.dark,
+                          fontSize   : 14,
+                        ),
+                      ),
+                      if (badge != null) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color        : AppColors.grey100,
+                            borderRadius : BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            badge!,
+                            style: AppTextStyles.caption.copyWith(
+                              color      : AppColors.grey600,
+                              fontWeight : FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    description,
+                    style: AppTextStyles.bodySmall.copyWith(
+                      color  : AppColors.grey500,
+                      height : 1.4,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(width: 10),
+
+            // Radio visuel
+            AnimatedContainer(
+              duration  : const Duration(milliseconds: 200),
+              width     : 20,
+              height    : 20,
+              decoration: BoxDecoration(
+                shape  : BoxShape.circle,
+                border : Border.all(
+                  color : selected ? AppColors.secondary : AppColors.grey300,
+                  width : 2,
+                ),
+                color: selected ? AppColors.secondary : Colors.white,
+              ),
+              child: selected
+                  ? const Icon(Icons.check, size: 12, color: Colors.white)
+                  : null,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class _QtyButton extends StatelessWidget {

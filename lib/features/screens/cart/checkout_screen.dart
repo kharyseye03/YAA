@@ -1,230 +1,105 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimens.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/utils/app_router.dart';
-import '../../../shared/widgets/phone_number_formatter.dart';
+import '../../../features/auth/providers/auth_notifier.dart';
+import '../../../features/cart/providers/cart_notifier.dart';
+import '../../../features/user/providers/user_notifier.dart';
+import '../../../model/transaction/transaction_model.dart';
+import '../../../service/api/api_service.dart';
 import '../../../shared/widgets/yaa_button.dart';
 import '../../../shared/widgets/yaa_text_field.dart';
 
-class CheckoutScreen extends StatefulWidget {
-  const CheckoutScreen({super.key});
+class CheckoutScreen extends ConsumerStatefulWidget {
+  const CheckoutScreen({super.key, this.modeLivraison = 'GROUPAGE'});
+
+  /// 'GROUPAGE' ou 'INDIVIDUEL' — transmis depuis le panier
+  final String modeLivraison;
 
   @override
-  State<CheckoutScreen> createState() => _CheckoutScreenState();
+  ConsumerState<CheckoutScreen> createState() => _CheckoutScreenState();
 }
 
-class _CheckoutScreenState extends State<CheckoutScreen> {
-  int _paymentTab = 0; // 0 = Mobile money · 1 = Carte
-  int _selectedProvider = 0;
+class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
+  final _formKey           = GlobalKey<FormState>();
+  final _addressController = TextEditingController();
+  final _phoneController   = TextEditingController();
+  final _noteController    = TextEditingController();
 
-  final _nameController = TextEditingController();
-  final _phoneController = TextEditingController();
-  final _cardNameController = TextEditingController();
-  final _cardNumberController = TextEditingController();
-  final _expiryController = TextEditingController();
-  final _cvvController = TextEditingController();
+  bool    _isSubmitting = false;
+  String? _error;
 
   @override
-  void dispose() {
-    _nameController.dispose();
-    _phoneController.dispose();
-    _cardNameController.dispose();
-    _cardNumberController.dispose();
-    _expiryController.dispose();
-    _cvvController.dispose();
-    super.dispose();
+  void initState() {
+    super.initState();
+    // Pré-remplir le téléphone depuis le profil
+    final phone = ref.read(userProvider).profile?.telephone ?? '';
+    _phoneController.text = phone;
   }
 
   @override
-  Widget build(BuildContext context) {
-    final top = MediaQuery.of(context).padding.top;
+  void dispose() {
+    _addressController.dispose();
+    _phoneController.dispose();
+    _noteController.dispose();
+    super.dispose();
+  }
 
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: Column(
-        children: [
-          // ── Header blanc ──────────────────────────────
-          Padding(
-            padding: EdgeInsets.only(
-              top: top + 12,
-              left: AppDimens.screenPadding,
-              right: AppDimens.screenPadding,
-              bottom: 16,
-            ),
-            child: Row(
-              children: [
-                GestureDetector(
-                  onTap: () => Navigator.of(context).pop(),
-                  child: Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: AppColors.grey100,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(Icons.arrow_back_ios_new_rounded,
-                        size: 16, color: AppColors.dark),
-                  ),
-                ),
-                const SizedBox(width: 14),
-                Text(
-                  'Paiement',
-                  style: AppTextStyles.h4.copyWith(
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.dark,
-                  ),
-                ),
-                const Spacer(),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 12, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: AppColors.grey100,
-                    borderRadius:
-                        BorderRadius.circular(AppDimens.radiusFull),
-                  ),
-                  child: Text(
-                    '8 000 F',
-                    style: AppTextStyles.labelSmall.copyWith(
-                      color: AppColors.dark,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 13,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
+  Future<void> _validerCommande() async {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
 
-          const Divider(height: 1, color: AppColors.grey200),
+    setState(() { _isSubmitting = true; _error = null; });
 
-          // ── Contenu ───────────────────────────────────
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.only(bottom: 24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // ── Récapitulatif ─────────────────────
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(
-                        AppDimens.screenPadding, 20,
-                        AppDimens.screenPadding, 16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _SectionLabel('Récapitulatif'),
-                        const SizedBox(height: 16),
-                        _PriceRow(label: 'Sous-total', value: '6 000 F'),
-                        const SizedBox(height: 10),
-                        _PriceRow(label: 'Frais de livraison', value: '2 000 F'),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          child: const Divider(
-                              height: 1, color: AppColors.grey200),
-                        ),
-                        _PriceRow(
-                            label: 'Total', value: '8 000 F', isTotal: true),
-                      ],
-                    ),
-                  ),
+    try {
+      final token = ref.read(authProvider.notifier).token;
+      final cart  = ref.read(cartProvider).cart;
+      if (cart == null) throw Exception('Panier introuvable');
 
-                  const Divider(height: 1, color: AppColors.grey200),
+      final transaction = await ApiService().createTransaction(
+        panierId         : cart.id,
+        modeLivraison    : widget.modeLivraison,
+        adresseLivraison : _addressController.text.trim(),
+        telephoneClient  : _phoneController.text.trim(),
+        description      : _noteController.text.trim(),
+        token            : token,
+      );
 
-                  // ── Infos personnelles ────────────────
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(
-                        AppDimens.screenPadding, 20,
-                        AppDimens.screenPadding, 20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _SectionLabel('Informations personnelles'),
-                        const SizedBox(height: 16),
-                        YaaTextField(
-                          controller: _nameController,
-                          label: 'Prénom et nom',
-                          hint: 'Ex: Birima Diop',
-                          textInputAction: TextInputAction.next,
-                        ),
-                        const SizedBox(height: AppDimens.lg),
-                        PhoneTextField(
-                          controller: _phoneController,
-                          textInputAction: TextInputAction.next,
-                        ),
-                      ],
-                    ),
-                  ),
+      setState(() => _isSubmitting = false);
+      if (!mounted) return;
 
-                  const Divider(height: 1, color: AppColors.grey200),
-
-                  // ── Mode de paiement ──────────────────
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(
-                        AppDimens.screenPadding, 20,
-                        AppDimens.screenPadding, 0),
-                    child: _SectionLabel('Mode de paiement'),
-                  ),
-
-                  // Tabs Mobile money / Carte
-                  _PaymentTabs(
-                    current: _paymentTab,
-                    onTap: (i) => setState(() => _paymentTab = i),
-                  ),
-
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(
-                        AppDimens.screenPadding, 20,
-                        AppDimens.screenPadding, 24),
-                    child: _paymentTab == 0
-                        ? _MobileMoneyList(
-                            selected: _selectedProvider,
-                            onSelect: (i) =>
-                                setState(() => _selectedProvider = i),
-                          )
-                        : _CardForm(
-                            nameCtrl: _cardNameController,
-                            numberCtrl: _cardNumberController,
-                            expiryCtrl: _expiryController,
-                            cvvCtrl: _cvvController,
-                          ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          // ── Bouton Payer fixe ─────────────────────────
-          Container(
-            padding: EdgeInsets.only(
-              left: AppDimens.screenPadding,
-              right: AppDimens.screenPadding,
-              top: 12,
-              bottom: MediaQuery.of(context).padding.bottom + 12,
-            ),
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              border: Border(top: BorderSide(color: AppColors.grey200)),
-            ),
-            child: YaaButton(
-              label: 'Payer · 8 000 F',
-              onPressed: _showSuccessSheet,
-              icon: Icons.lock_outline_rounded,
-            ),
-          ),
-        ],
-      ),
-    );
+      // Afficher le bottom sheet de paiement
+      showModalBottomSheet(
+        context            : context,
+        isScrollControlled : true,
+        isDismissible      : false,
+        backgroundColor    : Colors.transparent,
+        builder            : (_) => _PaymentSheet(
+          transaction : transaction,
+          token       : token,
+          onSuccess   : () {
+            Navigator.of(context).pop(); // ferme le sheet paiement
+            ref.read(cartProvider.notifier).clearCart(); // vide le panier local
+            _showSuccessSheet();
+          },
+        ),
+      );
+    } catch (e) {
+      setState(() {
+        _isSubmitting = false;
+        _error = e.toString().replaceAll('Exception: ', '');
+      });
+    }
   }
 
   void _showSuccessSheet() {
     showModalBottomSheet(
-      context: context,
-      backgroundColor: AppColors.white,
-      isDismissible: false,
-      shape: const RoundedRectangleBorder(
+      context         : context,
+      isDismissible   : false,
+      backgroundColor : Colors.white,
+      shape           : const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (_) => _OrderSuccessSheet(
@@ -235,9 +110,198 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       ),
     );
   }
+
+  @override
+  Widget build(BuildContext context) {
+    final cart  = ref.watch(cartProvider).cart;
+    final total = cart?.montantTotal ?? 0.0;
+    final count = cart?.totalArticles ?? 0;
+
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: Column(
+        children: [
+          // ── Header ──────────────────────────────────────────
+          Padding(
+            padding: EdgeInsets.only(
+              top    : MediaQuery.of(context).padding.top + 12,
+              left   : AppDimens.screenPadding,
+              right  : AppDimens.screenPadding,
+              bottom : 16,
+            ),
+            child: Row(
+              children: [
+                GestureDetector(
+                  onTap    : () => Navigator.of(context).pop(),
+                  behavior : HitTestBehavior.opaque,
+                  child: Container(
+                    width  : 38,
+                    height : 38,
+                    decoration: BoxDecoration(
+                      color        : AppColors.grey100,
+                      borderRadius : BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.chevron_left_rounded,
+                        color: AppColors.dark, size: 22),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  'Commander',
+                  style: AppTextStyles.h3.copyWith(
+                    fontWeight : FontWeight.w800,
+                    color      : AppColors.dark,
+                  ),
+                ),
+                const Spacer(),
+                // Badge total
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 12, vertical: 5),
+                  decoration: BoxDecoration(
+                    color        : AppColors.grey100,
+                    borderRadius : BorderRadius.circular(AppDimens.radiusFull),
+                  ),
+                  child: Text(
+                    '${total.toStringAsFixed(0)} F',
+                    style: AppTextStyles.labelSmall.copyWith(
+                      color      : AppColors.dark,
+                      fontWeight : FontWeight.w700,
+                      fontSize   : 13,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const Divider(height: 1, color: AppColors.grey200),
+
+          // ── Erreur ──────────────────────────────────────────
+          if (_error != null)
+            Container(
+              width   : double.infinity,
+              padding : const EdgeInsets.symmetric(
+                  horizontal: AppDimens.screenPadding, vertical: 10),
+              color   : AppColors.errorLight,
+              child   : Row(
+                children: [
+                  const Icon(Icons.error_outline_rounded,
+                      color: AppColors.error, size: 16),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(_error!,
+                        style: AppTextStyles.bodySmall
+                            .copyWith(color: AppColors.error)),
+                  ),
+                ],
+              ),
+            ),
+
+          // ── Contenu ─────────────────────────────────────────
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(
+                AppDimens.screenPadding, 20,
+                AppDimens.screenPadding, 24,
+              ),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // ── Récapitulatif ────────────────────────
+                    _SectionLabel('Récapitulatif'),
+                    const SizedBox(height: 14),
+                    _SummaryRow(
+                      icon  : Icons.shopping_bag_outlined,
+                      label : '$count article${count > 1 ? 's' : ''}',
+                      value : '${total.toStringAsFixed(0)} F',
+                      bold  : true,
+                    ),
+                    const SizedBox(height: 10),
+                    _SummaryRow(
+                      icon  : Icons.local_shipping_outlined,
+                      label : widget.modeLivraison == 'GROUPAGE'
+                          ? 'Livraison groupée'
+                          : 'Livraison individuelle',
+                      value : '',
+                    ),
+
+                    const SizedBox(height: 20),
+                    const Divider(height: 1, color: AppColors.grey200),
+                    const SizedBox(height: 20),
+
+                    // ── Livraison ────────────────────────────
+                    _SectionLabel('Livraison'),
+                    const SizedBox(height: 14),
+                    YaaTextField(
+                      controller      : _addressController,
+                      label           : 'Adresse de livraison',
+                      hint            : 'Ex: 15 Rue de la Paix, Dakar',
+                      prefixIcon      : Icons.location_on_outlined,
+                      textInputAction : TextInputAction.next,
+                      validator       : (v) =>
+                          v == null || v.trim().isEmpty ? 'Champ requis' : null,
+                    ),
+                    const SizedBox(height: AppDimens.lg),
+                    YaaTextField(
+                      controller      : _phoneController,
+                      label           : 'Téléphone',
+                      hint            : 'Ex: 77 123 45 67',
+                      prefixIcon      : Icons.phone_outlined,
+                      keyboardType    : TextInputType.phone,
+                      textInputAction : TextInputAction.next,
+                      validator       : (v) =>
+                          v == null || v.trim().isEmpty ? 'Champ requis' : null,
+                    ),
+
+                    const SizedBox(height: 20),
+                    const Divider(height: 1, color: AppColors.grey200),
+                    const SizedBox(height: 20),
+
+                    // ── Note de commande ─────────────────────
+                    _SectionLabel('Note de commande'),
+                    const SizedBox(height: 14),
+                    YaaTextField(
+                      controller : _noteController,
+                      hint       : 'Instructions spéciales, allergies…',
+                      maxLines   : 3,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+
+          // ── Bouton Valider fixe ──────────────────────────────
+          Container(
+            padding: EdgeInsets.only(
+              left   : AppDimens.screenPadding,
+              right  : AppDimens.screenPadding,
+              top    : 12,
+              bottom : MediaQuery.of(context).padding.bottom + 12,
+            ),
+            decoration: const BoxDecoration(
+              color  : Colors.white,
+              border : Border(top: BorderSide(color: AppColors.grey200)),
+            ),
+            child: YaaButton(
+              label           : _isSubmitting
+                  ? 'Validation...'
+                  : 'Valider la commande · ${total.toStringAsFixed(0)} F',
+              onPressed       : _isSubmitting ? null : _validerCommande,
+              icon            : _isSubmitting ? null : Icons.lock_outline_rounded,
+              backgroundColor : AppColors.secondary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
-// ── Label de section ──────────────────────────────────────
+// ── Label de section ──────────────────────────────────────────
 class _SectionLabel extends StatelessWidget {
   const _SectionLabel(this.text);
   final String text;
@@ -245,287 +309,277 @@ class _SectionLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Text(
-      text,
-      style: AppTextStyles.labelMedium.copyWith(
-        fontWeight: FontWeight.w700,
-        fontSize: 13,
-        color: AppColors.grey500,
-        letterSpacing: 0.4,
+      text.toUpperCase(),
+      style: AppTextStyles.labelSmall.copyWith(
+        color         : AppColors.grey500,
+        fontSize      : 11,
+        letterSpacing : 0.8,
+        fontWeight    : FontWeight.w700,
       ),
     );
   }
 }
 
-// ── Ligne prix ────────────────────────────────────────────
-class _PriceRow extends StatelessWidget {
-  const _PriceRow({
+// ── Ligne récap ───────────────────────────────────────────────
+class _SummaryRow extends StatelessWidget {
+  const _SummaryRow({
+    required this.icon,
     required this.label,
     required this.value,
-    this.isTotal = false,
+    this.bold = false,
   });
-  final String label;
-  final String value;
-  final bool isTotal;
+  final IconData icon;
+  final String   label;
+  final String   value;
+  final bool     bold;
 
   @override
   Widget build(BuildContext context) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          label,
-          style: isTotal
-              ? AppTextStyles.labelMedium.copyWith(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 15,
-                  color: AppColors.dark,
-                )
-              : AppTextStyles.bodyMedium.copyWith(
-                  color: AppColors.grey500,
-                  fontSize: 13,
-                ),
+        Container(
+          width  : 34,
+          height : 34,
+          decoration: BoxDecoration(
+            color        : AppColors.grey100,
+            borderRadius : BorderRadius.circular(10),
+          ),
+          child: Icon(icon, size: 16, color: AppColors.grey600),
         ),
-        Text(
-          value,
-          style: isTotal
-              ? AppTextStyles.labelMedium.copyWith(
-                  fontWeight: FontWeight.w800,
-                  fontSize: 16,
-                  color: AppColors.dark,
-                )
-              : AppTextStyles.bodyMedium.copyWith(
-                  color: AppColors.dark,
-                  fontSize: 13,
-                ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            label,
+            style: AppTextStyles.bodyMedium.copyWith(
+              color      : AppColors.grey700,
+              fontWeight : bold ? FontWeight.w600 : FontWeight.w400,
+            ),
+          ),
         ),
+        if (value.isNotEmpty)
+          Text(
+            value,
+            style: AppTextStyles.labelMedium.copyWith(
+              fontWeight : FontWeight.w700,
+              color      : AppColors.dark,
+            ),
+          ),
       ],
     );
   }
 }
 
-// ── Tabs Mobile money / Carte ─────────────────────────────
-class _PaymentTabs extends StatelessWidget {
-  const _PaymentTabs({required this.current, required this.onTap});
-  final int current;
-  final ValueChanged<int> onTap;
+// ── Bottom sheet paiement ─────────────────────────────────────
+class _PaymentSheet extends StatefulWidget {
+  const _PaymentSheet({
+    required this.transaction,
+    required this.token,
+    required this.onSuccess,
+  });
+
+  final TransactionModel transaction;
+  final String?          token;
+  final VoidCallback     onSuccess;
 
   @override
-  Widget build(BuildContext context) {
-    const labels = ['Mobile Money', 'Carte bancaire'];
-    const icons = [Icons.phone_android_outlined, Icons.credit_card_outlined];
-
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Row(
-          children: List.generate(2, (i) {
-            final active = i == current;
-            return Expanded(
-              child: GestureDetector(
-                onTap: () => onTap(i),
-                behavior: HitTestBehavior.opaque,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        icons[i],
-                        size: 16,
-                        color: active
-                            ? AppColors.dark
-                            : AppColors.grey400,
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        labels[i],
-                        style: AppTextStyles.labelMedium.copyWith(
-                          fontSize: 13,
-                          fontWeight: active
-                              ? FontWeight.w700
-                              : FontWeight.w500,
-                          color: active
-                              ? AppColors.dark
-                              : AppColors.grey400,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            );
-          }),
-        ),
-        Stack(
-          children: [
-            Container(height: 1, color: AppColors.grey200),
-            AnimatedAlign(
-              duration: const Duration(milliseconds: 200),
-              curve: Curves.easeInOut,
-              alignment: current == 0
-                  ? Alignment.centerLeft
-                  : Alignment.centerRight,
-              child: FractionallySizedBox(
-                widthFactor: 0.5,
-                child: Container(height: 2, color: AppColors.dark),
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
+  State<_PaymentSheet> createState() => _PaymentSheetState();
 }
 
-// ── Liste Mobile Money ────────────────────────────────────
-class _MobileMoneyList extends StatelessWidget {
-  const _MobileMoneyList({required this.selected, required this.onSelect});
-  final int selected;
-  final ValueChanged<int> onSelect;
+class _PaymentSheetState extends State<_PaymentSheet> {
+  int     _selectedIndex = 0;
+  bool    _isPaying      = false;
+  String? _error;
 
-  static const _providers = [
-    ('Wave', 'assets/images/wave2.webp'),
-    ('Yas Money', 'assets/images/yas2.webp'),
-    ('Orange Money', 'assets/images/om.webp'),
-    ('Kay Pay', 'assets/images/kpay.webp'),
+  static const _methods = [
+    _PaymentMethod('Orange Money', 'ORANGE_MONEY', 'assets/images/om.webp',
+        Color(0xFFFFF0E6), Color(0xFFFF7900)),
+    _PaymentMethod('Wave',         'WAVE',         'assets/images/wave2.webp',
+        Color(0xFFE8F4FF), Color(0xFF1B9AFF)),
+    _PaymentMethod('MTN Money',    'MTN_MONEY',    'assets/images/mtn.jpg',
+        Color(0xFFFFFBE6), Color(0xFFFFCC00)),
   ];
 
+  Future<void> _payer() async {
+    setState(() { _isPaying = true; _error = null; });
+    try {
+      await ApiService().payTransaction(
+        id           : widget.transaction.id,
+        reference    : widget.transaction.reference,
+        modePaiement : _methods[_selectedIndex].code,
+        token        : widget.token,
+      );
+      widget.onSuccess();
+    } catch (e) {
+      setState(() {
+        _isPaying = false;
+        _error    = e.toString().replaceAll('Exception: ', '');
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: List.generate(_providers.length, (i) {
-        final (name, img) = _providers[i];
-        final active = i == selected;
-        return Column(
-          children: [
-            GestureDetector(
-              onTap: () => onSelect(i),
-              behavior: HitTestBehavior.opaque,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 44,
-                      height: 44,
-                      decoration: BoxDecoration(
-                        color: AppColors.grey100,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(10),
-                        child: Image.asset(
-                          img,
-                          fit: BoxFit.contain,
-                          errorBuilder: (_, __, ___) => const Icon(
-                              Icons.payment,
-                              color: AppColors.grey400),
+    final bottomPad = MediaQuery.of(context).padding.bottom;
+    final tx        = widget.transaction;
+
+    return Container(
+      decoration: const BoxDecoration(
+        color        : Colors.white,
+        borderRadius : BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      padding: EdgeInsets.fromLTRB(
+          AppDimens.screenPadding, 0,
+          AppDimens.screenPadding, bottomPad + 16),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Poignée
+          const SizedBox(height: 12),
+          Container(
+            width: 40, height: 4,
+            decoration: BoxDecoration(
+              color        : AppColors.grey300,
+              borderRadius : BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          // ── Titre + référence ──────────────────────────────
+          Text(
+            'Choisir le mode de paiement',
+            style: AppTextStyles.h3.copyWith(
+              fontWeight : FontWeight.w800,
+              color      : AppColors.dark,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Réf : ${tx.reference.substring(0, 8).toUpperCase()}  ·  '
+            '${tx.montant.toStringAsFixed(0)} F',
+            style: AppTextStyles.bodySmall.copyWith(color: AppColors.grey500),
+          ),
+
+          const SizedBox(height: 20),
+          const Divider(height: 1, color: AppColors.grey200),
+          const SizedBox(height: 16),
+
+          // ── Options de paiement ────────────────────────────
+          ...List.generate(_methods.length, (i) {
+            final m      = _methods[i];
+            final active = i == _selectedIndex;
+            return Column(
+              children: [
+                GestureDetector(
+                  onTap    : () => setState(() => _selectedIndex = i),
+                  behavior : HitTestBehavior.opaque,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    child: Row(
+                      children: [
+                        // Logo
+                        Container(
+                          width  : 48,
+                          height : 48,
+                          decoration: BoxDecoration(
+                            color        : m.bgColor,
+                            borderRadius : BorderRadius.circular(12),
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Image.asset(
+                              m.imagePath,
+                              fit: BoxFit.contain,
+                              errorBuilder: (_, __, ___) => Icon(
+                                Icons.payment,
+                                color: m.accentColor,
+                                size: 24,
+                              ),
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Text(
-                        name,
-                        style: AppTextStyles.labelMedium.copyWith(
-                          fontWeight: active
-                              ? FontWeight.w700
-                              : FontWeight.w500,
-                          fontSize: 14,
-                          color: AppColors.dark,
+                        const SizedBox(width: 14),
+                        // Nom
+                        Expanded(
+                          child: Text(
+                            m.name,
+                            style: AppTextStyles.labelMedium.copyWith(
+                              fontWeight : active
+                                  ? FontWeight.w700
+                                  : FontWeight.w500,
+                              fontSize   : 14,
+                              color      : AppColors.dark,
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
-                    AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      width: 22,
-                      height: 22,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: active
-                              ? AppColors.dark
-                              : AppColors.grey300,
-                          width: active ? 6 : 1.5,
+                        // Radio
+                        AnimatedContainer(
+                          duration  : const Duration(milliseconds: 200),
+                          width     : 22,
+                          height    : 22,
+                          decoration: BoxDecoration(
+                            shape  : BoxShape.circle,
+                            border : Border.all(
+                              color : active ? AppColors.dark : AppColors.grey300,
+                              width : active ? 6 : 1.5,
+                            ),
+                          ),
                         ),
-                      ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
+                if (i < _methods.length - 1)
+                  const Divider(height: 1, color: AppColors.grey200),
+              ],
+            );
+          }),
+
+          // ── Erreur ────────────────────────────────────────
+          if (_error != null) ...[
+            const SizedBox(height: 12),
+            Container(
+              width   : double.infinity,
+              padding : const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color        : AppColors.errorLight,
+                borderRadius : BorderRadius.circular(10),
+              ),
+              child: Text(
+                _error!,
+                style: AppTextStyles.bodySmall.copyWith(color: AppColors.error),
               ),
             ),
-            if (i < _providers.length - 1)
-              const Divider(height: 1, color: AppColors.grey200),
           ],
-        );
-      }),
+
+          const SizedBox(height: 20),
+
+          // ── Bouton Payer ───────────────────────────────────
+          YaaButton(
+            label           : _isPaying
+                ? 'Paiement en cours...'
+                : 'Payer · ${tx.montant.toStringAsFixed(0)} F',
+            onPressed       : _isPaying ? null : _payer,
+            icon            : _isPaying ? null : Icons.lock_outline_rounded,
+            backgroundColor : AppColors.secondary,
+          ),
+        ],
+      ),
     );
   }
 }
 
-// ── Formulaire carte ──────────────────────────────────────
-class _CardForm extends StatelessWidget {
-  const _CardForm({
-    required this.nameCtrl,
-    required this.numberCtrl,
-    required this.expiryCtrl,
-    required this.cvvCtrl,
-  });
-  final TextEditingController nameCtrl;
-  final TextEditingController numberCtrl;
-  final TextEditingController expiryCtrl;
-  final TextEditingController cvvCtrl;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        YaaTextField(
-          controller: nameCtrl,
-          label: 'Nom sur la carte',
-          hint: 'Lamine Wade',
-          textInputAction: TextInputAction.next,
-        ),
-        const SizedBox(height: AppDimens.lg),
-        YaaTextField(
-          controller: numberCtrl,
-          label: 'Numéro de carte',
-          hint: '1234 5678 9012 3456',
-          keyboardType: TextInputType.number,
-          prefixIcon: Icons.credit_card_outlined,
-          textInputAction: TextInputAction.next,
-        ),
-        const SizedBox(height: AppDimens.lg),
-        Row(
-          children: [
-            Expanded(
-              child: YaaTextField(
-                controller: expiryCtrl,
-                label: 'Expiration',
-                hint: 'MM/AA',
-                keyboardType: TextInputType.datetime,
-                textInputAction: TextInputAction.next,
-              ),
-            ),
-            const SizedBox(width: AppDimens.md),
-            Expanded(
-              child: YaaTextField(
-                controller: cvvCtrl,
-                label: 'CVV',
-                hint: '···',
-                keyboardType: TextInputType.number,
-                obscureText: true,
-                textInputAction: TextInputAction.done,
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
+// ── Modèle de méthode de paiement ────────────────────────────
+class _PaymentMethod {
+  const _PaymentMethod(
+      this.name, this.code, this.imagePath, this.bgColor, this.accentColor);
+  final String name;
+  final String code;
+  final String imagePath;
+  final Color  bgColor;
+  final Color  accentColor;
 }
 
-// ── Bottom sheet succès ───────────────────────────────────
+// ── Bottom sheet succès ───────────────────────────────────────
 class _OrderSuccessSheet extends StatefulWidget {
   const _OrderSuccessSheet({required this.onContinue});
   final VoidCallback onContinue;
@@ -540,60 +594,67 @@ class _OrderSuccessSheetState extends State<_OrderSuccessSheet> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(
-          AppDimens.screenPadding, 16, AppDimens.screenPadding, AppDimens.xxl),
+      padding: EdgeInsets.fromLTRB(
+        AppDimens.screenPadding, 16,
+        AppDimens.screenPadding,
+        MediaQuery.of(context).padding.bottom + 24,
+      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
+          // Poignée
           Container(
             width: 36, height: 4,
             decoration: BoxDecoration(
-                color: AppColors.grey300,
-                borderRadius: BorderRadius.circular(2)),
+              color        : AppColors.grey300,
+              borderRadius : BorderRadius.circular(2),
+            ),
           ),
 
-          const SizedBox(height: AppDimens.xxl),
+          const SizedBox(height: 28),
 
+          // Icône succès
           Container(
-            width: 80, height: 80,
+            width  : 80,
+            height : 80,
             decoration: const BoxDecoration(
-                shape: BoxShape.circle, color: AppColors.primarySurface),
+              shape : BoxShape.circle,
+              color : AppColors.successLight,
+            ),
             child: const Icon(Icons.check_rounded,
-                size: 40, color: AppColors.primary),
+                size: 40, color: AppColors.success),
           ),
 
-          const SizedBox(height: AppDimens.xl),
+          const SizedBox(height: 20),
 
           Text(
             'Commande enregistrée !',
             style: AppTextStyles.h3.copyWith(
-              fontWeight: FontWeight.w800,
-              color: AppColors.dark,
+              fontWeight : FontWeight.w800,
+              color      : AppColors.dark,
             ),
           ),
-
           const SizedBox(height: 8),
-
           Text(
-            'Votre commande a bien été reçue.',
-            style: AppTextStyles.bodyMedium.copyWith(
-              color: AppColors.grey500,
+            'Votre paiement a bien été traité.\nVous pouvez suivre votre commande.',
+            textAlign : TextAlign.center,
+            style     : AppTextStyles.bodyMedium.copyWith(
+              color  : AppColors.grey500,
+              height : 1.5,
             ),
           ),
 
-          const SizedBox(height: AppDimens.xxl),
+          const SizedBox(height: 28),
           const Divider(color: AppColors.grey200, height: 1),
-          const SizedBox(height: AppDimens.lg),
+          const SizedBox(height: 16),
 
           Text(
             'Notez votre expérience',
-            style: AppTextStyles.bodyMedium.copyWith(
-              color: AppColors.grey500,
-            ),
+            style: AppTextStyles.bodyMedium.copyWith(color: AppColors.grey500),
           ),
+          const SizedBox(height: 12),
 
-          const SizedBox(height: AppDimens.md),
-
+          // Étoiles
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: List.generate(5, (i) {
@@ -608,9 +669,11 @@ class _OrderSuccessSheetState extends State<_OrderSuccessSheet> {
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 6),
                   child: Icon(
-                    i < _rating ? Icons.star_rounded : Icons.star_outline_rounded,
-                    size: 38,
-                    color: i < _rating
+                    i < _rating
+                        ? Icons.star_rounded
+                        : Icons.star_outline_rounded,
+                    size  : 38,
+                    color : i < _rating
                         ? const Color(0xFFFFC107)
                         : AppColors.grey300,
                   ),
@@ -618,8 +681,21 @@ class _OrderSuccessSheetState extends State<_OrderSuccessSheet> {
               );
             }),
           ),
-
-          const SizedBox(height: AppDimens.xl),
+          const SizedBox(height: 8),
+          Text(
+            'Ou ',
+            style: AppTextStyles.bodySmall.copyWith(color: AppColors.grey400),
+          ),
+          TextButton(
+            onPressed : widget.onContinue,
+            child     : Text(
+              'Passer',
+              style: AppTextStyles.bodySmall.copyWith(
+                color      : AppColors.grey500,
+                decoration : TextDecoration.underline,
+              ),
+            ),
+          ),
         ],
       ),
     );

@@ -29,6 +29,10 @@ class ApiConfig {
   static String structureDetailUrl(int id) => '$baseUrl/structures/$id';
   static String produitDetailUrl(int id)   => '$baseUrl/produits/$id';
 
+  // ── Endpoints Transaction ─────────────────────────
+  static const String transactionEndpoint     = '/transactions';
+  static const String payTransactionEndpoint  = '/transactions/payer';
+
   // ── Endpoints Panier ──────────────────────────────
   static const String cartEndpoint            = '/paniers';
   static const String cartClientEndpoint      = '/paniers/client';
