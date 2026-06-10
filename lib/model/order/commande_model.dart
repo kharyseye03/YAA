@@ -1,0 +1,47 @@
+class CommandeModel {
+  final int    id;
+  final String structureName;
+  final String structureAdresse;
+  final String structureTelephone;
+  final String referenceCommande;
+  final String modeLivraison;
+  final double montantTotal;
+  final String description;
+  final String adresseLivraison;
+  final String telephoneClient;
+  final String statut;
+
+  const CommandeModel({
+    required this.id,
+    required this.structureName,
+    required this.structureAdresse,
+    required this.structureTelephone,
+    required this.referenceCommande,
+    required this.modeLivraison,
+    required this.montantTotal,
+    required this.description,
+    required this.adresseLivraison,
+    required this.telephoneClient,
+    required this.statut,
+  });
+
+  factory CommandeModel.fromJson(Map<String, dynamic> json) {
+    return CommandeModel(
+      id                 : (json['id']                 as num).toInt(),
+      structureName      : json['structureName']       as String? ?? '',
+      structureAdresse   : json['structureAdresse']    as String? ?? '',
+      structureTelephone : json['structureTelephone']  as String? ?? '',
+      referenceCommande  : json['referenceCommande']   as String? ?? '',
+      modeLivraison      : json['modeLivraison']       as String? ?? '',
+      montantTotal       : (json['montantTotal']       as num?)?.toDouble() ?? 0.0,
+      description        : json['description']         as String? ?? '',
+      adresseLivraison   : json['adresseLivraison']    as String? ?? '',
+      telephoneClient    : json['telephoneClient']     as String? ?? '',
+      statut             : json['statut']              as String? ?? '',
+    );
+  }
+
+  /// Retourne true si la commande est encore active (pas terminée)
+  bool get isEnCours =>
+      statut != 'LIVRE' && statut != 'ANNULE' && statut != 'REJETE';
+}

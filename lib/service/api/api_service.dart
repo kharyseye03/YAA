@@ -7,6 +7,8 @@ import '../../config/api/api_config.dart';
 import '../../model/auth/login_response.dart';
 import '../../model/auth/register_response.dart';
 import '../../model/cart/cart_model.dart';
+import '../../model/order/commande_detail_model.dart';
+import '../../model/order/commande_model.dart';
 import '../../model/transaction/transaction_model.dart';
 import '../../model/category/categorie_produit.dart';
 import '../../model/category/categorie_structure.dart';
@@ -640,6 +642,42 @@ class ApiService {
       );
     } catch (e) {
       print('❌ Erreur deleteCartLine: $e');
+      rethrow;
+    }
+  }
+
+  // ════════════════════════════════════════════════════
+  // MÉTHODES PUBLIQUES — Commandes client
+  // ════════════════════════════════════════════════════
+
+  Future<CommandeDetailModel> getCommandeDetail({
+    required int id,
+    String?      token,
+  }) async {
+    try {
+      final response = await _get(
+        ApiConfig.commandeClientDetailEndpoint,
+        queryParams: {'id': id.toString()},
+        token: token,
+      );
+      return CommandeDetailModel.fromJson(response);
+    } catch (e) {
+      print('❌ Erreur getCommandeDetail: $e');
+      rethrow;
+    }
+  }
+
+  Future<List<CommandeModel>> getCommandes({String? token}) async {
+    try {
+      final list = await _getList(
+        ApiConfig.commandesClientEndpoint,
+        token: token,
+      );
+      return list
+          .map((e) => CommandeModel.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      print('❌ Erreur getCommandes: $e');
       rethrow;
     }
   }
