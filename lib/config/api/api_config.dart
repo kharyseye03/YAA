@@ -29,6 +29,12 @@ class ApiConfig {
   static String structureDetailUrl(int id) => '$baseUrl/structures/$id';
   static String produitDetailUrl(int id)   => '$baseUrl/produits/$id';
 
+  // ── Endpoints Favoris ────────────────────────────
+  static const String structuresFavorisEndpoint       = '/structures-favoris';
+  static const String structuresFavorisToggleEndpoint = '/structures-favoris/toggle';
+  static const String produitsFavorisEndpoint          = '/produits-favoris';
+  static const String produitsFavorisToggleEndpoint   = '/produits-favoris/toggle';
+
   // ── Endpoints Commandes ───────────────────────────
   static const String commandesClientEndpoint       = '/commandes-clients-livreurs/client';
   static const String commandeClientDetailEndpoint  = '/commandes-clients-livreurs/client/detail';

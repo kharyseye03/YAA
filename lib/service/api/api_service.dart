@@ -7,6 +7,8 @@ import '../../config/api/api_config.dart';
 import '../../model/auth/login_response.dart';
 import '../../model/auth/register_response.dart';
 import '../../model/cart/cart_model.dart';
+import '../../model/favori/produit_favori_model.dart';
+import '../../model/favori/structure_favori_model.dart';
 import '../../model/order/commande_detail_model.dart';
 import '../../model/order/commande_model.dart';
 import '../../model/transaction/transaction_model.dart';
@@ -642,6 +644,132 @@ class ApiService {
       );
     } catch (e) {
       print('❌ Erreur deleteCartLine: $e');
+      rethrow;
+    }
+  }
+
+  // ════════════════════════════════════════════════════
+  // MÉTHODES PUBLIQUES — Favoris structures
+  // ════════════════════════════════════════════════════
+
+  Future<List<StructureFavoriModel>> getStructuresFavoris({String? token}) async {
+    try {
+      final list = await _getList(
+        ApiConfig.structuresFavorisEndpoint,
+        token: token,
+      );
+      return list
+          .map((e) => StructureFavoriModel.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      print('❌ Erreur getStructuresFavoris: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> toggleStructureFavori({
+    required int structureId,
+    String?      token,
+  }) async {
+    try {
+      var uri = Uri.parse(ApiConfig.getUrl(ApiConfig.structuresFavorisToggleEndpoint));
+      uri = uri.replace(queryParameters: {'structureId': structureId.toString()});
+
+      print('🌐 GET (toggle favori) → $uri');
+
+      final headers = {
+        ...ApiConfig.headers,
+        if (token != null) 'Authorization': 'Bearer $token',
+      };
+
+      final response = await http.get(uri, headers: headers).timeout(
+        const Duration(seconds: ApiConfig.connectionTimeout),
+        onTimeout: () => throw TimeoutException('Le serveur ne répond pas.'),
+      );
+
+      print('📡 Status → ${response.statusCode}');
+      print('📬 Réponse → ${response.body}');
+
+      if (response.statusCode == 200 ||
+          response.statusCode == 201 ||
+          response.statusCode == 204) {
+        return;
+      }
+
+      if (response.statusCode == 401) {
+        throw Exception('Session expirée. Veuillez vous reconnecter.');
+      }
+
+      final data = response.body.isNotEmpty
+          ? json.decode(response.body) as Map<String, dynamic>
+          : <String, dynamic>{};
+      throw Exception(data['message'] as String? ?? 'Erreur ${response.statusCode}');
+    } on SocketException {
+      throw Exception('Pas de connexion internet.');
+    } on TimeoutException catch (e) {
+      throw Exception(e.message);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<List<ProduitFavoriModel>> getProduitsFavoris({String? token}) async {
+    try {
+      final list = await _getList(
+        ApiConfig.produitsFavorisEndpoint,
+        token: token,
+      );
+      return list
+          .map((e) => ProduitFavoriModel.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      print('❌ Erreur getProduitsFavoris: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> toggleProduitFavori({
+    required int produitId,
+    String?      token,
+  }) async {
+    try {
+      var uri = Uri.parse(ApiConfig.getUrl(ApiConfig.produitsFavorisToggleEndpoint));
+      uri = uri.replace(queryParameters: {'produitId': produitId.toString()});
+
+      print('🌐 GET (toggle produit favori) → $uri');
+
+      final headers = {
+        ...ApiConfig.headers,
+        if (token != null) 'Authorization': 'Bearer $token',
+      };
+
+      final response = await http.get(uri, headers: headers).timeout(
+        const Duration(seconds: ApiConfig.connectionTimeout),
+        onTimeout: () => throw TimeoutException('Le serveur ne répond pas.'),
+      );
+
+      print('📡 Status produit favori → ${response.statusCode}');
+      print('📬 Réponse produit favori → ${response.body}');
+
+      if (response.statusCode == 200 ||
+          response.statusCode == 201 ||
+          response.statusCode == 204) {
+        return;
+      }
+
+      if (response.statusCode == 401) {
+        throw Exception('Session expirée. Veuillez vous reconnecter.');
+      }
+
+      final data = response.body.isNotEmpty
+          ? json.decode(response.body) as Map<String, dynamic>
+          : <String, dynamic>{};
+      throw Exception(data['message'] as String? ?? 'Erreur ${response.statusCode}');
+    } on SocketException {
+      throw Exception('Pas de connexion internet.');
+    } on TimeoutException catch (e) {
+      throw Exception(e.message);
+    } catch (e) {
       rethrow;
     }
   }

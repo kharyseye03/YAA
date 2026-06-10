@@ -6,6 +6,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimens.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../features/cart/providers/cart_notifier.dart';
+import '../../../features/favoris/providers/favori_notifier.dart';
 import '../home/providers/category_provider.dart';
 
 void showProductBottomSheet(BuildContext context, int produitId) {
@@ -27,7 +28,6 @@ class _ProductSheet extends ConsumerStatefulWidget {
 
 class _ProductSheetState extends ConsumerState<_ProductSheet> {
   int  _quantity     = 1;
-  bool _isFavorite   = false;
   int  _selectedSize = 1;
   bool _added        = false; // état succès du bouton
 
@@ -172,13 +172,16 @@ class _ProductSheetState extends ConsumerState<_ProductSheet> {
           top: 16,
           left: 16,
           child: _GlassButton(
-            icon: _isFavorite
+            icon: ref.watch(favoriProvider).isProduitFavori(widget.produitId)
                 ? Icons.favorite_rounded
                 : Icons.favorite_border_rounded,
-            iconColor: _isFavorite ? const Color(0xFFFF4D6D) : Colors.white,
+            iconColor: ref.watch(favoriProvider).isProduitFavori(widget.produitId)
+                ? const Color(0xFFFF4D6D)
+                : Colors.white,
             onTap: () {
               HapticFeedback.lightImpact();
-              setState(() => _isFavorite = !_isFavorite);
+              ref.read(favoriProvider.notifier)
+                  .toggleProduitFavori(widget.produitId);
             },
           ),
         ),
