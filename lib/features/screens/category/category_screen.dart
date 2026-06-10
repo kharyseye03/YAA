@@ -5,6 +5,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimens.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../features/favoris/providers/favori_notifier.dart';
 import '../home/providers/category_provider.dart';
 import '../home/restaurant_card.dart';
 import 'restaurant_bottom_sheet.dart';
@@ -240,7 +241,7 @@ class _FilterData {
   const _FilterData({required this.label, this.icon});
 }
 
-class _FullWidthRestaurantCard extends StatelessWidget {
+class _FullWidthRestaurantCard extends ConsumerWidget {
   const _FullWidthRestaurantCard({
     required this.restaurant,
     required this.structureId,
@@ -252,7 +253,11 @@ class _FullWidthRestaurantCard extends StatelessWidget {
   final String categoryName;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final favoriState = ref.watch(favoriProvider);
+    final isFavori    = favoriState.isFavori(structureId);
+    final isToggling  = favoriState.isToggling(structureId);
+
     return GestureDetector(
       onTap: () => showRestaurantBottomSheet(
         context,
@@ -282,17 +287,38 @@ class _FullWidthRestaurantCard extends StatelessWidget {
                   ),
                 ),
               ),
+              // ── Bouton cœur ─────────────────────────────────
               Positioned(
-                top: 12,
-                right: 12,
-                child: SvgPicture.asset(
-                  'assets/icones/heart.svg',
-                  width: 24,
-                  height: 24,
-                  colorFilter: const ColorFilter.mode(
-                    Colors.white,
-                    BlendMode.srcIn,
-                  ),
+                top  : 10,
+                right: 10,
+                child: GestureDetector(
+                  onTap: isToggling
+                      ? null
+                      : () => ref
+                            .read(favoriProvider.notifier)
+                            .toggleFavori(structureId),
+                  child: isToggling
+                      ? const SizedBox(
+                          width : 22,
+                          height: 22,
+                          child : CircularProgressIndicator(
+                            strokeWidth : 2,
+                            color       : Colors.white,
+                          ),
+                        )
+                      : isFavori
+                          ? const Icon(Icons.favorite_rounded,
+                              color: Colors.red, size: 26,
+                              shadows: [Shadow(color: Colors.black26, blurRadius: 6)])
+                          : SvgPicture.asset(
+                              'assets/icones/heart.svg',
+                              width : 24,
+                              height: 24,
+                              colorFilter: const ColorFilter.mode(
+                                Colors.white,
+                                BlendMode.srcIn,
+                              ),
+                            ),
                 ),
               ),
             ],

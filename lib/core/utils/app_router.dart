@@ -234,7 +234,9 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: RoutePaths.orderDetail,
         name: RouteNames.orderDetail,
-        builder: (context, state) => const OrderDetailScreen(),
+        builder: (context, state) => OrderDetailScreen(
+          commandeId: state.extra as int?,
+        ),
       ),
       GoRoute(
         path: RoutePaths.personalInfo,

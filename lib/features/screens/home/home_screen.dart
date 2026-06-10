@@ -12,6 +12,7 @@ import '../../../core/constants/app_dimens.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/utils/app_router.dart';
 import '../cart/cart_screen.dart';
+import '../favoris/favoris_screen.dart';
 import '../order/orders_screen.dart';
 import '../profile/profile_screen.dart';
 import 'category_list.dart';
@@ -169,7 +170,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             child: _currentNavIndex == 1
                 ? const OrdersScreen()
                 : _currentNavIndex == 2
-                ? _buildFavoritesPlaceholder()
+                ? const FavorisScreen()
                 : _currentNavIndex == 3
                 ? const ProfileScreen()
                 : _currentNavIndex == 4
@@ -489,35 +490,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildFavoritesPlaceholder() {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.favorite_border_rounded,
-              size: 64, color: AppColors.grey300),
-          const SizedBox(height: AppDimens.lg),
-          Text(
-            'Aucun favori pour l\'instant',
-            style: AppTextStyles.h3.copyWith(
-              color: AppColors.dark,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: AppDimens.sm),
-          Text(
-            'Ajoutez des restaurants ou produits\nque vous aimez pour les retrouver ici.',
-            textAlign: TextAlign.center,
-            style: AppTextStyles.bodyMedium.copyWith(
-              color: AppColors.grey500,
-              height: 1.5,
-            ),
-          ),
-        ],
       ),
     );
   }

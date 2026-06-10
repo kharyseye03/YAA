@@ -1,95 +1,96 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimens.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/utils/app_router.dart';
+import '../../../features/orders/providers/commande_notifier.dart';
+import '../../../model/order/commande_model.dart';
 
-class OrdersScreen extends StatefulWidget {
+class OrdersScreen extends ConsumerStatefulWidget {
   const OrdersScreen({super.key});
 
   @override
-  State<OrdersScreen> createState() => _OrdersScreenState();
+  ConsumerState<OrdersScreen> createState() => _OrdersScreenState();
 }
 
-class _OrdersScreenState extends State<OrdersScreen> {
+class _OrdersScreenState extends ConsumerState<OrdersScreen> {
   int _tab = 0;
 
-  static const _ongoing = [
-    _Order(
-      shopName: 'Burger King – Plateau',
-      items: '2× Truffle Beef Burger, 1× Frites',
-      date: "Aujourd'hui, 14:30",
-      price: 5000,
-      status: 'En préparation',
-      statusColor: Color(0xFFF39C12),
-      imageUrl: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=200',
-    ),
-    _Order(
-      shopName: 'Green Life',
-      items: '1× Crudité salade, 1× Jus nature',
-      date: "Aujourd'hui, 13:15",
-      price: 12000,
-      status: 'En route',
-      statusColor: Color(0xFF1652F0),
-      imageUrl: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200',
-    ),
-  ];
-
-  static const _completed = [
-    _Order(
-      shopName: 'Pasta Box',
-      items: '1× Spaghetti bolognaise',
-      date: 'Hier, 19:45',
-      price: 1000,
-      status: 'Livrée',
-      statusColor: Color(0xFF27AE60),
-      imageUrl: 'https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?w=200',
-    ),
-    _Order(
-      shopName: 'Chez Fatou',
-      items: '1× Thiéboudienne, 2× Eau minérale',
-      date: '08 mai, 12:00',
-      price: 4500,
-      status: 'Livrée',
-      statusColor: Color(0xFF27AE60),
-      imageUrl: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=200',
-    ),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(
+        () => ref.read(commandeProvider.notifier).loadCommandes());
+  }
 
   @override
   Widget build(BuildContext context) {
-    final list = _tab == 0 ? _ongoing : _completed;
+    final state    = ref.watch(commandeProvider);
+    final list     = _tab == 0 ? state.enCours : state.terminees;
 
     return Column(
       children: [
         SizedBox(height: MediaQuery.of(context).padding.top),
+
+        // ── Tabs ──────────────────────────────────────────────
         _Tabs(current: _tab, onTap: (i) => setState(() => _tab = i)),
-        Expanded(
-          child: list.isEmpty
-              ? _Empty()
-              : ListView.separated(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppDimens.screenPadding,
-                    vertical: AppDimens.lg,
-                  ),
-                  itemCount: list.length,
-                  separatorBuilder: (_, __) =>
-                      const Divider(height: 32, color: AppColors.grey200),
-                  itemBuilder: (_, i) => _OrderRow(
-                    order: list[i],
-                    onTap: () => _tab == 0
-                        ? context.pushNamed(RouteNames.orderTracking)
-                        : context.pushNamed(RouteNames.orderDetail),
-                  ),
+
+        // ── Erreur ────────────────────────────────────────────
+        if (state.error != null)
+          Container(
+            width   : double.infinity,
+            padding : const EdgeInsets.symmetric(
+                horizontal: AppDimens.screenPadding, vertical: 10),
+            color   : AppColors.errorLight,
+            child   : Row(
+              children: [
+                const Icon(Icons.error_outline_rounded,
+                    color: AppColors.error, size: 16),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(state.error!,
+                      style: AppTextStyles.bodySmall
+                          .copyWith(color: AppColors.error)),
                 ),
+              ],
+            ),
+          ),
+
+        // ── Contenu ───────────────────────────────────────────
+        Expanded(
+          child: state.isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : list.isEmpty
+                  ? _Empty(tab: _tab)
+                  : RefreshIndicator(
+                      onRefresh: () =>
+                          ref.read(commandeProvider.notifier).loadCommandes(),
+                      child: ListView.separated(
+                        padding: const EdgeInsets.fromLTRB(
+                          AppDimens.screenPadding, 16,
+                          AppDimens.screenPadding, 24,
+                        ),
+                        itemCount      : list.length,
+                        separatorBuilder: (_, __) =>
+                            const SizedBox(height: 12),
+                        itemBuilder: (_, i) => _CommandeCard(
+                          commande : list[i],
+                          onTap    : () => context.pushNamed(
+                            RouteNames.orderDetail,
+                            extra: list[i].id,
+                          ),
+                        ),
+                      ),
+                    ),
         ),
       ],
     );
   }
 }
 
-// ── Tabs ──────────────────────────────────────────────────
+// ── Tabs En cours / Terminées ─────────────────────────────────
 class _Tabs extends StatelessWidget {
   const _Tabs({required this.current, required this.onTap});
   final int current;
@@ -106,18 +107,17 @@ class _Tabs extends StatelessWidget {
             final active = i == current;
             return Expanded(
               child: GestureDetector(
-                onTap: () => onTap(i),
-                behavior: HitTestBehavior.opaque,
+                onTap    : () => onTap(i),
+                behavior : HitTestBehavior.opaque,
                 child: Padding(
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   child: Center(
                     child: Text(
                       labels[i],
                       style: AppTextStyles.labelMedium.copyWith(
-                        fontSize: 14,
-                        fontWeight:
-                            active ? FontWeight.w700 : FontWeight.w500,
-                        color: active ? AppColors.dark : AppColors.grey400,
+                        fontSize   : 14,
+                        fontWeight : active ? FontWeight.w700 : FontWeight.w500,
+                        color      : active ? AppColors.dark : AppColors.grey400,
                       ),
                     ),
                   ),
@@ -130,16 +130,14 @@ class _Tabs extends StatelessWidget {
           children: [
             Container(height: 1, color: AppColors.grey200),
             AnimatedAlign(
-              duration: const Duration(milliseconds: 200),
-              curve: Curves.easeInOut,
-              alignment:
-                  current == 0 ? Alignment.centerLeft : Alignment.centerRight,
+              duration  : const Duration(milliseconds: 200),
+              curve     : Curves.easeInOut,
+              alignment : current == 0
+                  ? Alignment.centerLeft
+                  : Alignment.centerRight,
               child: FractionallySizedBox(
                 widthFactor: 0.5,
-                child: Container(
-                  height: 2,
-                  color: AppColors.dark,
-                ),
+                child: Container(height: 2, color: AppColors.dark),
               ),
             ),
           ],
@@ -149,171 +147,346 @@ class _Tabs extends StatelessWidget {
   }
 }
 
-// ── Ligne commande ────────────────────────────────────────
-class _OrderRow extends StatelessWidget {
-  const _OrderRow({required this.order, required this.onTap});
-  final _Order order;
-  final VoidCallback onTap;
+// ── Carte commande ────────────────────────────────────────────
+class _CommandeCard extends StatelessWidget {
+  const _CommandeCard({required this.commande, required this.onTap});
+  final CommandeModel commande;
+  final VoidCallback  onTap;
+
+  static ({String label, Color color, Color bgColor}) _statusInfo(
+      String statut) =>
+      switch (statut) {
+        'EN_ATTENTE' => (
+            label   : 'En attente',
+            color   : AppColors.grey600,
+            bgColor : AppColors.grey100,
+          ),
+        'CONFIRME' => (
+            label   : 'Confirmée',
+            color   : AppColors.info,
+            bgColor : AppColors.infoLight,
+          ),
+        'EN_PREPARATION' => (
+            label   : 'En préparation',
+            color   : AppColors.info,
+            bgColor : AppColors.infoLight,
+          ),
+        'EN_ATTENTE_ORDONNANCE' => (
+            label   : 'Ordonnance requise',
+            color   : AppColors.warning,
+            bgColor : AppColors.warningLight,
+          ),
+        'PARTIELLEMENT_DISPONIBLE' => (
+            label   : 'Partiel',
+            color   : AppColors.warning,
+            bgColor : AppColors.warningLight,
+          ),
+        'PRET' => (
+            label   : 'Prête',
+            color   : AppColors.info,
+            bgColor : AppColors.infoLight,
+          ),
+        'EN_ATTENTE_LIVREUR' => (
+            label   : 'Cherche livreur',
+            color   : AppColors.warning,
+            bgColor : AppColors.warningLight,
+          ),
+        'LIVREUR_ASSIGNE' => (
+            label   : 'Livreur assigné',
+            color   : AppColors.info,
+            bgColor : AppColors.infoLight,
+          ),
+        'EN_LIVRAISON' => (
+            label   : 'En livraison',
+            color   : AppColors.info,
+            bgColor : AppColors.infoLight,
+          ),
+        'LIVRE' => (
+            label   : 'Livré',
+            color   : AppColors.success,
+            bgColor : AppColors.successLight,
+          ),
+        'ANNULE' => (
+            label   : 'Annulée',
+            color   : AppColors.error,
+            bgColor : AppColors.errorLight,
+          ),
+        'REJETE' => (
+            label   : 'Rejetée',
+            color   : AppColors.error,
+            bgColor : AppColors.errorLight,
+          ),
+        _ => (
+            label   : statut,
+            color   : AppColors.grey500,
+            bgColor : AppColors.grey100,
+          ),
+      };
 
   @override
   Widget build(BuildContext context) {
+    final status = _statusInfo(commande.statut);
+    final ref    = commande.referenceCommande.length >= 8
+        ? commande.referenceCommande.substring(0, 8).toUpperCase()
+        : commande.referenceCommande.toUpperCase();
+
     return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          // Image
-          ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: Image.network(
-              order.imageUrl,
-              width: 60,
-              height: 60,
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Container(
-                width: 60,
-                height: 60,
-                decoration: BoxDecoration(
-                  color: AppColors.grey100,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(Icons.storefront_outlined,
-                    color: AppColors.grey400, size: 24),
-              ),
+      onTap    : onTap,
+      behavior : HitTestBehavior.opaque,
+      child: Container(
+        decoration: BoxDecoration(
+          color        : Colors.white,
+          borderRadius : BorderRadius.circular(16),
+          boxShadow    : [
+            BoxShadow(
+              color      : Colors.black.withValues(alpha: 0.06),
+              blurRadius : 16,
+              offset     : const Offset(0, 4),
             ),
-          ),
-
-          const SizedBox(width: 14),
-
-          // Infos
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  order.shopName,
-                  style: AppTextStyles.labelMedium.copyWith(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 15,
-                    color: AppColors.dark,
-                  ),
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  order.items,
-                  style: AppTextStyles.bodySmall.copyWith(
-                    color: AppColors.grey500,
-                    fontSize: 12,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  order.date,
-                  style: AppTextStyles.bodySmall.copyWith(
-                    color: AppColors.grey400,
-                    fontSize: 11,
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(width: 10),
-
-          // Prix + statut
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                '${order.price} F',
-                style: AppTextStyles.labelMedium.copyWith(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 14,
-                  color: AppColors.dark,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Row(
-                mainAxisSize: MainAxisSize.min,
+          ],
+        ),
+        child: Column(
+          children: [
+            // ── Top : structure + statut ─────────────────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
+              child: Row(
                 children: [
                   Container(
-                    width: 6,
-                    height: 6,
+                    width  : 38,
+                    height : 38,
                     decoration: BoxDecoration(
-                      color: order.statusColor,
-                      shape: BoxShape.circle,
+                      color        : AppColors.primarySurface,
+                      borderRadius : BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.storefront_outlined,
+                        size: 18, color: AppColors.primary),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          commande.structureName,
+                          style: AppTextStyles.labelMedium.copyWith(
+                            fontWeight : FontWeight.w700,
+                            fontSize   : 14,
+                            color      : AppColors.dark,
+                          ),
+                          maxLines : 1,
+                          overflow : TextOverflow.ellipsis,
+                        ),
+                        Text(
+                          'Réf: $ref',
+                          style: AppTextStyles.caption.copyWith(
+                            color: AppColors.grey400,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(width: 4),
-                  Text(
-                    order.status,
-                    style: AppTextStyles.bodySmall.copyWith(
-                      fontSize: 11,
-                      color: order.statusColor,
-                      fontWeight: FontWeight.w600,
+                  const SizedBox(width: 8),
+                  // Badge statut
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color        : status.bgColor,
+                      borderRadius : BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      status.label,
+                      style: AppTextStyles.labelSmall.copyWith(
+                        color      : status.color,
+                        fontWeight : FontWeight.w700,
+                        fontSize   : 11,
+                      ),
                     ),
                   ),
                 ],
               ),
-            ],
-          ),
-        ],
+            ),
+
+            const SizedBox(height: 12),
+            const Divider(height: 1, color: AppColors.grey100),
+            const SizedBox(height: 12),
+
+            // ── Itinéraire ───────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Icônes + ligne
+                    Column(
+                      children: [
+                        const SizedBox(height: 3),
+                        Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            Container(
+                              width  : 16,
+                              height : 16,
+                              decoration: BoxDecoration(
+                                shape : BoxShape.circle,
+                                border: Border.all(
+                                  color : AppColors.primary
+                                      .withValues(alpha: 0.3),
+                                  width : 1.5,
+                                ),
+                              ),
+                            ),
+                            Container(
+                              width  : 8,
+                              height : 8,
+                              decoration: const BoxDecoration(
+                                color : AppColors.primary,
+                                shape : BoxShape.circle,
+                              ),
+                            ),
+                          ],
+                        ),
+                        Expanded(
+                          child: Center(
+                            child: Container(
+                                width: 1.5, color: AppColors.grey200),
+                          ),
+                        ),
+                        const Icon(Icons.location_on,
+                            color: AppColors.secondary, size: 16),
+                        const SizedBox(height: 3),
+                      ],
+                    ),
+                    const SizedBox(width: 12),
+                    // Textes départ / arrivée
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Départ',
+                              style: AppTextStyles.caption
+                                  .copyWith(color: AppColors.grey400)),
+                          const SizedBox(height: 1),
+                          Text(
+                            commande.structureAdresse.isNotEmpty
+                                ? commande.structureAdresse
+                                : commande.structureName,
+                            style: AppTextStyles.labelSmall
+                                .copyWith(color: AppColors.dark),
+                            maxLines : 1,
+                            overflow : TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 10),
+                          Text('Livraison',
+                              style: AppTextStyles.caption
+                                  .copyWith(color: AppColors.grey400)),
+                          const SizedBox(height: 1),
+                          Text(
+                            commande.adresseLivraison,
+                            style: AppTextStyles.labelSmall
+                                .copyWith(color: AppColors.dark),
+                            maxLines : 1,
+                            overflow : TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 12),
+            const Divider(height: 1, color: AppColors.grey100),
+
+            // ── Bas : montant + mode livraison ───────────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
+              child: Row(
+                children: [
+                  Text(
+                    '${commande.montantTotal.toStringAsFixed(0)} F',
+                    style: const TextStyle(
+                      fontFamily : 'Archivo',
+                      fontSize   : 18,
+                      fontWeight : FontWeight.w800,
+                      color      : AppColors.dark,
+                    ),
+                  ),
+                  const Spacer(),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color        : AppColors.primarySurface,
+                      borderRadius : BorderRadius.circular(20),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.local_shipping_outlined,
+                            size: 12, color: AppColors.primary),
+                        const SizedBox(width: 4),
+                        Text(
+                          commande.modeLivraison == 'GROUPAGE'
+                              ? 'Groupée'
+                              : 'Individuelle',
+                          style: AppTextStyles.caption.copyWith(
+                            color      : AppColors.primary,
+                            fontWeight : FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
-// ── État vide ─────────────────────────────────────────────
+// ── État vide ─────────────────────────────────────────────────
 class _Empty extends StatelessWidget {
+  const _Empty({required this.tab});
+  final int tab;
+
   @override
   Widget build(BuildContext context) {
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.receipt_long_outlined,
-              size: 56, color: AppColors.grey300),
-          const SizedBox(height: AppDimens.lg),
+          Container(
+            width  : 72,
+            height : 72,
+            decoration: const BoxDecoration(
+              color : AppColors.grey100,
+              shape : BoxShape.circle,
+            ),
+            child: const Icon(Icons.receipt_long_outlined,
+                size: 32, color: AppColors.grey400),
+          ),
+          const SizedBox(height: 14),
           Text(
-            'Aucune commande',
-            style: AppTextStyles.h3.copyWith(
-              color: AppColors.dark,
-              fontWeight: FontWeight.w700,
+            tab == 0 ? 'Aucune commande en cours' : 'Aucune commande terminée',
+            style: AppTextStyles.labelMedium.copyWith(
+              fontWeight : FontWeight.w700,
+              color      : AppColors.dark,
             ),
           ),
-          const SizedBox(height: AppDimens.sm),
+          const SizedBox(height: 4),
           Text(
             'Vos commandes apparaîtront ici.',
-            style: AppTextStyles.bodyMedium.copyWith(
-              color: AppColors.grey500,
-            ),
+            style: AppTextStyles.bodySmall.copyWith(color: AppColors.grey500),
           ),
         ],
       ),
     );
   }
-}
-
-// ── Modèle ────────────────────────────────────────────────
-class _Order {
-  final String shopName;
-  final String items;
-  final String date;
-  final int price;
-  final String status;
-  final Color statusColor;
-  final String imageUrl;
-
-  const _Order({
-    required this.shopName,
-    required this.items,
-    required this.date,
-    required this.price,
-    required this.status,
-    required this.statusColor,
-    required this.imageUrl,
-  });
 }

@@ -7,6 +7,7 @@ import '../../../core/constants/app_dimens.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/utils/app_router.dart';
 import '../../../features/cart/providers/cart_notifier.dart';
+import '../../../features/favoris/providers/favori_notifier.dart';
 import '../../../shared/widgets/restaurant_sheet.dart';
 import '../../../shared/widgets/yaa_button.dart';
 
@@ -19,9 +20,6 @@ class ProductDetailScreen extends ConsumerStatefulWidget {
 }
 
 class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
-  bool _isFavorite = false;
-
-  // TODO: remplacer par le vrai produitId reçu en paramètre de navigation
   static const int _produitId = 1;
 
   Future<void> _addToCart() async {
@@ -233,7 +231,9 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
           top: MediaQuery.of(context).padding.top + AppDimens.sm,
           right: AppDimens.screenPadding,
           child: GestureDetector(
-            onTap: () => setState(() => _isFavorite = !_isFavorite),
+            onTap: () => ref
+                .read(favoriProvider.notifier)
+                .toggleProduitFavori(_produitId),
             child: Container(
               width: 40,
               height: 40,
@@ -241,11 +241,21 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                 color: AppColors.white.withValues(alpha: 0.85),
                 shape: BoxShape.circle,
               ),
-              child: Icon(
-                _isFavorite ? Icons.favorite : Icons.favorite_border,
-                color: AppColors.error,
-                size: 22,
-              ),
+              child: ref.watch(favoriProvider).isToggling(_produitId)
+                  ? const Padding(
+                      padding: EdgeInsets.all(10),
+                      child: CircularProgressIndicator(
+                        strokeWidth : 2,
+                        color       : AppColors.error,
+                      ),
+                    )
+                  : Icon(
+                      ref.watch(favoriProvider).isProduitFavori(_produitId)
+                          ? Icons.favorite
+                          : Icons.favorite_border,
+                      color: AppColors.error,
+                      size: 22,
+                    ),
             ),
           ),
         ),
