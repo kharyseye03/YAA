@@ -24,6 +24,10 @@ dependencies:
   # ── Media ───────────────────────────────────────────────
   image_picker: ^1.1.2
 
+  # ── Localisation ────────────────────────────────────────
+  geolocator: ^13.0.2
+  geocoding: ^3.0.0
+
   # ── Data & Serialization ────────────────────────────────
   freezed_annotation: ^2.4.4
   json_annotation: ^4.9.0
@@ -52,11 +56,24 @@ dev_dependencies:
     sdk: flutter
   flutter_lints: ^5.0.0
 
+  # ── Launcher Icon ───────────────────────────────────────
+  flutter_launcher_icons: ^0.14.3
+
   # ── Code Generation ─────────────────────────────────────
   build_runner: ^2.4.14
   freezed: ^2.5.8
   json_serializable: ^6.9.4
   riverpod_generator: ^2.6.3
+
+# ── Configuration de l'icône de l'app ─────────────────────
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/images/icone_officielle.jpeg"
+  # Icône adaptative Android (fond blanc + logo au centre)
+  adaptive_icon_background: "#FFFFFF"
+  adaptive_icon_foreground: "assets/images/icone_officielle.jpeg"
+  remove_alpha_ios: true
 
 flutter:
   uses-material-design: true
