@@ -16,6 +16,7 @@ class ApiConfig {
   static const String resetPasswordEndpoint = '/registrations/reset-password';
   static const String forgotPasswordEndpoint = '/registrations/forgot-password';
   static const String resendCodeEndpoint = '/registrations/resend-code';
+  static const String setAdresseEndpoint = '/registrations/set-adresse';
 
   // ── Endpoints User ────────────────────────────────
   static const String userDetailEndpoint    = '/registrations/detail';

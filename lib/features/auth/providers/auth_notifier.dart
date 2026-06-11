@@ -8,6 +8,7 @@ import 'auth_state.dart';
 const _tokenKey = 'access_token';
 const _refreshTokenKey = 'refresh_token';
 const _emailKey = 'user_email';
+const _telephoneKey = 'user_telephone';
 
 class AuthNotifier extends StateNotifier<AuthState> {
   AuthNotifier(this._prefs)
@@ -86,6 +87,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
         telephone: telephone,
       );
       await _prefs.setString(_emailKey, email);
+      // Sauvegardé pour l'écran de localisation (set-adresse)
+      await _prefs.setString(_telephoneKey, telephone);
       state = state.copyWith(isLoading: false);
       return true;
     } catch (e) {
@@ -123,6 +126,39 @@ class AuthNotifier extends StateNotifier<AuthState> {
     try {
       await ApiService().createPassword(email: email, newPassword: newPassword);
       await _prefs.setString(_emailKey, email);
+      state = state.copyWith(isLoading: false);
+      return true;
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: e.toString().replaceAll('Exception: ', ''),
+      );
+      return false;
+    }
+  }
+
+  /// Enregistre l'adresse de livraison choisie pendant l'inscription.
+  /// Email et téléphone sont relus depuis les prefs (sauvegardés
+  /// lors de register / createPassword).
+  Future<bool> setAdresse({
+    required String adresse,
+    required double latitude,
+    required double longitude,
+  }) async {
+    state = state.copyWith(isLoading: true, clearError: true);
+    try {
+      final email     = _prefs.getString(_emailKey);
+      final telephone = _prefs.getString(_telephoneKey);
+      if (email == null) {
+        throw Exception('Email introuvable. Veuillez recommencer l\'inscription.');
+      }
+      await ApiService().setAdresse(
+        email     : email,
+        telephone : telephone ?? '',
+        adresse   : adresse,
+        latitude  : latitude,
+        longitude : longitude,
+      );
       state = state.copyWith(isLoading: false);
       return true;
     } catch (e) {

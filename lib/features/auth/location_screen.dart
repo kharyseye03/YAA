@@ -1,22 +1,24 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/constants.dart';
 import '../../../../core/utils/app_router.dart';
 import '../../../../service/location/location_service.dart';
 import '../../../../shared/widgets/widgets.dart';
 import '../../shared/widgets/auth_header.dart';
+import 'providers/auth_notifier.dart';
 
 /// Location permission screen — "Où livrer vos commande ?"
-class LocationScreen extends StatefulWidget {
+class LocationScreen extends ConsumerStatefulWidget {
   const LocationScreen({super.key});
 
   @override
-  State<LocationScreen> createState() => _LocationScreenState();
+  ConsumerState<LocationScreen> createState() => _LocationScreenState();
 }
 
-class _LocationScreenState extends State<LocationScreen> {
+class _LocationScreenState extends ConsumerState<LocationScreen> {
   final _locationService   = LocationService();
   final _adresseController = TextEditingController();
 
@@ -91,6 +93,27 @@ class _LocationScreenState extends State<LocationScreen> {
       if (!mounted) return;
       setState(() => _isLoadingPlace = false);
       _showError(e.toString().replaceAll('Exception: ', ''));
+    }
+  }
+
+  // ── Enregistrement de l'adresse (PUT set-adresse) ─────────────
+  Future<void> _onContinue() async {
+    final location = _selectedLocation;
+    if (location == null) return;
+
+    final success = await ref.read(authProvider.notifier).setAdresse(
+      adresse   : location.adresse,
+      latitude  : location.latitude,
+      longitude : location.longitude,
+    );
+
+    if (!mounted) return;
+
+    if (success) {
+      await _showLocationSuccessSheet();
+    } else {
+      final error = ref.read(authProvider).error;
+      if (error != null) _showError(error);
     }
   }
 
@@ -284,7 +307,8 @@ class _LocationScreenState extends State<LocationScreen> {
                   if (_selectedLocation != null) ...[
                     YaaButton(
                       label     : 'Continuer',
-                      onPressed : _showLocationSuccessSheet,
+                      onPressed : _onContinue,
+                      isLoading : ref.watch(authProvider).isLoading,
                     ),
                     const SizedBox(height: AppDimens.md),
                   ],
