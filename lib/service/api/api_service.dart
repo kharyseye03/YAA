@@ -88,6 +88,65 @@ class ApiService {
     }
   }
 
+  Future<Map<String, dynamic>> _put(
+    String endpoint,
+    dynamic body, {
+    String? token,
+  }) async {
+    try {
+      final url = Uri.parse(ApiConfig.getUrl(endpoint));
+
+      print('🌐 PUT → $url');
+      print('📦 Body → $body');
+
+      final headers = {
+        ...ApiConfig.headers,
+        if (token != null) 'Authorization': 'Bearer $token',
+      };
+
+      final response = await http.put(
+        url,
+        headers : headers,
+        body    : json.encode(body),
+      ).timeout(
+        const Duration(seconds: ApiConfig.connectionTimeout),
+        onTimeout: () {
+          throw TimeoutException('Le serveur ne répond pas. Vérifiez votre connexion.');
+        },
+      );
+
+      print('📡 Status → ${response.statusCode}');
+      print('📬 Réponse → ${response.body}');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        if (response.body.isEmpty) return {};
+        final data = json.decode(response.body) as Map<String, dynamic>;
+        return data;
+      }
+
+      if (response.statusCode == 401) {
+        throw Exception('Session expirée. Veuillez vous reconnecter.');
+      }
+
+      if (response.body.isEmpty) {
+        throw Exception('Erreur ${response.statusCode}');
+      }
+
+      final data = json.decode(response.body) as Map<String, dynamic>;
+      final errorMessage = data['message'] as String? ?? 'Erreur ${response.statusCode}';
+      throw Exception(errorMessage);
+
+    } on SocketException {
+      throw Exception('Pas de connexion internet.');
+    } on TimeoutException catch (e) {
+      throw Exception(e.message);
+    } on FormatException {
+      throw Exception('Réponse invalide du serveur.');
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   Future<void> _delete(
     String endpoint, {
     Map<String, String>? queryParams,
@@ -349,6 +408,28 @@ class ApiService {
     }
   }
 
+  Future<void> setAdresse({
+    required String email,
+    required String telephone,
+    required String adresse,
+    required double latitude,
+    required double longitude,
+  }) async {
+    try {
+      final body = {
+        'email'     : email,
+        'telephone' : telephone,
+        'adresse'   : adresse,
+        'latitude'  : latitude,
+        'longitude' : longitude,
+      };
+      await _put(ApiConfig.setAdresseEndpoint, body);
+    } catch (e) {
+      print('❌ Erreur setAdresse: $e');
+      rethrow;
+    }
+  }
+
   Future<LoginResponse> login({
     required String username,
     required String password,
@@ -496,16 +577,38 @@ class ApiService {
   }
 
   Future<List<Structure>> getStructuresByCategory(int categorieId) async {
+    return getStructures(categorieId: categorieId);
+  }
+
+  /// Recherche de structures — tous les filtres sont optionnels et
+  /// combinables : géolocalisation (lat/lng/rayon en mètres),
+  /// catégorie, nom, spécialité.
+  Future<List<Structure>> getStructures({
+    int? categorieId,
+    double? latitude,
+    double? longitude,
+    double? rayon,
+    String? nom,
+    String? specialite,
+  }) async {
     try {
+      final queryParams = <String, String>{
+        if (categorieId != null) 'categorieId' : categorieId.toString(),
+        if (latitude    != null) 'latitude'    : latitude.toString(),
+        if (longitude   != null) 'longitude'   : longitude.toString(),
+        if (rayon       != null) 'rayon'       : rayon.toString(),
+        if (nom         != null) 'nom'         : nom,
+        if (specialite  != null) 'specialite'  : specialite,
+      };
       final list = await _getList(
         ApiConfig.structuresEndpoint,
-        queryParams: {'categorieId': categorieId.toString()},
+        queryParams: queryParams.isEmpty ? null : queryParams,
       );
       return list
           .map((e) => Structure.fromJson(e as Map<String, dynamic>))
           .toList();
     } catch (e) {
-      print('❌ Erreur getStructuresByCategory: $e');
+      print('❌ Erreur getStructures: $e');
       rethrow;
     }
   }

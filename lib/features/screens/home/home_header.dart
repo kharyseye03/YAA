@@ -1,21 +1,30 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimens.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../location/providers/position_provider.dart';
 
-class HomeHeader extends StatelessWidget {
+class HomeHeader extends ConsumerWidget {
   const HomeHeader({
     super.key,
-    this.location = 'Dakar, Sénégal',
     this.onNotificationTap,
   });
 
-  final String location;
   final VoidCallback? onNotificationTap;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Position actuelle : adresse GPS, "Localisation…" pendant le
+    // chargement, fallback si permission refusée / GPS désactivé
+    final position = ref.watch(currentPositionProvider);
+    final location = position.when(
+      data    : (p) => p.adresse,
+      loading : ()  => 'Localisation…',
+      error   : (_, __) => 'Dakar, Sénégal',
+    );
+
     return Container(
       width: double.infinity,
       color: Colors.white,

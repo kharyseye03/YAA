@@ -11,6 +11,7 @@ class Structure {
   final int nombreEtoile;
   final String tempsLivraison;
   final String codeStructure;
+  final double distance; // en mètres, calculée par le backend si lat/lng fournis
 
   const Structure({
     required this.id,
@@ -23,6 +24,7 @@ class Structure {
     required this.nombreEtoile,
     required this.tempsLivraison,
     required this.codeStructure,
+    this.distance = 0,
   });
 
   factory Structure.fromJson(Map<String, dynamic> json) => Structure(
@@ -36,7 +38,13 @@ class Structure {
         nombreEtoile: json['nombreEtoile'] as int,
         tempsLivraison: json['tempsLivraison'] as String,
         codeStructure: json['codeStructure'] as String,
+        distance: (json['distance'] as num?)?.toDouble() ?? 0,
       );
 
   String get logoUrl => ApiConfig.getImageUrl(logoFile);
+
+  /// Distance lisible : "487 m" ou "1,3 km"
+  String get distanceLabel => distance < 1000
+      ? '${distance.round()} m'
+      : '${(distance / 1000).toStringAsFixed(1).replaceAll('.', ',')} km';
 }

@@ -1,20 +1,133 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/constants.dart';
 import '../../../../core/utils/app_router.dart';
+import '../../../../service/location/location_service.dart';
 import '../../../../shared/widgets/widgets.dart';
 import '../../shared/widgets/auth_header.dart';
+import 'providers/auth_notifier.dart';
 
 /// Location permission screen — "Où livrer vos commande ?"
-class LocationScreen extends StatelessWidget {
+class LocationScreen extends ConsumerStatefulWidget {
   const LocationScreen({super.key});
 
-  Future<void> _onUseLocation(BuildContext context) async {
-    // TODO: Request actual location permission here
-    await _showLocationSuccessSheet(context);
+  @override
+  ConsumerState<LocationScreen> createState() => _LocationScreenState();
+}
+
+class _LocationScreenState extends ConsumerState<LocationScreen> {
+  final _locationService   = LocationService();
+  final _adresseController = TextEditingController();
+
+  Timer?                _debounce;
+  List<PlaceSuggestion> _suggestions      = [];
+  LocationResult?       _selectedLocation;
+  bool                  _isLoadingGps     = false;
+  bool                  _isLoadingPlace   = false;
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    _adresseController.dispose();
+    super.dispose();
   }
 
-  Future<void> _showLocationSuccessSheet(BuildContext context) async {
+  // ── Position actuelle (GPS) ───────────────────────────────────
+  Future<void> _onUseLocation() async {
+    setState(() => _isLoadingGps = true);
+    try {
+      final result = await _locationService.getCurrentLocation();
+      if (!mounted) return;
+      setState(() {
+        _selectedLocation        = result;
+        _adresseController.text  = result.adresse;
+        _suggestions             = [];
+        _isLoadingGps            = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoadingGps = false);
+      _showError(e.toString().replaceAll('Exception: ', ''));
+    }
+  }
+
+  // ── Autocomplétion pendant la saisie ──────────────────────────
+  void _onAdresseChanged(String value) {
+    // L'utilisateur modifie l'adresse → on invalide la sélection
+    _selectedLocation = null;
+
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 400), () async {
+      if (value.trim().length < 3) {
+        if (mounted) setState(() => _suggestions = []);
+        return;
+      }
+      try {
+        final suggestions = await _locationService.autocomplete(value);
+        if (mounted) setState(() => _suggestions = suggestions);
+      } catch (e) {
+        debugPrint('❌ autocomplete: $e');
+      }
+    });
+  }
+
+  // ── Sélection d'une suggestion ────────────────────────────────
+  Future<void> _onSuggestionTap(PlaceSuggestion suggestion) async {
+    FocusScope.of(context).unfocus();
+    setState(() {
+      _adresseController.text = suggestion.description;
+      _suggestions            = [];
+      _isLoadingPlace         = true;
+    });
+    try {
+      final result = await _locationService.getPlaceDetails(suggestion);
+      if (!mounted) return;
+      setState(() {
+        _selectedLocation = result;
+        _isLoadingPlace   = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoadingPlace = false);
+      _showError(e.toString().replaceAll('Exception: ', ''));
+    }
+  }
+
+  // ── Enregistrement de l'adresse (PUT set-adresse) ─────────────
+  Future<void> _onContinue() async {
+    final location = _selectedLocation;
+    if (location == null) return;
+
+    final success = await ref.read(authProvider.notifier).setAdresse(
+      adresse   : location.adresse,
+      latitude  : location.latitude,
+      longitude : location.longitude,
+    );
+
+    if (!mounted) return;
+
+    if (success) {
+      await _showLocationSuccessSheet();
+    } else {
+      final error = ref.read(authProvider).error;
+      if (error != null) _showError(error);
+    }
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content         : Text(message),
+        backgroundColor : AppColors.error,
+        behavior        : SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  Future<void> _showLocationSuccessSheet() async {
     await showModalBottomSheet<void>(
       context: context,
       // Transparent pour laisser le Container gérer son propre style
@@ -72,7 +185,79 @@ class LocationScreen extends StatelessWidget {
                       ),
                     ),
 
-                    const SizedBox(height: 64),
+                    const SizedBox(height: AppDimens.xl),
+
+                    // ── Champ adresse avec autocomplétion ────────────
+                    YaaTextField(
+                      controller : _adresseController,
+                      hint       : 'Saisissez votre adresse…',
+                      prefixIcon : Icons.search_rounded,
+                      onChanged  : _onAdresseChanged,
+                      suffixIcon : _isLoadingPlace
+                          ? const Padding(
+                              padding: EdgeInsets.all(14),
+                              child: SizedBox(
+                                width: 18, height: 18,
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              ),
+                            )
+                          : _selectedLocation != null
+                              ? const Padding(
+                                  padding: EdgeInsets.all(12),
+                                  child: Icon(Icons.check_circle_rounded,
+                                      color: AppColors.success, size: 22),
+                                )
+                              : null,
+                    ),
+
+                    // ── Suggestions ──────────────────────────────────
+                    if (_suggestions.isNotEmpty) ...[
+                      const SizedBox(height: AppDimens.sm),
+                      Container(
+                        decoration: BoxDecoration(
+                          color        : AppColors.white,
+                          borderRadius : BorderRadius.circular(AppDimens.radiusMd),
+                          border       : Border.all(color: AppColors.grey200),
+                          boxShadow    : [
+                            BoxShadow(
+                              color      : Colors.black.withValues(alpha: 0.06),
+                              blurRadius : 12,
+                              offset     : const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          children: _suggestions.map((s) {
+                            return InkWell(
+                              onTap: () => _onSuggestionTap(s),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 14, vertical: 12),
+                                child: Row(
+                                  children: [
+                                    const Icon(Icons.location_on_outlined,
+                                        size: 18, color: AppColors.grey500),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: Text(
+                                        s.description,
+                                        style: AppTextStyles.bodySmall.copyWith(
+                                          color: AppColors.dark,
+                                        ),
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                    ],
+
+                    const SizedBox(height: 40),
 
                     // Location icon — double cercle centré
                     Center(
@@ -101,13 +286,13 @@ class LocationScreen extends StatelessWidget {
                       ),
                     ),
 
-                    const SizedBox(height: 64),
+                    const SizedBox(height: 40),
                   ],
                 ),
               ),
             ),
 
-            // ── Button anchored at bottom ────────────────────────────
+            // ── Buttons anchored at bottom ───────────────────────────
             Padding(
               padding: const EdgeInsets.fromLTRB(
                 AppDimens.screenPadding,
@@ -115,10 +300,26 @@ class LocationScreen extends StatelessWidget {
                 AppDimens.screenPadding,
                 AppDimens.xxl,
               ),
-              child: YaaButton(
-                label: 'Utiliser ma position actuelle',
-                onPressed: () => _onUseLocation(context),
-                icon: Icons.location_on,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Bouton de validation — visible quand une adresse est choisie
+                  if (_selectedLocation != null) ...[
+                    YaaButton(
+                      label     : 'Continuer',
+                      onPressed : _onContinue,
+                      isLoading : ref.watch(authProvider).isLoading,
+                    ),
+                    const SizedBox(height: AppDimens.md),
+                  ],
+                  YaaButton(
+                    label      : 'Utiliser ma position actuelle',
+                    onPressed  : _onUseLocation,
+                    isLoading  : _isLoadingGps,
+                    isOutlined : _selectedLocation != null,
+                    icon       : Icons.location_on,
+                  ),
+                ],
               ),
             ),
           ],
