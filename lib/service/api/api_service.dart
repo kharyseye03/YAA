@@ -577,16 +577,38 @@ class ApiService {
   }
 
   Future<List<Structure>> getStructuresByCategory(int categorieId) async {
+    return getStructures(categorieId: categorieId);
+  }
+
+  /// Recherche de structures — tous les filtres sont optionnels et
+  /// combinables : géolocalisation (lat/lng/rayon en mètres),
+  /// catégorie, nom, spécialité.
+  Future<List<Structure>> getStructures({
+    int? categorieId,
+    double? latitude,
+    double? longitude,
+    double? rayon,
+    String? nom,
+    String? specialite,
+  }) async {
     try {
+      final queryParams = <String, String>{
+        if (categorieId != null) 'categorieId' : categorieId.toString(),
+        if (latitude    != null) 'latitude'    : latitude.toString(),
+        if (longitude   != null) 'longitude'   : longitude.toString(),
+        if (rayon       != null) 'rayon'       : rayon.toString(),
+        if (nom         != null) 'nom'         : nom,
+        if (specialite  != null) 'specialite'  : specialite,
+      };
       final list = await _getList(
         ApiConfig.structuresEndpoint,
-        queryParams: {'categorieId': categorieId.toString()},
+        queryParams: queryParams.isEmpty ? null : queryParams,
       );
       return list
           .map((e) => Structure.fromJson(e as Map<String, dynamic>))
           .toList();
     } catch (e) {
-      print('❌ Erreur getStructuresByCategory: $e');
+      print('❌ Erreur getStructures: $e');
       rethrow;
     }
   }

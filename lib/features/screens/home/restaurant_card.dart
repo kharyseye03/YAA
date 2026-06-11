@@ -10,6 +10,7 @@ class RestaurantData {
   final double rating;
   final String deliveryTime;
   final String imageUrl;
+  final String? distance; // ex: "487 m" — affiché si fourni
 
   const RestaurantData({
     required this.name,
@@ -17,6 +18,7 @@ class RestaurantData {
     required this.rating,
     required this.deliveryTime,
     required this.imageUrl,
+    this.distance,
   });
 }
 
@@ -142,6 +144,19 @@ class RestaurantCard extends StatelessWidget {
                     color: AppColors.grey500,
                   ),
                 ),
+                if (restaurant.distance != null) ...[
+                  const SizedBox(width: 8),
+                  const Icon(Icons.location_on_outlined,
+                      size: 14, color: AppColors.grey500),
+                  const SizedBox(width: 2),
+                  Text(
+                    restaurant.distance!,
+                    style: AppTextStyles.bodySmall.copyWith(
+                      fontSize: 12,
+                      color: AppColors.grey500,
+                    ),
+                  ),
+                ],
               ],
             ),
           ],

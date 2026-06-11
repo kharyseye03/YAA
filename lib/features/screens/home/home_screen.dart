@@ -15,6 +15,7 @@ import '../cart/cart_screen.dart';
 import '../favoris/favoris_screen.dart';
 import '../order/orders_screen.dart';
 import '../profile/profile_screen.dart';
+import '../category/restaurant_bottom_sheet.dart';
 import 'category_list.dart';
 import 'home_bottom_nav.dart';
 import 'home_header.dart';
@@ -63,45 +64,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       subtitle: 'Médicaments livrés rapidement',
       icon: LucideIcons.cross,
       gradient: [Color(0xFF27AE60), Color(0xFF1A7A40)],
-    ),
-  ];
-
-  // ── Mock : Restaurants proches ──────────────────────────
-  final _restaurants = const [
-    RestaurantData(
-      name: 'Chez Fatou',
-      cuisine: 'Cuisine locale',
-      rating: 4.8,
-      deliveryTime: '20-30 min',
-      imageUrl: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=400',
-    ),
-    RestaurantData(
-      name: 'Pizza Palace',
-      cuisine: 'Pizzeria',
-      rating: 4.5,
-      deliveryTime: '25-35 min',
-      imageUrl: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400',
-    ),
-    RestaurantData(
-      name: 'Burger House',
-      cuisine: 'Fast-food',
-      rating: 4.6,
-      deliveryTime: '15-25 min',
-      imageUrl: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400',
-    ),
-    RestaurantData(
-      name: 'Le Grill d\'Or',
-      cuisine: 'Grillades',
-      rating: 4.7,
-      deliveryTime: '30-40 min',
-      imageUrl: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=400',
-    ),
-    RestaurantData(
-      name: 'Sushi Garden',
-      cuisine: 'Japonais',
-      rating: 4.9,
-      deliveryTime: '35-50 min',
-      imageUrl: 'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=400',
     ),
   ];
 
@@ -306,7 +268,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 );
               });
               return Padding(
-                padding: const EdgeInsets.only(left: AppDimens.screenPadding),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: AppDimens.screenPadding),
                 child: CategoryList(
                   categories: categories,
                   activeIndex: _activeCategoryIndex,
@@ -334,16 +297,61 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           const SizedBox(height: AppDimens.md),
           SizedBox(
             height: 200,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(
-                  horizontal: AppDimens.screenPadding),
-              itemCount: _restaurants.length,
-              separatorBuilder: (_, __) => const SizedBox(width: AppDimens.md),
-              itemBuilder: (_, i) => RestaurantCard(
-                restaurant: _restaurants[i],
-                onTap: () {},
+            child: ref.watch(nearbyStructuresProvider).when(
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (_, __) => Center(
+                child: Text(
+                  'Impossible de charger les structures',
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: AppColors.grey400,
+                  ),
+                ),
               ),
+              data: (structures) {
+                if (structures.isEmpty) {
+                  return Center(
+                    child: Text(
+                      'Aucune structure autour de vous',
+                      style: AppTextStyles.bodySmall.copyWith(
+                        color: AppColors.grey400,
+                      ),
+                    ),
+                  );
+                }
+                return ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: AppDimens.screenPadding),
+                  itemCount: structures.length,
+                  separatorBuilder: (_, __) =>
+                      const SizedBox(width: AppDimens.md),
+                  itemBuilder: (_, i) {
+                    final s = structures[i];
+                    return RestaurantCard(
+                      restaurant: RestaurantData(
+                        name         : s.name,
+                        cuisine      : s.categorie,
+                        rating       : s.nombreEtoile.toDouble(),
+                        deliveryTime : s.tempsLivraison,
+                        imageUrl     : s.logoUrl,
+                        distance     : s.distance > 0 ? s.distanceLabel : null,
+                      ),
+                      onTap: () => showRestaurantBottomSheet(
+                        context,
+                        RestaurantData(
+                          name         : s.name,
+                          cuisine      : s.categorie,
+                          rating       : s.nombreEtoile.toDouble(),
+                          deliveryTime : s.tempsLivraison,
+                          imageUrl     : s.logoUrl,
+                        ),
+                        structureId  : s.id,
+                        categoryType : s.categorie,
+                      ),
+                    );
+                  },
+                );
+              },
             ),
           ),
 

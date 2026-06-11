@@ -34,15 +34,38 @@ class CategoryList extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       height: 88,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 2),
-        itemCount: categories.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 16),
-        itemBuilder: (_, i) => _CategoryItem(
-          data: categories[i],
-          isActive: i == activeIndex,
-        ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          // Largeur totale nécessaire : items (68) + espacements (16)
+          final neededWidth =
+              categories.length * 68 + (categories.length - 1) * 16;
+
+          // Si tous les items tiennent → répartition équitable sur la ligne
+          if (neededWidth <= constraints.maxWidth) {
+            return Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: List.generate(
+                categories.length,
+                (i) => _CategoryItem(
+                  data: categories[i],
+                  isActive: i == activeIndex,
+                ),
+              ),
+            );
+          }
+
+          // Sinon → scroll horizontal comme avant
+          return ListView.separated(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 2),
+            itemCount: categories.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 16),
+            itemBuilder: (_, i) => _CategoryItem(
+              data: categories[i],
+              isActive: i == activeIndex,
+            ),
+          );
+        },
       ),
     );
   }
