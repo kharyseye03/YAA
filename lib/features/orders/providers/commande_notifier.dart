@@ -128,6 +128,20 @@ class CommandeNotifier extends StateNotifier<CommandeState> {
       );
     }
   }
+
+  /// Rafraîchit le détail en arrière-plan (polling) : pas de spinner,
+  /// on garde l'affichage actuel et on remplace les données à l'arrivée.
+  /// Les erreurs sont silencieuses (réseau instable → on réessaiera
+  /// au prochain tick).
+  Future<void> refreshDetail(int id) async {
+    try {
+      final token  = await _getValidToken();
+      final detail = await ApiService().getCommandeDetail(id: id, token: token);
+      state = state.copyWith(detail: detail);
+    } catch (e) {
+      debugPrint('⚠️ refreshDetail (silencieux): $e');
+    }
+  }
 }
 
 final commandeProvider =

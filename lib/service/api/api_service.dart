@@ -923,6 +923,8 @@ class ApiService {
     required String modeLivraison,
     required String adresseLivraison,
     required String telephoneClient,
+    required double latitude,
+    required double longitude,
     String          description = '',
     String?         token,
   }) async {
@@ -933,8 +935,8 @@ class ApiService {
         'modeLivraison'    : modeLivraison,
         'adresseLivraison' : adresseLivraison,
         'telephoneClient'  : telephoneClient,
-        'latitude'         : 0.1,
-        'longitude'        : 0.1,
+        'latitude'         : latitude,
+        'longitude'        : longitude,
       };
       final response = await _post(
           ApiConfig.transactionEndpoint, body, token: token);

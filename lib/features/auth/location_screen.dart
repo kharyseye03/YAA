@@ -227,32 +227,12 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
                           ],
                         ),
                         child: Column(
-                          children: _suggestions.map((s) {
-                            return InkWell(
-                              onTap: () => _onSuggestionTap(s),
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 14, vertical: 12),
-                                child: Row(
-                                  children: [
-                                    const Icon(Icons.location_on_outlined,
-                                        size: 18, color: AppColors.grey500),
-                                    const SizedBox(width: 10),
-                                    Expanded(
-                                      child: Text(
-                                        s.description,
-                                        style: AppTextStyles.bodySmall.copyWith(
-                                          color: AppColors.dark,
-                                        ),
-                                        maxLines: 2,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            );
-                          }).toList(),
+                          children: _suggestions
+                              .map((s) => PlaceSuggestionTile(
+                                    suggestion: s,
+                                    onTap: () => _onSuggestionTap(s),
+                                  ))
+                              .toList(),
                         ),
                       ),
                     ],
