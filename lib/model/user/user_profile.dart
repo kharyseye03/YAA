@@ -6,6 +6,9 @@ class UserProfile {
   final String email;
   final String telephone;
   final String? imageUrl;
+  final String? address;   // adresse de livraison par défaut
+  final double? latitude;
+  final double? longitude;
 
   const UserProfile({
     required this.firstName,
@@ -13,6 +16,9 @@ class UserProfile {
     required this.email,
     required this.telephone,
     this.imageUrl,
+    this.address,
+    this.latitude,
+    this.longitude,
   });
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
@@ -33,6 +39,9 @@ class UserProfile {
       email     : json['email']     as String? ?? '',
       telephone : json['telephone'] as String? ?? '',
       imageUrl  : imageUrl,
+      address   : json['address'] as String?,
+      latitude  : (json['latitude']  as num?)?.toDouble(),
+      longitude : (json['longitude'] as num?)?.toDouble(),
     );
   }
 

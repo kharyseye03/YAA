@@ -37,6 +37,8 @@ class CommandeDetailModel {
   final String structureName;
   final String structureAdresse;
   final String structureTelephone;
+  final double structureLatitude;
+  final double structureLongitude;
   final String referenceCommande;
   final String modeLivraison;
   final double montantTotal;
@@ -44,7 +46,12 @@ class CommandeDetailModel {
   final String? livreurName;
   final String? livreurLastName;
   final String? livreurTelephone;
+  final String? livreurImage;
   final String statut;
+  final String adresseLivraison;
+  final double latitudeLivraison;
+  final double longitudeLivraison;
+  final String telephoneClient;
   final List<CommandeProduit> commandeProduits;
 
   const CommandeDetailModel({
@@ -52,6 +59,8 @@ class CommandeDetailModel {
     required this.structureName,
     required this.structureAdresse,
     required this.structureTelephone,
+    this.structureLatitude  = 0,
+    this.structureLongitude = 0,
     required this.referenceCommande,
     required this.modeLivraison,
     required this.montantTotal,
@@ -59,7 +68,12 @@ class CommandeDetailModel {
     this.livreurName,
     this.livreurLastName,
     this.livreurTelephone,
+    this.livreurImage,
     required this.statut,
+    this.adresseLivraison   = '',
+    this.latitudeLivraison  = 0,
+    this.longitudeLivraison = 0,
+    this.telephoneClient    = '',
     required this.commandeProduits,
   });
 
@@ -72,6 +86,13 @@ class CommandeDetailModel {
 
   bool get hasLivreur => livreurName != null && livreurName!.isNotEmpty;
 
+  /// URL complète de la photo du livreur (null si pas de photo)
+  String? get livreurImageUrl {
+    final img = livreurImage;
+    if (img == null || img.isEmpty) return null;
+    return img.startsWith('http') ? img : ApiConfig.getImageUrl(img);
+  }
+
   factory CommandeDetailModel.fromJson(Map<String, dynamic> json) {
     final produits = json['commandeProduits'] as List<dynamic>? ?? [];
     return CommandeDetailModel(
@@ -79,6 +100,8 @@ class CommandeDetailModel {
       structureName     : json['structureName']      as String? ?? '',
       structureAdresse  : json['structureAdresse']   as String? ?? '',
       structureTelephone: json['structureTelephone'] as String? ?? '',
+      structureLatitude : (json['structurelatitude']  as num?)?.toDouble() ?? 0,
+      structureLongitude: (json['structurelongitude'] as num?)?.toDouble() ?? 0,
       referenceCommande : json['referenceCommande']  as String? ?? '',
       modeLivraison     : json['modeLivraison']      as String? ?? '',
       montantTotal      : (json['montantTotal']      as num?)?.toDouble() ?? 0.0,
@@ -86,7 +109,12 @@ class CommandeDetailModel {
       livreurName       : json['livreurName']        as String?,
       livreurLastName   : json['livreurLastName']    as String?,
       livreurTelephone  : json['livreurTelephone']   as String?,
+      livreurImage      : json['livreurImage']       as String?,
       statut            : json['statut']             as String? ?? '',
+      adresseLivraison  : json['adresseLivraison']   as String? ?? '',
+      latitudeLivraison : (json['latitudeLivraison']  as num?)?.toDouble() ?? 0,
+      longitudeLivraison: (json['longitudeLivraison'] as num?)?.toDouble() ?? 0,
+      telephoneClient   : json['telephoneClient']    as String? ?? '',
       commandeProduits  : produits
           .map((e) => CommandeProduit.fromJson(e as Map<String, dynamic>))
           .toList(),

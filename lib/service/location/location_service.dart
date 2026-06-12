@@ -10,8 +10,17 @@ import '../../config/maps/maps_config.dart';
 class PlaceSuggestion {
   final String placeId;
   final String description;
+  final List<String> types;     // types Google du lieu (restaurant, pharmacy…)
+  final String mainText;        // nom du lieu (ex: "Pharmacie Guigon")
+  final String secondaryText;   // adresse (ex: "Avenue Cheikh Anta Diop, Dakar")
 
-  const PlaceSuggestion({required this.placeId, required this.description});
+  const PlaceSuggestion({
+    required this.placeId,
+    required this.description,
+    this.types         = const [],
+    this.mainText      = '',
+    this.secondaryText = '',
+  });
 }
 
 /// Résultat d'une localisation : adresse lisible + coordonnées GPS
@@ -104,12 +113,19 @@ class LocationService {
     }
 
     final predictions = data['predictions'] as List<dynamic>;
-    return predictions
-        .map((p) => PlaceSuggestion(
-              placeId     : p['place_id'] as String,
-              description : p['description'] as String,
-            ))
-        .toList();
+    return predictions.map((p) {
+      final formatting = p['structured_formatting'] as Map<String, dynamic>?;
+      return PlaceSuggestion(
+        placeId       : p['place_id'] as String,
+        description   : p['description'] as String,
+        types         : (p['types'] as List<dynamic>?)
+                            ?.map((t) => t as String)
+                            .toList() ??
+                        const [],
+        mainText      : formatting?['main_text'] as String? ?? '',
+        secondaryText : formatting?['secondary_text'] as String? ?? '',
+      );
+    }).toList();
   }
 
   // ── Détails d'un lieu sélectionné ───────────────────────────

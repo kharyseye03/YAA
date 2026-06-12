@@ -7,10 +7,13 @@ import '../../../core/constants/app_dimens.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/utils/app_router.dart';
 import '../../../features/cart/providers/cart_notifier.dart';
+import '../../../features/cart/providers/delivery_address_provider.dart';
+import '../../../features/user/providers/user_notifier.dart';
 import '../../../model/cart/cart_item_model.dart';
 import '../../../model/cart/cart_structure_model.dart';
 import '../../../shared/widgets/yaa_button.dart';
 import '../../../shared/widgets/yaa_text_field.dart';
+import 'delivery_address_sheet.dart';
 
 class CartScreen extends ConsumerStatefulWidget {
   const CartScreen({super.key, this.onAddMore});
@@ -211,44 +214,55 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                       const SizedBox(height: 20),
 
                       // ── Adresse de livraison ─────────────────
-                      Row(
-                        children: [
-                          Container(
-                            width  : 36,
-                            height : 36,
-                            decoration: BoxDecoration(
-                              color        : AppColors.primarySurface,
-                              borderRadius : BorderRadius.circular(10),
+                      // Adresse de la commande en cours, sinon
+                      // adresse par défaut du profil
+                      GestureDetector(
+                        onTap    : () => showDeliveryAddressSheet(context),
+                        behavior : HitTestBehavior.opaque,
+                        child: Row(
+                          children: [
+                            Container(
+                              width  : 36,
+                              height : 36,
+                              decoration: BoxDecoration(
+                                color        : AppColors.primarySurface,
+                                borderRadius : BorderRadius.circular(10),
+                              ),
+                              child: const Icon(Icons.location_on_outlined,
+                                  color: AppColors.primary, size: 18),
                             ),
-                            child: const Icon(Icons.location_on_outlined,
-                                color: AppColors.primary, size: 18),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Adresse de livraison',
-                                  style: AppTextStyles.bodySmall.copyWith(
-                                    color    : AppColors.grey500,
-                                    fontSize : 11,
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Adresse de livraison',
+                                    style: AppTextStyles.bodySmall.copyWith(
+                                      color    : AppColors.grey500,
+                                      fontSize : 11,
+                                    ),
                                   ),
-                                ),
-                                Text(
-                                  '15 Rue de la Paix, Dakar',
-                                  style: AppTextStyles.labelMedium.copyWith(
-                                    fontWeight : FontWeight.w600,
-                                    fontSize   : 13,
-                                    color      : AppColors.dark,
+                                  Text(
+                                    ref.watch(deliveryAddressProvider)?.adresse
+                                        ?? ref.watch(userProvider)
+                                            .profile?.address
+                                        ?? 'Définir une adresse',
+                                    style: AppTextStyles.labelMedium.copyWith(
+                                      fontWeight : FontWeight.w600,
+                                      fontSize   : 13,
+                                      color      : AppColors.dark,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
-                          ),
-                          const Icon(Icons.chevron_right,
-                              size: 18, color: AppColors.grey400),
-                        ],
+                            const Icon(Icons.chevron_right,
+                                size: 18, color: AppColors.grey400),
+                          ],
+                        ),
                       ),
 
                       const SizedBox(height: 20),

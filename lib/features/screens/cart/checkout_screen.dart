@@ -1,17 +1,23 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimens.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/utils/app_router.dart';
 import '../../../features/auth/providers/auth_notifier.dart';
 import '../../../features/cart/providers/cart_notifier.dart';
+import '../../../features/cart/providers/delivery_address_provider.dart';
 import '../../../features/user/providers/user_notifier.dart';
+import '../../../model/order/commande_detail_model.dart';
 import '../../../model/transaction/transaction_model.dart';
 import '../../../service/api/api_service.dart';
 import '../../../shared/widgets/yaa_button.dart';
 import '../../../shared/widgets/yaa_text_field.dart';
+import 'delivery_address_sheet.dart';
 
 class CheckoutScreen extends ConsumerStatefulWidget {
   const CheckoutScreen({super.key, this.modeLivraison = 'GROUPAGE'});
@@ -36,8 +42,14 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   void initState() {
     super.initState();
     // Pré-remplir le téléphone depuis le profil
-    final phone = ref.read(userProvider).profile?.telephone ?? '';
-    _phoneController.text = phone;
+    final profile = ref.read(userProvider).profile;
+    _phoneController.text = profile?.telephone ?? '';
+
+    // Pré-remplir l'adresse : celle choisie pour cette commande,
+    // sinon l'adresse par défaut du profil
+    _addressController.text = ref.read(deliveryAddressProvider)?.adresse
+        ?? profile?.address
+        ?? '';
   }
 
   @override
@@ -58,14 +70,33 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       final cart  = ref.read(cartProvider).cart;
       if (cart == null) throw Exception('Panier introuvable');
 
+      // Coordonnées : adresse choisie pour cette commande,
+      // sinon celles de l'adresse par défaut du profil
+      final delivery = ref.read(deliveryAddressProvider);
+      final profile  = ref.read(userProvider).profile;
+      final latitude  = delivery?.latitude  ?? profile?.latitude  ?? 0;
+      final longitude = delivery?.longitude ?? profile?.longitude ?? 0;
+
       final transaction = await ApiService().createTransaction(
         panierId         : cart.id,
         modeLivraison    : widget.modeLivraison,
         adresseLivraison : _addressController.text.trim(),
         telephoneClient  : _phoneController.text.trim(),
+        latitude         : latitude,
+        longitude        : longitude,
         description      : _noteController.text.trim(),
         token            : token,
       );
+
+      // Infos trajet pour le sheet de recherche de livreur
+      // (capturées avant que le panier ne soit vidé)
+      final departNom = cart.lignes.length > 1
+          ? 'Plusieurs établissements'
+          : cart.lignes.first.nomStructure;
+      final departAdresse = cart.lignes.length > 1
+          ? '${cart.lignes.length} points de retrait'
+          : cart.lignes.first.adresseStructure;
+      final arriveeAdresse = _addressController.text.trim();
 
       setState(() => _isSubmitting = false);
       if (!mounted) return;
@@ -82,7 +113,15 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           onSuccess   : () {
             Navigator.of(context).pop(); // ferme le sheet paiement
             ref.read(cartProvider.notifier).clearCart(); // vide le panier local
-            _showSuccessSheet();
+            // L'adresse ponctuelle ne vaut que pour cette commande
+            ref.read(deliveryAddressProvider.notifier).state = null;
+            _showLivreurSearchSheet(
+              transaction,
+              token,
+              departNom      : departNom,
+              departAdresse  : departAdresse,
+              arriveeAdresse : arriveeAdresse,
+            );
           },
         ),
       );
@@ -94,18 +133,36 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     }
   }
 
-  void _showSuccessSheet() {
+  void _showLivreurSearchSheet(
+    TransactionModel transaction,
+    String? token, {
+    required String departNom,
+    required String departAdresse,
+    required String arriveeAdresse,
+  }) {
     showModalBottomSheet(
-      context         : context,
-      isDismissible   : false,
-      backgroundColor : Colors.white,
-      shape           : const RoundedRectangleBorder(
+      context            : context,
+      isDismissible      : false,
+      enableDrag         : false,
+      isScrollControlled : true,
+      backgroundColor    : Colors.white,
+      shape              : const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (_) => _OrderSuccessSheet(
-        onContinue: () {
+      builder: (_) => _LivreurSearchSheet(
+        transaction    : transaction,
+        token          : token,
+        departNom      : departNom,
+        departAdresse  : departAdresse,
+        arriveeAdresse : arriveeAdresse,
+        onGoHome: () {
           Navigator.of(context).pop();
           context.goNamed(RouteNames.home);
+        },
+        onTrackOrder: (commandeId) {
+          Navigator.of(context).pop();
+          context.goNamed(RouteNames.home);
+          context.pushNamed(RouteNames.orderDetail, extra: commandeId);
         },
       ),
     );
@@ -116,6 +173,11 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     final cart  = ref.watch(cartProvider).cart;
     final total = cart?.montantTotal ?? 0.0;
     final count = cart?.totalArticles ?? 0;
+
+    // Met à jour le champ quand l'adresse est changée via le sheet
+    ref.listen(deliveryAddressProvider, (_, next) {
+      if (next != null) _addressController.text = next.adresse;
+    });
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -235,13 +297,19 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                     // ── Livraison ────────────────────────────
                     _SectionLabel('Livraison'),
                     const SizedBox(height: 14),
+                    // Lecture seule : l'adresse se choisit via le bottom
+                    // sheet (GPS ou autocomplétion) pour garantir que les
+                    // coordonnées envoyées correspondent à l'adresse
                     YaaTextField(
-                      controller      : _addressController,
-                      label           : 'Adresse de livraison',
-                      hint            : 'Ex: 15 Rue de la Paix, Dakar',
-                      prefixIcon      : Icons.location_on_outlined,
-                      textInputAction : TextInputAction.next,
-                      validator       : (v) =>
+                      controller : _addressController,
+                      label      : 'Adresse de livraison',
+                      hint       : 'Choisir une adresse…',
+                      prefixIcon : Icons.location_on_outlined,
+                      readOnly   : true,
+                      onTap      : () => showDeliveryAddressSheet(context),
+                      suffixIcon : const Icon(Icons.edit_outlined,
+                          size: 18, color: AppColors.grey500),
+                      validator  : (v) =>
                           v == null || v.trim().isEmpty ? 'Champ requis' : null,
                     ),
                     const SizedBox(height: AppDimens.lg),
@@ -555,10 +623,9 @@ class _PaymentSheetState extends State<_PaymentSheet> {
 
           // ── Bouton Payer ───────────────────────────────────
           YaaButton(
-            label           : _isPaying
-                ? 'Paiement en cours...'
-                : 'Payer · ${tx.montant.toStringAsFixed(0)} F',
+            label           : 'Payer · ${tx.montant.toStringAsFixed(0)} F',
             onPressed       : _isPaying ? null : _payer,
+            isLoading       : _isPaying,
             icon            : _isPaying ? null : Icons.lock_outline_rounded,
             backgroundColor : AppColors.secondary,
           ),
@@ -579,17 +646,109 @@ class _PaymentMethod {
   final Color  accentColor;
 }
 
-// ── Bottom sheet succès ───────────────────────────────────────
-class _OrderSuccessSheet extends StatefulWidget {
-  const _OrderSuccessSheet({required this.onContinue});
-  final VoidCallback onContinue;
+// ── Bottom sheet recherche de livreur (post-paiement) ─────────
+// Affiché après un paiement réussi : animation type Yango pendant
+// la recherche d'un livreur, avec polling du statut de la commande.
+// Dès qu'un livreur accepte → bascule en "Livreur trouvé !".
+class _LivreurSearchSheet extends StatefulWidget {
+  const _LivreurSearchSheet({
+    required this.transaction,
+    required this.token,
+    required this.departNom,
+    required this.departAdresse,
+    required this.arriveeAdresse,
+    required this.onGoHome,
+    required this.onTrackOrder,
+  });
+
+  final TransactionModel    transaction;
+  final String?             token;
+  final String              departNom;
+  final String              departAdresse;
+  final String              arriveeAdresse;
+  final VoidCallback        onGoHome;
+  final ValueChanged<int>   onTrackOrder;
 
   @override
-  State<_OrderSuccessSheet> createState() => _OrderSuccessSheetState();
+  State<_LivreurSearchSheet> createState() => _LivreurSearchSheetState();
 }
 
-class _OrderSuccessSheetState extends State<_OrderSuccessSheet> {
-  int _rating = 0;
+class _LivreurSearchSheetState extends State<_LivreurSearchSheet>
+    with SingleTickerProviderStateMixin {
+  // Lent volontairement : donne l'impression d'une vraie recherche
+  late final AnimationController _controller = AnimationController(
+    vsync    : this,
+    duration : const Duration(milliseconds: 4500),
+  )..repeat();
+
+  Timer?  _pollTimer;
+  String  _statut = 'EN_ATTENTE'; // statut initial après paiement
+  int?    _commandeId;
+  CommandeDetailModel? _detail; // infos livreur une fois assigné
+
+  bool get _livreurTrouve =>
+      _statut == 'LIVREUR_ASSIGNE' || _statut == 'EN_LIVRAISON';
+  bool get _commandeArretee =>
+      _statut == 'ANNULE' || _statut == 'REJETE';
+
+  @override
+  void initState() {
+    super.initState();
+    // Polling : on suit l'avancement de la commande créée par cette
+    // transaction (même référence) : confirmation → préparation →
+    // recherche livreur → livreur assigné
+    _pollTimer = Timer.periodic(const Duration(seconds: 10), (_) async {
+      try {
+        final commandes =
+            await ApiService().getCommandes(token: widget.token);
+        if (commandes.isEmpty) return;
+
+        // 1. Match par référence (si le backend partage la même
+        //    référence entre transaction et commande)
+        final matches = commandes.where(
+          (c) => c.referenceCommande.toLowerCase() ==
+              widget.transaction.reference.toLowerCase(),
+        ).toList();
+
+        // 2. Fallback : référence différente → on prend la commande
+        //    la plus récente (id max), c'est celle qu'on vient de créer
+        final commande = matches.isNotEmpty
+            ? matches.first
+            : commandes.reduce((a, b) => a.id > b.id ? a : b);
+
+        debugPrint('🔄 Suivi commande #${commande.id} '
+            '→ ${commande.statut} (match réf: ${matches.isNotEmpty})');
+
+        _commandeId = commande.id;
+        if (commande.statut != _statut && mounted) {
+          setState(() => _statut = commande.statut);
+        }
+        // Plus rien à guetter une fois le livreur trouvé
+        // ou la commande arrêtée
+        if (_livreurTrouve || _commandeArretee) {
+          _pollTimer?.cancel();
+          // Détail de la commande pour les infos du livreur
+          if (_livreurTrouve) {
+            final detail = await ApiService().getCommandeDetail(
+              id    : commande.id,
+              token : widget.token,
+            );
+            if (mounted) setState(() => _detail = detail);
+          }
+        }
+      } catch (e) {
+        // Erreur réseau → on réessaiera au prochain tick
+        debugPrint('⚠️ Polling commande: $e');
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _pollTimer?.cancel();
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -611,93 +770,456 @@ class _OrderSuccessSheetState extends State<_OrderSuccessSheet> {
             ),
           ),
 
-          const SizedBox(height: 28),
+          const SizedBox(height: 24),
 
-          // Icône succès
-          Container(
-            width  : 80,
-            height : 80,
-            decoration: const BoxDecoration(
-              shape : BoxShape.circle,
-              color : AppColors.successLight,
-            ),
-            child: const Icon(Icons.check_rounded,
-                size: 40, color: AppColors.success),
+          _livreurTrouve
+              ? _buildLivreurTrouve()
+              : _commandeArretee
+                  ? _buildCommandeArretee()
+                  : _buildEnCours(),
+        ],
+      ),
+    );
+  }
+
+  // ── Phase d'avancement selon le statut backend ───────────────
+  // EN_ATTENTE → confirmation, CONFIRME/EN_PREPARATION → préparation,
+  // PRET/EN_ATTENTE_LIVREUR → recherche livreur
+  ({IconData icon, String titre, String message}) get _phase =>
+      switch (_statut) {
+        'EN_ATTENTE' => (
+          icon    : Icons.storefront_rounded,
+          titre   : 'En attente de confirmation',
+          message : 'Votre commande a été envoyée à l\'établissement, '
+                    'il va bientôt la confirmer.',
+        ),
+        'CONFIRME' || 'EN_PREPARATION' => (
+          icon    : Icons.restaurant_rounded,
+          titre   : 'Préparation en cours',
+          message : 'L\'établissement prépare votre commande.',
+        ),
+        'PRET' || 'EN_ATTENTE_LIVREUR' => (
+          icon    : Icons.sports_motorsports,
+          titre   : 'Recherche d\'un livreur',
+          message : 'Nous recherchons un livreur disponible dans votre zone.',
+        ),
+        _ => (
+          icon    : Icons.hourglass_top_rounded,
+          titre   : 'Commande en cours de traitement',
+          message : 'Votre commande est bien enregistrée.',
+        ),
+      };
+
+  // ── État : commande en cours (animation par phase) ───────────
+  Widget _buildEnCours() {
+    final phase = _phase;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        AnimatedBuilder(
+          animation: _controller,
+          builder: (context, _) {
+            return Column(
+              children: [
+                Text(
+                  '${phase.titre}${'.' * ((_controller.value * 3).floor() + 1)}',
+                  style: AppTextStyles.h3.copyWith(
+                    fontWeight : FontWeight.w800,
+                    color      : AppColors.dark,
+                  ),
+                ),
+
+                const SizedBox(height: 24),
+
+                // ── Scooter qui avance sur une piste pointillée ──
+                SizedBox(
+                  height: 56,
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final trackWidth = constraints.maxWidth - 48;
+                      return Stack(
+                        children: [
+                          // Piste pointillée
+                          Positioned(
+                            left  : 0,
+                            right : 0,
+                            top   : 27,
+                            child: Row(
+                              children: List.generate(
+                                20,
+                                (_) => Expanded(
+                                  child: Container(
+                                    height : 2,
+                                    margin : const EdgeInsets.symmetric(
+                                        horizontal: 3),
+                                    color  : AppColors.grey200,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          // Icône animée (change selon la phase)
+                          Positioned(
+                            left: trackWidth * _controller.value,
+                            top : 4,
+                            child: Container(
+                              width  : 48,
+                              height : 48,
+                              decoration: BoxDecoration(
+                                color : AppColors.primary,
+                                shape : BoxShape.circle,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: AppColors.primary
+                                        .withValues(alpha: 0.3),
+                                    blurRadius : 12,
+                                    offset     : const Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child: Icon(phase.icon,
+                                  color: Colors.white, size: 24),
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
+
+        const SizedBox(height: 20),
+
+        // Message rassurant
+        Container(
+          width   : double.infinity,
+          padding : const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color        : AppColors.grey100,
+            borderRadius : BorderRadius.circular(14),
           ),
-
-          const SizedBox(height: 20),
-
-          Text(
-            'Commande enregistrée !',
-            style: AppTextStyles.h3.copyWith(
-              fontWeight : FontWeight.w800,
-              color      : AppColors.dark,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Votre paiement a bien été traité.\nVous pouvez suivre votre commande.',
+          child: Text(
+            phase.message,
             textAlign : TextAlign.center,
-            style     : AppTextStyles.bodyMedium.copyWith(
-              color  : AppColors.grey500,
+            style     : AppTextStyles.bodySmall.copyWith(
+              color  : AppColors.grey600,
               height : 1.5,
             ),
           ),
+        ),
 
-          const SizedBox(height: 28),
-          const Divider(color: AppColors.grey200, height: 1),
-          const SizedBox(height: 16),
+        const SizedBox(height: 20),
 
-          Text(
-            'Notez votre expérience',
-            style: AppTextStyles.bodyMedium.copyWith(color: AppColors.grey500),
+        _buildTrajet(),
+
+        const SizedBox(height: 12),
+        TextButton(
+          onPressed : widget.onGoHome,
+          child     : Text(
+            'Retour à l\'accueil',
+            style: AppTextStyles.bodySmall.copyWith(
+              color      : AppColors.grey500,
+              decoration : TextDecoration.underline,
+            ),
           ),
-          const SizedBox(height: 12),
+        ),
+      ],
+    );
+  }
 
-          // Étoiles
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: List.generate(5, (i) {
-              return GestureDetector(
-                onTap: () {
-                  setState(() => _rating = i + 1);
-                  Future.delayed(
-                    const Duration(milliseconds: 600),
-                    widget.onContinue,
-                  );
-                },
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 6),
-                  child: Icon(
-                    i < _rating
-                        ? Icons.star_rounded
-                        : Icons.star_outline_rounded,
-                    size  : 38,
-                    color : i < _rating
-                        ? const Color(0xFFFFC107)
-                        : AppColors.grey300,
+  // ── Détails de la commande : trajet ─────────────────────────
+  Widget _buildTrajet() {
+    return Container(
+      width   : double.infinity,
+      padding : const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        borderRadius : BorderRadius.circular(14),
+        border       : Border.all(color: AppColors.grey200),
+      ),
+      // IntrinsicHeight : donne une hauteur finie au Row pour que
+      // la colonne dot→pin (avec Expanded) puisse se dimensionner
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Colonne dot → pin
+            Column(
+              children: [
+                const SizedBox(height: 3),
+                Container(
+                  width  : 14,
+                  height : 14,
+                  decoration: BoxDecoration(
+                    shape  : BoxShape.circle,
+                    border : Border.all(
+                        color: AppColors.primary, width: 4),
                   ),
                 ),
-              );
-            }),
+                Expanded(
+                  child: Container(
+                    width : 1.5,
+                    color : AppColors.grey300,
+                    margin: const EdgeInsets.symmetric(vertical: 4),
+                  ),
+                ),
+                const Icon(Icons.location_on,
+                    color: AppColors.secondary, size: 18),
+                const SizedBox(height: 3),
+              ],
+            ),
+            const SizedBox(width: 14),
+
+            // Adresses
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Départ',
+                      style: AppTextStyles.caption
+                          .copyWith(color: AppColors.grey400)),
+                  const SizedBox(height: 2),
+                  Text(
+                    widget.departNom,
+                    style: AppTextStyles.labelMedium.copyWith(
+                      fontWeight : FontWeight.w700,
+                      color      : AppColors.dark,
+                    ),
+                  ),
+                  if (widget.departAdresse.isNotEmpty)
+                    Text(
+                      widget.departAdresse,
+                      style: AppTextStyles.bodySmall
+                          .copyWith(color: AppColors.grey500),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+
+                  const SizedBox(height: 16),
+
+                  Text('Livraison',
+                      style: AppTextStyles.caption
+                          .copyWith(color: AppColors.grey400)),
+                  const SizedBox(height: 2),
+                  Text(
+                    widget.arriveeAdresse,
+                    style: AppTextStyles.labelMedium.copyWith(
+                      fontWeight : FontWeight.w600,
+                      color      : AppColors.dark,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+
+            // Montant
+            Text(
+              '${widget.transaction.montant.toStringAsFixed(0)} F',
+              style: AppTextStyles.labelMedium.copyWith(
+                fontWeight : FontWeight.w800,
+                color      : AppColors.dark,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ── État : commande annulée / rejetée ────────────────────────
+  Widget _buildCommandeArretee() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width  : 80,
+          height : 80,
+          decoration: const BoxDecoration(
+            shape : BoxShape.circle,
+            color : AppColors.errorLight,
           ),
-          const SizedBox(height: 8),
-          Text(
-            'Ou ',
-            style: AppTextStyles.bodySmall.copyWith(color: AppColors.grey400),
+          child: const Icon(Icons.close_rounded,
+              size: 36, color: AppColors.error),
+        ),
+        const SizedBox(height: 20),
+        Text(
+          _statut == 'REJETE' ? 'Commande rejetée' : 'Commande annulée',
+          style: AppTextStyles.h3.copyWith(
+            fontWeight : FontWeight.w800,
+            color      : AppColors.dark,
           ),
-          TextButton(
-            onPressed : widget.onContinue,
-            child     : Text(
-              'Passer',
-              style: AppTextStyles.bodySmall.copyWith(
-                color      : AppColors.grey500,
-                decoration : TextDecoration.underline,
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Votre commande n\'a pas pu être traitée.\nContactez l\'établissement pour plus d\'informations.',
+          textAlign : TextAlign.center,
+          style     : AppTextStyles.bodyMedium.copyWith(
+            color  : AppColors.grey500,
+            height : 1.5,
+          ),
+        ),
+        const SizedBox(height: 24),
+        YaaButton(
+          label     : 'Retour à l\'accueil',
+          onPressed : widget.onGoHome,
+        ),
+      ],
+    );
+  }
+
+  /// Initiales du livreur pour l'avatar (ex: "Abdoul DIALLO" → "AD")
+  String get _livreurInitiales {
+    final prenom = _detail?.livreurName?.trim()     ?? '';
+    final nom    = _detail?.livreurLastName?.trim() ?? '';
+    final p = prenom.isNotEmpty ? prenom[0] : '';
+    final n = nom.isNotEmpty    ? nom[0]    : '';
+    return (p + n).toUpperCase();
+  }
+
+  /// Avatar fallback : initiales sur fond navy
+  Widget _buildInitiales() {
+    return Center(
+      child: _livreurInitiales.isNotEmpty
+          ? Text(
+              _livreurInitiales,
+              style: const TextStyle(
+                fontFamily : 'Archivo',
+                fontSize   : 30,
+                fontWeight : FontWeight.w800,
+                color      : Colors.white,
+              ),
+            )
+          : const Icon(Icons.person_rounded,
+              color: Colors.white, size: 40),
+    );
+  }
+
+  Future<void> _appelerLivreur() async {
+    final phone = _detail?.livreurTelephone;
+    if (phone == null || phone.isEmpty) return;
+    final uri = Uri(scheme: 'tel', path: phone);
+    if (await canLaunchUrl(uri)) await launchUrl(uri);
+  }
+
+  // ── État : livreur trouvé ────────────────────────────────────
+  Widget _buildLivreurTrouve() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          'Livreur trouvé !',
+          style: AppTextStyles.h3.copyWith(
+            fontWeight : FontWeight.w800,
+            color      : AppColors.dark,
+          ),
+        ),
+
+        const SizedBox(height: 20),
+
+        // ── Photo du livreur (initiales si pas de photo) ──────
+        Container(
+          width  : 88,
+          height : 88,
+          decoration: BoxDecoration(
+            shape : BoxShape.circle,
+            color : AppColors.primary,
+            boxShadow: [
+              BoxShadow(
+                color      : AppColors.primary.withValues(alpha: 0.25),
+                blurRadius : 16,
+                offset     : const Offset(0, 6),
+              ),
+            ],
+          ),
+          child: ClipOval(
+            child: _detail?.livreurImageUrl != null
+                ? Image.network(
+                    _detail!.livreurImageUrl!,
+                    width  : 88,
+                    height : 88,
+                    fit    : BoxFit.cover,
+                    errorBuilder: (_, __, ___) => _buildInitiales(),
+                  )
+                : _buildInitiales(),
+          ),
+        ),
+
+        const SizedBox(height: 14),
+
+        // ── Infos du livreur ──────────────────────────────────
+        Text(
+          _detail?.livreurFullName ?? 'Votre livreur',
+          style: AppTextStyles.labelMedium.copyWith(
+            fontWeight : FontWeight.w800,
+            fontSize   : 17,
+            color      : AppColors.dark,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          'Votre livreur · en route vers l\'établissement',
+          style: AppTextStyles.bodySmall.copyWith(color: AppColors.grey500),
+        ),
+
+        if (_detail?.livreurTelephone != null &&
+            _detail!.livreurTelephone!.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          // Bouton d'appel
+          GestureDetector(
+            onTap: _appelerLivreur,
+            child: Container(
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 18, vertical: 9),
+              decoration: BoxDecoration(
+                color        : AppColors.successLight,
+                borderRadius : BorderRadius.circular(AppDimens.radiusFull),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.phone_rounded,
+                      color: AppColors.success, size: 16),
+                  const SizedBox(width: 7),
+                  Text(
+                    _detail!.livreurTelephone!,
+                    style: AppTextStyles.labelMedium.copyWith(
+                      fontWeight : FontWeight.w700,
+                      color      : AppColors.success,
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
         ],
-      ),
+
+        const SizedBox(height: 20),
+
+        // ── Itinéraire ────────────────────────────────────────
+        _buildTrajet(),
+
+        const SizedBox(height: 16),
+
+        YaaButton(
+          label     : 'Suivre ma commande',
+          onPressed : () => widget.onTrackOrder(_commandeId!),
+        ),
+        const SizedBox(height: 6),
+        TextButton(
+          onPressed : widget.onGoHome,
+          child     : Text(
+            'Retour à l\'accueil',
+            style: AppTextStyles.bodySmall.copyWith(
+              color      : AppColors.grey500,
+              decoration : TextDecoration.underline,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
