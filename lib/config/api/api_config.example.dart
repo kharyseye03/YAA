@@ -1,15 +1,15 @@
 class ApiConfig {
 
-  // ── Keycloak (IAM) ────────────────────────────────────────
-  // URL différente car c'est un service complètement séparé
-  static const String iamBaseUrl = 'http://10.3.20.91:8080';
-  static const String iamBaseUrltelephone = 'http://10.3.96.111:8080';
-  static const String loginEndpoint = '/realms/yaa-delivery/protocol/openid-connect/token';
+// Keycloak
+  static const String iamBaseUrl = 'https://your-iam-server.com';
+  static const String iamBaseUrltelephone = 'https://your-iam-server.com';
+  static const String loginEndpoint = '/realms/your-realm/protocol/openid-connect/token';
 
-  // 🔧 Backend AWS EC2
-  static const String _backendBaseUrl = 'http://10.3.20.91:8081';
-  static const String _backendBaseUrltelephone = 'http://10.3.20.91:8081';
-  static const String baseUrl         = '$_backendBaseUrl/api/v1';
+  // Backend
+  static const String _backendBaseUrl = 'https://your-api-server.com';
+  static const String _backendBaseUrltelephone = 'https://your-api-server.com';
+  static const String baseUrl = '$_backendBaseUrl/api/v1';
+
 
 
   // ── Endpoints Auth ────────────────────────────────
