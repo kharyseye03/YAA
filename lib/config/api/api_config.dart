@@ -2,7 +2,7 @@ class ApiConfig {
 
   // ── Keycloak (IAM) ────────────────────────────────────────
   // URL différente car c'est un service complètement séparé
-  static const String iamBaseUrl = 'http://10.3.20.91:8080';
+  static const String iamBaseUrl = 'http://10.3.20.91:8686';
   static const String iamBaseUrltelephone = 'http://10.3.96.111:8080';
   static const String loginEndpoint = '/realms/yaa-delivery/protocol/openid-connect/token';
 
