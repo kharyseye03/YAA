@@ -124,6 +124,18 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           const Divider(height: 1, color: AppColors.grey200),
           const SizedBox(height: 8),
 
+          // ── Historique ────────────────────────────────
+          _Row(
+            icon: Icons.history_rounded,
+            label: 'Historique des commandes',
+            subtitle: 'Vos commandes terminées',
+            onTap: () => context.pushNamed(RouteNames.orderHistory),
+          ),
+
+          const SizedBox(height: 8),
+          const Divider(height: 1, color: AppColors.grey200),
+          const SizedBox(height: 8),
+
           // ── Préférences ───────────────────────────────
           _ToggleRow(
             icon: Icons.notifications_none_rounded,

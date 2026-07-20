@@ -16,8 +16,6 @@ class OrdersScreen extends ConsumerStatefulWidget {
 }
 
 class _OrdersScreenState extends ConsumerState<OrdersScreen> {
-  int _tab = 0;
-
   @override
   void initState() {
     super.initState();
@@ -27,15 +25,31 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final state    = ref.watch(commandeProvider);
-    final list     = _tab == 0 ? state.enCours : state.terminees;
+    final state = ref.watch(commandeProvider);
+    final list  = state.enCours;
 
     return Column(
       children: [
         SizedBox(height: MediaQuery.of(context).padding.top),
 
-        // ── Tabs ──────────────────────────────────────────────
-        _Tabs(current: _tab, onTap: (i) => setState(() => _tab = i)),
+        // ── Titre ─────────────────────────────────────────────
+        Padding(
+          padding: const EdgeInsets.fromLTRB(
+            AppDimens.screenPadding, 14,
+            AppDimens.screenPadding, 10,
+          ),
+          child: Row(
+            children: [
+              Text(
+                'Mes commandes',
+                style: AppTextStyles.h3.copyWith(
+                  fontWeight : FontWeight.w700,
+                  color      : AppColors.dark,
+                ),
+              ),
+            ],
+          ),
+        ),
 
         // ── Erreur ────────────────────────────────────────────
         if (state.error != null)
@@ -63,7 +77,7 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
           child: state.isLoading
               ? const Center(child: CircularProgressIndicator())
               : list.isEmpty
-                  ? _Empty(tab: _tab)
+                  ? const _Empty()
                   : RefreshIndicator(
                       onRefresh: () =>
                           ref.read(commandeProvider.notifier).loadCommandes(),
@@ -75,7 +89,7 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
                         itemCount      : list.length,
                         separatorBuilder: (_, __) =>
                             const SizedBox(height: 12),
-                        itemBuilder: (_, i) => _CommandeCard(
+                        itemBuilder: (_, i) => CommandeCard(
                           commande : list[i],
                           onTap    : () => context.pushNamed(
                             RouteNames.orderDetail,
@@ -90,66 +104,9 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
   }
 }
 
-// ── Tabs En cours / Terminées ─────────────────────────────────
-class _Tabs extends StatelessWidget {
-  const _Tabs({required this.current, required this.onTap});
-  final int current;
-  final ValueChanged<int> onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    const labels = ['En cours', 'Terminées'];
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Row(
-          children: List.generate(2, (i) {
-            final active = i == current;
-            return Expanded(
-              child: GestureDetector(
-                onTap    : () => onTap(i),
-                behavior : HitTestBehavior.opaque,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  child: Center(
-                    child: Text(
-                      labels[i],
-                      style: AppTextStyles.labelMedium.copyWith(
-                        fontSize   : 14,
-                        fontWeight : active ? FontWeight.w700 : FontWeight.w500,
-                        color      : active ? AppColors.dark : AppColors.grey400,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            );
-          }),
-        ),
-        Stack(
-          children: [
-            Container(height: 1, color: AppColors.grey200),
-            AnimatedAlign(
-              duration  : const Duration(milliseconds: 200),
-              curve     : Curves.easeInOut,
-              alignment : current == 0
-                  ? Alignment.centerLeft
-                  : Alignment.centerRight,
-              child: FractionallySizedBox(
-                widthFactor: 0.5,
-                child: Container(height: 2, color: AppColors.dark),
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-}
-
-// ── Carte commande ────────────────────────────────────────────
-class _CommandeCard extends StatelessWidget {
-  const _CommandeCard({required this.commande, required this.onTap});
+// ── Carte commande (publique : réutilisée par l'historique) ───
+class CommandeCard extends StatelessWidget {
+  const CommandeCard({super.key, required this.commande, required this.onTap});
   final CommandeModel commande;
   final VoidCallback  onTap;
 
@@ -453,8 +410,7 @@ class _CommandeCard extends StatelessWidget {
 
 // ── État vide ─────────────────────────────────────────────────
 class _Empty extends StatelessWidget {
-  const _Empty({required this.tab});
-  final int tab;
+  const _Empty();
 
   @override
   Widget build(BuildContext context) {
@@ -474,7 +430,7 @@ class _Empty extends StatelessWidget {
           ),
           const SizedBox(height: 14),
           Text(
-            tab == 0 ? 'Aucune commande en cours' : 'Aucune commande terminée',
+            'Aucune commande en cours',
             style: AppTextStyles.labelMedium.copyWith(
               fontWeight : FontWeight.w700,
               color      : AppColors.dark,
