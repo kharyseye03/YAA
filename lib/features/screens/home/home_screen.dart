@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import 'package:yaa/features/screens/home/product_card.dart';
 import 'package:yaa/features/screens/home/restaurant_card.dart';
 import 'package:yaa/features/screens/home/promo_banner_carousel.dart';
 import 'package:yaa/features/screens/home/search_bar_widget.dart';
@@ -17,6 +16,7 @@ import '../order/orders_screen.dart';
 import '../profile/profile_screen.dart';
 import '../category/restaurant_bottom_sheet.dart';
 import 'category_list.dart';
+import 'service_cards.dart';
 import 'home_bottom_nav.dart';
 import 'home_header.dart';
 import 'providers/category_provider.dart';
@@ -35,71 +35,30 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   int _currentNavIndex = 0;
   int _activeCategoryIndex = 0;
 
-  // ── Mock Data ────────────────────────────────────────────
+  // ── Bannières du carrousel ───────────────────────────────
+  // Slide 1 : Promo acquisition · Slide 2 : Pub sponsorisée
+  // Slide 3 : Mise en avant du service Course
   final _banners = const [
     PromoBannerData(
-      badge: '🔥 OFFRE DU JOUR',
-      title: 'Restos & Fast-food\nlivrés chez vous',
-      subtitle: '-10% sur votre 1ère commande',
-      icon: LucideIcons.utensils,
-      gradient: [Color(0xFFFF6B35), Color(0xFFCC4400)],
+      badge      : 'Flash Deal',
+      title      : '-50% sur votre\n1ère commande',
+      subtitle   : 'Code BIENVENUE · valable 7 jours',
+      badgeColor : Color(0xFFFF6B35),
+      image      : 'assets/images/slide1.jpg',
     ),
     PromoBannerData(
-      badge: '⚡ LIVRAISON EXPRESS',
-      title: 'Courses & Épicerie\nen 30 minutes',
-      subtitle: 'Disponible 7j/7 dans votre ville',
-      icon: LucideIcons.shoppingCart,
-      gradient: [Color(0xFF1652F0), Color(0xFF0E3BB8)],
+      badge      : 'Sponsorisé',
+      title      : 'Le Djoloff\nvous régale',
+      subtitle   : '2 pizzas achetées = 1 offerte',
+      badgeColor : Color(0xFF1A1A2E),
+      image      : 'assets/images/slide2.png',
     ),
     PromoBannerData(
-      badge: '✨ NOUVEAUTÉS',
-      title: 'Mode & Boutiques\nlocales',
-      subtitle: 'Découvrez les tendances du moment',
-      icon: LucideIcons.shoppingBag,
-      gradient: [Color(0xFF9B59B6), Color(0xFF6C3483)],
-    ),
-    PromoBannerData(
-      badge: '💊 SANTÉ',
-      title: 'Pharmacies proches\nde vous',
-      subtitle: 'Médicaments livrés rapidement',
-      icon: LucideIcons.cross,
-      gradient: [Color(0xFF27AE60), Color(0xFF1A7A40)],
-    ),
-  ];
-
-  // ── Mock : Top vente ────────────────────────────────────
-  final _topSelling = const [
-    ProductData(
-      name: 'Assiette du jour',
-      subtitle: 'Chez Fatou Restaurant',
-      price: 3500,
-      rating: 4.9,
-      imageUrl: 'assets/images/food.jpeg',
-      isAsset: true,
-    ),
-    ProductData(
-      name: 'Pack Skincare',
-      subtitle: 'AURA Boutique',
-      price: 18000,
-      rating: 4.8,
-      imageUrl: 'assets/images/tv1.jpeg',
-      isAsset: true,
-    ),
-    ProductData(
-      name: 'Basket Homme',
-      subtitle: 'SneakerZone',
-      price: 25000,
-      rating: 4.7,
-      imageUrl: 'assets/images/tv3.jpeg',
-      isAsset: true,
-    ),
-    ProductData(
-      name: 'Produit Bébé',
-      subtitle: 'BabyShop Dakar',
-      price: 5500,
-      rating: 4.6,
-      imageUrl: 'assets/images/tv4.jpeg',
-      isAsset: true,
+      badge      : 'Nouveau',
+      title      : 'Envoyez vos colis\nen quelques clics',
+      subtitle   : 'Un coursier récupère et livre',
+      badgeColor : Color(0xFF27AE60),
+      image      : 'assets/images/slide3.png',
     ),
   ];
 
@@ -280,6 +239,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
           const SizedBox(height: AppDimens.xxl),
 
+// ── Cartes de service : Livraison / Course ─────────────
+          _buildSectionHeader('Livraison & Course'),
+          const SizedBox(height: AppDimens.md),
+          ServiceCards(
+            onLivraison: () {
+              // TODO: flow livraison (à venir)
+            },
+            onCourse: () {
+              // TODO: flow course (à venir)
+            },
+          ),
+
+          const SizedBox(height: AppDimens.xxl),
+
 // ── Section : Restaurants proches ──────────────────────
           _buildSectionHeader('Autour de vous', onSeeAll: () {
             final cats = ref.read(categoriesProvider).value;
@@ -355,149 +328,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
           ),
 
-          const SizedBox(height: AppDimens.lg),
-
-// ── Section : Top vente ─────────────────────────────────
-          _buildSectionHeader('Coup de cœur'),
-          const SizedBox(height: AppDimens.md),
-          SizedBox(
-            height: 220,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(
-                  horizontal: AppDimens.screenPadding),
-              itemCount: _topSelling.length,
-              separatorBuilder: (_, __) => const SizedBox(width: AppDimens.md),
-              itemBuilder: (_, i) => _buildTopSellingCard(_topSelling[i]),
-            ),
-          ),
-
           const SizedBox(height: AppDimens.xxl),
         ],
-      ),
-    );
-  }
-
-  Widget _buildTopSellingCard(ProductData product) {
-    return GestureDetector(
-      onTap: () => context.pushNamed(RouteNames.productDetail),
-      child: Container(
-        width: 155,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(AppDimens.radiusLg),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.07),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // ── Image + cœur ──────────────────────────────
-            Stack(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(10, 10, 10, 0),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(AppDimens.radiusMd),
-                    child: product.isAsset
-                        ? Image.asset(
-                            product.imageUrl,
-                            height: 100,
-                            width: double.infinity,
-                            fit: BoxFit.cover,
-                          )
-                        : Image.network(
-                            product.imageUrl,
-                            height: 100,
-                            width: double.infinity,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => Container(
-                              height: 100,
-                              color: AppColors.grey200,
-                              child: const Icon(Icons.image_outlined,
-                                  color: AppColors.grey400, size: 28),
-                            ),
-                          ),
-                  ),
-                ),
-                // Flamme top vente
-                Positioned(
-                  top: 6,
-                  right: 6,
-                  child: Icon(
-                    LucideIcons.flame,
-                    size: 18,
-                    color: Color(0xFFFF6B35),
-                  ),
-                ),
-              ],
-            ),
-
-            // ── Infos ─────────────────────────────────────
-            Padding(
-              padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    product.name,
-                    style: AppTextStyles.labelMedium.copyWith(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 13,
-                      color: AppColors.dark,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  if (product.subtitle != null) ...[
-                    const SizedBox(height: 2),
-                    Text(
-                      product.subtitle!,
-                      style: AppTextStyles.bodySmall.copyWith(
-                        fontSize: 11,
-                        color: AppColors.grey500,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                  const SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        '${product.price} F',
-                        style: AppTextStyles.labelMedium.copyWith(
-                          fontWeight: FontWeight.w700,
-                          fontSize: 13,
-                          color: AppColors.dark,
-                        ),
-                      ),
-                      Container(
-                        width: 28,
-                        height: 28,
-                        decoration: const BoxDecoration(
-                          color: AppColors.primary,
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.add,
-                          color: Colors.white,
-                          size: 18,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
