@@ -8,6 +8,7 @@ import '../../../core/constants/app_dimens.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../features/orders/providers/commande_notifier.dart';
 import '../../../model/order/commande_detail_model.dart';
+import '../../../service/location/location_service.dart';
 
 class OrderDetailScreen extends ConsumerStatefulWidget {
   const OrderDetailScreen({super.key, this.commandeId});
@@ -437,7 +438,8 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                                 const SizedBox(height: 2),
                                 Text(
                                   d.adresseLivraison.isNotEmpty
-                                      ? d.adresseLivraison
+                                      ? LocationService.cleanAddress(
+                                          d.adresseLivraison)
                                       : 'Adresse non renseignée',
                                   style: AppTextStyles.labelMedium
                                       .copyWith(color: AppColors.dark),

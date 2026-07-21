@@ -7,6 +7,7 @@ import '../../../core/constants/app_text_styles.dart';
 import '../../../core/utils/app_router.dart';
 import '../../../features/orders/providers/commande_notifier.dart';
 import '../../../model/order/commande_model.dart';
+import '../../../service/location/location_service.dart';
 
 class OrdersScreen extends ConsumerStatefulWidget {
   const OrdersScreen({super.key});
@@ -341,7 +342,8 @@ class CommandeCard extends StatelessWidget {
                                   .copyWith(color: AppColors.grey400)),
                           const SizedBox(height: 1),
                           Text(
-                            commande.adresseLivraison,
+                            LocationService.cleanAddress(
+                                commande.adresseLivraison),
                             style: AppTextStyles.labelSmall
                                 .copyWith(color: AppColors.dark),
                             maxLines : 1,

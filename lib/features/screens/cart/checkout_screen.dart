@@ -14,6 +14,7 @@ import '../../../features/cart/providers/delivery_address_provider.dart';
 import '../../../features/user/providers/user_notifier.dart';
 import '../../../model/order/commande_detail_model.dart';
 import '../../../model/transaction/transaction_model.dart';
+import '../../../service/location/location_service.dart';
 import '../../../service/api/api_service.dart';
 import '../../../shared/widgets/yaa_button.dart';
 import '../../../shared/widgets/yaa_text_field.dart';
@@ -47,9 +48,10 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
 
     // Pré-remplir l'adresse : celle choisie pour cette commande,
     // sinon l'adresse par défaut du profil
-    _addressController.text = ref.read(deliveryAddressProvider)?.adresse
-        ?? profile?.address
-        ?? '';
+    final adr = ref.read(deliveryAddressProvider)?.adresse
+        ?? profile?.address;
+    _addressController.text =
+        adr != null ? LocationService.cleanAddress(adr) : '';
   }
 
   @override

@@ -37,6 +37,21 @@ class LocationResult {
 }
 
 class LocationService {
+  // Détecte un "Plus Code" Google (ex: "PG8J+MWG", "8FVC9G8F+5W")
+  // que le reverse geocoding met parfois en début d'adresse.
+  static final _plusCodeRegExp = RegExp(r'^[A-Z0-9]{4,}\+[A-Z0-9]{2,}$');
+  static bool _isPlusCode(String value) =>
+      _plusCodeRegExp.hasMatch(value.trim());
+
+  /// Retire un Plus Code présent en tête d'une adresse à segments
+  /// (ex: "PG8J+MWG, Mermoz, Dakar" → "Mermoz, Dakar").
+  static String cleanAddress(String adresse) {
+    final parts = adresse.split(',').map((e) => e.trim());
+    final cleaned =
+        parts.where((e) => e.isNotEmpty && !_isPlusCode(e)).join(', ');
+    return cleaned.isEmpty ? adresse : cleaned;
+  }
+
   // ── Position actuelle (GPS) ─────────────────────────────────
   /// Demande la permission, récupère la position GPS puis la
   /// convertit en adresse lisible (reverse geocoding natif).
@@ -77,7 +92,7 @@ class LocationService {
       if (placemarks.isNotEmpty) {
         final p = placemarks.first;
         adresse = [p.street, p.subLocality, p.locality]
-            .where((e) => e != null && e.isNotEmpty)
+            .where((e) => e != null && e.isNotEmpty && !_isPlusCode(e!))
             .join(', ');
         if (adresse.isEmpty) adresse = 'Position actuelle';
       }
@@ -146,8 +161,11 @@ class LocationService {
     final result   = data['result'] as Map<String, dynamic>;
     final location = result['geometry']['location'] as Map<String, dynamic>;
 
+    final formatted =
+        result['formatted_address'] as String? ?? suggestion.description;
+
     return LocationResult(
-      adresse   : result['formatted_address'] as String? ?? suggestion.description,
+      adresse   : cleanAddress(formatted),
       latitude  : (location['lat'] as num).toDouble(),
       longitude : (location['lng'] as num).toDouble(),
     );

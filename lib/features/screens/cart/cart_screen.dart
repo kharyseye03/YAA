@@ -10,6 +10,7 @@ import '../../../features/cart/providers/cart_notifier.dart';
 import '../../../features/cart/providers/delivery_address_provider.dart';
 import '../../../features/user/providers/user_notifier.dart';
 import '../../../model/cart/cart_item_model.dart';
+import '../../../service/location/location_service.dart';
 import '../../../model/cart/cart_structure_model.dart';
 import '../../../shared/widgets/yaa_button.dart';
 import '../../../shared/widgets/yaa_text_field.dart';
@@ -244,10 +245,13 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                                     ),
                                   ),
                                   Text(
-                                    ref.watch(deliveryAddressProvider)?.adresse
-                                        ?? ref.watch(userProvider)
-                                            .profile?.address
-                                        ?? 'Définir une adresse',
+                                    () {
+                                      final adr = ref.watch(deliveryAddressProvider)?.adresse
+                                          ?? ref.watch(userProvider).profile?.address;
+                                      return adr != null
+                                          ? LocationService.cleanAddress(adr)
+                                          : 'Définir une adresse';
+                                    }(),
                                     style: AppTextStyles.labelMedium.copyWith(
                                       fontWeight : FontWeight.w600,
                                       fontSize   : 13,
