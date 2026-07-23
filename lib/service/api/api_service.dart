@@ -461,6 +461,43 @@ class ApiService {
     }
   }
 
+  /// Crée une demande de livraison (colis A → B).
+  /// Retourne le `data` brut de la réponse.
+  Future<Map<String, dynamic>> createLivraison({
+    required String typeVehicule,   // MOTO | VEHICULE
+    required double latitudeDepart,
+    required double longitudeDepart,
+    required double latitudeArrivee,
+    required double longitudeArrivee,
+    required String adresseDepart,
+    required String adresseArrivee,
+    required String telephoneExpediteur,
+    required String telephoneDestinataire,
+    String  instructions = '',
+    String? token,
+  }) async {
+    try {
+      final body = {
+        'typeVehicule'          : typeVehicule,
+        'latitudeDepart'        : latitudeDepart,
+        'longitudeDepart'       : longitudeDepart,
+        'latitudeArrivee'       : latitudeArrivee,
+        'longitudeArrivee'      : longitudeArrivee,
+        'adresseDepart'         : adresseDepart,
+        'adresseArrivee'        : adresseArrivee,
+        'instructions'          : instructions,
+        'telephoneExpediteur'   : telephoneExpediteur,
+        'telephoneDestinataire' : telephoneDestinataire,
+      };
+      final response = await _post(
+          ApiConfig.livraisonEndpoint, body, token: token);
+      return (response['data'] as Map<String, dynamic>?) ?? response;
+    } catch (e) {
+      print('❌ Erreur createLivraison: $e');
+      rethrow;
+    }
+  }
+
   Future<LoginResponse> login({
     required String username,
     required String password,

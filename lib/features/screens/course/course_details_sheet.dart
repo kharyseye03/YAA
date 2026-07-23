@@ -1,29 +1,37 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimens.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../core/utils/app_router.dart';
+import '../../../core/utils/phone_formatter.dart';
+import '../../../features/auth/providers/auth_notifier.dart';
 import '../../../features/user/providers/user_notifier.dart';
+import '../../../model/course/estimation_model.dart';
+import '../../../service/api/api_service.dart';
 import '../../../service/location/location_service.dart';
 import '../../../shared/widgets/widgets.dart';
 import '../../course/models/course_models.dart';
 
-/// Ouvre l'étape 2 de la livraison (détails expéditeur/destinataire)
-/// en bottom sheet par-dessus la carte, façon Yango.
+/// Étape 2 de la livraison : prix en haut, puis les coordonnées de
+/// l'expéditeur et du destinataire, en bottom sheet sur la carte.
 Future<void> showCourseDetailsSheet(
-    BuildContext context, CourseFlowArgs args) {
+    BuildContext context, CourseFlowArgs args, {EstimationModel? estimation}) {
   return showModalBottomSheet<void>(
     context            : context,
     isScrollControlled : true,
     backgroundColor    : Colors.transparent,
-    builder            : (_) => _CourseDetailsSheet(args: args),
+    builder            : (_) =>
+        _CourseDetailsSheet(args: args, estimation: estimation),
   );
 }
 
 class _CourseDetailsSheet extends ConsumerStatefulWidget {
-  const _CourseDetailsSheet({required this.args});
+  const _CourseDetailsSheet({required this.args, this.estimation});
 
-  final CourseFlowArgs args;
+  final CourseFlowArgs   args;
+  final EstimationModel? estimation;
 
   @override
   ConsumerState<_CourseDetailsSheet> createState() =>
@@ -33,262 +41,271 @@ class _CourseDetailsSheet extends ConsumerStatefulWidget {
 class _CourseDetailsSheetState extends ConsumerState<_CourseDetailsSheet> {
   final _formKey = GlobalKey<FormState>();
 
-  final _expedTelCtrl  = TextEditingController();
-  final _expedNoteCtrl = TextEditingController();
-  final _destNomCtrl   = TextEditingController();
-  final _destTelCtrl   = TextEditingController();
-  final _destNoteCtrl  = TextEditingController();
+  final _expedTelCtrl     = TextEditingController();
+  final _destTelCtrl      = TextEditingController();
+  final _instructionsCtrl = TextEditingController();
+
+  bool    _isSubmitting = false;
+  String? _error;
 
   @override
   void initState() {
     super.initState();
-    _expedTelCtrl.text = ref.read(userProvider).profile?.telephone ?? '';
+    // Téléphone du profil, formaté "77 123 45 67"
+    _expedTelCtrl.text =
+        formatPhone(ref.read(userProvider).profile?.telephone ?? '');
   }
 
   @override
   void dispose() {
     _expedTelCtrl.dispose();
-    _expedNoteCtrl.dispose();
-    _destNomCtrl.dispose();
     _destTelCtrl.dispose();
-    _destNoteCtrl.dispose();
+    _instructionsCtrl.dispose();
     super.dispose();
   }
 
-  void _commander() {
+  Future<void> _commander() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
-    // TODO: estimation + création livraison + recherche de coursier
+    final depart  = widget.args.depart;
+    final arrivee = widget.args.arrivee;
+    if (depart == null || arrivee == null) return;
+
+    setState(() { _isSubmitting = true; _error = null; });
+
+    try {
+      await ApiService().createLivraison(
+        typeVehicule          : TypeVehicule.moto.code,
+        latitudeDepart        : depart.latitude,
+        longitudeDepart       : depart.longitude,
+        latitudeArrivee       : arrivee.latitude,
+        longitudeArrivee      : arrivee.longitude,
+        adresseDepart         : depart.adresse,
+        adresseArrivee        : arrivee.adresse,
+        // L'API attend le numéro sans espaces
+        telephoneExpediteur   : unformatPhone(_expedTelCtrl.text),
+        telephoneDestinataire : unformatPhone(_destTelCtrl.text),
+        instructions          : _instructionsCtrl.text.trim(),
+        token                 : ref.read(authProvider.notifier).token,
+      );
+
+      if (!mounted) return;
+      setState(() => _isSubmitting = false);
+      Navigator.of(context).pop();          // ferme le sheet
+      // TODO: enchaîner sur la recherche de coursier
+      context.goNamed(RouteNames.home);     // retour à l'accueil
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content         : Text('Demande de livraison envoyée !'),
+          backgroundColor : AppColors.success,
+          behavior        : SnackBarBehavior.floating,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isSubmitting = false;
+        _error        = e.toString().replaceAll('Exception: ', '');
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final depart  = widget.args.depart;
     final arrivee = widget.args.arrivee;
+    final estim   = widget.estimation;
 
     return Padding(
-      // Remonte le sheet quand le clavier s'ouvre
       padding: EdgeInsets.only(
           bottom: MediaQuery.of(context).viewInsets.bottom),
       child: Container(
-        height: MediaQuery.of(context).size.height * 0.88,
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.9,
+        ),
         decoration: const BoxDecoration(
           color        : Colors.white,
           borderRadius : BorderRadius.vertical(top: Radius.circular(24)),
         ),
-        child: Column(
-          children: [
-            const SizedBox(height: 12),
-            // Poignée
-            Container(
-              width: 40, height: 4,
-              decoration: BoxDecoration(
-                color        : AppColors.grey300,
-                borderRadius : BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(height: 14),
-
-            // ── En-tête ─────────────────────────────────────
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: AppDimens.screenPadding),
-              child: Row(
+        child: SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(
+                AppDimens.screenPadding, 12, AppDimens.screenPadding, 12),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
-                    'Détails de la livraison',
-                    style: AppTextStyles.h3.copyWith(
-                      fontWeight : FontWeight.w800,
-                      color      : AppColors.dark,
+                  // Poignée
+                  Container(
+                    width: 40, height: 4,
+                    decoration: BoxDecoration(
+                      color        : AppColors.grey300,
+                      borderRadius : BorderRadius.circular(2),
                     ),
                   ),
-                  const Spacer(),
-                  GestureDetector(
-                    onTap    : () => Navigator.of(context).pop(),
-                    behavior : HitTestBehavior.opaque,
-                    child: Container(
-                      width  : 32,
-                      height : 32,
-                      decoration: const BoxDecoration(
-                        color : AppColors.grey100,
-                        shape : BoxShape.circle,
-                      ),
-                      child: const Icon(Icons.close_rounded,
-                          size: 18, color: AppColors.dark),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+                  const SizedBox(height: 16),
 
-            const SizedBox(height: 14),
-            const Divider(height: 1, color: AppColors.grey200),
-
-            // ── Contenu ─────────────────────────────────────
-            Expanded(
-              child: Form(
-                key: _formKey,
-                child: ListView(
-                  padding: const EdgeInsets.fromLTRB(
-                      AppDimens.screenPadding, 18,
-                      AppDimens.screenPadding, 20),
-                  children: [
-                    // Bandeau moto
-                    Container(
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color        : AppColors.primarySurface,
-                        borderRadius : BorderRadius.circular(14),
-                      ),
-                      child: Row(
-                        children: [
-                          SizedBox(
-                            width  : 40,
-                            height : 40,
-                            child: Image.asset(
-                              'assets/images/moto.png',
-                              fit: BoxFit.contain,
-                              errorBuilder: (_, __, ___) => const Icon(
-                                  Icons.sports_motorsports,
-                                  color: AppColors.primary, size: 22),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              'Livraison par moto',
-                              style: AppTextStyles.labelMedium.copyWith(
-                                fontWeight : FontWeight.w700,
+                  // ── Prix bien visible en haut ─────────────────
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              estim?.prixLabel ?? '—',
+                              style: const TextStyle(
+                                fontFamily : 'Archivo',
+                                fontSize   : 30,
+                                fontWeight : FontWeight.w800,
                                 color      : AppColors.dark,
                               ),
                             ),
-                          ),
-                        ],
+                            if (estim != null)
+                              Text(
+                                estim.metaLabel,
+                                style: AppTextStyles.bodySmall
+                                    .copyWith(color: AppColors.grey500),
+                              ),
+                          ],
+                        ),
                       ),
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    // ── Carte Expéditeur ────────────────────────
-                    _SectionCard(
-                      icon    : Icons.trip_origin_rounded,
-                      iconBg  : AppColors.primarySurface,
-                      iconClr : AppColors.primary,
-                      titre   : 'Expéditeur',
-                      adresse : depart != null
-                          ? LocationService.cleanAddress(depart.adresse)
-                          : '—',
-                      onEditAddress: () => Navigator.of(context).pop(),
-                      children: [
-                        YaaTextField(
-                          controller      : _expedTelCtrl,
-                          label           : 'Téléphone de l\'expéditeur',
-                          hint            : 'Ex: 77 123 45 67',
-                          prefixIcon      : Icons.phone_outlined,
-                          keyboardType    : TextInputType.phone,
-                          textInputAction : TextInputAction.next,
-                          validator       : (v) => v == null || v.trim().isEmpty
-                              ? 'Champ requis'
-                              : null,
+                      // Badge moto
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color        : AppColors.primarySurface,
+                          borderRadius : BorderRadius.circular(20),
                         ),
-                        const SizedBox(height: 12),
-                        YaaTextField(
-                          controller : _expedNoteCtrl,
-                          label      : 'Précisions (facultatif)',
-                          hint       : 'Étage, code, point de repère…',
-                          maxLines   : 2,
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    // ── Carte Destinataire ──────────────────────
-                    _SectionCard(
-                      icon    : Icons.location_on_rounded,
-                      iconBg  : const Color(0xFFFFF0E9),
-                      iconClr : AppColors.secondary,
-                      titre   : 'Destinataire',
-                      adresse : arrivee != null
-                          ? LocationService.cleanAddress(arrivee.adresse)
-                          : '—',
-                      onEditAddress: () => Navigator.of(context).pop(),
-                      children: [
-                        YaaTextField(
-                          controller      : _destNomCtrl,
-                          label           : 'Nom du destinataire',
-                          hint            : 'Ex: Awa Ndiaye',
-                          prefixIcon      : Icons.person_outline_rounded,
-                          textInputAction : TextInputAction.next,
-                          validator       : (v) => v == null || v.trim().isEmpty
-                              ? 'Champ requis'
-                              : null,
-                        ),
-                        const SizedBox(height: 12),
-                        YaaTextField(
-                          controller      : _destTelCtrl,
-                          label           : 'Téléphone du destinataire',
-                          hint            : 'Ex: 77 123 45 67',
-                          prefixIcon      : Icons.phone_outlined,
-                          keyboardType    : TextInputType.phone,
-                          textInputAction : TextInputAction.next,
-                          validator       : (v) => v == null || v.trim().isEmpty
-                              ? 'Champ requis'
-                              : null,
-                        ),
-                        const SizedBox(height: 12),
-                        YaaTextField(
-                          controller : _destNoteCtrl,
-                          label      : 'Précisions (facultatif)',
-                          hint       : 'Étage, code, point de repère…',
-                          maxLines   : 2,
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-            // ── Barre du bas : total + commander ────────────
-            Container(
-              padding: EdgeInsets.only(
-                left   : AppDimens.screenPadding,
-                right  : AppDimens.screenPadding,
-                top    : 12,
-                bottom : MediaQuery.of(context).padding.bottom + 12,
-              ),
-              decoration: const BoxDecoration(
-                color  : Colors.white,
-                border : Border(top: BorderSide(color: AppColors.grey200)),
-              ),
-              child: Row(
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Total',
-                          style: AppTextStyles.caption
-                              .copyWith(color: AppColors.grey400)),
-                      Text(
-                        '—',
-                        style: AppTextStyles.h3.copyWith(
-                          fontWeight : FontWeight.w800,
-                          color      : AppColors.dark,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            SizedBox(
+                              width: 22, height: 22,
+                              child: Image.asset(
+                                'assets/images/moto.png',
+                                fit: BoxFit.contain,
+                                errorBuilder: (_, __, ___) => const Icon(
+                                    Icons.sports_motorsports,
+                                    color: AppColors.primary, size: 14),
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              'Moto',
+                              style: AppTextStyles.bodySmall.copyWith(
+                                fontWeight : FontWeight.w700,
+                                color      : AppColors.primary,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: YaaButton(
-                      label     : 'Commander',
-                      onPressed : _commander,
+
+                  const SizedBox(height: 16),
+
+                  // ── Erreur ────────────────────────────────────
+                  if (_error != null) ...[
+                    Container(
+                      width   : double.infinity,
+                      padding : const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color        : AppColors.errorLight,
+                        borderRadius : BorderRadius.circular(10),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.error_outline_rounded,
+                              color: AppColors.error, size: 16),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(_error!,
+                                style: AppTextStyles.bodySmall
+                                    .copyWith(color: AppColors.error)),
+                          ),
+                        ],
+                      ),
                     ),
+                    const SizedBox(height: 12),
+                  ],
+
+                  // ── Expéditeur / Destinataire ─────────────────
+                  Flexible(
+                    child: SingleChildScrollView(
+                      child: Column(
+                        children: [
+                          _SectionCard(
+                            icon    : Icons.trip_origin_rounded,
+                            iconBg  : AppColors.primarySurface,
+                            iconClr : AppColors.primary,
+                            titre   : 'Expéditeur',
+                            adresse : depart != null
+                                ? LocationService.cleanAddress(depart.adresse)
+                                : '—',
+                            onEditAddress: () => Navigator.of(context).pop(),
+                            child: YaaTextField(
+                              controller      : _expedTelCtrl,
+                              hint            : '77 123 45 67',
+                              prefixIcon      : Icons.phone_outlined,
+                              keyboardType    : TextInputType.phone,
+                              textInputAction : TextInputAction.next,
+                              inputFormatters : [PhoneInputFormatter()],
+                              validator       : validatePhone,
+                            ),
+                          ),
+
+                          const SizedBox(height: 12),
+
+                          _SectionCard(
+                            icon    : Icons.location_on_rounded,
+                            iconBg  : const Color(0xFFFFF0E9),
+                            iconClr : AppColors.secondary,
+                            titre   : 'Destinataire',
+                            adresse : arrivee != null
+                                ? LocationService.cleanAddress(arrivee.adresse)
+                                : '—',
+                            onEditAddress: () => Navigator.of(context).pop(),
+                            child: YaaTextField(
+                              controller      : _destTelCtrl,
+                              hint            : '77 123 45 67',
+                              prefixIcon      : Icons.phone_outlined,
+                              keyboardType    : TextInputType.phone,
+                              textInputAction : TextInputAction.next,
+                              inputFormatters : [PhoneInputFormatter()],
+                              validator       : validatePhone,
+                            ),
+                          ),
+
+                          const SizedBox(height: 12),
+
+                          // ── Instructions (champ unique) ─────────
+                          YaaTextField(
+                            controller : _instructionsCtrl,
+                            hint       : 'Instructions : colis fragile, étage…',
+                            prefixIcon : Icons.notes_rounded,
+                            maxLines   : 2,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  YaaButton(
+                    label     : 'Commander',
+                    isLoading : _isSubmitting,
+                    onPressed : _isSubmitting ? null : _commander,
                   ),
                 ],
               ),
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -304,7 +321,7 @@ class _SectionCard extends StatelessWidget {
     required this.titre,
     required this.adresse,
     required this.onEditAddress,
-    required this.children,
+    required this.child,
   });
 
   final IconData     icon;
@@ -313,12 +330,12 @@ class _SectionCard extends StatelessWidget {
   final String       titre;
   final String       adresse;
   final VoidCallback onEditAddress;
-  final List<Widget> children;
+  final Widget       child;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color        : Colors.white,
         borderRadius : BorderRadius.circular(16),
@@ -327,64 +344,52 @@ class _SectionCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Container(
-                width  : 32,
-                height : 32,
-                decoration: BoxDecoration(
-                  color        : iconBg,
-                  borderRadius : BorderRadius.circular(9),
-                ),
-                child: Icon(icon, color: iconClr, size: 17),
-              ),
-              const SizedBox(width: 10),
-              Text(
-                titre,
-                style: AppTextStyles.labelMedium.copyWith(
-                  fontWeight : FontWeight.w800,
-                  fontSize   : 15,
-                  color      : AppColors.dark,
-                ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 12),
-
+          // En-tête : icône + titre + adresse (modifiable)
           GestureDetector(
             onTap    : onEditAddress,
             behavior : HitTestBehavior.opaque,
-            child: Container(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 12, vertical: 12),
-              decoration: BoxDecoration(
-                color        : AppColors.grey100,
-                borderRadius : BorderRadius.circular(12),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      adresse,
-                      style: AppTextStyles.bodySmall.copyWith(
-                        color      : AppColors.dark,
-                        fontWeight : FontWeight.w600,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
+            child: Row(
+              children: [
+                Container(
+                  width  : 30,
+                  height : 30,
+                  decoration: BoxDecoration(
+                    color        : iconBg,
+                    borderRadius : BorderRadius.circular(9),
                   ),
-                  const SizedBox(width: 8),
-                  const Icon(Icons.edit_outlined,
-                      size: 16, color: AppColors.grey500),
-                ],
-              ),
+                  child: Icon(icon, color: iconClr, size: 16),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        titre,
+                        style: AppTextStyles.caption
+                            .copyWith(color: AppColors.grey400),
+                      ),
+                      Text(
+                        adresse,
+                        style: AppTextStyles.bodySmall.copyWith(
+                          fontWeight : FontWeight.w700,
+                          color      : AppColors.dark,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                const Icon(Icons.edit_outlined,
+                    size: 15, color: AppColors.grey500),
+              ],
             ),
           ),
 
           const SizedBox(height: 12),
-          ...children,
+          child,
         ],
       ),
     );

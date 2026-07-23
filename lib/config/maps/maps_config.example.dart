@@ -17,4 +17,18 @@ class MapsConfig {
           '&fields=geometry,formatted_address'
           '&language=fr'
           '&key=$apiKey';
+
+  // ── Directions API (tracé du trajet A → B) ────────────────
+  static String directionsUrl({
+    required double originLat,
+    required double originLng,
+    required double destLat,
+    required double destLng,
+  }) =>
+      'https://maps.googleapis.com/maps/api/directions/json'
+          '?origin=$originLat,$originLng'
+          '&destination=$destLat,$destLng'
+          '&mode=driving'
+          '&language=fr'
+          '&key=$apiKey';
 }

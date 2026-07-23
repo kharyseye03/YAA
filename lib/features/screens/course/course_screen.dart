@@ -2,10 +2,12 @@ import 'dart:async';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimens.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../features/auth/providers/auth_notifier.dart';
 import '../../../model/course/estimation_model.dart';
 import '../../../service/api/api_service.dart';
 import '../../../service/location/location_service.dart';
@@ -16,16 +18,16 @@ import 'course_details_sheet.dart';
 /// Écran unique du flow course/livraison, façon Yango :
 /// carte Google Maps en fond + bottom sheet qui évolue
 /// (saisie A→B → choix véhicule/prix → commander).
-class CourseScreen extends StatefulWidget {
+class CourseScreen extends ConsumerStatefulWidget {
   const CourseScreen({super.key, required this.typeService});
 
   final TypeService typeService;
 
   @override
-  State<CourseScreen> createState() => _CourseScreenState();
+  ConsumerState<CourseScreen> createState() => _CourseScreenState();
 }
 
-class _CourseScreenState extends State<CourseScreen> {
+class _CourseScreenState extends ConsumerState<CourseScreen> {
   static const _dakar = LatLng(14.6928, -17.4467);
 
   final _locationService = LocationService();
@@ -135,6 +137,7 @@ class _CourseScreenState extends State<CourseScreen> {
         longitudeDepart  : _depart!.longitude,
         latitudeArrivee  : _arrivee!.latitude,
         longitudeArrivee : _arrivee!.longitude,
+        token            : ref.read(authProvider.notifier).token,
       );
       if (!mounted) return;
       setState(() {
@@ -584,6 +587,7 @@ class _CourseScreenState extends State<CourseScreen> {
         depart      : _depart,
         arrivee     : _arrivee,
       ),
+      estimation: _estimation,
     );
   }
 

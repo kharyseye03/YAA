@@ -38,8 +38,12 @@ class ApiConfig {
   static const String produitsFavorisEndpoint          = '/produits-favoris';
   static const String produitsFavorisToggleEndpoint   = '/produits-favoris/toggle';
 
+  // ── Endpoints Livraisons & Courses ────────────────
+  static const String estimationEndpoint = '/livraisons-courses/estimation';
+  static const String livraisonEndpoint  = '/livraisons-courses/livraisons';
+
   // ── Endpoints Commandes ───────────────────────────
-  static const String commandesClientEndpoint       = '/commandes-clients-livreurs/client';
+  static const String commandesClientEndpoint       = '/commandes-clients';
   static const String commandeClientDetailEndpoint  = '/commandes-clients-livreurs/client/detail';
 
   // ── Endpoints Transaction ─────────────────────────
