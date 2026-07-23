@@ -170,4 +170,65 @@ class LocationService {
       longitude : (location['lng'] as num).toDouble(),
     );
   }
+
+  // ── Tracé du trajet (Directions API) ─────────────────────────
+  /// Retourne les points du trajet routier A → B sous forme de
+  /// paires [latitude, longitude]. Liste vide si aucun trajet.
+  Future<List<List<double>>> getRoutePolyline({
+    required double departLat,
+    required double departLng,
+    required double arriveeLat,
+    required double arriveeLng,
+  }) async {
+    final url = MapsConfig.directionsUrl(
+      originLat : departLat,
+      originLng : departLng,
+      destLat   : arriveeLat,
+      destLng   : arriveeLng,
+    );
+    final response = await http.get(Uri.parse(url));
+    if (response.statusCode != 200) {
+      throw Exception('Erreur Directions API (${response.statusCode})');
+    }
+
+    final data = json.decode(response.body) as Map<String, dynamic>;
+    final status = data['status'] as String?;
+    if (status != 'OK') {
+      throw Exception('Directions : ${data['error_message'] ?? status}');
+    }
+
+    final routes = data['routes'] as List<dynamic>;
+    if (routes.isEmpty) return [];
+    final encoded =
+        routes.first['overview_polyline']['points'] as String;
+    return _decodePolyline(encoded);
+  }
+
+  /// Décode une polyline encodée Google en liste de [lat, lng].
+  static List<List<double>> _decodePolyline(String encoded) {
+    final points = <List<double>>[];
+    int index = 0, lat = 0, lng = 0;
+
+    while (index < encoded.length) {
+      int shift = 0, result = 0, b;
+      do {
+        b = encoded.codeUnitAt(index++) - 63;
+        result |= (b & 0x1f) << shift;
+        shift += 5;
+      } while (b >= 0x20);
+      lat += (result & 1) != 0 ? ~(result >> 1) : (result >> 1);
+
+      shift = 0;
+      result = 0;
+      do {
+        b = encoded.codeUnitAt(index++) - 63;
+        result |= (b & 0x1f) << shift;
+        shift += 5;
+      } while (b >= 0x20);
+      lng += (result & 1) != 0 ? ~(result >> 1) : (result >> 1);
+
+      points.add([lat / 1e5, lng / 1e5]);
+    }
+    return points;
+  }
 }

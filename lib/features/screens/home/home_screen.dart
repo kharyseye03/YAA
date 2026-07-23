@@ -15,6 +15,7 @@ import '../favoris/favoris_screen.dart';
 import '../order/orders_screen.dart';
 import '../profile/profile_screen.dart';
 import '../category/restaurant_bottom_sheet.dart';
+import '../../course/models/course_models.dart';
 import 'category_list.dart';
 import 'service_cards.dart';
 import 'home_bottom_nav.dart';
@@ -243,12 +244,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           _buildSectionHeader('Livraison & Course'),
           const SizedBox(height: AppDimens.md),
           ServiceCards(
-            onLivraison: () {
-              // TODO: flow livraison (à venir)
-            },
-            onCourse: () {
-              // TODO: flow course (à venir)
-            },
+            onLivraison: () => context.pushNamed(
+              RouteNames.course,
+              extra: TypeService.livraison,
+            ),
+            onCourse: () => context.pushNamed(
+              RouteNames.course,
+              extra: TypeService.course,
+            ),
           ),
 
           const SizedBox(height: AppDimens.xxl),

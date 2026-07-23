@@ -27,6 +27,7 @@ dependencies:
   # ── Localisation ────────────────────────────────────────
   geolocator: ^13.0.2
   geocoding: ^3.0.0
+  google_maps_flutter: ^2.9.0
 
   # ── Data & Serialization ────────────────────────────────
   freezed_annotation: ^2.4.4

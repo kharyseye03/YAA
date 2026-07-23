@@ -17,6 +17,7 @@ import '../../model/category/categorie_structure.dart';
 import '../../model/category/structure.dart';
 import '../../model/category/produit_detail.dart';
 import '../../model/category/structure_detail.dart';
+import '../../model/course/estimation_model.dart';
 import '../../model/user/user_profile.dart';
 
 class ApiService {
@@ -426,6 +427,36 @@ class ApiService {
       await _put(ApiConfig.setAdresseEndpoint, body);
     } catch (e) {
       print('❌ Erreur setAdresse: $e');
+      rethrow;
+    }
+  }
+
+  /// Estimation des frais d'une livraison / course (distance,
+  /// durée et prix) à partir du trajet et du type de véhicule.
+  Future<EstimationModel> getEstimation({
+    required String typeService,   // LIVRAISON | COURSE
+    required String typeVehicule,  // MOTO | VEHICULE
+    required double latitudeDepart,
+    required double longitudeDepart,
+    required double latitudeArrivee,
+    required double longitudeArrivee,
+    String? token,
+  }) async {
+    try {
+      final body = {
+        'typeService'      : typeService,
+        'typeVehicule'     : typeVehicule,
+        'latitudeDepart'   : latitudeDepart,
+        'longitudeDepart'  : longitudeDepart,
+        'latitudeArrivee'  : latitudeArrivee,
+        'longitudeArrivee' : longitudeArrivee,
+      };
+      final response = await _post(
+          ApiConfig.estimationEndpoint, body, token: token);
+      return EstimationModel.fromJson(
+          response['data'] as Map<String, dynamic>);
+    } catch (e) {
+      print('❌ Erreur getEstimation: $e');
       rethrow;
     }
   }
