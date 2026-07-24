@@ -50,9 +50,13 @@ class _CourseScreenState extends ConsumerState<CourseScreen> {
   BitmapDescriptor?  _departIcon;
   BitmapDescriptor?  _arriveeIcon;
 
-  // Estimation (prix, distance, durée)
-  EstimationModel? _estimation;
-  bool             _loadingEstim = false;
+  // Estimation par véhicule (prix, distance, durée)
+  Map<TypeVehicule, EstimationModel> _estimations = {};
+  bool _loadingEstim = false;
+
+  /// Estimation du véhicule actuellement retenu
+  EstimationModel? get _estimation =>
+      _estimations[_isCourse ? _vehicule : TypeVehicule.moto];
 
   bool get _isCourse   => widget.typeService == TypeService.course;
   bool get _bothSet    => _depart != null && _arrivee != null;
@@ -122,26 +126,49 @@ class _CourseScreenState extends ConsumerState<CourseScreen> {
     return BitmapDescriptor.bytes(data!.buffer.asUint8List());
   }
 
-  // Estimation automatique dès que le trajet est complet
-  // (relancée aussi quand l'utilisateur change de véhicule)
+  // Estimation automatique dès que le trajet est complet.
+  // Course   → 1 seul appel qui renvoie les tarifs MOTO et VEHICULE.
+  // Livraison → estimation moto uniquement.
   Future<void> _loadEstimation() async {
     if (_depart == null || _arrivee == null) return;
     setState(() => _loadingEstim = true);
+
+    final token = ref.read(authProvider.notifier).token;
+
     try {
-      final estim = await ApiService().getEstimation(
-        typeService      : widget.typeService.code,
-        typeVehicule     : _isCourse
-            ? _vehicule.code
-            : TypeVehicule.moto.code, // livraison → moto imposée
-        latitudeDepart   : _depart!.latitude,
-        longitudeDepart  : _depart!.longitude,
-        latitudeArrivee  : _arrivee!.latitude,
-        longitudeArrivee : _arrivee!.longitude,
-        token            : ref.read(authProvider.notifier).token,
-      );
+      final Map<TypeVehicule, EstimationModel> result = {};
+
+      if (_isCourse) {
+        final estimations = await ApiService().getCourseEstimations(
+          latitudeDepart   : _depart!.latitude,
+          longitudeDepart  : _depart!.longitude,
+          latitudeArrivee  : _arrivee!.latitude,
+          longitudeArrivee : _arrivee!.longitude,
+          token            : token,
+        );
+        // Range chaque tarif selon son typeVehiculeTarification
+        for (final e in estimations) {
+          final vehicule = TypeVehicule.values.firstWhere(
+            (v) => v.code == e.typeVehiculeTarification,
+            orElse: () => TypeVehicule.moto,
+          );
+          result[vehicule] = e;
+        }
+      } else {
+        result[TypeVehicule.moto] = await ApiService().getEstimation(
+          typeService      : widget.typeService.code,
+          typeVehicule     : TypeVehicule.moto.code,
+          latitudeDepart   : _depart!.latitude,
+          longitudeDepart  : _depart!.longitude,
+          latitudeArrivee  : _arrivee!.latitude,
+          longitudeArrivee : _arrivee!.longitude,
+          token            : token,
+        );
+      }
+
       if (!mounted) return;
       setState(() {
-        _estimation   = estim;
+        _estimations  = result;
         _loadingEstim = false;
       });
     } catch (e) {
@@ -209,9 +236,9 @@ class _CourseScreenState extends ConsumerState<CourseScreen> {
     } else {
       _arrivee = null;
     }
-    // Adresse modifiée → tracé et estimation ne sont plus valables
+    // Adresse modifiée → tracé et estimations ne sont plus valables
     _routePoints = [];
-    _estimation  = null;
+    _estimations = {};
     _debounce?.cancel();
     _debounce = Timer(const Duration(milliseconds: 400), () async {
       if (value.trim().length < 3) {
@@ -533,31 +560,64 @@ class _CourseScreenState extends ConsumerState<CourseScreen> {
       children: [
         const SizedBox(height: 16),
 
-        // Course → choix véhicule ; Livraison → carte moto
-        if (_isCourse)
+        // Course → infos trajet + choix véhicule ; Livraison → carte moto
+        if (_isCourse) ...[
+          // Distance et durée : identiques pour les 2 véhicules,
+          // donc affichées une seule fois au-dessus
+          if (_estimation != null) ...[
+            Container(
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color        : AppColors.grey100,
+                borderRadius : BorderRadius.circular(12),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.route_rounded,
+                      size: 15, color: AppColors.grey500),
+                  const SizedBox(width: 6),
+                  Text(
+                    _estimation!.distanceText,
+                    style: AppTextStyles.bodySmall.copyWith(
+                      fontWeight : FontWeight.w700,
+                      color      : AppColors.dark,
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  const Icon(Icons.schedule_rounded,
+                      size: 15, color: AppColors.grey500),
+                  const SizedBox(width: 6),
+                  Text(
+                    _estimation!.dureeText,
+                    style: AppTextStyles.bodySmall.copyWith(
+                      fontWeight : FontWeight.w700,
+                      color      : AppColors.dark,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
           Row(
             children: [TypeVehicule.moto, TypeVehicule.voiture]
                 .map((v) => Expanded(
                       child: _VehiclePick(
                         vehicule : v,
                         selected : v == _vehicule,
-                        // prix affiché seulement sur l'option choisie
-                        prix     : v == _vehicule
-                            ? (_loadingEstim
-                                ? '…'
-                                : _estimation?.prixLabel ?? '—')
-                            : '—',
-                        onTap    : () {
-                          if (v == _vehicule) return;
-                          setState(() => _vehicule = v);
-                          // Nouveau véhicule → nouvelle estimation
-                          if (_bothSet) _loadEstimation();
-                        },
+                        loading  : _loadingEstim,
+                        // Chaque véhicule affiche son propre prix
+                        estimation : _estimations[v],
+                        // Les 2 estimations sont déjà chargées :
+                        // changer de véhicule n'appelle plus l'API
+                        onTap    : () => setState(() => _vehicule = v),
                       ),
                     ))
                 .toList(),
-          )
-        else
+          ),
+        ] else
           _buildMotoCard(),
 
         const SizedBox(height: 16),
@@ -697,14 +757,16 @@ class _VehiclePick extends StatelessWidget {
   const _VehiclePick({
     required this.vehicule,
     required this.selected,
-    required this.prix,
+    required this.loading,
+    required this.estimation,
     required this.onTap,
   });
 
-  final TypeVehicule vehicule;
-  final bool         selected;
-  final String       prix;
-  final VoidCallback onTap;
+  final TypeVehicule     vehicule;
+  final bool             selected;
+  final bool             loading;
+  final EstimationModel? estimation;
+  final VoidCallback     onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -714,10 +776,10 @@ class _VehiclePick extends StatelessWidget {
       child: AnimatedContainer(
         duration : const Duration(milliseconds: 180),
         margin   : const EdgeInsets.symmetric(horizontal: 4),
-        padding  : const EdgeInsets.symmetric(vertical: 14),
+        padding  : const EdgeInsets.symmetric(vertical: 14, horizontal: 10),
         decoration: BoxDecoration(
           color        : selected ? AppColors.primarySurface : Colors.white,
-          borderRadius : BorderRadius.circular(14),
+          borderRadius : BorderRadius.circular(16),
           border: Border.all(
             color : selected ? AppColors.primary : AppColors.grey200,
             width : selected ? 1.5 : 1,
@@ -725,27 +787,60 @@ class _VehiclePick extends StatelessWidget {
         ),
         child: Column(
           children: [
-            Icon(
-              vehicule.icon,
-              color : selected ? AppColors.primary : AppColors.grey500,
-              size  : 26,
+            // Icône + nom du véhicule
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  vehicule.icon,
+                  color : selected ? AppColors.primary : AppColors.grey500,
+                  size  : 20,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  vehicule.label,
+                  style: AppTextStyles.bodySmall.copyWith(
+                    fontWeight : FontWeight.w700,
+                    color      : selected ? AppColors.primary : AppColors.dark,
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 6),
-            Text(
-              vehicule.label,
-              style: AppTextStyles.bodySmall.copyWith(
-                fontWeight : FontWeight.w700,
-                color      : selected ? AppColors.primary : AppColors.dark,
+
+            const SizedBox(height: 8),
+
+            // Prix bien visible
+            if (loading)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 6),
+                child: SizedBox(
+                  width: 18, height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2.2),
+                ),
+              )
+            else
+              Column(
+                children: [
+                  Text(
+                    estimation != null
+                        ? estimation!.fraisLivraison.toStringAsFixed(0)
+                        : '—',
+                    style: TextStyle(
+                      fontFamily : 'Archivo',
+                      fontSize   : 22,
+                      fontWeight : FontWeight.w800,
+                      color      : selected ? AppColors.dark : AppColors.grey600,
+                    ),
+                  ),
+                  Text(
+                    estimation?.devise ?? 'FCFA',
+                    style: AppTextStyles.caption.copyWith(
+                      fontWeight : FontWeight.w600,
+                      color      : AppColors.grey400,
+                    ),
+                  ),
+                ],
               ),
-            ),
-            const SizedBox(height: 2),
-            Text(prix,
-                style: AppTextStyles.caption.copyWith(
-                  fontWeight : selected ? FontWeight.w700 : FontWeight.w400,
-                  color      : selected
-                      ? AppColors.dark
-                      : AppColors.grey400,
-                )),
           ],
         ),
       ),

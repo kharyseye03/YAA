@@ -461,6 +461,34 @@ class ApiService {
     }
   }
 
+  /// Estimation d'une course : un seul appel renvoie les tarifs
+  /// des deux véhicules (MOTO et VEHICULE).
+  Future<List<EstimationModel>> getCourseEstimations({
+    required double latitudeDepart,
+    required double longitudeDepart,
+    required double latitudeArrivee,
+    required double longitudeArrivee,
+    String? token,
+  }) async {
+    try {
+      final body = {
+        'latitudeDepart'   : latitudeDepart,
+        'longitudeDepart'  : longitudeDepart,
+        'latitudeArrivee'  : latitudeArrivee,
+        'longitudeArrivee' : longitudeArrivee,
+      };
+      final response = await _post(
+          ApiConfig.courseEstimationEndpoint, body, token: token);
+      final list = response['data'] as List<dynamic>? ?? [];
+      return list
+          .map((e) => EstimationModel.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      print('❌ Erreur getCourseEstimations: $e');
+      rethrow;
+    }
+  }
+
   /// Crée une demande de livraison (colis A → B).
   /// Retourne le `data` brut de la réponse.
   Future<Map<String, dynamic>> createLivraison({

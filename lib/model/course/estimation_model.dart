@@ -9,6 +9,8 @@ class EstimationModel {
   final String estimation;     // ex: "16 mins (6.9 km)"
   final double fraisLivraison;
   final String devise;         // ex: "CFA"
+  /// Présent sur l'estimation d'une course : MOTO | VEHICULE
+  final String? typeVehiculeTarification;
 
   const EstimationModel({
     required this.distanceMetres,
@@ -20,6 +22,7 @@ class EstimationModel {
     required this.estimation,
     required this.fraisLivraison,
     required this.devise,
+    this.typeVehiculeTarification,
   });
 
   factory EstimationModel.fromJson(Map<String, dynamic> json) {
@@ -33,6 +36,8 @@ class EstimationModel {
       estimation     : json['estimation']      as String? ?? '',
       fraisLivraison : (json['fraisLivraison'] as num?)?.toDouble() ?? 0,
       devise         : json['devise']          as String? ?? 'CFA',
+      typeVehiculeTarification :
+          json['typeVehiculeTarification'] as String?,
     );
   }
 
