@@ -8,9 +8,9 @@ class EstimationModel {
   final String dureeText;      // ex: "16 mins"
   final String estimation;     // ex: "16 mins (6.9 km)"
   final double fraisLivraison;
-  final String devise;         // ex: "CFA"
+  final String devise;         // ex: "FCFA"
   /// Présent sur l'estimation d'une course : MOTO | VEHICULE
-  final String? typeVehiculeTarification;
+  final String? typeVehicule;
 
   const EstimationModel({
     required this.distanceMetres,
@@ -22,7 +22,7 @@ class EstimationModel {
     required this.estimation,
     required this.fraisLivraison,
     required this.devise,
-    this.typeVehiculeTarification,
+    this.typeVehicule,
   });
 
   factory EstimationModel.fromJson(Map<String, dynamic> json) {
@@ -35,9 +35,10 @@ class EstimationModel {
       dureeText      : json['dureeText']       as String? ?? '',
       estimation     : json['estimation']      as String? ?? '',
       fraisLivraison : (json['fraisLivraison'] as num?)?.toDouble() ?? 0,
-      devise         : json['devise']          as String? ?? 'CFA',
-      typeVehiculeTarification :
-          json['typeVehiculeTarification'] as String?,
+      devise         : json['devise']          as String? ?? 'FCFA',
+      // Le backend a renommé ce champ : on accepte les deux noms
+      typeVehicule   : json['typeVehicule'] as String?
+                       ?? json['typeVehiculeTarification'] as String?,
     );
   }
 

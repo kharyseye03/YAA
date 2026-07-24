@@ -39,10 +39,12 @@ class ApiConfig {
   static const String produitsFavorisToggleEndpoint   = '/produits-favoris/toggle';
 
   // ── Endpoints Livraisons & Courses ────────────────
-  static const String estimationEndpoint = '/livraisons-courses/estimation';
+  // Livraison : estimation puis création
+  static const String estimationEndpoint = '/livraisons-courses/estimation/livraison';
   static const String livraisonEndpoint  = '/livraisons-courses/livraisons';
-  // Estimation d'une course : renvoie les tarifs MOTO et VEHICULE
-  static const String courseEstimationEndpoint = '/livraisons-courses/courses';
+  // Course : estimation (renvoie les tarifs MOTO et VEHICULE) puis création
+  static const String courseEstimationEndpoint = '/livraisons-courses/estimation/course';
+  static const String courseEndpoint           = '/livraisons-courses/courses';
 
   // ── Endpoints Commandes ───────────────────────────
   static const String commandesClientEndpoint       = '/commandes-clients';

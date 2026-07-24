@@ -3,10 +3,12 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimens.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../core/utils/app_router.dart';
 import '../../../features/auth/providers/auth_notifier.dart';
 import '../../../model/course/estimation_model.dart';
 import '../../../service/api/api_service.dart';
@@ -53,6 +55,7 @@ class _CourseScreenState extends ConsumerState<CourseScreen> {
   // Estimation par véhicule (prix, distance, durée)
   Map<TypeVehicule, EstimationModel> _estimations = {};
   bool _loadingEstim = false;
+  bool _isSubmitting = false;
 
   /// Estimation du véhicule actuellement retenu
   EstimationModel? get _estimation =>
@@ -146,13 +149,16 @@ class _CourseScreenState extends ConsumerState<CourseScreen> {
           longitudeArrivee : _arrivee!.longitude,
           token            : token,
         );
-        // Range chaque tarif selon son typeVehiculeTarification
+        // Range chaque tarif selon son typeVehicule (MOTO / VEHICULE).
+        // Si le type est inconnu on ignore, pour ne pas écraser un
+        // tarif déjà rangé.
         for (final e in estimations) {
-          final vehicule = TypeVehicule.values.firstWhere(
-            (v) => v.code == e.typeVehiculeTarification,
-            orElse: () => TypeVehicule.moto,
-          );
-          result[vehicule] = e;
+          for (final v in TypeVehicule.values) {
+            if (v.code == e.typeVehicule) {
+              result[v] = e;
+              break;
+            }
+          }
         }
       } else {
         result[TypeVehicule.moto] = await ApiService().getEstimation(
@@ -627,7 +633,8 @@ class _CourseScreenState extends ConsumerState<CourseScreen> {
           width: double.infinity,
           child: YaaButton(
             label     : _isCourse ? 'Commander' : 'Continuer',
-            onPressed : _bothSet ? _onConfirm : null,
+            isLoading : _isSubmitting,
+            onPressed : (_bothSet && !_isSubmitting) ? _onConfirm : null,
           ),
         ),
       ],
@@ -636,10 +643,52 @@ class _CourseScreenState extends ConsumerState<CourseScreen> {
 
   void _onConfirm() {
     if (_isCourse) {
-      // TODO: estimation + création + recherche de coursier
+      _commanderCourse();
       return;
     }
     // Livraison → étape détails expéditeur/destinataire (bottom sheet)
+    _showLivraisonSheet();
+  }
+
+  // ── Commander une course ─────────────────────────────────────
+  Future<void> _commanderCourse() async {
+    if (_depart == null || _arrivee == null) return;
+    setState(() => _isSubmitting = true);
+    try {
+      await ApiService().createCourse(
+        typeVehicule     : _vehicule.code,
+        latitudeDepart   : _depart!.latitude,
+        longitudeDepart  : _depart!.longitude,
+        latitudeArrivee  : _arrivee!.latitude,
+        longitudeArrivee : _arrivee!.longitude,
+        adresseDepart    : _depart!.adresse,
+        adresseArrivee   : _arrivee!.adresse,
+        token            : ref.read(authProvider.notifier).token,
+      );
+      if (!mounted) return;
+      setState(() => _isSubmitting = false);
+      context.goNamed(RouteNames.home);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content         : Text('Course commandée avec succès !'),
+          backgroundColor : AppColors.success,
+          behavior        : SnackBarBehavior.floating,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isSubmitting = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content         : Text(e.toString().replaceAll('Exception: ', '')),
+          backgroundColor : AppColors.error,
+          behavior        : SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  void _showLivraisonSheet() {
     showCourseDetailsSheet(
       context,
       CourseFlowArgs(

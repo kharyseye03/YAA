@@ -489,6 +489,36 @@ class ApiService {
     }
   }
 
+  /// Crée une course (transport A → B) avec le véhicule choisi.
+  Future<void> createCourse({
+    required String typeVehicule,   // MOTO | VEHICULE
+    required double latitudeDepart,
+    required double longitudeDepart,
+    required double latitudeArrivee,
+    required double longitudeArrivee,
+    required String adresseDepart,
+    required String adresseArrivee,
+    String  instructions = '',
+    String? token,
+  }) async {
+    try {
+      final body = {
+        'typeVehicule'     : typeVehicule,
+        'latitudeDepart'   : latitudeDepart,
+        'longitudeDepart'  : longitudeDepart,
+        'latitudeArrivee'  : latitudeArrivee,
+        'longitudeArrivee' : longitudeArrivee,
+        'adresseDepart'    : adresseDepart,
+        'adresseArrivee'   : adresseArrivee,
+        'instructions'     : instructions,
+      };
+      await _post(ApiConfig.courseEndpoint, body, token: token);
+    } catch (e) {
+      print('❌ Erreur createCourse: $e');
+      rethrow;
+    }
+  }
+
   /// Crée une demande de livraison (colis A → B).
   /// Retourne le `data` brut de la réponse.
   Future<Map<String, dynamic>> createLivraison({
