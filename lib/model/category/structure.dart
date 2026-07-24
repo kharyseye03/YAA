@@ -27,17 +27,20 @@ class Structure {
     this.distance = 0,
   });
 
+  // Parsing tolérant : le backend peut renvoyer null sur certains
+  // champs (structure incomplète) — on met des valeurs par défaut
+  // plutôt que de faire planter toute la liste
   factory Structure.fromJson(Map<String, dynamic> json) => Structure(
-        id: json['id'] as int,
-        categorie: json['categorie'] as String,
-        logoFile: json['logoFile'] as String,
-        name: json['name'] as String,
-        latitude: (json['latitude'] as num).toDouble(),
-        longitude: (json['longitude'] as num).toDouble(),
-        adresse: json['adresse'] as String,
-        nombreEtoile: json['nombreEtoile'] as int,
-        tempsLivraison: json['tempsLivraison'] as String,
-        codeStructure: json['codeStructure'] as String,
+        id: (json['id'] as num).toInt(),
+        categorie: json['categorie'] as String? ?? '',
+        logoFile: json['logoFile'] as String? ?? '',
+        name: json['name'] as String? ?? '',
+        latitude: (json['latitude'] as num?)?.toDouble() ?? 0,
+        longitude: (json['longitude'] as num?)?.toDouble() ?? 0,
+        adresse: json['adresse'] as String? ?? '',
+        nombreEtoile: (json['nombreEtoile'] as num?)?.toInt() ?? 0,
+        tempsLivraison: json['tempsLivraison'] as String? ?? '',
+        codeStructure: json['codeStructure'] as String? ?? '',
         distance: (json['distance'] as num?)?.toDouble() ?? 0,
       );
 

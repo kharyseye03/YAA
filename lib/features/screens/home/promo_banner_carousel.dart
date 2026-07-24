@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:lucide_icons/lucide_icons.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimens.dart';
 import '../../../core/constants/app_text_styles.dart';
@@ -8,15 +7,15 @@ class PromoBannerData {
   final String title;
   final String subtitle;
   final String badge;
-  final IconData icon;
-  final List<Color> gradient;
+  final Color  badgeColor; // couleur de la pastille + du dot actif
+  final String? image;     // image de fond (asset)
 
   const PromoBannerData({
     required this.title,
     required this.subtitle,
     required this.badge,
-    required this.icon,
-    required this.gradient,
+    this.badgeColor = AppColors.primary,
+    this.image,
   });
 }
 
@@ -36,12 +35,12 @@ class PromoBannerCarousel extends StatefulWidget {
 
 class _PromoBannerCarouselState extends State<PromoBannerCarousel> {
   late final PageController _controller;
-  int _currentPage = 1;
+  int _currentPage = 0;
 
   @override
   void initState() {
     super.initState();
-    _controller = PageController(viewportFraction: 0.88, initialPage: 1);
+    _controller = PageController(viewportFraction: 0.88);
   }
 
   @override
@@ -56,10 +55,11 @@ class _PromoBannerCarouselState extends State<PromoBannerCarousel> {
       children: [
         // ── Cartes ──────────────────────────────────────────────
         SizedBox(
-          height: 130,
+          height: 150,
           child: PageView.builder(
             controller: _controller,
             itemCount: widget.banners.length,
+            padEnds: false, // aligne la 1ère carte à gauche
             onPageChanged: (i) => setState(() => _currentPage = i),
             itemBuilder: (_, i) => Padding(
               padding: const EdgeInsets.symmetric(horizontal: 6),
@@ -85,7 +85,7 @@ class _PromoBannerCarouselState extends State<PromoBannerCarousel> {
               height: 6,
               decoration: BoxDecoration(
                 color: isActive
-                    ? widget.banners[_currentPage].gradient.first
+                    ? widget.banners[_currentPage].badgeColor
                     : AppColors.grey300,
                 borderRadius: BorderRadius.circular(AppDimens.radiusFull),
               ),
@@ -107,111 +107,90 @@ class _BannerCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: data.gradient,
-          ),
-          borderRadius: BorderRadius.circular(18),
-        ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(18),
         child: Stack(
+          fit: StackFit.expand,
           children: [
-            // ── Cercles décoratifs en arrière-plan ─────────────
-            Positioned(
-              right: -18,
-              top: -18,
-              child: Container(
-                width: 100,
-                height: 100,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.white.withOpacity(0.08),
-                ),
-              ),
-            ),
-            Positioned(
-              right: 30,
-              bottom: -30,
-              child: Container(
-                width: 80,
-                height: 80,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.white.withOpacity(0.06),
+            // ── Image de fond (ou couleur unie en fallback) ────
+            if (data.image != null)
+              Image.asset(
+                data.image!,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) =>
+                    Container(color: data.badgeColor),
+              )
+            else
+              Container(color: data.badgeColor),
+
+            // ── Filtre sombre pour la lisibilité du texte ──────
+            // Dégradé : plus sombre en bas (là où est le texte)
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin  : Alignment.topRight,
+                  end    : Alignment.bottomLeft,
+                  colors : [
+                    Colors.black.withValues(alpha: 0.25),
+                    Colors.black.withValues(alpha: 0.70),
+                  ],
                 ),
               ),
             ),
 
-            // ── Contenu ────────────────────────────────────────
+            // ── Contenu texte ──────────────────────────────────
             Padding(
-              padding: const EdgeInsets.fromLTRB(18, 14, 14, 14),
-              child: Row(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment : CrossAxisAlignment.start,
+                mainAxisAlignment  : MainAxisAlignment.spaceBetween,
                 children: [
-                  // Texte
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        // Badge promo
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 3),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.22),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            data.badge,
-                            style: const TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white,
-                              letterSpacing: 0.3,
-                            ),
-                          ),
-                        ),
-
-                        const SizedBox(height: 7),
-
-                        Text(
-                          data.title,
-                          style: AppTextStyles.labelLarge.copyWith(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w800,
-                            height: 1.2,
-                          ),
-                        ),
-
-                        const SizedBox(height: 4),
-
-                        Text(
-                          data.subtitle,
-                          style: AppTextStyles.bodySmall.copyWith(
-                            color: Colors.white.withOpacity(0.85),
-                            fontSize: 11.5,
-                          ),
-                        ),
-                      ],
+                  // Badge en haut à gauche
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color        : data.badgeColor,
+                      borderRadius : BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      data.badge.toUpperCase(),
+                      style: const TextStyle(
+                        fontFamily    : 'Archivo',
+                        fontSize      : 10,
+                        fontWeight    : FontWeight.w800,
+                        color         : Colors.white,
+                        letterSpacing : 0.5,
+                      ),
                     ),
                   ),
 
-                  // Icône dans cercle blanc
-                  Container(
-                    width: 52,
-                    height: 52,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      data.icon,
-                      color: Colors.white,
-                      size: 26,
-                    ),
+                  // Titre + sous-titre en bas
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        data.title,
+                        style: AppTextStyles.labelLarge.copyWith(
+                          color      : Colors.white,
+                          fontSize   : 19,
+                          fontWeight : FontWeight.w800,
+                          height     : 1.15,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        data.subtitle,
+                        style: AppTextStyles.bodySmall.copyWith(
+                          color    : Colors.white.withValues(alpha: 0.9),
+                          fontSize : 12,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
                   ),
                 ],
               ),

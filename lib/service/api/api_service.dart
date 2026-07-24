@@ -17,6 +17,7 @@ import '../../model/category/categorie_structure.dart';
 import '../../model/category/structure.dart';
 import '../../model/category/produit_detail.dart';
 import '../../model/category/structure_detail.dart';
+import '../../model/course/estimation_model.dart';
 import '../../model/user/user_profile.dart';
 
 class ApiService {
@@ -426,6 +427,131 @@ class ApiService {
       await _put(ApiConfig.setAdresseEndpoint, body);
     } catch (e) {
       print('❌ Erreur setAdresse: $e');
+      rethrow;
+    }
+  }
+
+  /// Estimation des frais d'une livraison / course (distance,
+  /// durée et prix) à partir du trajet et du type de véhicule.
+  Future<EstimationModel> getEstimation({
+    required String typeService,   // LIVRAISON | COURSE
+    required String typeVehicule,  // MOTO | VEHICULE
+    required double latitudeDepart,
+    required double longitudeDepart,
+    required double latitudeArrivee,
+    required double longitudeArrivee,
+    String? token,
+  }) async {
+    try {
+      final body = {
+        'typeService'      : typeService,
+        'typeVehicule'     : typeVehicule,
+        'latitudeDepart'   : latitudeDepart,
+        'longitudeDepart'  : longitudeDepart,
+        'latitudeArrivee'  : latitudeArrivee,
+        'longitudeArrivee' : longitudeArrivee,
+      };
+      final response = await _post(
+          ApiConfig.estimationEndpoint, body, token: token);
+      return EstimationModel.fromJson(
+          response['data'] as Map<String, dynamic>);
+    } catch (e) {
+      print('❌ Erreur getEstimation: $e');
+      rethrow;
+    }
+  }
+
+  /// Estimation d'une course : un seul appel renvoie les tarifs
+  /// des deux véhicules (MOTO et VEHICULE).
+  Future<List<EstimationModel>> getCourseEstimations({
+    required double latitudeDepart,
+    required double longitudeDepart,
+    required double latitudeArrivee,
+    required double longitudeArrivee,
+    String? token,
+  }) async {
+    try {
+      final body = {
+        'latitudeDepart'   : latitudeDepart,
+        'longitudeDepart'  : longitudeDepart,
+        'latitudeArrivee'  : latitudeArrivee,
+        'longitudeArrivee' : longitudeArrivee,
+      };
+      final response = await _post(
+          ApiConfig.courseEstimationEndpoint, body, token: token);
+      final list = response['data'] as List<dynamic>? ?? [];
+      return list
+          .map((e) => EstimationModel.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      print('❌ Erreur getCourseEstimations: $e');
+      rethrow;
+    }
+  }
+
+  /// Crée une course (transport A → B) avec le véhicule choisi.
+  Future<void> createCourse({
+    required String typeVehicule,   // MOTO | VEHICULE
+    required double latitudeDepart,
+    required double longitudeDepart,
+    required double latitudeArrivee,
+    required double longitudeArrivee,
+    required String adresseDepart,
+    required String adresseArrivee,
+    String  instructions = '',
+    String? token,
+  }) async {
+    try {
+      final body = {
+        'typeVehicule'     : typeVehicule,
+        'latitudeDepart'   : latitudeDepart,
+        'longitudeDepart'  : longitudeDepart,
+        'latitudeArrivee'  : latitudeArrivee,
+        'longitudeArrivee' : longitudeArrivee,
+        'adresseDepart'    : adresseDepart,
+        'adresseArrivee'   : adresseArrivee,
+        'instructions'     : instructions,
+      };
+      await _post(ApiConfig.courseEndpoint, body, token: token);
+    } catch (e) {
+      print('❌ Erreur createCourse: $e');
+      rethrow;
+    }
+  }
+
+  /// Crée une demande de livraison (colis A → B).
+  /// Retourne le `data` brut de la réponse.
+  Future<Map<String, dynamic>> createLivraison({
+    required String typeVehicule,   // MOTO | VEHICULE
+    required double latitudeDepart,
+    required double longitudeDepart,
+    required double latitudeArrivee,
+    required double longitudeArrivee,
+    required String adresseDepart,
+    required String adresseArrivee,
+    required String telephoneExpediteur,
+    required String telephoneDestinataire,
+    String  instructions = '',
+    String? token,
+  }) async {
+    try {
+      final body = {
+        'typeVehicule'          : typeVehicule,
+        'latitudeDepart'        : latitudeDepart,
+        'longitudeDepart'       : longitudeDepart,
+        'latitudeArrivee'       : latitudeArrivee,
+        'longitudeArrivee'      : longitudeArrivee,
+        'adresseDepart'         : adresseDepart,
+        'adresseArrivee'        : adresseArrivee,
+        'instructions'          : instructions,
+        'telephoneExpediteur'   : telephoneExpediteur,
+        'telephoneDestinataire' : telephoneDestinataire,
+      };
+      final response = await _post(
+          ApiConfig.livraisonEndpoint, body, token: token);
+      return (response['data'] as Map<String, dynamic>?) ?? response;
+    } catch (e) {
+      print('❌ Erreur createLivraison: $e');
       rethrow;
     }
   }

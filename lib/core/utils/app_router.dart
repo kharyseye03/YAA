@@ -14,7 +14,10 @@ import '../../features/screens/cart/cart_screen.dart';
 import '../../features/screens/cart/checkout_screen.dart';
 import '../../features/screens/home/home_screen.dart';
 import '../../features/screens/home/notifications.dart';
+import '../../features/screens/course/course_screen.dart';
+import '../../features/course/models/course_models.dart';
 import '../../features/screens/order/order_detail_screen.dart';
+import '../../features/screens/order/order_history_screen.dart';
 import '../../features/screens/order/order_tracking_screen.dart';
 import '../../features/screens/order/orders_screen.dart';
 import '../../features/screens/product/product_detail_screen.dart';
@@ -29,7 +32,8 @@ import '../../features/starter/splash/splash_screen.dart';
 // Routes qui nécessitent d'être connecté
 const _protectedRoutes = {
   '/home', '/product-detail', '/cart', '/checkout',
-  '/orders', '/order-detail', '/orderTracking',
+  '/orders', '/order-detail', '/order-history', '/orderTracking',
+  '/course',
   '/profile', '/personalInfo', '/editPersonalInfo',
   '/terms', '/notifications', '/search',
 };
@@ -66,6 +70,8 @@ abstract final class RoutePaths {
   static const String checkout = '/checkout';
   static const String orders = '/orders';
   static const String orderDetail = '/order-detail';
+  static const String orderHistory = '/order-history';
+  static const String course = '/course';
   static const String profile = '/profile';
   static const String search = '/search';
   static const String orderTracking = '/orderTracking';
@@ -102,6 +108,8 @@ abstract final class RouteNames {
   static const String checkout = 'checkout';
   static const String orders = 'orders';
   static const String orderDetail = 'orderDetail';
+  static const String orderHistory = 'orderHistory';
+  static const String course = 'course';
   static const String profile = 'profile';
   static const String search = 'search';
   static const String personalInfo = 'personalInfo';
@@ -236,6 +244,18 @@ final routerProvider = Provider<GoRouter>((ref) {
         name: RouteNames.orderDetail,
         builder: (context, state) => OrderDetailScreen(
           commandeId: state.extra as int?,
+        ),
+      ),
+      GoRoute(
+        path: RoutePaths.orderHistory,
+        name: RouteNames.orderHistory,
+        builder: (context, state) => const OrderHistoryScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.course,
+        name: RouteNames.course,
+        builder: (context, state) => CourseScreen(
+          typeService: state.extra as TypeService,
         ),
       ),
       GoRoute(
