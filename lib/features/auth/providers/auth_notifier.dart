@@ -3,20 +3,21 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../service/api/api_service.dart';
+import '../../../service/auth/token_storage.dart';
 import 'auth_state.dart';
 
 const _tokenKey = 'access_token';
-const _refreshTokenKey = 'refresh_token';
 const _emailKey = 'user_email';
 const _telephoneKey = 'user_telephone';
 
 class AuthNotifier extends StateNotifier<AuthState> {
+  // L'état initial est optimiste (un token est présent) ; tryAutoLogin()
+  // au démarrage confirme ou infirme en tentant un renouvellement.
   AuthNotifier(this._prefs)
       : super(AuthState(isAuthenticated: _prefs.containsKey(_tokenKey)));
 
   final SharedPreferences _prefs;
 
-  String? get token => _prefs.getString(_tokenKey);
   String? get email => _prefs.getString(_emailKey);
 
   /// Décode le payload JWT et retourne la Map complète.
@@ -49,8 +50,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
         username: username,
         password: password,
       );
-      await _prefs.setString(_tokenKey, response.accessToken);
-      await _prefs.setString(_refreshTokenKey, response.refreshToken);
+      // Enregistre les deux tokens + la date d'expiration calculée
+      await TokenStorage.instance.saveTokens(response);
 
       // Extraire et sauvegarder l'email depuis le JWT Keycloak
       final emailFromToken = _extractEmailFromJwt(response.accessToken);
@@ -200,37 +201,44 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
-  /// Renouvelle le token via Keycloak, sauvegarde les nouveaux tokens.
-  /// Retourne `true` si succès, `false` si échec (→ logout automatique).
-  Future<bool> refreshToken() async {
-    final storedRefreshToken = _prefs.getString(_refreshTokenKey);
-    if (storedRefreshToken == null) {
-      await logout();
-      return false;
+  /// Restaure la session au démarrage.
+  ///
+  /// - Token encore valide → on est connecté directement
+  /// - Sinon on tente un refresh (10 jours de validité)
+  /// - Échec → on efface les tokens et on repart sur le login
+  Future<bool> tryAutoLogin() async {
+    if (await TokenStorage.instance.hasValidToken()) {
+      debugPrint('🔐 Session restaurée (token encore valide)');
+      state = state.copyWith(isAuthenticated: true);
+      return true;
     }
+
+    final refresh = await TokenStorage.instance.getRefreshToken();
+    if (refresh == null) return false;
+
     try {
-      final response = await ApiService().refreshToken(
-        refreshToken: storedRefreshToken,
-      );
-      await _prefs.setString(_tokenKey, response.accessToken);
-      await _prefs.setString(_refreshTokenKey, response.refreshToken);
+      debugPrint('🔄 Renouvellement du token au démarrage…');
+      final response = await ApiService().refreshToken(refreshToken: refresh);
+      await TokenStorage.instance.saveTokens(response);
+
       final emailFromToken = _extractEmailFromJwt(response.accessToken);
       if (emailFromToken != null) {
         await _prefs.setString(_emailKey, emailFromToken);
       }
-      debugPrint('✅ Token rafraîchi avec succès');
+      state = state.copyWith(isAuthenticated: true);
       return true;
     } catch (e) {
-      debugPrint('❌ Refresh token échoué: $e → déconnexion');
-      await logout();
+      debugPrint('❌ Refresh au démarrage échoué : $e → login');
+      await TokenStorage.instance.clear();
+      state = const AuthState();
       return false;
     }
   }
 
   Future<void> logout() async {
-    await _prefs.remove(_tokenKey);
-    await _prefs.remove(_refreshTokenKey);
+    await TokenStorage.instance.clear();
     await _prefs.remove(_emailKey);
+    await _prefs.remove(_telephoneKey);
     await _prefs.remove('user_image_url');
     state = const AuthState();
   }

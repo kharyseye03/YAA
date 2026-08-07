@@ -18,6 +18,7 @@ import '../../model/category/structure.dart';
 import '../../model/category/produit_detail.dart';
 import '../../model/category/structure_detail.dart';
 import '../../model/course/estimation_model.dart';
+import '../auth/token_storage.dart';
 import '../../model/user/user_profile.dart';
 
 class ApiService {
@@ -27,13 +28,99 @@ class ApiService {
   ApiService._internal();
 
   // ════════════════════════════════════════════════════
+  // AUTHENTIFICATION — Renouvellement automatique du token
+  // ════════════════════════════════════════════════════
+
+  /// Renouvellement en cours, partagé par tous les appels : sans ce
+  /// verrou, trois écrans qui se rafraîchissent en même temps
+  /// déclencheraient trois refresh simultanés — et Keycloak peut
+  /// invalider le refresh token après usage.
+  Future<String>? _refreshing;
+
+  /// Token valide, renouvelé si besoin. null si la session est morte.
+  Future<String?> _validToken() async {
+    if (await TokenStorage.instance.hasValidToken()) {
+      return TokenStorage.instance.getAccessToken();
+    }
+    return _renewToken();
+  }
+
+  Future<String?> _renewToken() async {
+    _refreshing ??= _performRefresh().whenComplete(() => _refreshing = null);
+    try {
+      return await _refreshing;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<String> _performRefresh() async {
+    final refresh = await TokenStorage.instance.getRefreshToken();
+    if (refresh == null) throw Exception('Aucun refresh token.');
+    print('🔄 Renouvellement du token…');
+    final auth = await refreshToken(refreshToken: refresh);
+    // Bien enregistrer le NOUVEAU refresh token, pas seulement l'access
+    await TokenStorage.instance.saveTokens(auth);
+    return auth.accessToken;
+  }
+
+  /// Exécute une requête authentifiée, avec renouvellement préventif
+  /// et une seule nouvelle tentative si le serveur répond 401.
+  Future<http.Response> _authed(
+    Future<http.Response> Function(String token) send,
+  ) async {
+    var token = await _validToken();
+    if (token == null) throw _sessionExpired();
+
+    var response = await send(token);
+    if (response.statusCode != 401) return response;
+
+    print('🔒 401 reçu → nouvelle tentative');
+    // L'en-tête WWW-Authenticate précise la cause exacte du 401
+    // (Jwt expired, iss claim not valid, …) — utile en debug.
+    final reason = response.headers['www-authenticate'];
+    if (reason != null) print('🔒 WWW-Authenticate → $reason');
+
+    token = await _renewToken();
+    if (token == null) throw _sessionExpired();
+
+    response = await send(token);
+    if (response.statusCode == 401) throw _sessionExpired();
+    return response;
+  }
+
+  Exception _sessionExpired() =>
+      Exception('Session expirée. Reconnectez-vous.');
+
+  /// Adaptateur : exécute [request] avec les bons en-têtes, en passant
+  /// par [_authed] quand l'endpoint est protégé.
+  Future<http.Response> _send({
+    required bool auth,
+    required Future<http.Response> Function(Map<String, String> headers)
+        request,
+  }) {
+    Future<http.Response> run(Map<String, String> headers) =>
+        request(headers).timeout(
+          const Duration(seconds: ApiConfig.connectionTimeout),
+          onTimeout: () => throw TimeoutException(
+              'Le serveur ne répond pas. Vérifiez votre connexion.'),
+        );
+
+    if (!auth) return run(ApiConfig.headers);
+    return _authed((token) => run({
+          ...ApiConfig.headers,
+          'Authorization': 'Bearer $token',
+        }));
+  }
+
+  // ════════════════════════════════════════════════════
   // MÉTHODES PRIVÉES — Le moteur interne
   // ════════════════════════════════════════════════════
 
   Future<Map<String, dynamic>> _post(
     String endpoint,
     dynamic body, {
-    String? token,
+    bool auth = false,
   }) async {
     try {
       final url = Uri.parse(ApiConfig.getUrl(endpoint));
@@ -41,20 +128,13 @@ class ApiService {
       print('🌐 POST → $url');
       print('📦 Body → $body');
 
-      final headers = {
-        ...ApiConfig.headers,
-        if (token != null) 'Authorization': 'Bearer $token',
-      };
-
-      final response = await http.post(
-        url,
-        headers : headers,
-        body    : json.encode(body),
-      ).timeout(
-        const Duration(seconds: ApiConfig.connectionTimeout),
-        onTimeout: () {
-          throw TimeoutException('Le serveur ne répond pas. Vérifiez votre connexion.');
-        },
+      final response = await _send(
+        auth    : auth,
+        request : (headers) => http.post(
+          url,
+          headers : headers,
+          body    : json.encode(body),
+        ),
       );
 
       print('📡 Status → ${response.statusCode}');
@@ -64,10 +144,6 @@ class ApiService {
         if (response.body.isEmpty) return {};
         final data = json.decode(response.body) as Map<String, dynamic>;
         return data;
-      }
-
-      if (response.statusCode == 401) {
-        throw Exception('Session expirée. Veuillez vous reconnecter.');
       }
 
       if (response.body.isEmpty) {
@@ -92,7 +168,7 @@ class ApiService {
   Future<Map<String, dynamic>> _put(
     String endpoint,
     dynamic body, {
-    String? token,
+    bool auth = false,
   }) async {
     try {
       final url = Uri.parse(ApiConfig.getUrl(endpoint));
@@ -100,20 +176,13 @@ class ApiService {
       print('🌐 PUT → $url');
       print('📦 Body → $body');
 
-      final headers = {
-        ...ApiConfig.headers,
-        if (token != null) 'Authorization': 'Bearer $token',
-      };
-
-      final response = await http.put(
-        url,
-        headers : headers,
-        body    : json.encode(body),
-      ).timeout(
-        const Duration(seconds: ApiConfig.connectionTimeout),
-        onTimeout: () {
-          throw TimeoutException('Le serveur ne répond pas. Vérifiez votre connexion.');
-        },
+      final response = await _send(
+        auth    : auth,
+        request : (headers) => http.put(
+          url,
+          headers : headers,
+          body    : json.encode(body),
+        ),
       );
 
       print('📡 Status → ${response.statusCode}');
@@ -123,10 +192,6 @@ class ApiService {
         if (response.body.isEmpty) return {};
         final data = json.decode(response.body) as Map<String, dynamic>;
         return data;
-      }
-
-      if (response.statusCode == 401) {
-        throw Exception('Session expirée. Veuillez vous reconnecter.');
       }
 
       if (response.body.isEmpty) {
@@ -151,7 +216,7 @@ class ApiService {
   Future<void> _delete(
     String endpoint, {
     Map<String, String>? queryParams,
-    String? token,
+    bool auth = false,
   }) async {
     try {
       var uri = Uri.parse(ApiConfig.getUrl(endpoint));
@@ -161,17 +226,9 @@ class ApiService {
 
       print('🌐 DELETE → $uri');
 
-      final headers = {
-        ...ApiConfig.headers,
-        if (token != null) 'Authorization': 'Bearer $token',
-      };
-
-      final response = await http.delete(
-        uri,
-        headers: headers,
-      ).timeout(
-        const Duration(seconds: ApiConfig.connectionTimeout),
-        onTimeout: () => throw TimeoutException('Le serveur ne répond pas.'),
+      final response = await _send(
+        auth    : auth,
+        request : (headers) => http.delete(uri, headers: headers),
       );
 
       print('📡 DELETE Status → ${response.statusCode}');
@@ -181,10 +238,6 @@ class ApiService {
           response.statusCode == 201 ||
           response.statusCode == 204) {
         return; // succès
-      }
-
-      if (response.statusCode == 401) {
-        throw Exception('Session expirée. Veuillez vous reconnecter.');
       }
 
       if (response.body.isEmpty) {
@@ -208,7 +261,7 @@ class ApiService {
   Future<Map<String, dynamic>> _get(
     String endpoint, {
     Map<String, String>? queryParams,
-    String? token,
+    bool auth = false,
   }) async {
     try {
       var uri = Uri.parse(ApiConfig.getUrl(endpoint));
@@ -216,17 +269,10 @@ class ApiService {
         uri = uri.replace(queryParameters: queryParams);
       }
 
-      final headers = {
-        ...ApiConfig.headers,
-        if (token != null) 'Authorization': 'Bearer $token',
-      };
-
-      final response = await http
-          .get(uri, headers: headers)
-          .timeout(
-            const Duration(seconds: ApiConfig.connectionTimeout),
-            onTimeout: () => throw TimeoutException('Le serveur ne répond pas.'),
-          );
+      final response = await _send(
+        auth    : auth,
+        request : (headers) => http.get(uri, headers: headers),
+      );
 
       print('📡 GET Status → ${response.statusCode}');
       print('📬 GET Réponse → ${response.body}');
@@ -259,21 +305,17 @@ class ApiService {
   Future<List<dynamic>> _getList(
     String endpoint, {
     Map<String, String>? queryParams,
-    String? token,
+    bool auth = false,
   }) async {
     try {
       var uri = Uri.parse(ApiConfig.getUrl(endpoint));
       if (queryParams != null) {
         uri = uri.replace(queryParameters: queryParams);
       }
-      final headers = {
-        ...ApiConfig.headers,
-        if (token != null) 'Authorization': 'Bearer $token',
-      };
-      final response = await http
-          .get(uri, headers: headers)
-          .timeout(const Duration(seconds: ApiConfig.connectionTimeout),
-              onTimeout: () => throw TimeoutException('Le serveur ne répond pas.'));
+      final response = await _send(
+        auth    : auth,
+        request : (headers) => http.get(uri, headers: headers),
+      );
 
       print('📡 GET Status → ${response.statusCode}');
       print('📬 GET Réponse → ${response.body}');
@@ -440,7 +482,6 @@ class ApiService {
     required double longitudeDepart,
     required double latitudeArrivee,
     required double longitudeArrivee,
-    String? token,
   }) async {
     try {
       final body = {
@@ -452,7 +493,7 @@ class ApiService {
         'longitudeArrivee' : longitudeArrivee,
       };
       final response = await _post(
-          ApiConfig.estimationEndpoint, body, token: token);
+          ApiConfig.estimationEndpoint, body, auth: true);
       return EstimationModel.fromJson(
           response['data'] as Map<String, dynamic>);
     } catch (e) {
@@ -468,7 +509,6 @@ class ApiService {
     required double longitudeDepart,
     required double latitudeArrivee,
     required double longitudeArrivee,
-    String? token,
   }) async {
     try {
       final body = {
@@ -478,7 +518,7 @@ class ApiService {
         'longitudeArrivee' : longitudeArrivee,
       };
       final response = await _post(
-          ApiConfig.courseEstimationEndpoint, body, token: token);
+          ApiConfig.courseEstimationEndpoint, body, auth: true);
       final list = response['data'] as List<dynamic>? ?? [];
       return list
           .map((e) => EstimationModel.fromJson(e as Map<String, dynamic>))
@@ -499,7 +539,6 @@ class ApiService {
     required String adresseDepart,
     required String adresseArrivee,
     String  instructions = '',
-    String? token,
   }) async {
     try {
       final body = {
@@ -512,7 +551,7 @@ class ApiService {
         'adresseArrivee'   : adresseArrivee,
         'instructions'     : instructions,
       };
-      await _post(ApiConfig.courseEndpoint, body, token: token);
+      await _post(ApiConfig.courseEndpoint, body, auth: true);
     } catch (e) {
       print('❌ Erreur createCourse: $e');
       rethrow;
@@ -532,7 +571,6 @@ class ApiService {
     required String telephoneExpediteur,
     required String telephoneDestinataire,
     String  instructions = '',
-    String? token,
   }) async {
     try {
       final body = {
@@ -548,7 +586,7 @@ class ApiService {
         'telephoneDestinataire' : telephoneDestinataire,
       };
       final response = await _post(
-          ApiConfig.livraisonEndpoint, body, token: token);
+          ApiConfig.livraisonEndpoint, body, auth: true);
       return (response['data'] as Map<String, dynamic>?) ?? response;
     } catch (e) {
       print('❌ Erreur createLivraison: $e');
@@ -563,7 +601,7 @@ class ApiService {
     try {
       final fields = {
         'grant_type' : 'password',
-        'client_id'  : 'yaa',
+        'client_id'  : ApiConfig.clientId,
         'username'   : username,
         'password'   : password,
       };
@@ -579,7 +617,7 @@ class ApiService {
     try {
       final fields = {
         'grant_type'    : 'refresh_token',
-        'client_id'     : 'yaa',
+        'client_id'     : ApiConfig.clientId,
         'refresh_token' : refreshToken,
       };
       final response = await _postForm(ApiConfig.getIamUrl(ApiConfig.loginEndpoint), fields);
@@ -596,12 +634,12 @@ class ApiService {
 
   Future<UserProfile> getUserDetail({
     required String email,
-    required String token,
   }) async {
     try {
       final response = await _get(
         ApiConfig.userDetailEndpoint,
-        queryParams: {'email': email},
+        queryParams : {'email': email},
+        auth        : true,
       );
       return UserProfile.fromJson(response);
     } catch (e) {
@@ -836,13 +874,12 @@ class ApiService {
   Future<void> addToCart({
     required int produitId,
     required int quantite,
-    String? token,
   }) async {
     try {
       final body = [
         {'produitId': produitId, 'quantite': quantite},
       ];
-      await _post(ApiConfig.cartEndpoint, body, token: token);
+      await _post(ApiConfig.cartEndpoint, body, auth: true);
       // On n'essaie pas de parser la réponse — le CartNotifier
       // recharge le panier complet via getCart() juste après.
     } catch (e) {
@@ -852,9 +889,9 @@ class ApiService {
   }
 
   /// Retourne null si aucun panier actif (réponse vide)
-  Future<CartModel?> getCart({String? token}) async {
+  Future<CartModel?> getCart() async {
     try {
-      final response = await _get(ApiConfig.cartClientEndpoint, token: token);
+      final response = await _get(ApiConfig.cartClientEndpoint, auth: true);
       if (response.isEmpty) return null; // pas de panier actif
       return CartModel.fromJson(response);
     } catch (e) {
@@ -864,12 +901,12 @@ class ApiService {
   }
 
   /// Supprime une ligne du panier
-  Future<void> deleteCartLine({required int idLigne, String? token}) async {
+  Future<void> deleteCartLine({required int idLigne}) async {
     try {
       await _delete(
         ApiConfig.cartDeleteLineEndpoint,
         queryParams: {'idLigne': idLigne.toString()},
-        token: token,
+        auth: true,
       );
     } catch (e) {
       print('❌ Erreur deleteCartLine: $e');
@@ -881,11 +918,11 @@ class ApiService {
   // MÉTHODES PUBLIQUES — Favoris structures
   // ════════════════════════════════════════════════════
 
-  Future<List<StructureFavoriModel>> getStructuresFavoris({String? token}) async {
+  Future<List<StructureFavoriModel>> getStructuresFavoris() async {
     try {
       final list = await _getList(
         ApiConfig.structuresFavorisEndpoint,
-        token: token,
+        auth: true,
       );
       return list
           .map((e) => StructureFavoriModel.fromJson(e as Map<String, dynamic>))
@@ -898,7 +935,6 @@ class ApiService {
 
   Future<void> toggleStructureFavori({
     required int structureId,
-    String?      token,
   }) async {
     try {
       var uri = Uri.parse(ApiConfig.getUrl(ApiConfig.structuresFavorisToggleEndpoint));
@@ -906,14 +942,9 @@ class ApiService {
 
       print('🌐 GET (toggle favori) → $uri');
 
-      final headers = {
-        ...ApiConfig.headers,
-        if (token != null) 'Authorization': 'Bearer $token',
-      };
-
-      final response = await http.get(uri, headers: headers).timeout(
-        const Duration(seconds: ApiConfig.connectionTimeout),
-        onTimeout: () => throw TimeoutException('Le serveur ne répond pas.'),
+      final response = await _send(
+        auth    : true,
+        request : (headers) => http.get(uri, headers: headers),
       );
 
       print('📡 Status → ${response.statusCode}');
@@ -923,10 +954,6 @@ class ApiService {
           response.statusCode == 201 ||
           response.statusCode == 204) {
         return;
-      }
-
-      if (response.statusCode == 401) {
-        throw Exception('Session expirée. Veuillez vous reconnecter.');
       }
 
       final data = response.body.isNotEmpty
@@ -942,11 +969,11 @@ class ApiService {
     }
   }
 
-  Future<List<ProduitFavoriModel>> getProduitsFavoris({String? token}) async {
+  Future<List<ProduitFavoriModel>> getProduitsFavoris() async {
     try {
       final list = await _getList(
         ApiConfig.produitsFavorisEndpoint,
-        token: token,
+        auth: true,
       );
       return list
           .map((e) => ProduitFavoriModel.fromJson(e as Map<String, dynamic>))
@@ -959,7 +986,6 @@ class ApiService {
 
   Future<void> toggleProduitFavori({
     required int produitId,
-    String?      token,
   }) async {
     try {
       var uri = Uri.parse(ApiConfig.getUrl(ApiConfig.produitsFavorisToggleEndpoint));
@@ -967,14 +993,9 @@ class ApiService {
 
       print('🌐 GET (toggle produit favori) → $uri');
 
-      final headers = {
-        ...ApiConfig.headers,
-        if (token != null) 'Authorization': 'Bearer $token',
-      };
-
-      final response = await http.get(uri, headers: headers).timeout(
-        const Duration(seconds: ApiConfig.connectionTimeout),
-        onTimeout: () => throw TimeoutException('Le serveur ne répond pas.'),
+      final response = await _send(
+        auth    : true,
+        request : (headers) => http.get(uri, headers: headers),
       );
 
       print('📡 Status produit favori → ${response.statusCode}');
@@ -984,10 +1005,6 @@ class ApiService {
           response.statusCode == 201 ||
           response.statusCode == 204) {
         return;
-      }
-
-      if (response.statusCode == 401) {
-        throw Exception('Session expirée. Veuillez vous reconnecter.');
       }
 
       final data = response.body.isNotEmpty
@@ -1009,13 +1026,12 @@ class ApiService {
 
   Future<CommandeDetailModel> getCommandeDetail({
     required int id,
-    String?      token,
   }) async {
     try {
       final response = await _get(
         ApiConfig.commandeClientDetailEndpoint,
         queryParams: {'id': id.toString()},
-        token: token,
+        auth: true,
       );
       return CommandeDetailModel.fromJson(response);
     } catch (e) {
@@ -1024,11 +1040,11 @@ class ApiService {
     }
   }
 
-  Future<List<CommandeModel>> getCommandes({String? token}) async {
+  Future<List<CommandeModel>> getCommandes() async {
     try {
       final list = await _getList(
         ApiConfig.commandesClientEndpoint,
-        token: token,
+        auth: true,
       );
       return list
           .map((e) => CommandeModel.fromJson(e as Map<String, dynamic>))
@@ -1052,7 +1068,6 @@ class ApiService {
     required double latitude,
     required double longitude,
     String          description = '',
-    String?         token,
   }) async {
     try {
       final body = {
@@ -1065,7 +1080,7 @@ class ApiService {
         'longitude'        : longitude,
       };
       final response = await _post(
-          ApiConfig.transactionEndpoint, body, token: token);
+          ApiConfig.transactionEndpoint, body, auth: true);
       return TransactionModel.fromJson(response);
     } catch (e) {
       print('❌ Erreur createTransaction: $e');
@@ -1078,7 +1093,6 @@ class ApiService {
     required int    id,
     required String reference,
     required String modePaiement,
-    String?         token,
   }) async {
     try {
       final body = {
@@ -1086,7 +1100,7 @@ class ApiService {
         'reference'   : reference,
         'modePaiement': modePaiement,
       };
-      await _post(ApiConfig.payTransactionEndpoint, body, token: token);
+      await _post(ApiConfig.payTransactionEndpoint, body, auth: true);
     } catch (e) {
       print('❌ Erreur payTransaction: $e');
       rethrow;
@@ -1094,12 +1108,12 @@ class ApiService {
   }
 
   /// Vide entièrement le panier
-  Future<void> clearEntireCart({required int idPanier, String? token}) async {
+  Future<void> clearEntireCart({required int idPanier}) async {
     try {
       await _delete(
         ApiConfig.cartClearEndpoint,
         queryParams: {'idPanier': idPanier.toString()},
-        token: token,
+        auth: true,
       );
     } catch (e) {
       print('❌ Erreur clearEntireCart: $e');

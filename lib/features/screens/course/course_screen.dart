@@ -9,7 +9,6 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimens.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/utils/app_router.dart';
-import '../../../features/auth/providers/auth_notifier.dart';
 import '../../../model/course/estimation_model.dart';
 import '../../../service/api/api_service.dart';
 import '../../../service/location/location_service.dart';
@@ -136,8 +135,6 @@ class _CourseScreenState extends ConsumerState<CourseScreen> {
     if (_depart == null || _arrivee == null) return;
     setState(() => _loadingEstim = true);
 
-    final token = ref.read(authProvider.notifier).token;
-
     try {
       final Map<TypeVehicule, EstimationModel> result = {};
 
@@ -147,7 +144,6 @@ class _CourseScreenState extends ConsumerState<CourseScreen> {
           longitudeDepart  : _depart!.longitude,
           latitudeArrivee  : _arrivee!.latitude,
           longitudeArrivee : _arrivee!.longitude,
-          token            : token,
         );
         // Range chaque tarif selon son typeVehicule (MOTO / VEHICULE).
         // Si le type est inconnu on ignore, pour ne pas écraser un
@@ -168,7 +164,6 @@ class _CourseScreenState extends ConsumerState<CourseScreen> {
           longitudeDepart  : _depart!.longitude,
           latitudeArrivee  : _arrivee!.latitude,
           longitudeArrivee : _arrivee!.longitude,
-          token            : token,
         );
       }
 
@@ -663,7 +658,6 @@ class _CourseScreenState extends ConsumerState<CourseScreen> {
         longitudeArrivee : _arrivee!.longitude,
         adresseDepart    : _depart!.adresse,
         adresseArrivee   : _arrivee!.adresse,
-        token            : ref.read(authProvider.notifier).token,
       );
       if (!mounted) return;
       setState(() => _isSubmitting = false);

@@ -43,7 +43,7 @@ class UserNotifier extends StateNotifier<UserState> {
 
     state = state.copyWith(isLoading: true);
     try {
-      final profile = await ApiService().getUserDetail(email: email, token: token);
+      final profile = await ApiService().getUserDetail(email: email);
       // Persister l'image pour un affichage instantané au prochain démarrage
       if (profile.imageUrl != null) {
         await _prefs.setString(_imageUrlKey, profile.imageUrl!);

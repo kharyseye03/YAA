@@ -1,13 +1,9 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import '../../../features/auth/providers/auth_notifier.dart';
 import '../../../model/order/commande_detail_model.dart';
 import '../../../model/order/commande_model.dart';
 import '../../../service/api/api_service.dart';
 
-const _tokenKey        = 'access_token';
-const _refreshTokenKey = 'refresh_token';
 
 class CommandeState {
   final bool                  isLoading;
@@ -55,50 +51,15 @@ class CommandeState {
 }
 
 class CommandeNotifier extends StateNotifier<CommandeState> {
-  CommandeNotifier(this._prefs) : super(const CommandeState());
+  CommandeNotifier() : super(const CommandeState());
 
-  final SharedPreferences _prefs;
 
-  // ── Token ──────────────────────────────────────────────────
-  static bool _isExpired(String token) {
-    try {
-      final payload = AuthNotifier.decodeJwtPayload(token);
-      if (payload == null) return true;
-      final exp = payload['exp'] as int?;
-      if (exp == null) return false;
-      return DateTime.now().millisecondsSinceEpoch > exp * 1000 - 30000;
-    } catch (_) {
-      return false;
-    }
-  }
-
-  Future<String?> _refreshToken() async {
-    try {
-      final refreshTk = _prefs.getString(_refreshTokenKey);
-      if (refreshTk == null) return null;
-      final res = await ApiService().refreshToken(refreshToken: refreshTk);
-      await _prefs.setString(_tokenKey,        res.accessToken);
-      await _prefs.setString(_refreshTokenKey, res.refreshToken);
-      return res.accessToken;
-    } catch (e) {
-      debugPrint('❌ refresh: $e');
-      return null;
-    }
-  }
-
-  Future<String?> _getValidToken() async {
-    final token = _prefs.getString(_tokenKey);
-    if (token == null) return null;
-    if (_isExpired(token)) return await _refreshToken();
-    return token;
-  }
 
   // ── Liste ──────────────────────────────────────────────────
   Future<void> loadCommandes() async {
     state = state.copyWith(isLoading: true, clearError: true);
     try {
-      final token     = await _getValidToken();
-      final commandes = await ApiService().getCommandes(token: token);
+      final commandes = await ApiService().getCommandes();
       state = state.copyWith(isLoading: false, commandes: commandes);
     } catch (e) {
       debugPrint('❌ loadCommandes: $e');
@@ -117,8 +78,7 @@ class CommandeNotifier extends StateNotifier<CommandeState> {
       clearDetailError : true,
     );
     try {
-      final token  = await _getValidToken();
-      final detail = await ApiService().getCommandeDetail(id: id, token: token);
+      final detail = await ApiService().getCommandeDetail(id: id);
       state = state.copyWith(isLoadingDetail: false, detail: detail);
     } catch (e) {
       debugPrint('❌ loadDetail: $e');
@@ -135,8 +95,7 @@ class CommandeNotifier extends StateNotifier<CommandeState> {
   /// au prochain tick).
   Future<void> refreshDetail(int id) async {
     try {
-      final token  = await _getValidToken();
-      final detail = await ApiService().getCommandeDetail(id: id, token: token);
+      final detail = await ApiService().getCommandeDetail(id: id);
       state = state.copyWith(detail: detail);
     } catch (e) {
       debugPrint('⚠️ refreshDetail (silencieux): $e');
@@ -146,6 +105,5 @@ class CommandeNotifier extends StateNotifier<CommandeState> {
 
 final commandeProvider =
     StateNotifierProvider<CommandeNotifier, CommandeState>((ref) {
-  final prefs = ref.watch(sharedPreferencesProvider);
-  return CommandeNotifier(prefs);
+  return CommandeNotifier();
 });
