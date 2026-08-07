@@ -60,16 +60,22 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     _navigateAfterDelay();
   }
 
-  // ── Logique YAA : vérification auth avant navigation ──────
+  // ── Logique YAA : restauration de session avant navigation ──
+  // Le refresh token vit 10 jours : si l'access token a expiré on le
+  // renouvelle en silence, l'utilisateur n'a pas à se reconnecter.
   Future<void> _navigateAfterDelay() async {
-    await Future.delayed(const Duration(milliseconds: 3000));
+    final autoLogin = ref.read(authProvider.notifier).tryAutoLogin();
+    // On laisse l'animation se jouer pendant la restauration
+    final results = await Future.wait([
+      autoLogin,
+      Future.delayed(const Duration(milliseconds: 3000)),
+    ]);
     if (!mounted) return;
-    final isAuthenticated = ref.read(authProvider).isAuthenticated;
-    if (isAuthenticated) {
-      context.goNamed(RouteNames.home);
-    } else {
-      context.goNamed(RouteNames.onboarding);
-    }
+
+    final isAuthenticated = results.first as bool;
+    context.goNamed(
+      isAuthenticated ? RouteNames.home : RouteNames.onboarding,
+    );
   }
 
   @override

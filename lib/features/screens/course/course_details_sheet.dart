@@ -6,7 +6,6 @@ import '../../../core/constants/app_dimens.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/utils/app_router.dart';
 import '../../../core/utils/phone_formatter.dart';
-import '../../../features/auth/providers/auth_notifier.dart';
 import '../../../features/user/providers/user_notifier.dart';
 import '../../../model/course/estimation_model.dart';
 import '../../../service/api/api_service.dart';
@@ -85,7 +84,6 @@ class _CourseDetailsSheetState extends ConsumerState<_CourseDetailsSheet> {
         telephoneExpediteur   : unformatPhone(_expedTelCtrl.text),
         telephoneDestinataire : unformatPhone(_destTelCtrl.text),
         instructions          : _instructionsCtrl.text.trim(),
-        token                 : ref.read(authProvider.notifier).token,
       );
 
       if (!mounted) return;

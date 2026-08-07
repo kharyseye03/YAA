@@ -8,7 +8,6 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimens.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/utils/app_router.dart';
-import '../../../features/auth/providers/auth_notifier.dart';
 import '../../../features/cart/providers/cart_notifier.dart';
 import '../../../features/cart/providers/delivery_address_provider.dart';
 import '../../../features/user/providers/user_notifier.dart';
@@ -68,7 +67,6 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     setState(() { _isSubmitting = true; _error = null; });
 
     try {
-      final token = ref.read(authProvider.notifier).token;
       final cart  = ref.read(cartProvider).cart;
       if (cart == null) throw Exception('Panier introuvable');
 
@@ -87,7 +85,6 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         latitude         : latitude,
         longitude        : longitude,
         description      : _noteController.text.trim(),
-        token            : token,
       );
 
       // Infos trajet pour le sheet de recherche de livreur
@@ -111,7 +108,6 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         backgroundColor    : Colors.transparent,
         builder            : (_) => _PaymentSheet(
           transaction : transaction,
-          token       : token,
           onSuccess   : () {
             Navigator.of(context).pop(); // ferme le sheet paiement
             ref.read(cartProvider.notifier).clearCart(); // vide le panier local
@@ -119,7 +115,6 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             ref.read(deliveryAddressProvider.notifier).state = null;
             _showLivreurSearchSheet(
               transaction,
-              token,
               departNom      : departNom,
               departAdresse  : departAdresse,
               arriveeAdresse : arriveeAdresse,
@@ -136,8 +131,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   }
 
   void _showLivreurSearchSheet(
-    TransactionModel transaction,
-    String? token, {
+    TransactionModel transaction, {
     required String departNom,
     required String departAdresse,
     required String arriveeAdresse,
@@ -153,7 +147,6 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       ),
       builder: (_) => _LivreurSearchSheet(
         transaction    : transaction,
-        token          : token,
         departNom      : departNom,
         departAdresse  : departAdresse,
         arriveeAdresse : arriveeAdresse,
@@ -443,12 +436,10 @@ class _SummaryRow extends StatelessWidget {
 class _PaymentSheet extends StatefulWidget {
   const _PaymentSheet({
     required this.transaction,
-    required this.token,
     required this.onSuccess,
   });
 
   final TransactionModel transaction;
-  final String?          token;
   final VoidCallback     onSuccess;
 
   @override
@@ -476,7 +467,6 @@ class _PaymentSheetState extends State<_PaymentSheet> {
         id           : widget.transaction.id,
         reference    : widget.transaction.reference,
         modePaiement : _methods[_selectedIndex].code,
-        token        : widget.token,
       );
       widget.onSuccess();
     } catch (e) {
@@ -655,7 +645,6 @@ class _PaymentMethod {
 class _LivreurSearchSheet extends StatefulWidget {
   const _LivreurSearchSheet({
     required this.transaction,
-    required this.token,
     required this.departNom,
     required this.departAdresse,
     required this.arriveeAdresse,
@@ -664,7 +653,6 @@ class _LivreurSearchSheet extends StatefulWidget {
   });
 
   final TransactionModel    transaction;
-  final String?             token;
   final String              departNom;
   final String              departAdresse;
   final String              arriveeAdresse;
@@ -702,7 +690,7 @@ class _LivreurSearchSheetState extends State<_LivreurSearchSheet>
     _pollTimer = Timer.periodic(const Duration(seconds: 10), (_) async {
       try {
         final commandes =
-            await ApiService().getCommandes(token: widget.token);
+            await ApiService().getCommandes();
         if (commandes.isEmpty) return;
 
         // 1. Match par référence (si le backend partage la même
@@ -733,7 +721,6 @@ class _LivreurSearchSheetState extends State<_LivreurSearchSheet>
           if (_livreurTrouve) {
             final detail = await ApiService().getCommandeDetail(
               id    : commande.id,
-              token : widget.token,
             );
             if (mounted) setState(() => _detail = detail);
           }

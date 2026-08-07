@@ -1,12 +1,9 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../../../features/auth/providers/auth_notifier.dart';
 import '../../../model/cart/cart_model.dart';
 import '../../../service/api/api_service.dart';
 
-const _tokenKey        = 'access_token';
-const _refreshTokenKey = 'refresh_token';
 
 class CartState {
   final bool isLoading;
@@ -39,62 +36,15 @@ class CartState {
 }
 
 class CartNotifier extends StateNotifier<CartState> {
-  CartNotifier(this._prefs) : super(const CartState());
+  CartNotifier() : super(const CartState());
 
-  final SharedPreferences _prefs;
-
-  // ── Vérifie si le JWT est expiré (avec 30s de marge) ──────
-  static bool _isExpired(String token) {
-    try {
-      final payload = AuthNotifier.decodeJwtPayload(token);
-      if (payload == null) return true;
-      final exp = payload['exp'] as int?;
-      if (exp == null) return false;
-      final expiryMs = exp * 1000 - 30000; // 30s de marge
-      return DateTime.now().millisecondsSinceEpoch > expiryMs;
-    } catch (_) {
-      return false;
-    }
-  }
-
-  // ── Rafraîchit le token via Keycloak ──────────────────────
-  Future<String?> _refreshToken() async {
-    try {
-      final refreshTk = _prefs.getString(_refreshTokenKey);
-      if (refreshTk == null) {
-        debugPrint('⚠️ Pas de refresh_token disponible');
-        return null;
-      }
-      debugPrint('🔄 Rafraîchissement du token...');
-      final response = await ApiService().refreshToken(refreshToken: refreshTk);
-      await _prefs.setString(_tokenKey,        response.accessToken);
-      await _prefs.setString(_refreshTokenKey, response.refreshToken);
-      debugPrint('✅ Token rafraîchi avec succès');
-      return response.accessToken;
-    } catch (e) {
-      debugPrint('❌ Échec du refresh token: $e');
-      return null;
-    }
-  }
-
-  // ── Retourne un token valide (rafraîchit si expiré) ───────
-  Future<String?> _getValidToken() async {
-    final token = _prefs.getString(_tokenKey);
-    if (token == null) return null;
-    if (_isExpired(token)) {
-      debugPrint('⚠️ Token expiré, rafraîchissement automatique...');
-      return await _refreshToken();
-    }
-    return token;
-  }
 
   // ─────────────────────────────────────────────────────────
 
   Future<void> loadCart() async {
     state = state.copyWith(isLoading: true, clearError: true);
     try {
-      final token = await _getValidToken();
-      final cart  = await ApiService().getCart(token: token);
+      final cart  = await ApiService().getCart();
       // cart == null → pas de panier actif (corps vide du serveur) : état normal
       state = state.copyWith(
         isLoading : false,
@@ -114,15 +64,13 @@ class CartNotifier extends StateNotifier<CartState> {
   Future<bool> addToCart({required int produitId, int quantite = 1}) async {
     state = state.copyWith(isAdding: true, clearError: true);
     try {
-      final token = await _getValidToken();
       await ApiService().addToCart(
         produitId : produitId,
         quantite  : quantite,
-        token     : token,
       );
       // Recharge le panier depuis le serveur pour avoir
       // le vrai total, les noms et tous les champs à jour
-      final cart = await ApiService().getCart(token: token);
+      final cart = await ApiService().getCart();
       state = state.copyWith(isAdding: false, cart: cart);
       return true;
     } catch (e) {
@@ -138,9 +86,8 @@ class CartNotifier extends StateNotifier<CartState> {
   /// Supprime une ligne du panier via son id (idLigne)
   Future<void> removeItem(int idLigne) async {
     try {
-      final token = await _getValidToken();
-      await ApiService().deleteCartLine(idLigne: idLigne, token: token);
-      final cart = await ApiService().getCart(token: token);
+      await ApiService().deleteCartLine(idLigne: idLigne);
+      final cart = await ApiService().getCart();
       state = state.copyWith(cart: cart, clearError: true);
     } catch (e) {
       debugPrint('❌ removeItem: $e');
@@ -155,8 +102,7 @@ class CartNotifier extends StateNotifier<CartState> {
     final idPanier = state.cart?.id;
     if (idPanier == null) return;
     try {
-      final token = await _getValidToken();
-      await ApiService().clearEntireCart(idPanier: idPanier, token: token);
+      await ApiService().clearEntireCart(idPanier: idPanier);
       // Recharge depuis le serveur → loadCart gère le corps vide (panier vidé)
       await loadCart();
     } catch (e) {
@@ -171,8 +117,7 @@ class CartNotifier extends StateNotifier<CartState> {
 }
 
 final cartProvider = StateNotifierProvider<CartNotifier, CartState>((ref) {
-  final prefs    = ref.watch(sharedPreferencesProvider);
-  final notifier = CartNotifier(prefs);
+  final notifier = CartNotifier();
 
   ref.listen(authProvider, (previous, next) {
     if (!next.isAuthenticated) notifier.clearCart();

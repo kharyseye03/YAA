@@ -1,6 +1,9 @@
 class ApiConfig {
 
 // Keycloak
+  // ⚠️ Doit être identique entre le login et le refresh
+  static const String clientId = 'your-client-id';
+
   static const String iamBaseUrl = 'https://your-iam-server.com';
   static const String iamBaseUrltelephone = 'https://your-iam-server.com';
   static const String loginEndpoint = '/realms/your-realm/protocol/openid-connect/token';

@@ -1,13 +1,9 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import '../../../features/auth/providers/auth_notifier.dart';
 import '../../../model/favori/produit_favori_model.dart';
 import '../../../model/favori/structure_favori_model.dart';
 import '../../../service/api/api_service.dart';
 
-const _tokenKey        = 'access_token';
-const _refreshTokenKey = 'refresh_token';
 
 // ── State ──────────────────────────────────────────────────────
 class FavoriState {
@@ -57,50 +53,15 @@ class FavoriState {
 
 // ── Notifier ───────────────────────────────────────────────────
 class FavoriNotifier extends StateNotifier<FavoriState> {
-  FavoriNotifier(this._prefs) : super(const FavoriState());
+  FavoriNotifier() : super(const FavoriState());
 
-  final SharedPreferences _prefs;
 
-  // ── Token ────────────────────────────────────────────────────
-  static bool _isExpired(String token) {
-    try {
-      final payload = AuthNotifier.decodeJwtPayload(token);
-      if (payload == null) return true;
-      final exp = payload['exp'] as int?;
-      if (exp == null) return false;
-      return DateTime.now().millisecondsSinceEpoch > exp * 1000 - 30000;
-    } catch (_) {
-      return false;
-    }
-  }
-
-  Future<String?> _refreshToken() async {
-    try {
-      final refreshTk = _prefs.getString(_refreshTokenKey);
-      if (refreshTk == null) return null;
-      final res = await ApiService().refreshToken(refreshToken: refreshTk);
-      await _prefs.setString(_tokenKey,        res.accessToken);
-      await _prefs.setString(_refreshTokenKey, res.refreshToken);
-      return res.accessToken;
-    } catch (e) {
-      debugPrint('❌ refresh: $e');
-      return null;
-    }
-  }
-
-  Future<String?> _getValidToken() async {
-    final token = _prefs.getString(_tokenKey);
-    if (token == null) return null;
-    if (_isExpired(token)) return await _refreshToken();
-    return token;
-  }
 
   // ── Charger la liste ─────────────────────────────────────────
   Future<void> loadFavoris() async {
     state = state.copyWith(isLoading: true, clearError: true);
     try {
-      final token   = await _getValidToken();
-      final favoris = await ApiService().getStructuresFavoris(token: token);
+      final favoris = await ApiService().getStructuresFavoris();
       // Met à jour la liste ET le set d'IDs en même temps
       state = state.copyWith(
         isLoading  : false,
@@ -138,10 +99,8 @@ class FavoriNotifier extends StateNotifier<FavoriState> {
 
     // 3. Appel API
     try {
-      final token = await _getValidToken();
       await ApiService().toggleStructureFavori(
         structureId : structureId,
-        token       : token,
       );
       // L'état optimiste est correct — on retire juste le spinner
       state = state.copyWith(
@@ -162,8 +121,7 @@ class FavoriNotifier extends StateNotifier<FavoriState> {
   // ── Charger produits favoris ─────────────────────────────────
   Future<void> loadProduitsFavoris() async {
     try {
-      final token   = await _getValidToken();
-      final produits = await ApiService().getProduitsFavoris(token: token);
+      final produits = await ApiService().getProduitsFavoris();
       state = state.copyWith(
         produitsFavoris    : produits,
         produitsFavorisIds : produits.map((p) => p.produitId).toSet(),
@@ -193,10 +151,8 @@ class FavoriNotifier extends StateNotifier<FavoriState> {
     );
 
     try {
-      final token = await _getValidToken();
       await ApiService().toggleProduitFavori(
         produitId : produitId,
-        token     : token,
       );
       state = state.copyWith(
         togglingIds: state.togglingIds.difference({produitId}),
@@ -216,6 +172,5 @@ class FavoriNotifier extends StateNotifier<FavoriState> {
 // ── Provider ───────────────────────────────────────────────────
 final favoriProvider =
     StateNotifierProvider<FavoriNotifier, FavoriState>((ref) {
-  final prefs = ref.watch(sharedPreferencesProvider);
-  return FavoriNotifier(prefs);
+  return FavoriNotifier();
 });
