@@ -8,10 +8,12 @@
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
         android:usesCleartextTraffic="true">
-        <!-- Clé API Google Maps (SDK Android) -->
+        <!-- Clé API Google Maps (SDK Android).
+             Injectée au build depuis android/secrets.properties — ne jamais
+             écrire la valeur en dur ici, ce fichier est versionné. -->
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="AIzaSyBUIUFuknenEGOxzRekkzhbyHE6RubvcGE"/>
+            android:value="${MAPS_API_KEY}"/>
         <activity
             android:name=".MainActivity"
             android:exported="true"
