@@ -225,7 +225,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: RoutePaths.checkout,
         name: RouteNames.checkout,
         builder: (context, state) => CheckoutScreen(
-          modeLivraison: state.extra as String? ?? 'GROUPAGE',
+          modeReception: state.extra as String? ?? 'LIVRAISON',
         ),
       ),
       // ── Orders ─────────────────────────────────────────────

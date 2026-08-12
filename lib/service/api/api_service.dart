@@ -1059,10 +1059,17 @@ class ApiService {
   // MÉTHODES PUBLIQUES — Transactions
   // ════════════════════════════════════════════════════
 
-  /// Crée une transaction (commande) — retourne les infos pour le paiement
+  /// Crée une transaction (commande) — retourne les infos pour le paiement.
+  ///
+  /// `modeLivraison` est toujours INDIVIDUEL : le regroupement des
+  /// livraisons n'est plus proposé au client. Ce qu'il choisit, c'est
+  /// son mode de réception (livraison à domicile ou retrait sur place).
+  ///
+  /// Les adresses restent envoyées à l'identique dans les deux cas :
+  /// le backend connaît déjà l'adresse du client et celle de la structure.
   Future<TransactionModel> createTransaction({
     required int    panierId,
-    required String modeLivraison,
+    required String modeReceptionCommande, // LIVRAISON | RETRAIT_CLIENT
     required String adresseLivraison,
     required String telephoneClient,
     required double latitude,
@@ -1071,13 +1078,14 @@ class ApiService {
   }) async {
     try {
       final body = {
-        'panierId'         : panierId,
-        'description'      : description,
-        'modeLivraison'    : modeLivraison,
-        'adresseLivraison' : adresseLivraison,
-        'telephoneClient'  : telephoneClient,
-        'latitude'         : latitude,
-        'longitude'        : longitude,
+        'panierId'              : panierId,
+        'description'           : description,
+        'modeLivraison'         : 'INDIVIDUEL',
+        'modeReceptionCommande' : modeReceptionCommande,
+        'adresseLivraison'      : adresseLivraison,
+        'telephoneClient'       : telephoneClient,
+        'latitude'              : latitude,
+        'longitude'             : longitude,
       };
       final response = await _post(
           ApiConfig.transactionEndpoint, body, auth: true);
