@@ -59,29 +59,21 @@ class _CartScreenState extends ConsumerState<CartScreen> {
 
   void _handleCommander(BuildContext context) {
     final cart = ref.read(cartProvider).cart;
-    if (cart == null) return;
+    if (cart == null || cart.lignes.isEmpty) return;
 
-    if (cart.multipleLivraison) {
-      // Plusieurs structures → demander le mode de livraison
-      showModalBottomSheet(
-        context            : context,
-        isScrollControlled : true,
-        backgroundColor    : Colors.transparent,
-        builder            : (_) => _DeliveryModeSheet(
-          lignes : cart.lignes,
-          onConfirm: (mode) {
-            Navigator.of(context).pop();
-            context.pushNamed(
-              RouteNames.checkout,
-              extra: mode == DeliveryMode.groupee ? 'GROUPAGE' : 'INDIVIDUEL',
-            );
-          },
-        ),
-      );
-    } else {
-      // Une seule structure → direct au checkout (groupage par défaut)
-      context.pushNamed(RouteNames.checkout, extra: 'GROUPAGE');
-    }
+    // La question est posée à chaque commande : livraison ou retrait.
+    showModalBottomSheet(
+      context            : context,
+      isScrollControlled : true,
+      backgroundColor    : Colors.transparent,
+      builder            : (_) => _ReceptionModeSheet(
+        lignes : cart.lignes,
+        onConfirm: (mode) {
+          Navigator.of(context).pop();
+          context.pushNamed(RouteNames.checkout, extra: mode.code);
+        },
+      ),
+    );
   }
 
   @override
@@ -568,28 +560,38 @@ class _CartItemState extends State<_CartItem> {
       );
 }
 
-// ── Bottom sheet choix mode de livraison ─────────────────────
-enum DeliveryMode { individuelle, groupee }
+// ── Bottom sheet choix du mode de réception ──────────────────
+/// Comment le client récupère sa commande. Le regroupement des
+/// livraisons (GROUPAGE/INDIVIDUEL) n'est plus proposé : il relève
+/// de la logistique interne, pas d'un choix client.
+enum ModeReception {
+  livraison('LIVRAISON'),
+  retrait('RETRAIT_CLIENT');
 
-class _DeliveryModeSheet extends StatefulWidget {
-  const _DeliveryModeSheet({
+  const ModeReception(this.code);
+  final String code;
+}
+
+class _ReceptionModeSheet extends StatefulWidget {
+  const _ReceptionModeSheet({
     required this.lignes,
     required this.onConfirm,
   });
 
-  final List<CartStructureModel>               lignes;
-  final ValueChanged<DeliveryMode> onConfirm;
+  final List<CartStructureModel>    lignes;
+  final ValueChanged<ModeReception> onConfirm;
 
   @override
-  State<_DeliveryModeSheet> createState() => _DeliveryModeSheetState();
+  State<_ReceptionModeSheet> createState() => _ReceptionModeSheetState();
 }
 
-class _DeliveryModeSheetState extends State<_DeliveryModeSheet> {
-  DeliveryMode _selected = DeliveryMode.groupee;
+class _ReceptionModeSheetState extends State<_ReceptionModeSheet> {
+  ModeReception _selected = ModeReception.livraison;
 
   @override
   Widget build(BuildContext context) {
     final bottomPad = MediaQuery.of(context).padding.bottom;
+    final multi     = widget.lignes.length > 1;
 
     return Container(
       decoration: const BoxDecoration(
@@ -617,46 +619,42 @@ class _DeliveryModeSheetState extends State<_DeliveryModeSheet> {
           Align(
             alignment: Alignment.centerLeft,
             child: Text(
-              'Mode de livraison',
+              'Comment récupérer votre commande ?',
               style: AppTextStyles.h3.copyWith(
                 fontWeight : FontWeight.w800,
                 color      : AppColors.dark,
               ),
             ),
           ),
-          const SizedBox(height: 4),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Text(
-              'Vous avez commandé dans ${widget.lignes.length} établissements différents.',
-              style: AppTextStyles.bodySmall.copyWith(color: AppColors.grey500),
-            ),
-          ),
 
           const SizedBox(height: 20),
 
-          // ── Option : Livraison groupée ──────────────────────
+          // ── Option : Livraison ─────────────────────────────
           _ModeCard(
-            selected    : _selected == DeliveryMode.groupee,
+            selected    : _selected == ModeReception.livraison,
             icon        : Icons.local_shipping_outlined,
-            title       : 'Livraison groupée',
-            description : 'Un seul livreur récupère toutes vos commandes. '
-                'Plus simple, délai unique.',
-            onTap       : () => setState(() => _selected = DeliveryMode.groupee),
+            title       : 'Me faire livrer',
+            description : 'Un livreur vous apporte votre commande '
+                'à l\'adresse de votre choix.',
+            onTap       : () =>
+                setState(() => _selected = ModeReception.livraison),
           ),
 
           const SizedBox(height: 12),
 
-          // ── Option : Livraison individuelle ────────────────
+          // ── Option : Retrait sur place ─────────────────────
           _ModeCard(
-            selected    : _selected == DeliveryMode.individuelle,
-            icon        : Icons.move_to_inbox_outlined,
-            title       : 'Livraison individuelle',
-            description : 'Un livreur par établissement — '
-                '${widget.lignes.length} livraisons séparées.',
-            badge       : '${widget.lignes.length} livraisons',
+            selected    : _selected == ModeReception.retrait,
+            icon        : Icons.storefront_outlined,
+            title       : 'Retrait sur place',
+            description : multi
+                ? 'Vous passez récupérer vos commandes dans les '
+                    '${widget.lignes.length} établissements.'
+                : 'Vous passez récupérer votre commande chez '
+                    '${widget.lignes.first.nomStructure}.',
+            badge       : multi ? '${widget.lignes.length} points' : null,
             onTap       : () =>
-                setState(() => _selected = DeliveryMode.individuelle),
+                setState(() => _selected = ModeReception.retrait),
           ),
 
           const SizedBox(height: 24),

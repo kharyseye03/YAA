@@ -137,7 +137,8 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
 
   // ── Bannière + contenu ─────────────────────────────────────
   Widget _buildContent(BuildContext context, CommandeDetailModel d) {
-    final status = _statusInfo(d.statut);
+    final status    = _statusInfo(d.statut);
+    final isRetrait = d.modeReceptionCommande == 'RETRAIT_CLIENT';
     final ref    = d.referenceCommande.length >= 8
         ? d.referenceCommande.substring(0, 8).toUpperCase()
         : d.referenceCommande.toUpperCase();
@@ -314,13 +315,16 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(Icons.local_shipping_outlined,
-                                  size: 14, color: AppColors.primary),
+                              Icon(
+                                isRetrait
+                                    ? Icons.storefront_outlined
+                                    : Icons.local_shipping_outlined,
+                                size  : 14,
+                                color : AppColors.primary,
+                              ),
                               const SizedBox(width: 6),
                               Text(
-                                d.modeLivraison == 'GROUPAGE'
-                                    ? 'Groupée'
-                                    : 'Individuelle',
+                                isRetrait ? 'Retrait' : 'Livraison',
                                 style: AppTextStyles.labelSmall.copyWith(
                                   color      : AppColors.primary,
                                   fontWeight : FontWeight.w600,
@@ -420,7 +424,7 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text('Départ',
+                                Text(isRetrait ? 'Point de retrait' : 'Départ',
                                     style: AppTextStyles.caption
                                         .copyWith(color: AppColors.grey400)),
                                 const SizedBox(height: 2),
@@ -431,19 +435,23 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                                   style: AppTextStyles.labelMedium
                                       .copyWith(color: AppColors.dark),
                                 ),
-                                const SizedBox(height: 18),
-                                Text('Votre adresse',
-                                    style: AppTextStyles.caption
-                                        .copyWith(color: AppColors.grey400)),
-                                const SizedBox(height: 2),
-                                Text(
-                                  d.adresseLivraison.isNotEmpty
-                                      ? LocationService.cleanAddress(
-                                          d.adresseLivraison)
-                                      : 'Adresse non renseignée',
-                                  style: AppTextStyles.labelMedium
-                                      .copyWith(color: AppColors.dark),
-                                ),
+                                // En retrait, le client se déplace :
+                                // pas d'adresse de livraison
+                                if (!isRetrait) ...[
+                                  const SizedBox(height: 18),
+                                  Text('Votre adresse',
+                                      style: AppTextStyles.caption
+                                          .copyWith(color: AppColors.grey400)),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    d.adresseLivraison.isNotEmpty
+                                        ? LocationService.cleanAddress(
+                                            d.adresseLivraison)
+                                        : 'Adresse non renseignée',
+                                    style: AppTextStyles.labelMedium
+                                        .copyWith(color: AppColors.dark),
+                                  ),
+                                ],
                               ],
                             ),
                           ),

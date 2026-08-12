@@ -47,3 +47,12 @@ app.*.map.json
 # Configuration sensible
 lib/config/api/api_config.dart
 lib/config/maps/maps_config.dart
+
+# Clés natives (voir les fichiers .example versionnés)
+android/secrets.properties
+ios/Flutter/Secrets.xcconfig
+
+# Signature Android
+android/key.properties
+*.jks
+*.keystore

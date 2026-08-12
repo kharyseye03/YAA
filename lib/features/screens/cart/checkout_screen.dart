@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -20,10 +19,12 @@ import '../../../shared/widgets/yaa_text_field.dart';
 import 'delivery_address_sheet.dart';
 
 class CheckoutScreen extends ConsumerStatefulWidget {
-  const CheckoutScreen({super.key, this.modeLivraison = 'GROUPAGE'});
+  const CheckoutScreen({super.key, this.modeReception = 'LIVRAISON'});
 
-  /// 'GROUPAGE' ou 'INDIVIDUEL' — transmis depuis le panier
-  final String modeLivraison;
+  /// 'LIVRAISON' ou 'RETRAIT_CLIENT' — transmis depuis le panier
+  final String modeReception;
+
+  bool get isRetrait => modeReception == 'RETRAIT_CLIENT';
 
   @override
   ConsumerState<CheckoutScreen> createState() => _CheckoutScreenState();
@@ -77,14 +78,16 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       final latitude  = delivery?.latitude  ?? profile?.latitude  ?? 0;
       final longitude = delivery?.longitude ?? profile?.longitude ?? 0;
 
+      // Le payload est identique dans les deux modes : le backend
+      // connaît déjà l'adresse du client et celle de la structure.
       final transaction = await ApiService().createTransaction(
-        panierId         : cart.id,
-        modeLivraison    : widget.modeLivraison,
-        adresseLivraison : _addressController.text.trim(),
-        telephoneClient  : _phoneController.text.trim(),
-        latitude         : latitude,
-        longitude        : longitude,
-        description      : _noteController.text.trim(),
+        panierId              : cart.id,
+        modeReceptionCommande : widget.modeReception,
+        adresseLivraison      : _addressController.text.trim(),
+        telephoneClient       : _phoneController.text.trim(),
+        latitude              : latitude,
+        longitude             : longitude,
+        description           : _noteController.text.trim(),
       );
 
       // Infos trajet pour le sheet de recherche de livreur
@@ -150,6 +153,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         departNom      : departNom,
         departAdresse  : departAdresse,
         arriveeAdresse : arriveeAdresse,
+        isRetrait      : widget.isRetrait,
         onGoHome: () {
           Navigator.of(context).pop();
           context.goNamed(RouteNames.home);
@@ -278,10 +282,12 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                     ),
                     const SizedBox(height: 10),
                     _SummaryRow(
-                      icon  : Icons.local_shipping_outlined,
-                      label : widget.modeLivraison == 'GROUPAGE'
-                          ? 'Livraison groupée'
-                          : 'Livraison individuelle',
+                      icon  : widget.isRetrait
+                          ? Icons.storefront_outlined
+                          : Icons.local_shipping_outlined,
+                      label : widget.isRetrait
+                          ? 'Retrait sur place'
+                          : 'Livraison à domicile',
                       value : '',
                     ),
 
@@ -289,24 +295,68 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                     const Divider(height: 1, color: AppColors.grey200),
                     const SizedBox(height: 20),
 
-                    // ── Livraison ────────────────────────────
-                    _SectionLabel('Livraison'),
+                    // ── Réception ────────────────────────────
+                    _SectionLabel(
+                        widget.isRetrait ? 'Retrait' : 'Livraison'),
                     const SizedBox(height: 14),
-                    // Lecture seule : l'adresse se choisit via le bottom
-                    // sheet (GPS ou autocomplétion) pour garantir que les
-                    // coordonnées envoyées correspondent à l'adresse
-                    YaaTextField(
-                      controller : _addressController,
-                      label      : 'Adresse de livraison',
-                      hint       : 'Choisir une adresse…',
-                      prefixIcon : Icons.location_on_outlined,
-                      readOnly   : true,
-                      onTap      : () => showDeliveryAddressSheet(context),
-                      suffixIcon : const Icon(Icons.edit_outlined,
-                          size: 18, color: AppColors.grey500),
-                      validator  : (v) =>
-                          v == null || v.trim().isEmpty ? 'Champ requis' : null,
-                    ),
+
+                    if (widget.isRetrait) ...[
+                      // Retrait : pas d'adresse à saisir, on rappelle
+                      // simplement où récupérer la commande
+                      Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color        : AppColors.primarySurface,
+                          borderRadius : BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.storefront_outlined,
+                                color: AppColors.primary, size: 20),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Retrait sur place',
+                                    style: AppTextStyles.labelMedium.copyWith(
+                                      fontWeight : FontWeight.w700,
+                                      color      : AppColors.dark,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    cart != null && cart.lignes.length == 1
+                                        ? cart.lignes.first.nomStructure
+                                        : 'Vous serez prévenu dès que votre '
+                                            'commande sera prête.',
+                                    style: AppTextStyles.bodySmall
+                                        .copyWith(color: AppColors.grey600),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ] else
+                      // Lecture seule : l'adresse se choisit via le bottom
+                      // sheet (GPS ou autocomplétion) pour garantir que les
+                      // coordonnées envoyées correspondent à l'adresse
+                      YaaTextField(
+                        controller : _addressController,
+                        label      : 'Adresse de livraison',
+                        hint       : 'Choisir une adresse…',
+                        prefixIcon : Icons.location_on_outlined,
+                        readOnly   : true,
+                        onTap      : () => showDeliveryAddressSheet(context),
+                        suffixIcon : const Icon(Icons.edit_outlined,
+                            size: 18, color: AppColors.grey500),
+                        validator  : (v) =>
+                            v == null || v.trim().isEmpty ? 'Champ requis' : null,
+                      ),
+
                     const SizedBox(height: AppDimens.lg),
                     YaaTextField(
                       controller      : _phoneController,
@@ -638,10 +688,12 @@ class _PaymentMethod {
   final Color  accentColor;
 }
 
-// ── Bottom sheet recherche de livreur (post-paiement) ─────────
-// Affiché après un paiement réussi : animation type Yango pendant
-// la recherche d'un livreur, avec polling du statut de la commande.
-// Dès qu'un livreur accepte → bascule en "Livreur trouvé !".
+// ── Bottom sheet de suivi (post-paiement) ────────────────────
+// Affiché après un paiement réussi, avec polling du statut.
+//   • Livraison → confirmation → préparation → recherche d'un
+//     livreur → "Livreur trouvé !"
+//   • Retrait   → confirmation → préparation → "Commande prête",
+//     aucun coursier n'intervient.
 class _LivreurSearchSheet extends StatefulWidget {
   const _LivreurSearchSheet({
     required this.transaction,
@@ -650,6 +702,7 @@ class _LivreurSearchSheet extends StatefulWidget {
     required this.arriveeAdresse,
     required this.onGoHome,
     required this.onTrackOrder,
+    this.isRetrait = false,
   });
 
   final TransactionModel    transaction;
@@ -658,6 +711,7 @@ class _LivreurSearchSheet extends StatefulWidget {
   final String              arriveeAdresse;
   final VoidCallback        onGoHome;
   final ValueChanged<int>   onTrackOrder;
+  final bool                isRetrait;
 
   @override
   State<_LivreurSearchSheet> createState() => _LivreurSearchSheetState();
@@ -676,8 +730,12 @@ class _LivreurSearchSheetState extends State<_LivreurSearchSheet>
   int?    _commandeId;
   CommandeDetailModel? _detail; // infos livreur une fois assigné
 
+  // En retrait, aucun livreur n'est assigné : le parcours s'achève
+  // quand la commande est prête à être récupérée.
   bool get _livreurTrouve =>
-      _statut == 'LIVREUR_ASSIGNE' || _statut == 'EN_LIVRAISON';
+      !widget.isRetrait &&
+      (_statut == 'LIVREUR_ASSIGNE' || _statut == 'EN_LIVRAISON');
+  bool get _commandePrete => widget.isRetrait && _statut == 'PRET';
   bool get _commandeArretee =>
       _statut == 'ANNULE' || _statut == 'REJETE';
 
@@ -713,9 +771,9 @@ class _LivreurSearchSheetState extends State<_LivreurSearchSheet>
         if (commande.statut != _statut && mounted) {
           setState(() => _statut = commande.statut);
         }
-        // Plus rien à guetter une fois le livreur trouvé
-        // ou la commande arrêtée
-        if (_livreurTrouve || _commandeArretee) {
+        // Plus rien à guetter une fois le livreur trouvé, la commande
+        // prête (retrait) ou la commande arrêtée
+        if (_livreurTrouve || _commandePrete || _commandeArretee) {
           _pollTimer?.cancel();
           // Détail de la commande pour les infos du livreur
           if (_livreurTrouve) {
@@ -763,9 +821,11 @@ class _LivreurSearchSheetState extends State<_LivreurSearchSheet>
 
           _livreurTrouve
               ? _buildLivreurTrouve()
-              : _commandeArretee
-                  ? _buildCommandeArretee()
-                  : _buildEnCours(),
+              : _commandePrete
+                  ? _buildCommandePrete()
+                  : _commandeArretee
+                      ? _buildCommandeArretee()
+                      : _buildEnCours(),
         ],
       ),
     );
@@ -787,6 +847,8 @@ class _LivreurSearchSheetState extends State<_LivreurSearchSheet>
           titre   : 'Préparation en cours',
           message : 'L\'établissement prépare votre commande.',
         ),
+        // En retrait, cette phase n'est jamais atteinte : PRET est
+        // un état final traité par _buildCommandePrete().
         'PRET' || 'EN_ATTENTE_LIVREUR' => (
           icon    : Icons.sports_motorsports,
           titre   : 'Recherche d\'un livreur',
@@ -934,7 +996,8 @@ class _LivreurSearchSheetState extends State<_LivreurSearchSheet>
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Colonne dot → pin
+            // Colonne dot → pin (le pin et la ligne n'ont de sens
+            // qu'en livraison, où il y a un trajet)
             Column(
               children: [
                 const SizedBox(height: 3),
@@ -947,15 +1010,17 @@ class _LivreurSearchSheetState extends State<_LivreurSearchSheet>
                         color: AppColors.primary, width: 4),
                   ),
                 ),
-                Expanded(
-                  child: Container(
-                    width : 1.5,
-                    color : AppColors.grey300,
-                    margin: const EdgeInsets.symmetric(vertical: 4),
+                if (!widget.isRetrait) ...[
+                  Expanded(
+                    child: Container(
+                      width : 1.5,
+                      color : AppColors.grey300,
+                      margin: const EdgeInsets.symmetric(vertical: 4),
+                    ),
                   ),
-                ),
-                const Icon(Icons.location_on,
-                    color: AppColors.secondary, size: 18),
+                  const Icon(Icons.location_on,
+                      color: AppColors.secondary, size: 18),
+                ],
                 const SizedBox(height: 3),
               ],
             ),
@@ -966,7 +1031,7 @@ class _LivreurSearchSheetState extends State<_LivreurSearchSheet>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Départ',
+                  Text(widget.isRetrait ? 'Point de retrait' : 'Départ',
                       style: AppTextStyles.caption
                           .copyWith(color: AppColors.grey400)),
                   const SizedBox(height: 2),
@@ -986,21 +1051,24 @@ class _LivreurSearchSheetState extends State<_LivreurSearchSheet>
                       overflow: TextOverflow.ellipsis,
                     ),
 
-                  const SizedBox(height: 16),
-
-                  Text('Livraison',
-                      style: AppTextStyles.caption
-                          .copyWith(color: AppColors.grey400)),
-                  const SizedBox(height: 2),
-                  Text(
-                    widget.arriveeAdresse,
-                    style: AppTextStyles.labelMedium.copyWith(
-                      fontWeight : FontWeight.w600,
-                      color      : AppColors.dark,
+                  // En retrait, il n'y a pas de trajet : le client se
+                  // déplace lui-même jusqu'à l'établissement.
+                  if (!widget.isRetrait) ...[
+                    const SizedBox(height: 16),
+                    Text('Livraison',
+                        style: AppTextStyles.caption
+                            .copyWith(color: AppColors.grey400)),
+                    const SizedBox(height: 2),
+                    Text(
+                      widget.arriveeAdresse,
+                      style: AppTextStyles.labelMedium.copyWith(
+                        fontWeight : FontWeight.w600,
+                        color      : AppColors.dark,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
+                  ],
                 ],
               ),
             ),
@@ -1016,6 +1084,114 @@ class _LivreurSearchSheetState extends State<_LivreurSearchSheet>
           ],
         ),
       ),
+    );
+  }
+
+  // ── État : commande prête à retirer (mode retrait) ───────────
+  Widget _buildCommandePrete() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width  : 80,
+          height : 80,
+          decoration: const BoxDecoration(
+            shape : BoxShape.circle,
+            color : AppColors.successLight,
+          ),
+          child: const Icon(Icons.shopping_bag_rounded,
+              size: 36, color: AppColors.success),
+        ),
+
+        const SizedBox(height: 20),
+
+        Text(
+          'Commande prête !',
+          style: AppTextStyles.h3.copyWith(
+            fontWeight : FontWeight.w800,
+            color      : AppColors.dark,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Vous pouvez venir la récupérer.',
+          textAlign : TextAlign.center,
+          style     : AppTextStyles.bodyMedium.copyWith(
+            color  : AppColors.grey500,
+            height : 1.5,
+          ),
+        ),
+
+        const SizedBox(height: 20),
+
+        // Où retirer + montant
+        Container(
+          width   : double.infinity,
+          padding : const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            borderRadius : BorderRadius.circular(14),
+            border       : Border.all(color: AppColors.grey200),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.storefront_outlined,
+                  color: AppColors.primary, size: 20),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Point de retrait',
+                        style: AppTextStyles.caption
+                            .copyWith(color: AppColors.grey400)),
+                    const SizedBox(height: 2),
+                    Text(
+                      widget.departNom,
+                      style: AppTextStyles.labelMedium.copyWith(
+                        fontWeight : FontWeight.w700,
+                        color      : AppColors.dark,
+                      ),
+                    ),
+                    if (widget.departAdresse.isNotEmpty)
+                      Text(
+                        widget.departAdresse,
+                        style: AppTextStyles.bodySmall
+                            .copyWith(color: AppColors.grey500),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                  ],
+                ),
+              ),
+              Text(
+                '${widget.transaction.montant.toStringAsFixed(0)} F',
+                style: AppTextStyles.labelMedium.copyWith(
+                  fontWeight : FontWeight.w800,
+                  color      : AppColors.dark,
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 16),
+
+        YaaButton(
+          label     : 'Voir ma commande',
+          onPressed : () => widget.onTrackOrder(_commandeId!),
+        ),
+        const SizedBox(height: 6),
+        TextButton(
+          onPressed : widget.onGoHome,
+          child     : Text(
+            'Retour à l\'accueil',
+            style: AppTextStyles.bodySmall.copyWith(
+              color      : AppColors.grey500,
+              decoration : TextDecoration.underline,
+            ),
+          ),
+        ),
+      ],
     );
   }
 

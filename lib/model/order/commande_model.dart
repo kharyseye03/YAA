@@ -5,6 +5,8 @@ class CommandeModel {
   final String structureTelephone;
   final String referenceCommande;
   final String modeLivraison;
+  /// LIVRAISON | RETRAIT_CLIENT
+  final String modeReceptionCommande;
   final double montantTotal;
   final String description;
   final String adresseLivraison;
@@ -18,6 +20,7 @@ class CommandeModel {
     required this.structureTelephone,
     required this.referenceCommande,
     required this.modeLivraison,
+    this.modeReceptionCommande = 'LIVRAISON',
     required this.montantTotal,
     required this.description,
     required this.adresseLivraison,
@@ -33,6 +36,8 @@ class CommandeModel {
       structureTelephone : json['structureTelephone']  as String? ?? '',
       referenceCommande  : json['referenceCommande']   as String? ?? '',
       modeLivraison      : json['modeLivraison']       as String? ?? '',
+      modeReceptionCommande :
+          json['modeReceptionCommande'] as String? ?? 'LIVRAISON',
       montantTotal       : (json['montantTotal']       as num?)?.toDouble() ?? 0.0,
       description        : json['description']         as String? ?? '',
       adresseLivraison   : json['adresseLivraison']    as String? ?? '',

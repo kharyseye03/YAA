@@ -41,6 +41,8 @@ class CommandeDetailModel {
   final double structureLongitude;
   final String referenceCommande;
   final String modeLivraison;
+  /// LIVRAISON | RETRAIT_CLIENT
+  final String modeReceptionCommande;
   final double montantTotal;
   final String description;
   final String? livreurName;
@@ -63,6 +65,7 @@ class CommandeDetailModel {
     this.structureLongitude = 0,
     required this.referenceCommande,
     required this.modeLivraison,
+    this.modeReceptionCommande = 'LIVRAISON',
     required this.montantTotal,
     required this.description,
     this.livreurName,
@@ -104,6 +107,8 @@ class CommandeDetailModel {
       structureLongitude: (json['structurelongitude'] as num?)?.toDouble() ?? 0,
       referenceCommande : json['referenceCommande']  as String? ?? '',
       modeLivraison     : json['modeLivraison']      as String? ?? '',
+      modeReceptionCommande :
+          json['modeReceptionCommande'] as String? ?? 'LIVRAISON',
       montantTotal      : (json['montantTotal']      as num?)?.toDouble() ?? 0.0,
       description       : json['description']        as String? ?? '',
       livreurName       : json['livreurName']        as String?,

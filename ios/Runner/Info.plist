@@ -2,6 +2,16 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<!-- Clé Google Maps injectée depuis ios/Flutter/Secrets.xcconfig
+	     (non versionné) et lue par AppDelegate.swift -->
+	<key>MAPS_API_KEY</key>
+	<string>$(MAPS_API_KEY)</string>
+	<!-- Permissions de localisation (obligatoires : sans elles iOS
+	     refuse silencieusement l'accès à la position) -->
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>YAA utilise votre position pour vous proposer les établissements proches et organiser vos livraisons.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>YAA utilise votre position pour vous proposer les établissements proches et organiser vos livraisons.</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>

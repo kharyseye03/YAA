@@ -183,7 +183,8 @@ class CommandeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final status = _statusInfo(commande.statut);
+    final status    = _statusInfo(commande.statut);
+    final isRetrait = commande.modeReceptionCommande == 'RETRAIT_CLIENT';
     final ref    = commande.referenceCommande.length >= 8
         ? commande.referenceCommande.substring(0, 8).toUpperCase()
         : commande.referenceCommande.toUpperCase();
@@ -306,14 +307,16 @@ class CommandeCard extends StatelessWidget {
                             ),
                           ],
                         ),
-                        Expanded(
-                          child: Center(
-                            child: Container(
-                                width: 1.5, color: AppColors.grey200),
+                        if (!isRetrait) ...[
+                          Expanded(
+                            child: Center(
+                              child: Container(
+                                  width: 1.5, color: AppColors.grey200),
+                            ),
                           ),
-                        ),
-                        const Icon(Icons.location_on,
-                            color: AppColors.secondary, size: 16),
+                          const Icon(Icons.location_on,
+                              color: AppColors.secondary, size: 16),
+                        ],
                         const SizedBox(height: 3),
                       ],
                     ),
@@ -323,7 +326,7 @@ class CommandeCard extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Départ',
+                          Text(isRetrait ? 'Point de retrait' : 'Départ',
                               style: AppTextStyles.caption
                                   .copyWith(color: AppColors.grey400)),
                           const SizedBox(height: 1),
@@ -336,19 +339,23 @@ class CommandeCard extends StatelessWidget {
                             maxLines : 1,
                             overflow : TextOverflow.ellipsis,
                           ),
-                          const SizedBox(height: 10),
-                          Text('Livraison',
-                              style: AppTextStyles.caption
-                                  .copyWith(color: AppColors.grey400)),
-                          const SizedBox(height: 1),
-                          Text(
-                            LocationService.cleanAddress(
-                                commande.adresseLivraison),
-                            style: AppTextStyles.labelSmall
-                                .copyWith(color: AppColors.dark),
-                            maxLines : 1,
-                            overflow : TextOverflow.ellipsis,
-                          ),
+                          // En retrait, aucune adresse de livraison :
+                          // le client se déplace jusqu'à l'établissement
+                          if (!isRetrait) ...[
+                            const SizedBox(height: 10),
+                            Text('Livraison',
+                                style: AppTextStyles.caption
+                                    .copyWith(color: AppColors.grey400)),
+                            const SizedBox(height: 1),
+                            Text(
+                              LocationService.cleanAddress(
+                                  commande.adresseLivraison),
+                              style: AppTextStyles.labelSmall
+                                  .copyWith(color: AppColors.dark),
+                              maxLines : 1,
+                              overflow : TextOverflow.ellipsis,
+                            ),
+                          ],
                         ],
                       ),
                     ),
@@ -385,13 +392,16 @@ class CommandeCard extends StatelessWidget {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.local_shipping_outlined,
-                            size: 12, color: AppColors.primary),
+                        Icon(
+                          isRetrait
+                              ? Icons.storefront_outlined
+                              : Icons.local_shipping_outlined,
+                          size  : 12,
+                          color : AppColors.primary,
+                        ),
                         const SizedBox(width: 4),
                         Text(
-                          commande.modeLivraison == 'GROUPAGE'
-                              ? 'Groupée'
-                              : 'Individuelle',
+                          isRetrait ? 'Retrait' : 'Livraison',
                           style: AppTextStyles.caption.copyWith(
                             color      : AppColors.primary,
                             fontWeight : FontWeight.w600,
