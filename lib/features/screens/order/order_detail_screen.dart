@@ -8,11 +8,18 @@ import '../../../core/constants/app_dimens.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../features/orders/providers/commande_notifier.dart';
 import '../../../model/order/commande_detail_model.dart';
+import '../../../model/order/livraison_course_model.dart';
 import '../../../service/location/location_service.dart';
+import 'orders_screen.dart';
 
 class OrderDetailScreen extends ConsumerStatefulWidget {
-  const OrderDetailScreen({super.key, this.commandeId});
-  final int? commandeId;
+  const OrderDetailScreen({super.key, required this.mission});
+
+  /// Élément sélectionné dans la liste. Pour une commande
+  /// d'établissement (LIVRAISON_COMMANDE), un détail enrichi est
+  /// chargé en plus ; pour une livraison ou une course, tout est
+  /// déjà là.
+  final LivraisonCourseModel mission;
 
   @override
   ConsumerState<OrderDetailScreen> createState() => _OrderDetailScreenState();
@@ -27,21 +34,22 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
   @override
   void initState() {
     super.initState();
-    if (widget.commandeId != null) {
-      Future.microtask(
-        () => ref.read(commandeProvider.notifier).loadDetail(widget.commandeId!),
-      );
-      // Rafraîchissement silencieux tant que la commande est "vivante" :
-      // le statut et le livreur se mettent à jour sans quitter l'écran
-      _pollTimer = Timer.periodic(const Duration(seconds: 15), (_) {
-        final statut = ref.read(commandeProvider).detail?.statut;
-        if (statut != null && _statutsFinaux.contains(statut)) {
-          _pollTimer?.cancel();
-          return;
-        }
-        ref.read(commandeProvider.notifier).refreshDetail(widget.commandeId!);
-      });
-    }
+    if (!widget.mission.hasDetail) return;
+
+    final commandeId = widget.mission.commandeStructureId!;
+    Future.microtask(
+      () => ref.read(commandeProvider.notifier).loadDetail(widget.mission),
+    );
+    // Rafraîchissement silencieux tant que la commande est "vivante" :
+    // le statut et le livreur se mettent à jour sans quitter l'écran
+    _pollTimer = Timer.periodic(const Duration(seconds: 15), (_) {
+      final statut = ref.read(commandeProvider).detail?.statut;
+      if (statut != null && _statutsFinaux.contains(statut)) {
+        _pollTimer?.cancel();
+        return;
+      }
+      ref.read(commandeProvider.notifier).refreshDetail(commandeId);
+    });
   }
 
   @override
@@ -80,13 +88,17 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
       body: Stack(
         children: [
           // ── Corps scrollable ───────────────────────────────
-          state.isLoadingDetail
-              ? const Center(child: CircularProgressIndicator())
-              : state.detailError != null
-                  ? _buildError(state.detailError!)
-                  : detail == null
-                      ? const Center(child: Text('Commande introuvable'))
-                      : _buildContent(context, detail),
+          // Livraison ou course : la liste contient déjà tout
+          if (!widget.mission.hasDetail)
+            _buildMissionContent(widget.mission)
+          else
+            state.isLoadingDetail
+                ? const Center(child: CircularProgressIndicator())
+                : state.detailError != null
+                    ? _buildError(state.detailError!)
+                    : detail == null
+                        ? const Center(child: Text('Commande introuvable'))
+                        : _buildContent(context, detail),
 
           // ── Back button overlay ────────────────────────────
           Positioned(
@@ -132,6 +144,221 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  // ── Détail d'une livraison de colis ou d'une course ────────
+  // Aucun appel réseau : tout provient de la liste.
+  Widget _buildMissionContent(LivraisonCourseModel m) {
+    final status = CommandeCard.statusInfo(m.statut);
+
+    return ListView(
+      padding: EdgeInsets.only(
+        top    : MediaQuery.of(context).padding.top + 64,
+        bottom : 32,
+      ),
+      children: [
+        // ── En-tête : type + statut ──────────────────────────
+        Padding(
+          padding: const EdgeInsets.symmetric(
+              horizontal: AppDimens.screenPadding),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width  : 44,
+                    height : 44,
+                    decoration: BoxDecoration(
+                      color        : AppColors.primarySurface,
+                      borderRadius : BorderRadius.circular(12),
+                    ),
+                    child: Icon(m.typeService.icon,
+                        color: AppColors.primary, size: 22),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          m.typeService.label,
+                          style: AppTextStyles.h3.copyWith(
+                            fontWeight : FontWeight.w800,
+                            color      : AppColors.dark,
+                          ),
+                        ),
+                        Text('Réf: ${m.code}',
+                            style: AppTextStyles.caption
+                                .copyWith(color: AppColors.grey400)),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color        : status.bgColor,
+                      borderRadius : BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      status.label,
+                      style: AppTextStyles.labelSmall.copyWith(
+                        color      : status.color,
+                        fontWeight : FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 20),
+
+              // ── Montant + distance/durée ──────────────────
+              Row(
+                children: [
+                  Text(
+                    m.montantLabel,
+                    style: const TextStyle(
+                      fontFamily : 'Archivo',
+                      fontSize   : 28,
+                      fontWeight : FontWeight.w800,
+                      color      : AppColors.dark,
+                    ),
+                  ),
+                  const Spacer(),
+                  if (m.metaLabel.isNotEmpty)
+                    Text(
+                      m.metaLabel,
+                      style: AppTextStyles.bodySmall
+                          .copyWith(color: AppColors.grey500),
+                    ),
+                ],
+              ),
+
+              const SizedBox(height: 20),
+              const Divider(height: 1, color: AppColors.grey200),
+              const SizedBox(height: 20),
+
+              // ── Trajet ────────────────────────────────────
+              _SectionHeader(
+                icon  : Icons.route_rounded,
+                label : 'Trajet',
+                inset : false,
+              ),
+              const SizedBox(height: 14),
+              IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Column(
+                      children: [
+                        const SizedBox(height: 4),
+                        Container(
+                          width: 12, height: 12,
+                          decoration: BoxDecoration(
+                            shape  : BoxShape.circle,
+                            border : Border.all(
+                                color: AppColors.primary, width: 3.5),
+                          ),
+                        ),
+                        Expanded(
+                          child: Container(
+                            width : 1.5,
+                            color : AppColors.grey300,
+                            margin: const EdgeInsets.symmetric(vertical: 4),
+                          ),
+                        ),
+                        const Icon(Icons.location_on,
+                            color: AppColors.secondary, size: 18),
+                        const SizedBox(height: 4),
+                      ],
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Départ',
+                              style: AppTextStyles.caption
+                                  .copyWith(color: AppColors.grey400)),
+                          const SizedBox(height: 2),
+                          Text(
+                            LocationService.cleanAddress(m.adresseDepart),
+                            style: AppTextStyles.labelMedium
+                                .copyWith(color: AppColors.dark),
+                          ),
+                          const SizedBox(height: 18),
+                          Text('Arrivée',
+                              style: AppTextStyles.caption
+                                  .copyWith(color: AppColors.grey400)),
+                          const SizedBox(height: 2),
+                          Text(
+                            LocationService.cleanAddress(m.adresseArrivee),
+                            style: AppTextStyles.labelMedium
+                                .copyWith(color: AppColors.dark),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // ── Coursier (si assigné) ─────────────────────
+              if (m.hasLivreur) ...[
+                const SizedBox(height: 20),
+                const Divider(height: 1, color: AppColors.grey200),
+                const SizedBox(height: 20),
+                _SectionHeader(
+                  icon  : Icons.delivery_dining_outlined,
+                  label : 'Coursier',
+                  inset : false,
+                ),
+                const SizedBox(height: 14),
+                _ContactCard(
+                  icon      : Icons.person_outline_rounded,
+                  iconBg    : AppColors.infoLight,
+                  iconColor : AppColors.info,
+                  name      : m.livreurFullName!,
+                  phone     : m.livreurTelephone,
+                  inset     : false,
+                ),
+              ],
+
+              // ── Instructions ──────────────────────────────
+              if (m.instructions.isNotEmpty) ...[
+                const SizedBox(height: 20),
+                const Divider(height: 1, color: AppColors.grey200),
+                const SizedBox(height: 20),
+                _SectionHeader(
+                  icon  : Icons.notes_rounded,
+                  label : 'Instructions',
+                  inset : false,
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  width   : double.infinity,
+                  padding : const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color        : Colors.white,
+                    borderRadius : BorderRadius.circular(12),
+                    border       : Border.all(color: AppColors.grey200),
+                  ),
+                  child: Text(
+                    m.instructions,
+                    style: AppTextStyles.bodySmall.copyWith(
+                      color  : AppColors.grey700,
+                      height : 1.5,
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ],
     );
   }
 
@@ -575,14 +802,21 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
 
 // ── En-tête de section ────────────────────────────────────────
 class _SectionHeader extends StatelessWidget {
-  const _SectionHeader({required this.icon, required this.label});
+  const _SectionHeader({
+    required this.icon,
+    required this.label,
+    this.inset = true,
+  });
   final IconData icon;
   final String   label;
+  /// false quand le parent applique déjà le padding horizontal
+  final bool     inset;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppDimens.screenPadding),
+      padding: EdgeInsets.symmetric(
+          horizontal: inset ? AppDimens.screenPadding : 0),
       child: Row(
         children: [
           Icon(icon, size: 15, color: AppColors.grey500),
@@ -682,6 +916,7 @@ class _ContactCard extends StatelessWidget {
     required this.name,
     this.detail,
     this.phone,
+    this.inset = true,
   });
 
   final IconData icon;
@@ -690,12 +925,14 @@ class _ContactCard extends StatelessWidget {
   final String   name;
   final String?  detail;
   final String?  phone;
+  /// false quand le parent applique déjà le padding horizontal
+  final bool     inset;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(
-          horizontal: AppDimens.screenPadding),
+      padding: EdgeInsets.symmetric(
+          horizontal: inset ? AppDimens.screenPadding : 0),
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(

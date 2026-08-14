@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_text_styles.dart';
 import '../../../../core/utils/app_router.dart';
+import '../../../../service/storage/onboarding_storage.dart';
 import '../widgets/onboarding_page_data.dart';
 
 class OnboardingScreen extends StatefulWidget {
@@ -62,6 +63,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       duration: const Duration(milliseconds: 350),
       curve: Curves.easeInOut,
     );
+  }
+
+  /// Quitte l'onboarding en retenant qu'il a été vu : on ne le
+  /// réaffichera plus, même après une déconnexion.
+  Future<void> _quitter(String route) async {
+    await OnboardingStorage.instance.marquerVu();
+    if (mounted) context.goNamed(route);
   }
 
   void _skip() {
@@ -219,7 +227,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         _buildPrimaryButton(
           _isLastPage ? 'Commencer' : 'Suivant',
           onPressed: _isLastPage
-              ? () => context.goNamed(RouteNames.register)
+              ? () => _quitter(RouteNames.register)
               : _nextPage,
         ),
 
@@ -229,7 +237,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         if (_isLastPage)
           _buildSecondaryButton(
             'J\'ai déjà un compte',
-            onPressed: () => context.goNamed(RouteNames.login),
+            onPressed: () => _quitter(RouteNames.login),
           )
         else
           GestureDetector(

@@ -11,6 +11,7 @@ import '../../model/favori/produit_favori_model.dart';
 import '../../model/favori/structure_favori_model.dart';
 import '../../model/order/commande_detail_model.dart';
 import '../../model/order/commande_model.dart';
+import '../../model/order/livraison_course_model.dart';
 import '../../model/transaction/transaction_model.dart';
 import '../../model/category/categorie_produit.dart';
 import '../../model/category/categorie_structure.dart';
@@ -529,8 +530,26 @@ class ApiService {
     }
   }
 
+  /// Note le coursier d'une mission terminée (1 à 5 étoiles).
+  Future<void> noterCoursier({
+    required int livraisonCourseId,
+    required int note,
+  }) async {
+    try {
+      await _post(
+        ApiConfig.notationCoursierEndpoint,
+        {'livraisonCourseId': livraisonCourseId, 'note': note},
+        auth: true,
+      );
+    } catch (e) {
+      print('❌ Erreur noterCoursier: $e');
+      rethrow;
+    }
+  }
+
   /// Crée une course (transport A → B) avec le véhicule choisi.
-  Future<void> createCourse({
+  /// Retourne la mission créée (statut initial RECHERCHE_COURSIER).
+  Future<LivraisonCourseModel> createCourse({
     required String typeVehicule,   // MOTO | VEHICULE
     required double latitudeDepart,
     required double longitudeDepart,
@@ -551,7 +570,10 @@ class ApiService {
         'adresseArrivee'   : adresseArrivee,
         'instructions'     : instructions,
       };
-      await _post(ApiConfig.courseEndpoint, body, auth: true);
+      final response =
+          await _post(ApiConfig.courseEndpoint, body, auth: true);
+      return LivraisonCourseModel.fromJson(
+          response['data'] as Map<String, dynamic>);
     } catch (e) {
       print('❌ Erreur createCourse: $e');
       rethrow;
@@ -559,8 +581,8 @@ class ApiService {
   }
 
   /// Crée une demande de livraison (colis A → B).
-  /// Retourne le `data` brut de la réponse.
-  Future<Map<String, dynamic>> createLivraison({
+  /// Retourne la mission créée (statut initial RECHERCHE_COURSIER).
+  Future<LivraisonCourseModel> createLivraison({
     required String typeVehicule,   // MOTO | VEHICULE
     required double latitudeDepart,
     required double longitudeDepart,
@@ -587,7 +609,8 @@ class ApiService {
       };
       final response = await _post(
           ApiConfig.livraisonEndpoint, body, auth: true);
-      return (response['data'] as Map<String, dynamic>?) ?? response;
+      return LivraisonCourseModel.fromJson(
+          response['data'] as Map<String, dynamic>);
     } catch (e) {
       print('❌ Erreur createLivraison: $e');
       rethrow;
@@ -1051,6 +1074,25 @@ class ApiService {
           .toList();
     } catch (e) {
       print('❌ Erreur getCommandes: $e');
+      rethrow;
+    }
+  }
+
+  /// Liste unifiée des livraisons, courses et commandes livrées.
+  /// La réponse est enveloppée dans `data`.
+  Future<List<LivraisonCourseModel>> getMissions() async {
+    try {
+      final response = await _get(
+        ApiConfig.missionsClientEndpoint,
+        auth: true,
+      );
+      final list = response['data'] as List<dynamic>? ?? [];
+      return list
+          .map((e) =>
+              LivraisonCourseModel.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      print('❌ Erreur getMissions: $e');
       rethrow;
     }
   }

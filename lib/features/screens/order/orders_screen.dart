@@ -6,7 +6,7 @@ import '../../../core/constants/app_dimens.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/utils/app_router.dart';
 import '../../../features/orders/providers/commande_notifier.dart';
-import '../../../model/order/commande_model.dart';
+import '../../../model/order/livraison_course_model.dart';
 import '../../../service/location/location_service.dart';
 
 class OrdersScreen extends ConsumerStatefulWidget {
@@ -91,10 +91,10 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
                         separatorBuilder: (_, __) =>
                             const SizedBox(height: 12),
                         itemBuilder: (_, i) => CommandeCard(
-                          commande : list[i],
-                          onTap    : () => context.pushNamed(
+                          mission : list[i],
+                          onTap   : () => context.pushNamed(
                             RouteNames.orderDetail,
-                            extra: list[i].id,
+                            extra: list[i],
                           ),
                         ),
                       ),
@@ -105,15 +105,18 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
   }
 }
 
-// ── Carte commande (publique : réutilisée par l'historique) ───
+// ── Carte mission (publique : réutilisée par l'historique) ───
 class CommandeCard extends StatelessWidget {
-  const CommandeCard({super.key, required this.commande, required this.onTap});
-  final CommandeModel commande;
-  final VoidCallback  onTap;
+  const CommandeCard({super.key, required this.mission, required this.onTap});
+  final LivraisonCourseModel mission;
+  final VoidCallback         onTap;
 
-  static ({String label, Color color, Color bgColor}) _statusInfo(
+  /// Statuts communs aux commandes d'établissement et aux missions
+  /// de livraison/course.
+  static ({String label, Color color, Color bgColor}) statusInfo(
       String statut) =>
       switch (statut) {
+        // ── Cycle d'une commande d'établissement ──────────────
         'EN_ATTENTE' => (
             label   : 'En attente',
             color   : AppColors.grey600,
@@ -144,23 +147,39 @@ class CommandeCard extends StatelessWidget {
             color   : AppColors.info,
             bgColor : AppColors.infoLight,
           ),
-        'EN_ATTENTE_LIVREUR' => (
-            label   : 'Cherche livreur',
+        // ── Cycle d'une mission (livraison / course) ──────────
+        'EN_ATTENTE_LIVREUR' || 'RECHERCHE_COURSIER' => (
+            label   : 'Recherche coursier',
             color   : AppColors.warning,
             bgColor : AppColors.warningLight,
           ),
-        'LIVREUR_ASSIGNE' => (
-            label   : 'Livreur assigné',
+        'LIVREUR_ASSIGNE' || 'COURSIER_ASSIGNE' => (
+            label   : 'Coursier assigné',
             color   : AppColors.info,
             bgColor : AppColors.infoLight,
           ),
-        'EN_LIVRAISON' => (
-            label   : 'En livraison',
+        'COURSIER_EN_ROUTE_VERS_DEPART' => (
+            label   : 'En route',
             color   : AppColors.info,
             bgColor : AppColors.infoLight,
           ),
-        'LIVRE' => (
-            label   : 'Livré',
+        'COURSIER_ARRIVE_AU_DEPART' => (
+            label   : 'Sur place',
+            color   : AppColors.info,
+            bgColor : AppColors.infoLight,
+          ),
+        'PRISE_EN_CHARGE_EFFECTUEE' => (
+            label   : 'Colis récupéré',
+            color   : AppColors.info,
+            bgColor : AppColors.infoLight,
+          ),
+        'EN_LIVRAISON' || 'COURSE_EN_COURS' => (
+            label   : 'En cours',
+            color   : AppColors.info,
+            bgColor : AppColors.infoLight,
+          ),
+        'LIVRE' || 'COURSE_TERMINEE' => (
+            label   : 'Terminée',
             color   : AppColors.success,
             bgColor : AppColors.successLight,
           ),
@@ -183,11 +202,11 @@ class CommandeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final status    = _statusInfo(commande.statut);
-    final isRetrait = commande.modeReceptionCommande == 'RETRAIT_CLIENT';
-    final ref    = commande.referenceCommande.length >= 8
-        ? commande.referenceCommande.substring(0, 8).toUpperCase()
-        : commande.referenceCommande.toUpperCase();
+    final status = statusInfo(mission.statut);
+    final type   = mission.typeService;
+    final ref    = mission.code.isNotEmpty
+        ? mission.code
+        : '#${mission.id}';
 
     return GestureDetector(
       onTap    : onTap,
@@ -206,7 +225,7 @@ class CommandeCard extends StatelessWidget {
         ),
         child: Column(
           children: [
-            // ── Top : structure + statut ─────────────────────
+            // ── Top : type de service + statut ───────────────
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
               child: Row(
@@ -218,7 +237,7 @@ class CommandeCard extends StatelessWidget {
                       color        : AppColors.primarySurface,
                       borderRadius : BorderRadius.circular(10),
                     ),
-                    child: const Icon(Icons.storefront_outlined,
+                    child: Icon(type.icon,
                         size: 18, color: AppColors.primary),
                   ),
                   const SizedBox(width: 10),
@@ -227,7 +246,7 @@ class CommandeCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          commande.structureName,
+                          type.label,
                           style: AppTextStyles.labelMedium.copyWith(
                             fontWeight : FontWeight.w700,
                             fontSize   : 14,
@@ -241,6 +260,8 @@ class CommandeCard extends StatelessWidget {
                           style: AppTextStyles.caption.copyWith(
                             color: AppColors.grey400,
                           ),
+                          maxLines : 1,
+                          overflow : TextOverflow.ellipsis,
                         ),
                       ],
                     ),
@@ -307,16 +328,14 @@ class CommandeCard extends StatelessWidget {
                             ),
                           ],
                         ),
-                        if (!isRetrait) ...[
-                          Expanded(
-                            child: Center(
-                              child: Container(
-                                  width: 1.5, color: AppColors.grey200),
-                            ),
+                        Expanded(
+                          child: Center(
+                            child: Container(
+                                width: 1.5, color: AppColors.grey200),
                           ),
-                          const Icon(Icons.location_on,
-                              color: AppColors.secondary, size: 16),
-                        ],
+                        ),
+                        const Icon(Icons.location_on,
+                            color: AppColors.secondary, size: 16),
                         const SizedBox(height: 3),
                       ],
                     ),
@@ -326,36 +345,31 @@ class CommandeCard extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(isRetrait ? 'Point de retrait' : 'Départ',
+                          Text('Départ',
                               style: AppTextStyles.caption
                                   .copyWith(color: AppColors.grey400)),
                           const SizedBox(height: 1),
                           Text(
-                            commande.structureAdresse.isNotEmpty
-                                ? commande.structureAdresse
-                                : commande.structureName,
+                            LocationService.cleanAddress(
+                                mission.adresseDepart),
                             style: AppTextStyles.labelSmall
                                 .copyWith(color: AppColors.dark),
                             maxLines : 1,
                             overflow : TextOverflow.ellipsis,
                           ),
-                          // En retrait, aucune adresse de livraison :
-                          // le client se déplace jusqu'à l'établissement
-                          if (!isRetrait) ...[
-                            const SizedBox(height: 10),
-                            Text('Livraison',
-                                style: AppTextStyles.caption
-                                    .copyWith(color: AppColors.grey400)),
-                            const SizedBox(height: 1),
-                            Text(
-                              LocationService.cleanAddress(
-                                  commande.adresseLivraison),
-                              style: AppTextStyles.labelSmall
-                                  .copyWith(color: AppColors.dark),
-                              maxLines : 1,
-                              overflow : TextOverflow.ellipsis,
-                            ),
-                          ],
+                          const SizedBox(height: 10),
+                          Text('Arrivée',
+                              style: AppTextStyles.caption
+                                  .copyWith(color: AppColors.grey400)),
+                          const SizedBox(height: 1),
+                          Text(
+                            LocationService.cleanAddress(
+                                mission.adresseArrivee),
+                            style: AppTextStyles.labelSmall
+                                .copyWith(color: AppColors.dark),
+                            maxLines : 1,
+                            overflow : TextOverflow.ellipsis,
+                          ),
                         ],
                       ),
                     ),
@@ -367,13 +381,13 @@ class CommandeCard extends StatelessWidget {
             const SizedBox(height: 12),
             const Divider(height: 1, color: AppColors.grey100),
 
-            // ── Bas : montant + mode livraison ───────────────
+            // ── Bas : montant + distance/durée ───────────────
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
               child: Row(
                 children: [
                   Text(
-                    '${commande.montantTotal.toStringAsFixed(0)} F',
+                    mission.montantLabel,
                     style: const TextStyle(
                       fontFamily : 'Archivo',
                       fontSize   : 18,
@@ -382,34 +396,30 @@ class CommandeCard extends StatelessWidget {
                     ),
                   ),
                   const Spacer(),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color        : AppColors.primarySurface,
-                      borderRadius : BorderRadius.circular(20),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          isRetrait
-                              ? Icons.storefront_outlined
-                              : Icons.local_shipping_outlined,
-                          size  : 12,
-                          color : AppColors.primary,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          isRetrait ? 'Retrait' : 'Livraison',
-                          style: AppTextStyles.caption.copyWith(
-                            color      : AppColors.primary,
-                            fontWeight : FontWeight.w600,
+                  if (mission.metaLabel.isNotEmpty)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color        : AppColors.grey100,
+                        borderRadius : BorderRadius.circular(20),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.route_rounded,
+                              size: 12, color: AppColors.grey500),
+                          const SizedBox(width: 4),
+                          Text(
+                            mission.metaLabel,
+                            style: AppTextStyles.caption.copyWith(
+                              color      : AppColors.grey600,
+                              fontWeight : FontWeight.w600,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
                 ],
               ),
             ),

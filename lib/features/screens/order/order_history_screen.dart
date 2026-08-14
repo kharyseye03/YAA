@@ -131,10 +131,10 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
                           separatorBuilder: (_, __) =>
                               const SizedBox(height: 12),
                           itemBuilder: (_, i) => CommandeCard(
-                            commande : list[i],
-                            onTap    : () => context.pushNamed(
+                            mission : list[i],
+                            onTap   : () => context.pushNamed(
                               RouteNames.orderDetail,
-                              extra: list[i].id,
+                              extra: list[i],
                             ),
                           ),
                         ),

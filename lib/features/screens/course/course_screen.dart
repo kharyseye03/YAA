@@ -650,7 +650,7 @@ class _CourseScreenState extends ConsumerState<CourseScreen> {
     if (_depart == null || _arrivee == null) return;
     setState(() => _isSubmitting = true);
     try {
-      await ApiService().createCourse(
+      final mission = await ApiService().createCourse(
         typeVehicule     : _vehicule.code,
         latitudeDepart   : _depart!.latitude,
         longitudeDepart  : _depart!.longitude,
@@ -661,13 +661,10 @@ class _CourseScreenState extends ConsumerState<CourseScreen> {
       );
       if (!mounted) return;
       setState(() => _isSubmitting = false);
-      context.goNamed(RouteNames.home);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content         : Text('Course commandée avec succès !'),
-          backgroundColor : AppColors.success,
-          behavior        : SnackBarBehavior.floating,
-        ),
+      // Enchaîne sur l'écran de recherche de coursier
+      context.pushReplacementNamed(
+        RouteNames.coursierSearch,
+        extra: mission,
       );
     } catch (e) {
       if (!mounted) return;
