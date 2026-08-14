@@ -34,7 +34,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   // Debounce : on attend que l'utilisateur arrête de taper
   // avant d'interroger l'API
   void _onChanged(String value) {
-    setState(() {}); // met à jour l'affichage (tags / résultats)
+    setState(() {});
     _debounce?.cancel();
     _debounce = Timer(const Duration(milliseconds: 400), () {
       if (mounted) setState(() => _query = value.trim());

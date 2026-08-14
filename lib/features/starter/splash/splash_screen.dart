@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/utils/app_router.dart';
+import '../../../service/storage/onboarding_storage.dart';
 import '../../auth/providers/auth_notifier.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
@@ -68,13 +69,22 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     // On laisse l'animation se jouer pendant la restauration
     final results = await Future.wait([
       autoLogin,
+      OnboardingStorage.instance.dejaVu(),
       Future.delayed(const Duration(milliseconds: 3000)),
     ]);
     if (!mounted) return;
 
-    final isAuthenticated = results.first as bool;
+    final isAuthenticated = results[0] as bool;
+    final onboardingVu    = results[1] as bool;
+
+    // Session valide → accueil. Sinon login si l'utilisateur connaît
+    // déjà l'app, onboarding uniquement à la toute première ouverture.
     context.goNamed(
-      isAuthenticated ? RouteNames.home : RouteNames.onboarding,
+      isAuthenticated
+          ? RouteNames.home
+          : onboardingVu
+              ? RouteNames.login
+              : RouteNames.onboarding,
     );
   }
 

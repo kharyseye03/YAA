@@ -72,7 +72,7 @@ class _CourseDetailsSheetState extends ConsumerState<_CourseDetailsSheet> {
     setState(() { _isSubmitting = true; _error = null; });
 
     try {
-      await ApiService().createLivraison(
+      final mission = await ApiService().createLivraison(
         typeVehicule          : TypeVehicule.moto.code,
         latitudeDepart        : depart.latitude,
         longitudeDepart       : depart.longitude,
@@ -88,15 +88,11 @@ class _CourseDetailsSheetState extends ConsumerState<_CourseDetailsSheet> {
 
       if (!mounted) return;
       setState(() => _isSubmitting = false);
-      Navigator.of(context).pop();          // ferme le sheet
-      // TODO: enchaîner sur la recherche de coursier
-      context.goNamed(RouteNames.home);     // retour à l'accueil
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content         : Text('Demande de livraison envoyée !'),
-          backgroundColor : AppColors.success,
-          behavior        : SnackBarBehavior.floating,
-        ),
+      Navigator.of(context).pop(); // ferme le sheet
+      // Enchaîne sur l'écran de recherche de coursier
+      context.pushReplacementNamed(
+        RouteNames.coursierSearch,
+        extra: mission,
       );
     } catch (e) {
       if (!mounted) return;

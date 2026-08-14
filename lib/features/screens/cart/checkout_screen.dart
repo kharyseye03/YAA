@@ -158,10 +158,23 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           Navigator.of(context).pop();
           context.goNamed(RouteNames.home);
         },
-        onTrackOrder: (commandeId) {
+        onTrackOrder: (commandeId) async {
           Navigator.of(context).pop();
+          if (!mounted) return;
           context.goNamed(RouteNames.home);
-          context.pushNamed(RouteNames.orderDetail, extra: commandeId);
+          // L'écran de détail attend une mission de la liste unifiée :
+          // on retrouve celle qui porte cette commande.
+          try {
+            final missions = await ApiService().getMissions();
+            final match = missions
+                .where((m) => m.commandeStructureId == commandeId)
+                .toList();
+            if (match.isNotEmpty && mounted) {
+              context.pushNamed(RouteNames.orderDetail, extra: match.first);
+            }
+          } catch (e) {
+            debugPrint('⚠️ Suivi commande introuvable : $e');
+          }
         },
       ),
     );

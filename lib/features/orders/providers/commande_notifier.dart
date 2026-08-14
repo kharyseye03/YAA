@@ -1,22 +1,23 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../model/order/commande_detail_model.dart';
-import '../../../model/order/commande_model.dart';
+import '../../../model/order/livraison_course_model.dart';
 import '../../../service/api/api_service.dart';
 
-
 class CommandeState {
-  final bool                  isLoading;
-  final List<CommandeModel>   commandes;
-  final String?               error;
+  final bool                       isLoading;
+  final List<LivraisonCourseModel> missions;
+  final String?                    error;
   // ── Détail ────────────────────────────────────────
+  // Renseigné uniquement pour les LIVRAISON_COMMANDE : les autres
+  // types se suffisent des données de la liste.
   final bool                  isLoadingDetail;
   final CommandeDetailModel?  detail;
   final String?               detailError;
 
   const CommandeState({
     this.isLoading        = false,
-    this.commandes        = const [],
+    this.missions         = const [],
     this.error,
     this.isLoadingDetail  = false,
     this.detail,
@@ -24,19 +25,19 @@ class CommandeState {
   });
 
   CommandeState copyWith({
-    bool?                 isLoading,
-    List<CommandeModel>?  commandes,
-    String?               error,
-    bool                  clearError        = false,
-    bool                  isLoadingDetail   = false,
-    CommandeDetailModel?  detail,
-    bool                  clearDetail       = false,
-    String?               detailError,
-    bool                  clearDetailError  = false,
+    bool?                       isLoading,
+    List<LivraisonCourseModel>? missions,
+    String?                     error,
+    bool                        clearError        = false,
+    bool                        isLoadingDetail   = false,
+    CommandeDetailModel?        detail,
+    bool                        clearDetail       = false,
+    String?                     detailError,
+    bool                        clearDetailError  = false,
   }) {
     return CommandeState(
       isLoading       : isLoading       ?? this.isLoading,
-      commandes       : commandes       ?? this.commandes,
+      missions        : missions        ?? this.missions,
       error           : clearError      ? null : (error ?? this.error),
       isLoadingDetail : isLoadingDetail,
       detail          : clearDetail     ? null : (detail ?? this.detail),
@@ -46,21 +47,28 @@ class CommandeState {
     );
   }
 
-  List<CommandeModel> get enCours   => commandes.where((c) =>  c.isEnCours).toList();
-  List<CommandeModel> get terminees => commandes.where((c) => !c.isEnCours).toList();
+  List<LivraisonCourseModel> get enCours =>
+      missions.where((m) =>  m.isEnCours).toList();
+  List<LivraisonCourseModel> get terminees =>
+      missions.where((m) => !m.isEnCours).toList();
 }
 
 class CommandeNotifier extends StateNotifier<CommandeState> {
   CommandeNotifier() : super(const CommandeState());
 
-
-
   // ── Liste ──────────────────────────────────────────────────
   Future<void> loadCommandes() async {
     state = state.copyWith(isLoading: true, clearError: true);
     try {
-      final commandes = await ApiService().getCommandes();
-      state = state.copyWith(isLoading: false, commandes: commandes);
+      final missions = await ApiService().getMissions();
+      // Le plus récent en premier
+      missions.sort((a, b) {
+        final da = a.createdDate;
+        final db = b.createdDate;
+        if (da == null || db == null) return b.id.compareTo(a.id);
+        return db.compareTo(da);
+      });
+      state = state.copyWith(isLoading: false, missions: missions);
     } catch (e) {
       debugPrint('❌ loadCommandes: $e');
       state = state.copyWith(
@@ -71,14 +79,21 @@ class CommandeNotifier extends StateNotifier<CommandeState> {
   }
 
   // ── Détail ─────────────────────────────────────────────────
-  Future<void> loadDetail(int id) async {
+  /// Ne charge un détail que pour les commandes d'établissement.
+  /// Pour une livraison ou une course, la liste contient déjà tout.
+  Future<void> loadDetail(LivraisonCourseModel mission) async {
+    if (!mission.hasDetail) {
+      state = state.copyWith(clearDetail: true, clearDetailError: true);
+      return;
+    }
     state = state.copyWith(
       isLoadingDetail  : true,
       clearDetail      : true,
       clearDetailError : true,
     );
     try {
-      final detail = await ApiService().getCommandeDetail(id: id);
+      final detail = await ApiService()
+          .getCommandeDetail(id: mission.commandeStructureId!);
       state = state.copyWith(isLoadingDetail: false, detail: detail);
     } catch (e) {
       debugPrint('❌ loadDetail: $e');
@@ -93,9 +108,9 @@ class CommandeNotifier extends StateNotifier<CommandeState> {
   /// on garde l'affichage actuel et on remplace les données à l'arrivée.
   /// Les erreurs sont silencieuses (réseau instable → on réessaiera
   /// au prochain tick).
-  Future<void> refreshDetail(int id) async {
+  Future<void> refreshDetail(int commandeId) async {
     try {
-      final detail = await ApiService().getCommandeDetail(id: id);
+      final detail = await ApiService().getCommandeDetail(id: commandeId);
       state = state.copyWith(detail: detail);
     } catch (e) {
       debugPrint('⚠️ refreshDetail (silencieux): $e');

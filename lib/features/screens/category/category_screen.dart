@@ -6,8 +6,11 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimens.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../features/favoris/providers/favori_notifier.dart';
+import '../../../model/category/categorie_produit.dart';
 import '../home/providers/category_provider.dart';
 import '../home/restaurant_card.dart';
+import 'category_filters.dart';
+import 'category_filters_sheet.dart';
 import 'restaurant_bottom_sheet.dart';
 
 class CategoryScreenArgs {
@@ -30,47 +33,12 @@ class CategoryScreen extends ConsumerStatefulWidget {
 }
 
 class _CategoryScreenState extends ConsumerState<CategoryScreen> {
-  int _activeFilter = 0;
+  CategoryFilters _filtres = const CategoryFilters();
 
-  List<_FilterData> get _filters {
-    switch (widget.args.categoryName.toLowerCase()) {
-      case 'pharmacie':
-        return const [
-          _FilterData(label: 'Filtres', icon: Icons.tune),
-          _FilterData(label: 'Jusqu\'à 30 min', icon: Icons.access_time_outlined),
-          _FilterData(label: 'Médicaments'),
-          _FilterData(label: 'Parapharmacie'),
-          _FilterData(label: 'Bio'),
-        ];
-      case 'supermarché':
-      case 'supermarche':
-        return const [
-          _FilterData(label: 'Filtres', icon: Icons.tune),
-          _FilterData(label: 'Jusqu\'à 30 min', icon: Icons.access_time_outlined),
-          _FilterData(label: 'Épicerie'),
-          _FilterData(label: 'Bio & Naturel'),
-          _FilterData(label: 'Produits locaux'),
-        ];
-      case 'boutique':
-        return const [
-          _FilterData(label: 'Filtres', icon: Icons.tune),
-          _FilterData(label: 'Jusqu\'à 30 min', icon: Icons.access_time_outlined),
-          _FilterData(label: 'Mode'),
-          _FilterData(label: 'Chaussures'),
-          _FilterData(label: 'Électronique'),
-          _FilterData(label: 'Bébé'),
-        ];
-      default:
-        return const [
-          _FilterData(label: 'Filtres', icon: Icons.tune),
-          _FilterData(label: 'Jusqu\'à 30 min', icon: Icons.access_time_outlined),
-          _FilterData(label: 'Burger'),
-          _FilterData(label: 'Africain'),
-          _FilterData(label: 'Pizza'),
-          _FilterData(label: 'Fast-food'),
-        ];
-    }
-  }
+  final _chipsCtrl = ScrollController();
+
+  static const _espaceChips    = 8.0;
+  static const _dureeDefilement = Duration(milliseconds: 350);
 
   @override
   void initState() {
@@ -79,6 +47,12 @@ class _CategoryScreenState extends ConsumerState<CategoryScreen> {
       statusBarColor: Colors.transparent,
       statusBarIconBrightness: Brightness.dark,
     ));
+  }
+
+  @override
+  void dispose() {
+    _chipsCtrl.dispose();
+    super.dispose();
   }
 
   @override
@@ -91,7 +65,10 @@ class _CategoryScreenState extends ConsumerState<CategoryScreen> {
           _buildFilters(),
           const SizedBox(height: AppDimens.md),
           Expanded(
-            child: ref.watch(structuresProvider(widget.args.categoryId)).when(
+            child: ref.watch(structuresFiltreesProvider(StructuresQuery(
+              categorieId : widget.args.categoryId,
+              specialite  : _filtres.categorie?.nom,
+            ))).when(
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (e, _) => Center(
                 child: Text(
@@ -100,40 +77,41 @@ class _CategoryScreenState extends ConsumerState<CategoryScreen> {
                   textAlign: TextAlign.center,
                 ),
               ),
-              data: (structures) => structures.isEmpty
-                  ? Center(
-                      child: Text(
-                        'Aucun établissement pour cette catégorie',
-                        style: AppTextStyles.bodyMedium
-                            .copyWith(color: AppColors.grey500),
-                        textAlign: TextAlign.center,
+              data: (structures) {
+                // Note, temps et tri s'appliquent ici : le backend ne
+                // les gère pas, mais la liste est courte
+                final liste = _filtres.appliquer(structures);
+
+                if (liste.isEmpty) {
+                  return _buildVide(sourceVide: structures.isEmpty);
+                }
+
+                return ListView.separated(
+                  padding: const EdgeInsets.fromLTRB(
+                    AppDimens.screenPadding,
+                    0,
+                    AppDimens.screenPadding,
+                    AppDimens.xxl,
+                  ),
+                  itemCount: liste.length,
+                  separatorBuilder: (_, __) =>
+                      const SizedBox(height: AppDimens.lg),
+                  itemBuilder: (_, i) {
+                    final s = liste[i];
+                    return _FullWidthRestaurantCard(
+                      restaurant: RestaurantData(
+                        name: s.name,
+                        cuisine: s.adresse,
+                        rating: s.nombreEtoile.toDouble(),
+                        deliveryTime: s.tempsLivraison,
+                        imageUrl: s.logoUrl,
                       ),
-                    )
-                  : ListView.separated(
-                      padding: const EdgeInsets.fromLTRB(
-                        AppDimens.screenPadding,
-                        0,
-                        AppDimens.screenPadding,
-                        AppDimens.xxl,
-                      ),
-                      itemCount: structures.length,
-                      separatorBuilder: (_, __) =>
-                          const SizedBox(height: AppDimens.lg),
-                      itemBuilder: (_, i) {
-                        final s = structures[i];
-                        return _FullWidthRestaurantCard(
-                          restaurant: RestaurantData(
-                            name: s.name,
-                            cuisine: s.adresse,
-                            rating: s.nombreEtoile.toDouble(),
-                            deliveryTime: s.tempsLivraison,
-                            imageUrl: s.logoUrl,
-                          ),
-                          structureId: s.id,
-                          categoryName: widget.args.categoryName,
-                        );
-                      },
-                    ),
+                      structureId: s.id,
+                      categoryName: widget.args.categoryName,
+                    );
+                  },
+                );
+              },
             ),
           ),
         ],
@@ -141,54 +119,245 @@ class _CategoryScreenState extends ConsumerState<CategoryScreen> {
     );
   }
 
+  // ── Barre de filtres ────────────────────────────────────────────
+  // Un bouton « Filtres » épinglé à gauche, qui ouvre le panneau
+  // complet, puis les catégories de produits qui défilent.
+
+  TextStyle get _styleChip => AppTextStyles.bodySmall.copyWith(
+        fontSize   : 12,
+        fontWeight : FontWeight.w600,
+      );
+
   Widget _buildFilters() {
+    return ref.watch(filtresCategorieProvider(widget.args.categoryId)).when(
+      // Hauteur réservée pendant le chargement, plutôt qu'un espace
+      // vide qui saute quand les puces arrivent
+      loading : () => const SizedBox(height: 40),
+      // Le bouton reste utile même sans catégories : il porte aussi
+      // la note, le temps de livraison et le tri
+      error   : (_, __) => _buildBarre(const []),
+      data    : _buildBarre,
+    );
+  }
+
+  Widget _buildBarre(List<CategorieProduit> categories) {
     return SizedBox(
       height: 40,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: AppDimens.screenPadding),
-        itemCount: _filters.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 8),
-        itemBuilder: (_, i) {
-          final filter = _filters[i];
-          final isActive = i == _activeFilter;
-          return GestureDetector(
-            onTap: () => setState(() => _activeFilter = i),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              decoration: BoxDecoration(
-                color: isActive ? AppColors.dark : Colors.white,
-                borderRadius: BorderRadius.circular(AppDimens.radiusFull),
-                border: Border.all(
-                  color: isActive ? AppColors.dark : AppColors.grey300,
-                  width: 1,
-                ),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (filter.icon != null) ...[
-                    Icon(
-                      filter.icon,
-                      size: 14,
-                      color: isActive ? Colors.white : AppColors.dark,
-                    ),
-                    const SizedBox(width: 5),
-                  ],
-                  Text(
-                    filter.label,
-                    style: AppTextStyles.bodySmall.copyWith(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: isActive ? Colors.white : AppColors.dark,
-                    ),
-                  ),
-                ],
+      child: Row(
+        children: [
+          const SizedBox(width: AppDimens.screenPadding),
+          _buildBoutonFiltres(categories),
+          if (categories.isEmpty)
+            const Spacer()
+          else ...[
+            const SizedBox(width: AppDimens.md),
+            Container(width: 1, height: 22, color: AppColors.grey300),
+            const SizedBox(width: AppDimens.md),
+            Expanded(child: _buildChipsCategories(categories)),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBoutonFiltres(List<CategorieProduit> categories) {
+    final nb    = _filtres.nbCriteres;
+    final actif = nb > 0;
+
+    return GestureDetector(
+      onTap: () => _ouvrirPanneau(categories),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: actif ? AppColors.dark : Colors.white,
+          borderRadius: BorderRadius.circular(AppDimens.radiusFull),
+          border: Border.all(color: actif ? AppColors.dark : AppColors.grey300),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.tune_rounded,
+              size  : 15,
+              color : actif ? Colors.white : AppColors.dark,
+            ),
+            const SizedBox(width: 6),
+            Text(
+              'Filtres',
+              style: _styleChip.copyWith(
+                color: actif ? Colors.white : AppColors.dark,
               ),
             ),
-          );
-        },
+            // Pastille : combien de critères sont posés dans le panneau
+            if (actif) ...[
+              const SizedBox(width: 6),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                decoration: BoxDecoration(
+                  color: AppColors.secondary,
+                  borderRadius: BorderRadius.circular(AppDimens.radiusFull),
+                ),
+                child: Text(
+                  '$nb',
+                  style: AppTextStyles.bodySmall.copyWith(
+                    fontSize   : 11,
+                    fontWeight : FontWeight.w700,
+                    color      : Colors.white,
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildChipsCategories(List<CategorieProduit> categories) {
+    return ListView.separated(
+      controller      : _chipsCtrl,
+      scrollDirection : Axis.horizontal,
+      padding         : const EdgeInsets.only(right: AppDimens.screenPadding),
+      // +1 pour la puce « Tous » en tête
+      itemCount        : categories.length + 1,
+      separatorBuilder : (_, __) => const SizedBox(width: _espaceChips),
+      itemBuilder: (_, i) {
+        final estTous  = i == 0;
+        final filtre   = estTous ? null : categories[i - 1];
+        final isActive = estTous
+            ? _filtres.categorie == null
+            : _filtres.categorie?.id == filtre!.id;
+
+        return GestureDetector(
+          onTap: () => setState(
+            () => _filtres = estTous
+                ? _filtres.copyWith(effacerCategorie: true)
+                : _filtres.copyWith(categorie: filtre),
+          ),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            decoration: BoxDecoration(
+              color: isActive ? AppColors.dark : Colors.white,
+              borderRadius: BorderRadius.circular(AppDimens.radiusFull),
+              border: Border.all(
+                color: isActive ? AppColors.dark : AppColors.grey300,
+              ),
+            ),
+            child: Center(
+              child: Text(
+                estTous ? 'Tous' : filtre!.nom,
+                style: _styleChip.copyWith(
+                  color: isActive ? Colors.white : AppColors.dark,
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _ouvrirPanneau(List<CategorieProduit> categories) async {
+    final resultat = await showCategoryFiltersSheet(
+      context,
+      filtres    : _filtres,
+      categories : categories,
+    );
+    // null = fermeture sans valider, on garde les critères en cours
+    if (resultat == null || !mounted) return;
+
+    setState(() => _filtres = resultat);
+    _revelerCategorie(categories);
+  }
+
+  /// Amène la puce de la catégorie choisie dans le champ de vision.
+  ///
+  /// Sans ça, choisir « Sandwichs » dans le panneau ne montrerait
+  /// aucune puce active à l'écran, la barre restant en début de liste.
+  void _revelerCategorie(List<CategorieProduit> categories) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_chipsCtrl.hasClients) return;
+
+      final choisie = _filtres.categorie;
+      if (choisie == null) {
+        _chipsCtrl.animateTo(0,
+            duration: _dureeDefilement, curve: Curves.easeOut);
+        return;
+      }
+
+      // La puce visée est peut-être hors écran, donc non construite :
+      // on calcule sa position en mesurant les libellés qui la
+      // précèdent plutôt qu'en cherchant son contexte.
+      var offset = _largeurChip('Tous') + _espaceChips;
+      for (final c in categories) {
+        if (c.id == choisie.id) break;
+        offset += _largeurChip(c.nom) + _espaceChips;
+      }
+
+      _chipsCtrl.animateTo(
+        offset.clamp(0.0, _chipsCtrl.position.maxScrollExtent),
+        duration : _dureeDefilement,
+        curve    : Curves.easeOut,
+      );
+    });
+  }
+
+  double _largeurChip(String libelle) {
+    final peintre = TextPainter(
+      text          : TextSpan(text: libelle, style: _styleChip),
+      textDirection : TextDirection.ltr,
+      maxLines      : 1,
+    )..layout();
+    // + les 14 px de padding de chaque côté
+    return peintre.width + 28;
+  }
+
+  // ── État vide ───────────────────────────────────────────────────
+  Widget _buildVide({required bool sourceVide}) {
+    // Deux causes distinctes : le serveur n'a rien renvoyé, ou nos
+    // critères locaux ont tout écarté
+    final message = sourceVide
+        ? (_filtres.categorie == null
+            ? 'Aucun établissement pour cette catégorie'
+            : 'Aucun établissement pour « ${_filtres.categorie!.nom} »')
+        : 'Aucun établissement ne correspond à vos critères';
+
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+            horizontal: AppDimens.screenPadding),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.storefront_outlined,
+                size: 44, color: AppColors.grey400),
+            const SizedBox(height: AppDimens.md),
+            Text(
+              message,
+              style:
+                  AppTextStyles.bodyMedium.copyWith(color: AppColors.grey500),
+              textAlign: TextAlign.center,
+            ),
+            if (!_filtres.estVierge) ...[
+              const SizedBox(height: AppDimens.sm),
+              TextButton(
+                onPressed: () =>
+                    setState(() => _filtres = const CategoryFilters()),
+                child: Text(
+                  'Réinitialiser les filtres',
+                  style: AppTextStyles.bodySmall.copyWith(
+                    fontWeight : FontWeight.w600,
+                    color      : AppColors.secondary,
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }
@@ -233,12 +402,6 @@ class _CategoryScreenState extends ConsumerState<CategoryScreen> {
       ),
     );
   }
-}
-
-class _FilterData {
-  final String label;
-  final IconData? icon;
-  const _FilterData({required this.label, this.icon});
 }
 
 class _FullWidthRestaurantCard extends ConsumerWidget {

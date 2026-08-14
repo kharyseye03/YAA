@@ -4,13 +4,19 @@ class ApiConfig {
   // ⚠️ Doit être identique entre le login et le refresh
   static const String clientId = 'your-client-id';
 
-  static const String iamBaseUrl = 'https://your-iam-server.com';
-  static const String iamBaseUrltelephone = 'https://your-iam-server.com';
-  static const String loginEndpoint = '/realms/your-realm/protocol/openid-connect/token';
+  // ── Environnement ─────────────────────────────────────────
+  // Un seul bloc actif à la fois : commenter l'autre.
 
-  // Backend
+  // Production
+  static const String iamBaseUrl      = 'https://your-iam-server.com';
   static const String _backendBaseUrl = 'https://your-api-server.com';
-  static const String _backendBaseUrltelephone = 'https://your-api-server.com';
+
+  // Local (réseau interne)
+  // ⚠️ En http : nécessite usesCleartextTraffic dans AndroidManifest.
+  // static const String iamBaseUrl      = 'http://192.168.x.x:8080';
+  // static const String _backendBaseUrl = 'http://192.168.x.x:8081';
+
+  static const String loginEndpoint = '/realms/your-realm/protocol/openid-connect/token';
   static const String baseUrl = '$_backendBaseUrl/api/v1';
 
 
