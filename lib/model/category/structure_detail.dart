@@ -15,12 +15,14 @@ class Produit {
     required this.categorieProduitId,
   });
 
+  // Parsing tolérant : un champ manquant sur un seul produit ne doit
+  // pas faire échouer toute la liste
   factory Produit.fromJson(Map<String, dynamic> json) => Produit(
-        id: json['id'] as int,
-        nom: json['nom'] as String,
-        image: json['image'] as String,
-        prix: (json['prix'] as num).toDouble(),
-        categorieProduitId: json['categorieProduitId'] as int,
+        id: (json['id'] as num).toInt(),
+        nom: json['nom'] as String? ?? '',
+        image: json['image'] as String? ?? '',
+        prix: (json['prix'] as num?)?.toDouble() ?? 0,
+        categorieProduitId: (json['categorieProduitId'] as num?)?.toInt() ?? 0,
       );
 
   String get imageUrl => ApiConfig.getImageUrl(image);

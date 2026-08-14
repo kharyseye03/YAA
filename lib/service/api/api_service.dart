@@ -21,6 +21,7 @@ import '../../model/category/structure_detail.dart';
 import '../../model/course/estimation_model.dart';
 import '../auth/token_storage.dart';
 import '../../model/user/user_profile.dart';
+import 'api_logger.dart';
 
 class ApiService {
   // ── Singleton ──────────────────────────────────────
@@ -126,8 +127,8 @@ class ApiService {
     try {
       final url = Uri.parse(ApiConfig.getUrl(endpoint));
 
-      print('🌐 POST → $url');
-      print('📦 Body → $body');
+      ApiLogger.requete('POST', url, corps: body);
+      final chrono = Stopwatch()..start();
 
       final response = await _send(
         auth    : auth,
@@ -138,8 +139,8 @@ class ApiService {
         ),
       );
 
-      print('📡 Status → ${response.statusCode}');
-      print('📬 Réponse → ${response.body}');
+      ApiLogger.reponse(
+          'POST', url, response.statusCode, response.body, chrono.elapsed);
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         if (response.body.isEmpty) return {};
@@ -174,8 +175,8 @@ class ApiService {
     try {
       final url = Uri.parse(ApiConfig.getUrl(endpoint));
 
-      print('🌐 PUT → $url');
-      print('📦 Body → $body');
+      ApiLogger.requete('PUT', url, corps: body);
+      final chrono = Stopwatch()..start();
 
       final response = await _send(
         auth    : auth,
@@ -186,8 +187,8 @@ class ApiService {
         ),
       );
 
-      print('📡 Status → ${response.statusCode}');
-      print('📬 Réponse → ${response.body}');
+      ApiLogger.reponse(
+          'PUT', url, response.statusCode, response.body, chrono.elapsed);
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         if (response.body.isEmpty) return {};
@@ -225,15 +226,16 @@ class ApiService {
         uri = uri.replace(queryParameters: queryParams);
       }
 
-      print('🌐 DELETE → $uri');
+      ApiLogger.requete('DELETE', uri);
+      final chrono = Stopwatch()..start();
 
       final response = await _send(
         auth    : auth,
         request : (headers) => http.delete(uri, headers: headers),
       );
 
-      print('📡 DELETE Status → ${response.statusCode}');
-      print('📬 DELETE Réponse → ${response.body}');
+      ApiLogger.reponse(
+          'DELETE', uri, response.statusCode, response.body, chrono.elapsed);
 
       if (response.statusCode == 200 ||
           response.statusCode == 201 ||
@@ -270,13 +272,16 @@ class ApiService {
         uri = uri.replace(queryParameters: queryParams);
       }
 
+      ApiLogger.requete('GET', uri);
+      final chrono = Stopwatch()..start();
+
       final response = await _send(
         auth    : auth,
         request : (headers) => http.get(uri, headers: headers),
       );
 
-      print('📡 GET Status → ${response.statusCode}');
-      print('📬 GET Réponse → ${response.body}');
+      ApiLogger.reponse(
+          'GET', uri, response.statusCode, response.body, chrono.elapsed);
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         // Corps vide en succès = réponse valide (ex. panier vide)
@@ -313,13 +318,16 @@ class ApiService {
       if (queryParams != null) {
         uri = uri.replace(queryParameters: queryParams);
       }
+      ApiLogger.requete('GET', uri);
+      final chrono = Stopwatch()..start();
+
       final response = await _send(
         auth    : auth,
         request : (headers) => http.get(uri, headers: headers),
       );
 
-      print('📡 GET Status → ${response.statusCode}');
-      print('📬 GET Réponse → ${response.body}');
+      ApiLogger.reponse(
+          'GET', uri, response.statusCode, response.body, chrono.elapsed);
 
       if (response.body.isEmpty) {
         throw Exception('Erreur ${response.statusCode} — réponse vide du serveur.');
@@ -842,24 +850,85 @@ class ApiService {
     }
   }
 
+  /// Filtres de l'écran Catégorie : les catégories de produits
+  /// proposées au sein d'une catégorie d'établissement.
+  /// La réponse est enveloppée dans `data`.
+  Future<List<CategorieProduit>> getFiltresCategorie(
+      int categorieStructureId) async {
+    try {
+      final response = await _get(
+        ApiConfig.categoriesProduitParStructureUrl(categorieStructureId),
+      );
+      final list = response['data'] as List<dynamic>? ?? [];
+      return list
+          .map((e) => CategorieProduit.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      print('❌ Erreur getFiltresCategorie: $e');
+      rethrow;
+    }
+  }
+
+  /// Produits d'une structure.
+  ///
+  /// Tous les critères sont optionnels et cumulables — ils servent
+  /// aussi bien à remplir les sections de la fiche établissement
+  /// (`categorieProduitId`) qu'à la recherche dans son catalogue.
   Future<List<Produit>> getProduitsByStructure(
     int structureId, {
     int? categorieProduitId,
+    String? nom,
+    String? marque,
+    String? unite,
+    bool? disponible,
+    bool? enPromotion,
+    bool? necessiteOrdonnance,
+    num? prixMin,
+    num? prixMax,
   }) async {
     try {
       final params = <String, String>{
         'idStructure': structureId.toString(),
       };
-      if (categorieProduitId != null) {
-        params['categorieProduitId'] = categorieProduitId.toString();
+      // Un critère nul — ou une chaîne vide — ne doit pas partir dans
+      // l'URL : le backend le prendrait pour un filtre à part entière
+      void ajouter(String cle, Object? valeur) {
+        if (valeur == null) return;
+        if (valeur is String && valeur.trim().isEmpty) return;
+        params[cle] = valeur is String ? valeur.trim() : valeur.toString();
       }
+
+      ajouter('categorieProduitId', categorieProduitId);
+      ajouter('nom', nom);
+      ajouter('marque', marque);
+      ajouter('unite', unite);
+      ajouter('disponible', disponible);
+      ajouter('enPromotion', enPromotion);
+      ajouter('necessiteOrdonnance', necessiteOrdonnance);
+      ajouter('prixMin', prixMin);
+      ajouter('prixMax', prixMax);
+
       final list = await _getList(
         ApiConfig.produitsByStructureEndpoint,
         queryParams: params,
       );
+
+      // Cas observé sur la structure 17 : /structures/{id} expose des
+      // produits que /produits/structure n'a jamais renvoyés. Les
+      // produits concernés ont tous stock = 0 alors que
+      // disponible = true — l'écran se retrouve vide sans erreur.
+      if (list.isEmpty && params.length == 1) {
+        ApiLogger.vide(
+          'getProduitsByStructure(structure $structureId)',
+          'catalogue vide sans aucun filtre. Vérifier /structures/'
+          '$structureId : si des produits y figurent, le backend les '
+          'écarte ici (piste : stock = 0).',
+        );
+      }
+
       return list.map((e) => Produit.fromJson(e as Map<String, dynamic>)).toList();
     } catch (e) {
-      print('❌ Erreur getProduitsByStructure: $e');
+      ApiLogger.erreur('getProduitsByStructure(structure $structureId)', e);
       rethrow;
     }
   }
