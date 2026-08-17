@@ -160,21 +160,14 @@ final filtresCategorieProvider =
   return uniques;
 });
 
-final structureDetailProvider =
-    FutureProvider.family<StructureDetail, int>((ref, structureId) {
-  return ApiService().getStructureDetail(structureId);
-});
-
 final produitDetailProvider =
     FutureProvider.family<ProduitDetail, int>((ref, produitId) {
   return ApiService().getProduitDetail(produitId);
 });
 
-final categorieProduitProvider =
-    FutureProvider.family<List<CategorieProduit>, int>((ref, structureId) {
-  return ApiService().getCategorieProduits(structureId);
-});
-
+/// Catalogue d'une structure. Sans autre critère que `structureId`,
+/// renvoie tout — la fiche établissement s'en sert pour construire
+/// ses onglets. Avec les autres critères, c'est la recherche.
 final produitsByStructureProvider =
     FutureProvider.family<List<Produit>, ProduitQueryParams>((ref, params) {
   return ApiService().getProduitsByStructure(

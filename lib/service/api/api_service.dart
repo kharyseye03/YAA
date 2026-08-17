@@ -808,48 +808,6 @@ class ApiService {
     }
   }
 
-  Future<StructureDetail> getStructureDetail(int id) async {
-    try {
-      final uri = Uri.parse(ApiConfig.structureDetailUrl(id));
-      final response = await http
-          .get(uri, headers: ApiConfig.headers)
-          .timeout(const Duration(seconds: ApiConfig.connectionTimeout),
-              onTimeout: () => throw TimeoutException('Le serveur ne répond pas.'));
-
-      print('📡 GET Status → ${response.statusCode}');
-      print('📬 GET Réponse → ${response.body}');
-
-      if (response.body.isEmpty) throw Exception('Réponse vide du serveur.');
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        return StructureDetail.fromJson(
-            json.decode(response.body) as Map<String, dynamic>);
-      }
-      final data = json.decode(response.body) as Map<String, dynamic>;
-      throw Exception(data['message'] as String? ?? 'Erreur ${response.statusCode}');
-    } on SocketException {
-      throw Exception('Pas de connexion internet.');
-    } on TimeoutException catch (e) {
-      throw Exception(e.message);
-    } on FormatException {
-      throw Exception('Réponse invalide du serveur.');
-    } catch (e) {
-      print('❌ Erreur getStructureDetail: $e');
-      rethrow;
-    }
-  }
-
-  Future<List<CategorieProduit>> getCategorieProduits(int structureId) async {
-    try {
-      final list = await _getList('${ApiConfig.categorieProduitEndpoint}/$structureId');
-      return list
-          .map((e) => CategorieProduit.fromJson(e as Map<String, dynamic>))
-          .toList();
-    } catch (e) {
-      print('❌ Erreur getCategorieProduits: $e');
-      rethrow;
-    }
-  }
-
   /// Filtres de l'écran Catégorie : les catégories de produits
   /// proposées au sein d'une catégorie d'établissement.
   /// La réponse est enveloppée dans `data`.

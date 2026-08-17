@@ -36,9 +36,12 @@ class ApiConfig {
   // ── Endpoints Catégories ──────────────────────────
   static const String categoriesEndpoint          = '/categorie-structures';
   static const String structuresEndpoint          = '/structures';
-  static const String categorieProduitEndpoint    = '/categories-produit/search';
+  /// Catégories de produits d'une catégorie d'établissement —
+  /// alimente les filtres de l'écran Catégorie
+  static String categoriesProduitParStructureUrl(int categorieStructureId) =>
+      '/categories-produit/categorie-structure/$categorieStructureId'
+      '/categories-produit';
   static const String produitsByStructureEndpoint = '/produits/structure';
-  static String structureDetailUrl(int id) => '$baseUrl/structures/$id';
   static String produitDetailUrl(int id)   => '$baseUrl/produits/$id';
 
   // ── Endpoints Favoris ────────────────────────────
@@ -55,9 +58,19 @@ class ApiConfig {
   static const String courseEstimationEndpoint = '/livraisons-courses/estimation/course';
   static const String courseEndpoint           = '/livraisons-courses/courses';
 
+  // Notation du coursier après une mission terminée
+  static const String notationCoursierEndpoint = '/notations-coursiers';
+
   // ── Endpoints Commandes ───────────────────────────
-  static const String commandesClientEndpoint       = '/commandes-clients';
-  static const String commandeClientDetailEndpoint  = '/commandes-clients-livreurs/client/detail';
+  // Liste unifiée affichée dans l'écran Commandes : livraisons de
+  // colis, courses et commandes d'établissement, tous types confondus.
+  static const String missionsClientEndpoint =
+      '/livraisons-courses/client/livraisons-courses';
+  // Détail enrichi — uniquement pour les LIVRAISON_COMMANDE
+  static const String commandeClientDetailEndpoint = '/commandes-clients/detail';
+  // Commandes d'établissement seules — utilisé par le suivi
+  // post-paiement, qui guette les statuts propres à la commande
+  static const String commandesClientEndpoint = '/commandes-clients';
 
   // ── Endpoints Transaction ─────────────────────────
   static const String transactionEndpoint     = '/transactions';
