@@ -12,6 +12,7 @@ import '../../features/auth/verification_screen.dart';
 import '../../features/auth/providers/auth_notifier.dart';
 import '../../features/screens/cart/cart_screen.dart';
 import '../../features/screens/cart/checkout_screen.dart';
+import '../../features/screens/cart/reception_mode_sheet.dart';
 import '../../features/screens/home/home_screen.dart';
 import '../../features/screens/home/notifications.dart';
 import '../../features/screens/course/course_screen.dart';
@@ -229,7 +230,8 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: RoutePaths.checkout,
         name: RouteNames.checkout,
         builder: (context, state) => CheckoutScreen(
-          modeReception: state.extra as String? ?? 'LIVRAISON',
+          choix: state.extra as ChoixReception? ??
+              const ChoixReception(mode: ModeReception.livraison),
         ),
       ),
       // ── Orders ─────────────────────────────────────────────

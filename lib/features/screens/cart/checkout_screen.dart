@@ -17,14 +17,16 @@ import '../../../service/api/api_service.dart';
 import '../../../shared/widgets/yaa_button.dart';
 import '../../../shared/widgets/yaa_text_field.dart';
 import 'delivery_address_sheet.dart';
+import 'reception_mode_sheet.dart';
 
 class CheckoutScreen extends ConsumerStatefulWidget {
-  const CheckoutScreen({super.key, this.modeReception = 'LIVRAISON'});
+  const CheckoutScreen({super.key, required this.choix});
 
-  /// 'LIVRAISON' ou 'RETRAIT_CLIENT' — transmis depuis le panier
-  final String modeReception;
+  /// Mode de réception et, en livraison, le véhicule retenu —
+  /// choisis dans le sheet du panier
+  final ChoixReception choix;
 
-  bool get isRetrait => modeReception == 'RETRAIT_CLIENT';
+  bool get isRetrait => choix.mode == ModeReception.retrait;
 
   @override
   ConsumerState<CheckoutScreen> createState() => _CheckoutScreenState();
@@ -82,7 +84,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       // connaît déjà l'adresse du client et celle de la structure.
       final transaction = await ApiService().createTransaction(
         panierId              : cart.id,
-        modeReceptionCommande : widget.modeReception,
+        modeReceptionCommande : widget.choix.mode.code,
+        typeVehicule          : widget.choix.typeVehicule,
         adresseLivraison      : _addressController.text.trim(),
         telephoneClient       : _phoneController.text.trim(),
         latitude              : latitude,
@@ -514,7 +517,12 @@ class _PaymentSheetState extends State<_PaymentSheet> {
   bool    _isPaying      = false;
   String? _error;
 
+  // Seul le paiement en espèces est opérationnel. Les opérateurs
+  // mobiles restent visibles mais désactivés : les masquer donnerait
+  // l'impression qu'ils n'arriveront jamais.
   static const _methods = [
+    _PaymentMethod('Espèces', 'ESPECES', null,
+        Color(0xFFE8F8EF), Color(0xFF27AE60), disponible: true),
     _PaymentMethod('Orange Money', 'ORANGE_MONEY', 'assets/images/om.webp',
         Color(0xFFFFF0E6), Color(0xFFFF7900)),
     _PaymentMethod('Wave',         'WAVE',         'assets/images/wave2.webp',
@@ -590,39 +598,47 @@ class _PaymentSheetState extends State<_PaymentSheet> {
           ...List.generate(_methods.length, (i) {
             final m      = _methods[i];
             final active = i == _selectedIndex;
-            return Column(
-              children: [
-                GestureDetector(
-                  onTap    : () => setState(() => _selectedIndex = i),
-                  behavior : HitTestBehavior.opaque,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    child: Row(
-                      children: [
-                        // Logo
-                        Container(
-                          width  : 48,
-                          height : 48,
-                          decoration: BoxDecoration(
-                            color        : m.bgColor,
-                            borderRadius : BorderRadius.circular(12),
-                          ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
-                            child: Image.asset(
-                              m.imagePath,
+            final ouvert = m.disponible;
+
+            // Un moyen indisponible reste lisible mais éteint :
+            // grisé, sans radio, et signalé « Bientôt ».
+            final ligne = Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              child: Row(
+                children: [
+                  // Logo
+                  Container(
+                    width  : 48,
+                    height : 48,
+                    decoration: BoxDecoration(
+                      color        : ouvert ? m.bgColor : AppColors.grey100,
+                      borderRadius : BorderRadius.circular(12),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: m.imagePath == null
+                          ? Icon(Icons.payments_outlined,
+                              color: ouvert ? m.accentColor : AppColors.grey400,
+                              size: 24)
+                          : Image.asset(
+                              m.imagePath!,
                               fit: BoxFit.contain,
                               errorBuilder: (_, __, ___) => Icon(
                                 Icons.payment,
-                                color: m.accentColor,
+                                color: ouvert
+                                    ? m.accentColor
+                                    : AppColors.grey400,
                                 size: 24,
                               ),
                             ),
-                          ),
-                        ),
-                        const SizedBox(width: 14),
-                        // Nom
-                        Expanded(
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  // Nom
+                  Expanded(
+                    child: Row(
+                      children: [
+                        Flexible(
                           child: Text(
                             m.name,
                             style: AppTextStyles.labelMedium.copyWith(
@@ -630,27 +646,61 @@ class _PaymentSheetState extends State<_PaymentSheet> {
                                   ? FontWeight.w700
                                   : FontWeight.w500,
                               fontSize   : 14,
-                              color      : AppColors.dark,
+                              color      : ouvert
+                                  ? AppColors.dark
+                                  : AppColors.grey400,
                             ),
                           ),
                         ),
-                        // Radio
-                        AnimatedContainer(
-                          duration  : const Duration(milliseconds: 200),
-                          width     : 22,
-                          height    : 22,
-                          decoration: BoxDecoration(
-                            shape  : BoxShape.circle,
-                            border : Border.all(
-                              color : active ? AppColors.dark : AppColors.grey300,
-                              width : active ? 6 : 1.5,
+                        if (!ouvert) ...[
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color        : AppColors.grey100,
+                              borderRadius : BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              'Bientôt',
+                              style: AppTextStyles.caption.copyWith(
+                                color      : AppColors.grey500,
+                                fontWeight : FontWeight.w600,
+                              ),
                             ),
                           ),
-                        ),
+                        ],
                       ],
                     ),
                   ),
-                ),
+                  // Radio — masqué sur un moyen indisponible
+                  if (ouvert)
+                    AnimatedContainer(
+                      duration  : const Duration(milliseconds: 200),
+                      width     : 22,
+                      height    : 22,
+                      decoration: BoxDecoration(
+                        shape  : BoxShape.circle,
+                        border : Border.all(
+                          color : active ? AppColors.dark : AppColors.grey300,
+                          width : active ? 6 : 1.5,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            );
+
+            return Column(
+              children: [
+                if (ouvert)
+                  GestureDetector(
+                    onTap    : () => setState(() => _selectedIndex = i),
+                    behavior : HitTestBehavior.opaque,
+                    child    : ligne,
+                  )
+                else
+                  Opacity(opacity: 0.55, child: ligne),
                 if (i < _methods.length - 1)
                   const Divider(height: 1, color: AppColors.grey200),
               ],
@@ -693,12 +743,24 @@ class _PaymentSheetState extends State<_PaymentSheet> {
 // ── Modèle de méthode de paiement ────────────────────────────
 class _PaymentMethod {
   const _PaymentMethod(
-      this.name, this.code, this.imagePath, this.bgColor, this.accentColor);
+    this.name,
+    this.code,
+    this.imagePath,
+    this.bgColor,
+    this.accentColor, {
+    this.disponible = false,
+  });
+
   final String name;
   final String code;
-  final String imagePath;
+
+  /// Null pour les moyens sans logo — on retombe sur une icône
+  final String? imagePath;
   final Color  bgColor;
   final Color  accentColor;
+
+  /// Utilisable dès maintenant. Les autres sont affichés grisés.
+  final bool disponible;
 }
 
 // ── Bottom sheet de suivi (post-paiement) ────────────────────

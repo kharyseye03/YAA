@@ -45,6 +45,22 @@ class EstimationModel {
   /// Prix formaté : "2 500 F"
   String get prixLabel => '${fraisLivraison.toStringAsFixed(0)} F';
 
+  /// Prix avec la devise renvoyée par le serveur : "2 500 FCFA".
+  /// On affiche celle qu'il envoie plutôt qu'un symbole codé en dur —
+  /// c'est aussi ce qui rend visibles ses incohérences.
+  String get prixDevise => '${formaterMontant(fraisLivraison)} $devise';
+
   /// Métadonnées : "6.9 km · 16 mins"
   String get metaLabel => '$distanceText · $dureeText';
+}
+
+/// Sépare les milliers par une espace insécable : 2500 → "2 500"
+String formaterMontant(double montant) {
+  final entier = montant.toStringAsFixed(0);
+  final tampon = StringBuffer();
+  for (var i = 0; i < entier.length; i++) {
+    if (i > 0 && (entier.length - i) % 3 == 0) tampon.write(' ');
+    tampon.write(entier[i]);
+  }
+  return tampon.toString();
 }

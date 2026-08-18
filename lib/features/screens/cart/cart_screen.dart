@@ -15,6 +15,7 @@ import '../../../model/cart/cart_structure_model.dart';
 import '../../../shared/widgets/yaa_button.dart';
 import '../../../shared/widgets/yaa_text_field.dart';
 import 'delivery_address_sheet.dart';
+import 'reception_mode_sheet.dart';
 
 class CartScreen extends ConsumerStatefulWidget {
   const CartScreen({super.key, this.onAddMore});
@@ -61,18 +62,22 @@ class _CartScreenState extends ConsumerState<CartScreen> {
     final cart = ref.read(cartProvider).cart;
     if (cart == null || cart.lignes.isEmpty) return;
 
+    // Coordonnées d'arrivée : l'adresse choisie pour cette commande,
+    // sinon celle du profil. Le sheet en a besoin dès son ouverture
+    // pour précharger les tarifs.
+    final livraison = ref.read(deliveryAddressProvider);
+    final profil    = ref.read(userProvider).profile;
+
     // La question est posée à chaque commande : livraison ou retrait.
-    showModalBottomSheet(
-      context            : context,
-      isScrollControlled : true,
-      backgroundColor    : Colors.transparent,
-      builder            : (_) => _ReceptionModeSheet(
-        lignes : cart.lignes,
-        onConfirm: (mode) {
-          Navigator.of(context).pop();
-          context.pushNamed(RouteNames.checkout, extra: mode.code);
-        },
-      ),
+    showReceptionModeSheet(
+      context,
+      lignes          : cart.lignes,
+      latitudeClient  : livraison?.latitude  ?? profil?.latitude,
+      longitudeClient : livraison?.longitude ?? profil?.longitude,
+      onConfirm: (choix) {
+        Navigator.of(context).pop();
+        context.pushNamed(RouteNames.checkout, extra: choix);
+      },
     );
   }
 
@@ -558,248 +563,6 @@ class _CartItemState extends State<_CartItem> {
         child  : const Icon(Icons.fastfood_outlined,
             color: AppColors.grey400, size: 24),
       );
-}
-
-// ── Bottom sheet choix du mode de réception ──────────────────
-/// Comment le client récupère sa commande. Le regroupement des
-/// livraisons (GROUPAGE/INDIVIDUEL) n'est plus proposé : il relève
-/// de la logistique interne, pas d'un choix client.
-enum ModeReception {
-  livraison('LIVRAISON'),
-  retrait('RETRAIT_CLIENT');
-
-  const ModeReception(this.code);
-  final String code;
-}
-
-class _ReceptionModeSheet extends StatefulWidget {
-  const _ReceptionModeSheet({
-    required this.lignes,
-    required this.onConfirm,
-  });
-
-  final List<CartStructureModel>    lignes;
-  final ValueChanged<ModeReception> onConfirm;
-
-  @override
-  State<_ReceptionModeSheet> createState() => _ReceptionModeSheetState();
-}
-
-class _ReceptionModeSheetState extends State<_ReceptionModeSheet> {
-  ModeReception _selected = ModeReception.livraison;
-
-  @override
-  Widget build(BuildContext context) {
-    final bottomPad = MediaQuery.of(context).padding.bottom;
-    final multi     = widget.lignes.length > 1;
-
-    return Container(
-      decoration: const BoxDecoration(
-        color        : Colors.white,
-        borderRadius : BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      padding: EdgeInsets.fromLTRB(
-          AppDimens.screenPadding, 0,
-          AppDimens.screenPadding, bottomPad + 16),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // ── Poignée ────────────────────────────────────────
-          const SizedBox(height: 12),
-          Container(
-            width: 40, height: 4,
-            decoration: BoxDecoration(
-              color        : AppColors.grey300,
-              borderRadius : BorderRadius.circular(2),
-            ),
-          ),
-          const SizedBox(height: 20),
-
-          // ── Titre ──────────────────────────────────────────
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Text(
-              'Comment récupérer votre commande ?',
-              style: AppTextStyles.h3.copyWith(
-                fontWeight : FontWeight.w800,
-                color      : AppColors.dark,
-              ),
-            ),
-          ),
-
-          const SizedBox(height: 20),
-
-          // ── Option : Livraison ─────────────────────────────
-          _ModeCard(
-            selected    : _selected == ModeReception.livraison,
-            icon        : Icons.local_shipping_outlined,
-            title       : 'Me faire livrer',
-            description : 'Un livreur vous apporte votre commande '
-                'à l\'adresse de votre choix.',
-            onTap       : () =>
-                setState(() => _selected = ModeReception.livraison),
-          ),
-
-          const SizedBox(height: 12),
-
-          // ── Option : Retrait sur place ─────────────────────
-          _ModeCard(
-            selected    : _selected == ModeReception.retrait,
-            icon        : Icons.storefront_outlined,
-            title       : 'Retrait sur place',
-            description : multi
-                ? 'Vous passez récupérer vos commandes dans les '
-                    '${widget.lignes.length} établissements.'
-                : 'Vous passez récupérer votre commande chez '
-                    '${widget.lignes.first.nomStructure}.',
-            badge       : multi ? '${widget.lignes.length} points' : null,
-            onTap       : () =>
-                setState(() => _selected = ModeReception.retrait),
-          ),
-
-          const SizedBox(height: 24),
-
-          // ── Bouton confirmer ────────────────────────────────
-          YaaButton(
-            label           : 'Confirmer et commander',
-            onPressed       : () => widget.onConfirm(_selected),
-            icon            : Icons.arrow_forward,
-            backgroundColor : AppColors.secondary,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ── Carte option de mode ──────────────────────────────────────
-class _ModeCard extends StatelessWidget {
-  const _ModeCard({
-    required this.selected,
-    required this.icon,
-    required this.title,
-    required this.description,
-    required this.onTap,
-    this.badge,
-  });
-
-  final bool     selected;
-  final IconData icon;
-  final String   title;
-  final String   description;
-  final String?  badge;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap    : onTap,
-      behavior : HitTestBehavior.opaque,
-      child: AnimatedContainer(
-        duration  : const Duration(milliseconds: 200),
-        padding   : const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color        : selected
-              ? AppColors.secondary.withValues(alpha: 0.06)
-              : Colors.white,
-          borderRadius : BorderRadius.circular(14),
-          border       : Border.all(
-            color : selected ? AppColors.secondary : AppColors.grey200,
-            width : selected ? 2 : 1,
-          ),
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Icône
-            Container(
-              width  : 42,
-              height : 42,
-              decoration: BoxDecoration(
-                color        : selected
-                    ? AppColors.secondary.withValues(alpha: 0.12)
-                    : AppColors.grey100,
-                borderRadius : BorderRadius.circular(12),
-              ),
-              child: Icon(
-                icon,
-                size  : 20,
-                color : selected ? AppColors.secondary : AppColors.grey600,
-              ),
-            ),
-            const SizedBox(width: 12),
-
-            // Texte
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Text(
-                        title,
-                        style: AppTextStyles.labelMedium.copyWith(
-                          fontWeight : FontWeight.w700,
-                          color      : AppColors.dark,
-                          fontSize   : 14,
-                        ),
-                      ),
-                      if (badge != null) ...[
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 2),
-                          decoration: BoxDecoration(
-                            color        : AppColors.grey100,
-                            borderRadius : BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            badge!,
-                            style: AppTextStyles.caption.copyWith(
-                              color      : AppColors.grey600,
-                              fontWeight : FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                  const SizedBox(height: 3),
-                  Text(
-                    description,
-                    style: AppTextStyles.bodySmall.copyWith(
-                      color  : AppColors.grey500,
-                      height : 1.4,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(width: 10),
-
-            // Radio visuel
-            AnimatedContainer(
-              duration  : const Duration(milliseconds: 200),
-              width     : 20,
-              height    : 20,
-              decoration: BoxDecoration(
-                shape  : BoxShape.circle,
-                border : Border.all(
-                  color : selected ? AppColors.secondary : AppColors.grey300,
-                  width : 2,
-                ),
-                color: selected ? AppColors.secondary : Colors.white,
-              ),
-              child: selected
-                  ? const Icon(Icons.check, size: 12, color: Colors.white)
-                  : null,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }
 
 class _QtyButton extends StatelessWidget {

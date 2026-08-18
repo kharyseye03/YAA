@@ -538,6 +538,46 @@ class ApiService {
     }
   }
 
+  /// Estimation de la livraison d'une commande : un appel renvoie un
+  /// tarif par type de véhicule (MOTO, CARGO…). Le départ est le
+  /// dépôt de la structure, l'arrivée l'adresse du client.
+  Future<List<EstimationModel>> getLivraisonCommandeEstimations({
+    required double latitudeDepart,
+    required double longitudeDepart,
+    required double latitudeArrivee,
+    required double longitudeArrivee,
+  }) async {
+    try {
+      final body = {
+        'latitudeDepart'   : latitudeDepart,
+        'longitudeDepart'  : longitudeDepart,
+        'latitudeArrivee'  : latitudeArrivee,
+        'longitudeArrivee' : longitudeArrivee,
+      };
+      final response = await _post(
+          ApiConfig.livraisonCommandeEstimationEndpoint, body, auth: true);
+      final list = response['data'] as List<dynamic>? ?? [];
+      return list
+          .map((e) => EstimationModel.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      ApiLogger.erreur('getLivraisonCommandeEstimations', e);
+      rethrow;
+    }
+  }
+
+  /// Une structure par son identifiant — sert à récupérer ses
+  /// coordonnées, absentes du panier.
+  Future<Structure> getStructureById(int id) async {
+    try {
+      final response = await _get('${ApiConfig.structuresEndpoint}/$id');
+      return Structure.fromJson(response);
+    } catch (e) {
+      ApiLogger.erreur('getStructureById($id)', e);
+      rethrow;
+    }
+  }
+
   /// Note le coursier d'une mission terminée (1 à 5 étoiles).
   Future<void> noterCoursier({
     required int livraisonCourseId,
@@ -1144,6 +1184,7 @@ class ApiService {
     required double latitude,
     required double longitude,
     String          description = '',
+    String?         typeVehicule, // MOTO | CARGO… — livraison seulement
   }) async {
     try {
       final body = {
@@ -1155,6 +1196,8 @@ class ApiService {
         'telephoneClient'       : telephoneClient,
         'latitude'              : latitude,
         'longitude'             : longitude,
+        // Absent en retrait : aucun véhicule n'est mobilisé
+        if (typeVehicule != null) 'typeVehicule': typeVehicule,
       };
       final response = await _post(
           ApiConfig.transactionEndpoint, body, auth: true);

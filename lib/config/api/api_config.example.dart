@@ -57,6 +57,10 @@ class ApiConfig {
   // Course : estimation (renvoie les tarifs MOTO et VEHICULE) puis création
   static const String courseEstimationEndpoint = '/livraisons-courses/estimation/course';
   static const String courseEndpoint           = '/livraisons-courses/courses';
+  // Livraison d'une commande d'établissement : renvoie un tarif par
+  // type de véhicule, du dépôt de la structure jusqu'au client
+  static const String livraisonCommandeEstimationEndpoint =
+      '/livraisons-courses/estimation/livraison-commande';
 
   // Notation du coursier après une mission terminée
   static const String notationCoursierEndpoint = '/notations-coursiers';
