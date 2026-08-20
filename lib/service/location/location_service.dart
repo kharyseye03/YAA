@@ -92,7 +92,7 @@ class LocationService {
       if (placemarks.isNotEmpty) {
         final p = placemarks.first;
         adresse = [p.street, p.subLocality, p.locality]
-            .where((e) => e != null && e.isNotEmpty && !_isPlusCode(e!))
+            .where((e) => e != null && e.isNotEmpty && !_isPlusCode(e))
             .join(', ');
         if (adresse.isEmpty) adresse = 'Position actuelle';
       }

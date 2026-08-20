@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../config/api/api_config.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimens.dart';
 import '../../../core/constants/app_text_styles.dart';
@@ -385,7 +384,7 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                     gradient: LinearGradient(
                       begin   : Alignment.topLeft,
                       end     : Alignment.bottomRight,
-                      colors  : [Color(0xFF1A1A2E), Color(0xFF2A2A45)],
+                      colors  : [AppColors.primary, AppColors.primaryLight],
                     ),
                   ),
                 ),

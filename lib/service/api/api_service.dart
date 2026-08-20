@@ -59,7 +59,7 @@ class ApiService {
   Future<String> _performRefresh() async {
     final refresh = await TokenStorage.instance.getRefreshToken();
     if (refresh == null) throw Exception('Aucun refresh token.');
-    print('🔄 Renouvellement du token…');
+    ApiLogger.trace('Renouvellement du token…');
     final auth = await refreshToken(refreshToken: refresh);
     // Bien enregistrer le NOUVEAU refresh token, pas seulement l'access
     await TokenStorage.instance.saveTokens(auth);
@@ -77,11 +77,11 @@ class ApiService {
     var response = await send(token);
     if (response.statusCode != 401) return response;
 
-    print('🔒 401 reçu → nouvelle tentative');
+    ApiLogger.trace('401 reçu → nouvelle tentative');
     // L'en-tête WWW-Authenticate précise la cause exacte du 401
     // (Jwt expired, iss claim not valid, …) — utile en debug.
     final reason = response.headers['www-authenticate'];
-    if (reason != null) print('🔒 WWW-Authenticate → $reason');
+    if (reason != null) ApiLogger.trace('WWW-Authenticate → $reason');
 
     token = await _renewToken();
     if (token == null) throw _sessionExpired();
@@ -352,8 +352,10 @@ class ApiService {
     try {
       final uri = Uri.parse(url);
 
-      print('🌐 POST FORM → $uri');
-      print('📦 Fields → $fields');
+      // Mot de passe et jetons transitent ici : on trace les clés
+      // du formulaire, jamais leurs valeurs.
+      ApiLogger.requete('POST', uri, corps: fields.keys.join(', '));
+      final chrono = Stopwatch()..start();
 
       final response = await http
           .post(uri, headers: ApiConfig.formHeaders, body: fields)
@@ -362,8 +364,8 @@ class ApiService {
             onTimeout: () => throw TimeoutException('Le serveur ne répond pas.'),
           );
 
-      print('📡 Status → ${response.statusCode}');
-      print('📬 Réponse → ${response.body}');
+      ApiLogger.reponse(
+          'POST', uri, response.statusCode, response.body, chrono.elapsed);
 
       final data = json.decode(response.body) as Map<String, dynamic>;
 
@@ -407,7 +409,7 @@ class ApiService {
       final response = await _post(ApiConfig.registerEndpoint, body);
       return RegisterResponse.fromJson(response);
     } catch (e) {
-      print('❌ Erreur register: $e');
+      ApiLogger.erreur('register', e);
       rethrow;
     }
   }
@@ -421,7 +423,7 @@ class ApiService {
       final response = await _post(ApiConfig.verifyOtpEndpoint, body);
       return RegisterResponse.fromJson(response);
     } catch (e) {
-      print('❌ Erreur verifyOtp: $e');
+      ApiLogger.erreur('verifyOtp', e);
       rethrow;
     }
   }
@@ -435,7 +437,7 @@ class ApiService {
       final response = await _post(ApiConfig.resetPasswordEndpoint, body);
       return RegisterResponse.fromJson(response);
     } catch (e) {
-      print('❌ Erreur createPassword: $e');
+      ApiLogger.erreur('createPassword', e);
       rethrow;
     }
   }
@@ -445,7 +447,7 @@ class ApiService {
       final response = await _post(ApiConfig.forgotPasswordEndpoint, {'email': email});
       return RegisterResponse.fromJson(response);
     } catch (e) {
-      print('❌ Erreur forgotPassword: $e');
+      ApiLogger.erreur('forgotPassword', e);
       rethrow;
     }
   }
@@ -455,7 +457,7 @@ class ApiService {
       final response = await _post(ApiConfig.resendCodeEndpoint, {'email': email});
       return RegisterResponse.fromJson(response);
     } catch (e) {
-      print('❌ Erreur resendCode: $e');
+      ApiLogger.erreur('resendCode', e);
       rethrow;
     }
   }
@@ -477,7 +479,7 @@ class ApiService {
       };
       await _put(ApiConfig.setAdresseEndpoint, body);
     } catch (e) {
-      print('❌ Erreur setAdresse: $e');
+      ApiLogger.erreur('setAdresse', e);
       rethrow;
     }
   }
@@ -506,7 +508,7 @@ class ApiService {
       return EstimationModel.fromJson(
           response['data'] as Map<String, dynamic>);
     } catch (e) {
-      print('❌ Erreur getEstimation: $e');
+      ApiLogger.erreur('getEstimation', e);
       rethrow;
     }
   }
@@ -533,7 +535,7 @@ class ApiService {
           .map((e) => EstimationModel.fromJson(e as Map<String, dynamic>))
           .toList();
     } catch (e) {
-      print('❌ Erreur getCourseEstimations: $e');
+      ApiLogger.erreur('getCourseEstimations', e);
       rethrow;
     }
   }
@@ -590,7 +592,7 @@ class ApiService {
         auth: true,
       );
     } catch (e) {
-      print('❌ Erreur noterCoursier: $e');
+      ApiLogger.erreur('noterCoursier', e);
       rethrow;
     }
   }
@@ -623,7 +625,7 @@ class ApiService {
       return LivraisonCourseModel.fromJson(
           response['data'] as Map<String, dynamic>);
     } catch (e) {
-      print('❌ Erreur createCourse: $e');
+      ApiLogger.erreur('createCourse', e);
       rethrow;
     }
   }
@@ -660,7 +662,7 @@ class ApiService {
       return LivraisonCourseModel.fromJson(
           response['data'] as Map<String, dynamic>);
     } catch (e) {
-      print('❌ Erreur createLivraison: $e');
+      ApiLogger.erreur('createLivraison', e);
       rethrow;
     }
   }
@@ -679,7 +681,7 @@ class ApiService {
       final response = await _postForm(ApiConfig.getIamUrl(ApiConfig.loginEndpoint), fields);
       return LoginResponse.fromJson(response);
     } catch (e) {
-      print('❌ Erreur login: $e');
+      ApiLogger.erreur('login', e);
       rethrow;
     }
   }
@@ -694,7 +696,7 @@ class ApiService {
       final response = await _postForm(ApiConfig.getIamUrl(ApiConfig.loginEndpoint), fields);
       return LoginResponse.fromJson(response);
     } catch (e) {
-      print('❌ Erreur refreshToken: $e');
+      ApiLogger.erreur('refreshToken', e);
       rethrow;
     }
   }
@@ -751,7 +753,8 @@ class ApiService {
         );
       }
 
-      print('🌐 PUT multipart → $uri');
+      ApiLogger.requete('PUT multipart', uri);
+      final chrono = Stopwatch()..start();
 
       final streamed = await request.send().timeout(
         const Duration(seconds: ApiConfig.connectionTimeout),
@@ -759,8 +762,8 @@ class ApiService {
       );
       final response = await http.Response.fromStream(streamed);
 
-      print('📡 Status → ${response.statusCode}');
-      print('📬 Réponse → ${response.body}');
+      ApiLogger.reponse('PUT multipart', uri, response.statusCode,
+          response.body, chrono.elapsed);
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         if (response.body.isNotEmpty) {
@@ -806,7 +809,7 @@ class ApiService {
           .map((e) => CategorieStructure.fromJson(e as Map<String, dynamic>))
           .toList();
     } catch (e) {
-      print('❌ Erreur getCategories: $e');
+      ApiLogger.erreur('getCategories', e);
       rethrow;
     }
   }
@@ -843,7 +846,7 @@ class ApiService {
           .map((e) => Structure.fromJson(e as Map<String, dynamic>))
           .toList();
     } catch (e) {
-      print('❌ Erreur getStructures: $e');
+      ApiLogger.erreur('getStructures', e);
       rethrow;
     }
   }
@@ -862,7 +865,7 @@ class ApiService {
           .map((e) => CategorieProduit.fromJson(e as Map<String, dynamic>))
           .toList();
     } catch (e) {
-      print('❌ Erreur getFiltresCategorie: $e');
+      ApiLogger.erreur('getFiltresCategorie', e);
       rethrow;
     }
   }
@@ -973,7 +976,7 @@ class ApiService {
       // On n'essaie pas de parser la réponse — le CartNotifier
       // recharge le panier complet via getCart() juste après.
     } catch (e) {
-      print('❌ Erreur addToCart: $e');
+      ApiLogger.erreur('addToCart', e);
       rethrow;
     }
   }
@@ -985,7 +988,7 @@ class ApiService {
       if (response.isEmpty) return null; // pas de panier actif
       return CartModel.fromJson(response);
     } catch (e) {
-      print('❌ Erreur getCart: $e');
+      ApiLogger.erreur('getCart', e);
       rethrow;
     }
   }
@@ -999,7 +1002,7 @@ class ApiService {
         auth: true,
       );
     } catch (e) {
-      print('❌ Erreur deleteCartLine: $e');
+      ApiLogger.erreur('deleteCartLine', e);
       rethrow;
     }
   }
@@ -1018,7 +1021,7 @@ class ApiService {
           .map((e) => StructureFavoriModel.fromJson(e as Map<String, dynamic>))
           .toList();
     } catch (e) {
-      print('❌ Erreur getStructuresFavoris: $e');
+      ApiLogger.erreur('getStructuresFavoris', e);
       rethrow;
     }
   }
@@ -1030,15 +1033,16 @@ class ApiService {
       var uri = Uri.parse(ApiConfig.getUrl(ApiConfig.structuresFavorisToggleEndpoint));
       uri = uri.replace(queryParameters: {'structureId': structureId.toString()});
 
-      print('🌐 GET (toggle favori) → $uri');
+      ApiLogger.requete('GET', uri);
+      final chrono = Stopwatch()..start();
 
       final response = await _send(
         auth    : true,
         request : (headers) => http.get(uri, headers: headers),
       );
 
-      print('📡 Status → ${response.statusCode}');
-      print('📬 Réponse → ${response.body}');
+      ApiLogger.reponse(
+          'GET', uri, response.statusCode, response.body, chrono.elapsed);
 
       if (response.statusCode == 200 ||
           response.statusCode == 201 ||
@@ -1069,7 +1073,7 @@ class ApiService {
           .map((e) => ProduitFavoriModel.fromJson(e as Map<String, dynamic>))
           .toList();
     } catch (e) {
-      print('❌ Erreur getProduitsFavoris: $e');
+      ApiLogger.erreur('getProduitsFavoris', e);
       rethrow;
     }
   }
@@ -1081,15 +1085,16 @@ class ApiService {
       var uri = Uri.parse(ApiConfig.getUrl(ApiConfig.produitsFavorisToggleEndpoint));
       uri = uri.replace(queryParameters: {'produitId': produitId.toString()});
 
-      print('🌐 GET (toggle produit favori) → $uri');
+      ApiLogger.requete('GET', uri);
+      final chrono = Stopwatch()..start();
 
       final response = await _send(
         auth    : true,
         request : (headers) => http.get(uri, headers: headers),
       );
 
-      print('📡 Status produit favori → ${response.statusCode}');
-      print('📬 Réponse produit favori → ${response.body}');
+      ApiLogger.reponse(
+          'GET', uri, response.statusCode, response.body, chrono.elapsed);
 
       if (response.statusCode == 200 ||
           response.statusCode == 201 ||
@@ -1125,7 +1130,7 @@ class ApiService {
       );
       return CommandeDetailModel.fromJson(response);
     } catch (e) {
-      print('❌ Erreur getCommandeDetail: $e');
+      ApiLogger.erreur('getCommandeDetail', e);
       rethrow;
     }
   }
@@ -1140,7 +1145,7 @@ class ApiService {
           .map((e) => CommandeModel.fromJson(e as Map<String, dynamic>))
           .toList();
     } catch (e) {
-      print('❌ Erreur getCommandes: $e');
+      ApiLogger.erreur('getCommandes', e);
       rethrow;
     }
   }
@@ -1159,7 +1164,7 @@ class ApiService {
               LivraisonCourseModel.fromJson(e as Map<String, dynamic>))
           .toList();
     } catch (e) {
-      print('❌ Erreur getMissions: $e');
+      ApiLogger.erreur('getMissions', e);
       rethrow;
     }
   }
@@ -1206,7 +1211,7 @@ class ApiService {
           ApiConfig.transactionEndpoint, body, auth: true);
       return TransactionModel.fromJson(response);
     } catch (e) {
-      print('❌ Erreur createTransaction: $e');
+      ApiLogger.erreur('createTransaction', e);
       rethrow;
     }
   }
@@ -1225,7 +1230,7 @@ class ApiService {
       };
       await _post(ApiConfig.payTransactionEndpoint, body, auth: true);
     } catch (e) {
-      print('❌ Erreur payTransaction: $e');
+      ApiLogger.erreur('payTransaction', e);
       rethrow;
     }
   }
@@ -1239,7 +1244,7 @@ class ApiService {
         auth: true,
       );
     } catch (e) {
-      print('❌ Erreur clearEntireCart: $e');
+      ApiLogger.erreur('clearEntireCart', e);
       rethrow;
     }
   }

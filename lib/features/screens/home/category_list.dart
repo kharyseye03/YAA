@@ -94,11 +94,11 @@ class _CategoryItem extends StatelessWidget {
                 shape: BoxShape.circle,
                 color: isActive
                     ? data.color
-                    : data.color.withOpacity(0.12),
+                    : data.color.withValues(alpha: 0.12),
                 boxShadow: isActive
                     ? [
                         BoxShadow(
-                          color: data.color.withOpacity(0.35),
+                          color: data.color.withValues(alpha: 0.35),
                           blurRadius: 10,
                           offset: const Offset(0, 4),
                         ),

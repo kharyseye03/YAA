@@ -525,7 +525,7 @@ class _PaymentSheetState extends State<_PaymentSheet> {
   // l'impression qu'ils n'arriveront jamais.
   static const _methods = [
     _PaymentMethod('Espèces', 'ESPECE', null,
-        Color(0xFFE8F8EF), Color(0xFF27AE60), disponible: true),
+        AppColors.successLight, AppColors.success, disponible: true),
     _PaymentMethod('Orange Money', 'ORANGE_MONEY', 'assets/images/om.webp',
         Color(0xFFFFF0E6), Color(0xFFFF7900)),
     _PaymentMethod('Wave',         'WAVE',         'assets/images/wave2.webp',

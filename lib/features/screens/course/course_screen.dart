@@ -75,7 +75,7 @@ class _CourseScreenState extends ConsumerState<CourseScreen> {
   // icône pin) directement en Dart, aux couleurs de la marque.
   Future<void> _loadMarkerIcons() async {
     _departIcon = await _createMarker(
-        const Color(0xFF1A1A2E), Icons.location_on_outlined); // bleu
+        AppColors.primary, Icons.location_on_outlined); // bleu
     _arriveeIcon = await _createMarker(
         AppColors.secondary, Icons.location_on_outlined);       // orange
     if (mounted) setState(() {});

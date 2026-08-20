@@ -114,7 +114,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                             right: i < _pages.length - 1 ? 6 : 0),
                         decoration: BoxDecoration(
                           color: Colors.white
-                              .withOpacity(i <= _currentPage ? 1.0 : 0.35),
+                              .withValues(alpha: i <= _currentPage ? 1.0 : 0.35),
                           borderRadius: BorderRadius.circular(2),
                         ),
                       ),
@@ -151,7 +151,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         Positioned.fill(
           child: DecoratedBox(
             decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.45),
+              color: Colors.black.withValues(alpha: 0.45),
             ),
           ),
         ),
@@ -168,7 +168,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 end: Alignment.bottomCenter,
                 colors: [
                   Colors.transparent,
-                  Colors.black.withOpacity(0.75),
+                  Colors.black.withValues(alpha: 0.75),
                 ],
                 stops: const [0.0, 1.0],
               ),
@@ -216,7 +216,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           page.badge,
           textAlign: TextAlign.center,
           style: AppTextStyles.bodyMedium.copyWith(
-            color: Colors.white.withOpacity(0.75),
+            color: Colors.white.withValues(alpha: 0.75),
             height: 1.5,
           ),
         ),
@@ -249,7 +249,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
-                  color: Colors.white.withOpacity(0.7),
+                  color: Colors.white.withValues(alpha: 0.7),
                 ),
               ),
             ),
@@ -293,7 +293,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         onPressed: onPressed,
         style: OutlinedButton.styleFrom(
           foregroundColor: Colors.white,
-          side: BorderSide(color: Colors.white.withOpacity(0.5), width: 1.5),
+          side: BorderSide(color: Colors.white.withValues(alpha: 0.5), width: 1.5),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
           ),
@@ -330,9 +330,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   //               begin: Alignment.topCenter,
   //               end: Alignment.bottomCenter,
   //               colors: [
-  //                 Colors.white.withOpacity(0.0),
-  //                 Colors.white.withOpacity(0.55),
-  //                 Colors.white.withOpacity(0.92),
+  //                 Colors.white.withValues(alpha: 0.0),
+  //                 Colors.white.withValues(alpha: 0.55),
+  //                 Colors.white.withValues(alpha: 0.92),
   //                 Colors.white,
   //               ],
   //               stops: [0.0, 0.28, 0.50, 0.68],

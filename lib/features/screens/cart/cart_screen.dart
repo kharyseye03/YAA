@@ -13,7 +13,6 @@ import '../../../model/cart/cart_item_model.dart';
 import '../../../service/location/location_service.dart';
 import '../../../model/cart/cart_structure_model.dart';
 import '../../../shared/widgets/yaa_button.dart';
-import '../../../shared/widgets/yaa_text_field.dart';
 import 'delivery_address_sheet.dart';
 import 'reception_mode_sheet.dart';
 

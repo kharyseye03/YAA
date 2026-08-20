@@ -48,6 +48,13 @@ class ApiLogger {
     debugPrint('💥 $contexte → $e');
   }
 
+  /// Trace libre, pour ce qui n'est ni une requête ni une réponse :
+  /// renouvellement de jeton, 401 rattrapé, etc.
+  static void trace(String message) {
+    if (!actif) return;
+    debugPrint('🔎 $message');
+  }
+
   /// Avertissement métier : le serveur répond correctement mais
   /// l'écran n'aura rien à afficher.
   static void vide(String contexte, String explication) {

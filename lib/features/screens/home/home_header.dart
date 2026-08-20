@@ -93,7 +93,7 @@ class HomeHeader extends ConsumerWidget {
           GestureDetector(
             onTap: onNotificationTap,
             behavior: HitTestBehavior.opaque,
-            child: Container(
+            child: SizedBox(
               width: 42,
               height: 42,
               child: Icon(
