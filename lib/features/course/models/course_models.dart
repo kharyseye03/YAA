@@ -1,4 +1,8 @@
-import 'package:flutter/material.dart';
+// TypeVehicule vivait ici avec deux valeurs. Il est devenu l'enum
+// unique de l'application — le backend en compte six — et a migré
+// dans les modèles. On le ré-exporte pour ne pas casser les écrans
+// qui n'importent que ce fichier.
+export '../../../model/course/type_vehicule.dart';
 
 /// Type de service demandé (envoyé à l'API estimation/création).
 enum TypeService {
@@ -8,19 +12,6 @@ enum TypeService {
   const TypeService(this.code, this.label);
   final String code;
   final String label;
-}
-
-/// Type de véhicule (codes backend : MOTO / VEHICULE).
-enum TypeVehicule {
-  moto('MOTO', 'Moto', 'Rapide, colis standard', Icons.sports_motorsports),
-  voiture('VEHICULE', 'Voiture', 'Gros volume, confort',
-      Icons.local_taxi_rounded);
-
-  const TypeVehicule(this.code, this.label, this.description, this.icon);
-  final String   code;
-  final String   label;
-  final String   description;
-  final IconData icon;
 }
 
 /// Un point du trajet : adresse lisible + coordonnées.

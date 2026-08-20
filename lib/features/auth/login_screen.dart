@@ -129,11 +129,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 // ── Titre ────────────────────────────────────────
                 RichText(
                   text: TextSpan(
-                    text: 'Bon retour\n',
+                    text: 'Bon retour ',
                     style: AppTextStyles.h2,
                     children: [
                       TextSpan(
-                        text: 'chez vous 👋',
+                        text: 'chez vous ',
                         style: AppTextStyles.h2
                             .copyWith(color: AppColors.secondary),
                       ),

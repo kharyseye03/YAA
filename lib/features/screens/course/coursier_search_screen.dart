@@ -9,6 +9,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimens.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/utils/app_router.dart';
+import '../../../model/course/type_vehicule.dart';
 import '../../../model/order/livraison_course_model.dart';
 import '../../../service/api/api_service.dart';
 import '../../../service/location/location_service.dart';
@@ -533,15 +534,9 @@ class _CoursierSearchScreenState extends State<CoursierSearchScreen>
   }
 
   Widget _buildCoursier() {
-    final initiales = _mission.livreurFullName!
-        .trim()
-        .split(RegExp(r'\s+'))
-        .take(2)
-        .map((m) => m.isNotEmpty ? m[0] : '')
-        .join()
-        .toUpperCase();
-
-    final photo = _mission.livreurPhotoUrl;
+    final livreur   = _mission.livreur!;
+    final initiales = livreur.initiales;
+    final photo     = livreur.photoUrl;
 
     return Row(
       children: [
@@ -578,7 +573,7 @@ class _CoursierSearchScreenState extends State<CoursierSearchScreen>
                       .copyWith(color: AppColors.success)),
               const SizedBox(height: 2),
               Text(
-                _mission.livreurFullName!,
+                livreur.fullName,
                 style: AppTextStyles.labelMedium.copyWith(
                   fontWeight : FontWeight.w800,
                   fontSize   : 16,
@@ -587,11 +582,61 @@ class _CoursierSearchScreenState extends State<CoursierSearchScreen>
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
+              // Note et véhicule : ce qui rassure avant d'ouvrir sa
+              // porte à quelqu'un
+              if (livreur.noteMoyenne != null ||
+                  livreur.vehicule != null) ...[
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    if (livreur.noteMoyenne != null) ...[
+                      Icon(Icons.star_rounded,
+                          size: 15, color: Colors.amber.shade600),
+                      const SizedBox(width: 3),
+                      Text(
+                        livreur.noteMoyenne!.toStringAsFixed(1),
+                        style: AppTextStyles.bodySmall.copyWith(
+                          fontSize   : 12,
+                          fontWeight : FontWeight.w700,
+                          color      : AppColors.dark,
+                        ),
+                      ),
+                    ],
+                    if (livreur.noteMoyenne != null &&
+                        livreur.vehicule != null)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 7),
+                        child: Container(
+                            width: 3, height: 3,
+                            decoration: const BoxDecoration(
+                              color: AppColors.grey400,
+                              shape: BoxShape.circle,
+                            )),
+                      ),
+                    if (livreur.vehicule != null) ...[
+                      Icon(
+                        TypeVehicule.depuisCode(livreur.vehicule)?.icone
+                            ?? Icons.local_shipping_outlined,
+                        size  : 14,
+                        color : AppColors.grey500,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        TypeVehicule.depuisCode(livreur.vehicule)?.libelle
+                            ?? livreur.vehicule!,
+                        style: AppTextStyles.bodySmall.copyWith(
+                          fontSize : 12,
+                          color    : AppColors.grey500,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ],
             ],
           ),
         ),
-        if (_mission.livreurTelephone != null &&
-            _mission.livreurTelephone!.isNotEmpty)
+        if (livreur.telephone != null && livreur.telephone!.isNotEmpty)
           GestureDetector(
             onTap: _appelerCoursier,
             child: Container(

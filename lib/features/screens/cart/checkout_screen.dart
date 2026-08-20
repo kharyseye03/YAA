@@ -10,7 +10,9 @@ import '../../../core/utils/app_router.dart';
 import '../../../features/cart/providers/cart_notifier.dart';
 import '../../../features/cart/providers/delivery_address_provider.dart';
 import '../../../features/user/providers/user_notifier.dart';
+import '../../../model/course/type_vehicule.dart';
 import '../../../model/order/commande_detail_model.dart';
+import '../../../model/order/livraison_course_model.dart';
 import '../../../model/transaction/transaction_model.dart';
 import '../../../service/location/location_service.dart';
 import '../../../service/api/api_service.dart';
@@ -86,6 +88,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         panierId              : cart.id,
         modeReceptionCommande : widget.choix.mode.code,
         typeVehicule          : widget.choix.typeVehicule,
+        fraisLivraison        : widget.choix.fraisLivraison,
         adresseLivraison      : _addressController.text.trim(),
         telephoneClient       : _phoneController.text.trim(),
         latitude              : latitude,
@@ -521,7 +524,7 @@ class _PaymentSheetState extends State<_PaymentSheet> {
   // mobiles restent visibles mais désactivés : les masquer donnerait
   // l'impression qu'ils n'arriveront jamais.
   static const _methods = [
-    _PaymentMethod('Espèces', 'ESPECES', null,
+    _PaymentMethod('Espèces', 'ESPECE', null,
         Color(0xFFE8F8EF), Color(0xFF27AE60), disponible: true),
     _PaymentMethod('Orange Money', 'ORANGE_MONEY', 'assets/images/om.webp',
         Color(0xFFFFF0E6), Color(0xFFFF7900)),
@@ -805,6 +808,16 @@ class _LivreurSearchSheetState extends State<_LivreurSearchSheet>
   int?    _commandeId;
   CommandeDetailModel? _detail; // infos livreur une fois assigné
 
+  /// Le détail de commande n'expose ni la note ni le véhicule du
+  /// coursier : on complète depuis la mission correspondante.
+  Livreur? _livreur;
+
+  String? get _nomLivreur      => _livreur?.fullName  ?? _detail?.livreurFullName;
+  String? get _telLivreur      => _livreur?.telephone ?? _detail?.livreurTelephone;
+  String? get _photoLivreur    => _livreur?.photoUrl  ?? _detail?.livreurImageUrl;
+  double? get _noteLivreur     => _livreur?.noteMoyenne;
+  String? get _vehiculeLivreur => _livreur?.vehicule;
+
   // En retrait, aucun livreur n'est assigné : le parcours s'achève
   // quand la commande est prête à être récupérée.
   bool get _livreurTrouve =>
@@ -856,6 +869,20 @@ class _LivreurSearchSheetState extends State<_LivreurSearchSheet>
               id    : commande.id,
             );
             if (mounted) setState(() => _detail = detail);
+
+            // Photo, note et véhicule ne vivent que sur la mission :
+            // on la retrouve par l'identifiant de la commande.
+            try {
+              final missions = await ApiService().getMissions();
+              final match = missions
+                  .where((m) => m.commandeStructureId == commande.id)
+                  .toList();
+              if (match.isNotEmpty && mounted) {
+                setState(() => _livreur = match.first.livreur);
+              }
+            } catch (e) {
+              debugPrint('⚠️ Infos livreur enrichies indisponibles : $e');
+            }
           }
         }
       } catch (e) {
@@ -1313,6 +1340,10 @@ class _LivreurSearchSheetState extends State<_LivreurSearchSheet>
 
   /// Initiales du livreur pour l'avatar (ex: "Abdoul DIALLO" → "AD")
   String get _livreurInitiales {
+    final depuisMission = _livreur?.initiales;
+    if (depuisMission != null && depuisMission.isNotEmpty) {
+      return depuisMission;
+    }
     final prenom = _detail?.livreurName?.trim()     ?? '';
     final nom    = _detail?.livreurLastName?.trim() ?? '';
     final p = prenom.isNotEmpty ? prenom[0] : '';
@@ -1339,7 +1370,7 @@ class _LivreurSearchSheetState extends State<_LivreurSearchSheet>
   }
 
   Future<void> _appelerLivreur() async {
-    final phone = _detail?.livreurTelephone;
+    final phone = _telLivreur;
     if (phone == null || phone.isEmpty) return;
     final uri = Uri(scheme: 'tel', path: phone);
     if (await canLaunchUrl(uri)) await launchUrl(uri);
@@ -1376,13 +1407,16 @@ class _LivreurSearchSheetState extends State<_LivreurSearchSheet>
             ],
           ),
           child: ClipOval(
-            child: _detail?.livreurImageUrl != null
+            child: _photoLivreur != null
                 ? Image.network(
-                    _detail!.livreurImageUrl!,
+                    _photoLivreur!,
                     width  : 88,
                     height : 88,
                     fit    : BoxFit.cover,
-                    errorBuilder: (_, __, ___) => _buildInitiales(),
+                    errorBuilder: (_, e, __) {
+                      debugPrint('❌ photo livreur ($_photoLivreur) : $e');
+                      return _buildInitiales();
+                    },
                   )
                 : _buildInitiales(),
           ),
@@ -1392,21 +1426,71 @@ class _LivreurSearchSheetState extends State<_LivreurSearchSheet>
 
         // ── Infos du livreur ──────────────────────────────────
         Text(
-          _detail?.livreurFullName ?? 'Votre livreur',
+          _nomLivreur ?? 'Votre livreur',
           style: AppTextStyles.labelMedium.copyWith(
             fontWeight : FontWeight.w800,
             fontSize   : 17,
             color      : AppColors.dark,
           ),
         ),
-        const SizedBox(height: 2),
+
+        // Note et véhicule : ce qui rassure avant d'ouvrir sa porte
+        if (_noteLivreur != null || _vehiculeLivreur != null) ...[
+          const SizedBox(height: 5),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (_noteLivreur != null) ...[
+                Icon(Icons.star_rounded,
+                    size: 16, color: Colors.amber.shade600),
+                const SizedBox(width: 3),
+                Text(
+                  _noteLivreur!.toStringAsFixed(1),
+                  style: AppTextStyles.bodySmall.copyWith(
+                    fontSize   : 13,
+                    fontWeight : FontWeight.w700,
+                    color      : AppColors.dark,
+                  ),
+                ),
+              ],
+              if (_noteLivreur != null && _vehiculeLivreur != null)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: Container(
+                      width: 3, height: 3,
+                      decoration: const BoxDecoration(
+                        color: AppColors.grey400,
+                        shape: BoxShape.circle,
+                      )),
+                ),
+              if (_vehiculeLivreur != null) ...[
+                Icon(
+                  TypeVehicule.depuisCode(_vehiculeLivreur)?.icone
+                      ?? Icons.local_shipping_outlined,
+                  size  : 15,
+                  color : AppColors.grey500,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  TypeVehicule.depuisCode(_vehiculeLivreur)?.libelle
+                      ?? _vehiculeLivreur!,
+                  style: AppTextStyles.bodySmall.copyWith(
+                    fontSize : 13,
+                    color    : AppColors.grey500,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ],
+
+        const SizedBox(height: 4),
         Text(
-          'Votre livreur · en route vers l\'établissement',
+          'En route vers l\'établissement',
           style: AppTextStyles.bodySmall.copyWith(color: AppColors.grey500),
         ),
 
-        if (_detail?.livreurTelephone != null &&
-            _detail!.livreurTelephone!.isNotEmpty) ...[
+        if (_telLivreur != null && _telLivreur!.isNotEmpty) ...[
           const SizedBox(height: 12),
           // Bouton d'appel
           GestureDetector(
@@ -1425,7 +1509,7 @@ class _LivreurSearchSheetState extends State<_LivreurSearchSheet>
                       color: AppColors.success, size: 16),
                   const SizedBox(width: 7),
                   Text(
-                    _detail!.livreurTelephone!,
+                    _telLivreur!,
                     style: AppTextStyles.labelMedium.copyWith(
                       fontWeight : FontWeight.w700,
                       color      : AppColors.success,

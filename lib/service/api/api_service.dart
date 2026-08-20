@@ -1184,7 +1184,8 @@ class ApiService {
     required double latitude,
     required double longitude,
     String          description = '',
-    String?         typeVehicule, // MOTO | CARGO… — livraison seulement
+    String?         typeVehicule,   // MOTO | CARGO… — livraison seulement
+    double?         fraisLivraison, // tarif retenu par le client
   }) async {
     try {
       final body = {
@@ -1196,8 +1197,10 @@ class ApiService {
         'telephoneClient'       : telephoneClient,
         'latitude'              : latitude,
         'longitude'             : longitude,
-        // Absent en retrait : aucun véhicule n'est mobilisé
-        if (typeVehicule != null) 'typeVehicule': typeVehicule,
+        // Absents en retrait : aucun véhicule n'est mobilisé, aucun
+        // frais de livraison n'est dû
+        if (typeVehicule != null)   'typeVehicule'  : typeVehicule,
+        if (fraisLivraison != null) 'fraisLivraison': fraisLivraison,
       };
       final response = await _post(
           ApiConfig.transactionEndpoint, body, auth: true);

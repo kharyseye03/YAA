@@ -603,7 +603,7 @@ class _CourseScreenState extends ConsumerState<CourseScreen> {
             const SizedBox(height: 12),
           ],
           Row(
-            children: [TypeVehicule.moto, TypeVehicule.voiture]
+            children: [TypeVehicule.moto, TypeVehicule.vehicule]
                 .map((v) => Expanded(
                       child: _VehiclePick(
                         vehicule : v,
@@ -832,13 +832,13 @@ class _VehiclePick extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(
-                  vehicule.icon,
+                  vehicule.icone,
                   color : selected ? AppColors.primary : AppColors.grey500,
                   size  : 20,
                 ),
                 const SizedBox(width: 6),
                 Text(
-                  vehicule.label,
+                  vehicule.libelle,
                   style: AppTextStyles.bodySmall.copyWith(
                     fontWeight : FontWeight.w700,
                     color      : selected ? AppColors.primary : AppColors.dark,
