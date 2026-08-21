@@ -8,7 +8,7 @@ abstract final class AppTheme {
   static ThemeData get light {
     return ThemeData(
       useMaterial3: true,
-      fontFamily: 'Archivo',
+      fontFamily: 'PlusJakartaSans',
       brightness: Brightness.light,
 
       // ── Colors ──────────────────────────────────────────
@@ -34,7 +34,7 @@ abstract final class AppTheme {
         surfaceTintColor: Colors.transparent,
         foregroundColor: AppColors.dark,
         titleTextStyle: TextStyle(
-          fontFamily: 'Archivo',
+          fontFamily: 'PlusJakartaSans',
           fontSize: 18,
           fontWeight: FontWeight.w600,
           color: AppColors.dark,
@@ -135,12 +135,12 @@ abstract final class AppTheme {
         selectedItemColor: AppColors.primary,
         unselectedItemColor: AppColors.grey500,
         selectedLabelStyle: TextStyle(
-          fontFamily: 'Archivo',
+          fontFamily: 'PlusJakartaSans',
           fontSize: 11,
           fontWeight: FontWeight.w600,
         ),
         unselectedLabelStyle: TextStyle(
-          fontFamily: 'Archivo',
+          fontFamily: 'PlusJakartaSans',
           fontSize: 11,
           fontWeight: FontWeight.w400,
         ),

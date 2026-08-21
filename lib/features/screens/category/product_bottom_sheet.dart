@@ -462,13 +462,13 @@ class _ProductSheetState extends ConsumerState<_ProductSheet> {
                             produitId : widget.produitId,
                             quantite  : _quantity,
                           );
-                      if (!context.mounted) return;
+                      if (!mounted) return;
                       if (success) {
                         HapticFeedback.mediumImpact();
                         setState(() => _added = true);
                         await Future.delayed(
                             const Duration(milliseconds: 900));
-                        if (!context.mounted) return;
+                        if (!mounted) return;
                         Navigator.of(context).pop();
                       } else {
                         ScaffoldMessenger.of(context).showSnackBar(
@@ -489,7 +489,7 @@ class _ProductSheetState extends ConsumerState<_ProductSheet> {
                 height   : 54,
                 decoration: BoxDecoration(
                   color: _added
-                      ? const Color(0xFF27AE60)
+                      ? AppColors.success
                       : ref.watch(cartProvider).isAdding
                           ? AppColors.grey400
                           : null,

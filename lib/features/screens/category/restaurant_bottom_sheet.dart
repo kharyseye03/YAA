@@ -1,3 +1,4 @@
+import '../../../core/utils/devise.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -9,12 +10,9 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimens.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/utils/app_router.dart';
-import '../../../model/category/categorie_produit.dart';
 import '../../../model/category/structure_detail.dart';
 import '../../../features/cart/providers/cart_notifier.dart';
-import '../../../service/api/api_logger.dart';
 import '../home/providers/category_provider.dart' show
-    categorieProduitProvider,
     produitsByStructureProvider,
     ProduitQueryParams;
 import '../home/restaurant_card.dart';
@@ -138,7 +136,11 @@ class _RestaurantSheetState extends ConsumerState<_RestaurantSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final tabsAsync = ref.watch(categorieProduitProvider(widget.structureId));
+    // Un seul appel : le catalogue complet. Les onglets sont déduits
+    // des produits reçus, pas d'un référentiel de catégories séparé.
+    final catalogueAsync = ref.watch(produitsByStructureProvider(
+      ProduitQueryParams(structureId: widget.structureId),
+    ));
 
     return DraggableScrollableSheet(
       initialChildSize: 0.96,
@@ -163,7 +165,7 @@ class _RestaurantSheetState extends ConsumerState<_RestaurantSheet> {
             Expanded(
               child: _enRecherche
                   ? _buildRecherche()
-                  : tabsAsync.when(
+                  : catalogueAsync.when(
                       loading: () =>
                           const Center(child: CircularProgressIndicator()),
                       error: (e, _) => Center(
@@ -173,23 +175,31 @@ class _RestaurantSheetState extends ConsumerState<_RestaurantSheet> {
                               .copyWith(color: AppColors.error),
                         ),
                       ),
-                      data: (tabs) {
-                        _initKeys(tabs.length);
+                      data: (produits) {
+                        final sections = _grouperParCategorie(produits);
+                        _initKeys(sections.length);
                         return CustomScrollView(
                           controller: scrollController,
                           slivers: [
                             SliverToBoxAdapter(child: _buildHeader()),
                             SliverToBoxAdapter(child: _buildRestaurantInfo()),
-                            SliverPersistentHeader(
-                              pinned: true,
-                              delegate: _TabsDelegate(
-                                height: 43,
-                                child: _buildTabs(tabs),
+                            if (sections.isEmpty)
+                              SliverFillRemaining(
+                                hasScrollBody: false,
+                                child: _buildCatalogueVide(),
+                              )
+                            else ...[
+                              SliverPersistentHeader(
+                                pinned: true,
+                                delegate: _TabsDelegate(
+                                  height: 43,
+                                  child: _buildTabs(sections),
+                                ),
                               ),
-                            ),
-                            ..._buildAllSections(tabs),
-                            const SliverToBoxAdapter(
-                                child: SizedBox(height: 100)),
+                              ..._buildAllSections(sections),
+                              const SliverToBoxAdapter(
+                                  child: SizedBox(height: 100)),
+                            ],
                           ],
                         );
                       },
@@ -272,7 +282,7 @@ class _RestaurantSheetState extends ConsumerState<_RestaurantSheet> {
                     ),
                     // ── Prix ───────────────────────────
                     Text(
-                      '${total.toStringAsFixed(0)} F',
+                      montantLabel(total),
                       style: AppTextStyles.labelMedium.copyWith(
                         color      : Colors.white,
                         fontWeight : FontWeight.w800,
@@ -290,150 +300,94 @@ class _RestaurantSheetState extends ConsumerState<_RestaurantSheet> {
     );
   }
 
-  List<Widget> _buildAllSections(List<CategorieProduit> tabs) {
-    return tabs.asMap().entries.expand((entry) {
-      final i   = entry.key;
-      final tab = entry.value;
+  /// Découpe le catalogue en sections à partir des produits reçus.
+  ///
+  /// On ne demande plus au serveur quelles catégories existent : on
+  /// regarde celles que les produits portent réellement. Un produit
+  /// rangé dans une catégorie absente du référentiel reste donc
+  /// visible, et aucune section vide n'est créée.
+  List<_SectionCatalogue> _grouperParCategorie(List<Produit> produits) {
+    if (produits.isEmpty) return const [];
 
-      final sectionTitle = SliverToBoxAdapter(
-        child: Padding(
-          key: _sectionKeys![i],
-          padding: const EdgeInsets.fromLTRB(
-              AppDimens.screenPadding, AppDimens.lg,
-              AppDimens.screenPadding, 0),
-          child: Text(
-            tab.nom,
-            style: AppTextStyles.h3.copyWith(fontWeight: FontWeight.w700),
-          ),
-        ),
-      );
-
-      // "Populaire" → tous les produits de la structure (sans filtre catégorie)
-      // Autres onglets → filtrés par categorieProduitId
-      final isPopulaire = tab.nom.toLowerCase() == 'populaire';
-      final params = ProduitQueryParams(
-        structureId        : widget.structureId,
-        categorieProduitId : isPopulaire ? null : tab.id,
-      );
-
-      final produitsAsync = ref.watch(produitsByStructureProvider(params));
-
-      // L'onglet « Populaire » ramène tout le catalogue : c'est le
-      // seul endroit où l'on peut confronter les produits aux onglets
-      if (isPopulaire) {
-        produitsAsync.whenData((tous) => _verifierCoherence(tabs, tous));
+    // LinkedHashMap : l'ordre d'apparition du serveur est conservé
+    final parCategorie = <int, List<Produit>>{};
+    final noms         = <int, String>{};
+    for (final p in produits) {
+      parCategorie.putIfAbsent(p.categorieProduitId, () => []).add(p);
+      if (p.nomCategorieProduit.isNotEmpty) {
+        noms[p.categorieProduitId] ??= p.nomCategorieProduit;
       }
+    }
+
+    return [
+      // « Populaire » garde son rôle de vitrine : tout le catalogue
+      _SectionCatalogue(titre: 'Populaire', produits: produits),
+      for (final entree in parCategorie.entries)
+        _SectionCatalogue(
+          titre    : noms[entree.key] ?? 'Autres',
+          produits : entree.value,
+        ),
+    ];
+  }
+
+  List<Widget> _buildAllSections(List<_SectionCatalogue> sections) {
+    return sections.asMap().entries.expand((entry) {
+      final i       = entry.key;
+      final section = entry.value;
 
       return <Widget>[
-        sectionTitle,
-        produitsAsync.when(
-          loading: () => const SliverToBoxAdapter(
-            child: Padding(
-              padding: EdgeInsets.all(AppDimens.xl),
-              child: Center(child: CircularProgressIndicator()),
+        SliverToBoxAdapter(
+          child: Padding(
+            key: _sectionKeys![i],
+            padding: const EdgeInsets.fromLTRB(
+                AppDimens.screenPadding, AppDimens.lg,
+                AppDimens.screenPadding, 0),
+            child: Text(
+              section.titre,
+              style: AppTextStyles.h3.copyWith(fontWeight: FontWeight.w700),
             ),
           ),
-          error: (e, _) => SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(AppDimens.xl),
-              child: Center(
-                child: Text(
-                  e.toString().replaceAll('Exception: ', ''),
-                  style: AppTextStyles.bodyMedium
-                      .copyWith(color: AppColors.error),
-                  textAlign: TextAlign.center,
-                ),
-              ),
+        ),
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(
+              AppDimens.screenPadding, AppDimens.md,
+              AppDimens.screenPadding, 0),
+          sliver: SliverGrid(
+            delegate: SliverChildBuilderDelegate(
+              (_, j) => _ApiMenuItemCard(produit: section.produits[j]),
+              childCount: section.produits.length,
+            ),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount   : 2,
+              crossAxisSpacing : AppDimens.md,
+              mainAxisSpacing  : AppDimens.md,
+              childAspectRatio : 0.82,
             ),
           ),
-          data: (produits) => produits.isEmpty
-              ? SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.all(AppDimens.xl),
-                    child: Center(
-                      child: Text(
-                        'Aucun produit disponible',
-                        style: AppTextStyles.bodyMedium
-                            .copyWith(color: AppColors.grey500),
-                      ),
-                    ),
-                  ),
-                )
-              : SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(
-                      AppDimens.screenPadding, AppDimens.md,
-                      AppDimens.screenPadding, 0),
-                  sliver: SliverGrid(
-                    delegate: SliverChildBuilderDelegate(
-                      (_, j) => _ApiMenuItemCard(produit: produits[j]),
-                      childCount: produits.length,
-                    ),
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      crossAxisSpacing: AppDimens.md,
-                      mainAxisSpacing: AppDimens.md,
-                      childAspectRatio: 0.82,
-                    ),
-                  ),
-                ),
         ),
       ];
     }).toList();
   }
 
-  /// Signale les produits qu'aucun onglet ne peut afficher.
-  ///
-  /// Les onglets viennent de la catégorie d'établissement (tous les
-  /// supermarchés partagent la même liste), pas de ce que la
-  /// structure vend réellement. Un produit rangé dans une catégorie
-  /// absente de cette liste n'apparaît alors sous aucune section —
-  /// seul « Populaire », qui ne filtre pas, le montre.
-  bool _coherenceVerifiee = false;
-
-  void _verifierCoherence(List<CategorieProduit> tabs, List<Produit> tous) {
-    if (_coherenceVerifiee) return;
-    _coherenceVerifiee = true;
-
-    if (tous.isEmpty) {
-      ApiLogger.vide(
-        'Fiche structure ${widget.structureId}',
-        'aucun produit renvoyé par /produits/structure — '
-        'comparer avec /structures/${widget.structureId}',
-      );
-      return;
-    }
-
-    final idsOnglets = tabs.map((t) => t.id).toSet();
-    final orphelins  = tous
-        .where((p) => !idsOnglets.contains(p.categorieProduitId))
-        .toList();
-
-    if (orphelins.isNotEmpty) {
-      final detail = orphelins
-          .map((p) => '${p.nom} (categorieProduitId ${p.categorieProduitId})')
-          .join(', ');
-      ApiLogger.vide(
-        'Fiche structure ${widget.structureId}',
-        '${orphelins.length} produit(s) sans onglet correspondant, '
-        'visibles uniquement sous « Populaire » → $detail',
-      );
-    }
-
-    // Sections qui déclencheront un appel réseau pour rien
-    final categoriesUtilisees = tous.map((p) => p.categorieProduitId).toSet();
-    final ongletsVides = tabs
-        .where((t) =>
-            t.nom.toLowerCase() != 'populaire' &&
-            !categoriesUtilisees.contains(t.id))
-        .length;
-    if (ongletsVides > 0) {
-      ApiLogger.vide(
-        'Fiche structure ${widget.structureId}',
-        '$ongletsVides onglet(s) sur ${tabs.length} sans produit — '
-        'autant de requêtes /produits/structure inutiles',
-      );
-    }
+  Widget _buildCatalogueVide() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(AppDimens.xl),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.inventory_2_outlined,
+                size: 44, color: AppColors.grey300),
+            const SizedBox(height: AppDimens.md),
+            Text(
+              'Aucun produit disponible pour le moment',
+              style: AppTextStyles.bodyMedium.copyWith(color: AppColors.grey500),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   // ════════════════════════════════════════════════════════
@@ -654,7 +608,7 @@ class _RestaurantSheetState extends ConsumerState<_RestaurantSheet> {
           .copyWith(fontSize: 14, color: AppColors.dark),
       decoration: InputDecoration(
         labelText: label,
-        suffixText: 'F',
+        suffixText: kDevise,
         isDense: true,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppDimens.radiusMd),
@@ -850,7 +804,7 @@ class _RestaurantSheetState extends ConsumerState<_RestaurantSheet> {
     );
   }
 
-  Widget _buildTabs(List<CategorieProduit> tabs) {
+  Widget _buildTabs(List<_SectionCatalogue> tabs) {
     return Container(
       color: Colors.white,
       child: Column(
@@ -872,7 +826,7 @@ class _RestaurantSheetState extends ConsumerState<_RestaurantSheet> {
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
                       Text(
-                        tabs[i].nom.toUpperCase(),
+                        tabs[i].titre.toUpperCase(),
                         style: AppTextStyles.bodySmall.copyWith(
                           fontSize: 12,
                           fontWeight:
@@ -903,6 +857,14 @@ class _RestaurantSheetState extends ConsumerState<_RestaurantSheet> {
     );
   }
 
+}
+
+/// Une section du catalogue : un onglet et les produits qu'il montre.
+class _SectionCatalogue {
+  const _SectionCatalogue({required this.titre, required this.produits});
+
+  final String titre;
+  final List<Produit> produits;
 }
 
 // ── Delegate pour onglets sticky ──────────────────────────

@@ -32,7 +32,8 @@ class YaaButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final effectiveHeight = height ?? AppDimens.buttonHeight;
-    final effectiveRadius = borderRadius ?? AppDimens.radiusMd;
+    // Pilule par défaut, comme sur yaagn.com
+    final effectiveRadius = borderRadius ?? AppDimens.radiusFull;
 
     if (isOutlined) {
       return SizedBox(
@@ -54,14 +55,33 @@ class YaaButton extends StatelessWidget {
       );
     }
 
-    return SizedBox(
-      width: width ?? double.infinity,
-      height: effectiveHeight,
+    final fond = backgroundColor ?? AppColors.primary;
+
+    return Container(
+      width  : width ?? double.infinity,
+      height : effectiveHeight,
+      // Lueur teintée sous le bouton — la signature du site. Elle
+      // disparaît quand le bouton est inactif, pour ne pas suggérer
+      // une action possible.
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(effectiveRadius),
+        boxShadow: (onPressed == null || isLoading)
+            ? null
+            : [
+                BoxShadow(
+                  color      : fond.withValues(alpha: 0.20),
+                  blurRadius : 26,
+                  offset     : const Offset(0, 12),
+                ),
+              ],
+      ),
       child: ElevatedButton(
         onPressed: isLoading ? null : onPressed,
         style: ElevatedButton.styleFrom(
-          backgroundColor: backgroundColor ?? AppColors.primary,
-          foregroundColor: foregroundColor ?? AppColors.white,
+          backgroundColor : fond,
+          foregroundColor : foregroundColor ?? AppColors.white,
+          elevation       : 0,
+          shadowColor     : Colors.transparent,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(effectiveRadius),
           ),

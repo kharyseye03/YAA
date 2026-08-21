@@ -2,11 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/app_dimens.dart';
 import '../../../../core/constants/app_text_styles.dart';
 import '../../../../core/utils/app_router.dart';
 import '../../../../service/storage/onboarding_storage.dart';
-import '../widgets/onboarding_page_data.dart';
 
+/// Accueil de première ouverture — un seul écran.
+///
+/// Trois promesses en une respiration, comme sur YAA PRO, plutôt
+/// qu'un carrousel : un onboarding n'a qu'un travail, disparaître
+/// vite. Le bouton d'entrée est visible dès la première seconde,
+/// personne n'a à traverser quoi que ce soit pour entrer.
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
 
@@ -15,54 +21,25 @@ class OnboardingScreen extends StatefulWidget {
 }
 
 class _OnboardingScreenState extends State<OnboardingScreen> {
-  final _pageController = PageController();
-  int _currentPage = 0;
+  /// Visuel de fond. À remplacer par la photo définitive : c'est la
+  /// seule ligne à changer, le reste de l'écran s'y adapte.
+  static const _visuel = 'assets/images/l2.png';
 
-  static const _pages = [
-    OnboardingPageData(
-      image: 'assets/images/test4.jpeg',
-      title: 'Tout ce dont vous\navez besoin, ici',
-      badge: 'Courses, restos, boutiques — en un seul endroit',
-      imageAlignment: Alignment.topCenter,
-    ),
-    OnboardingPageData(
-      image: 'assets/images/L1.jpeg',
-      title: 'Livré directement\nchez vous',
-      badge: 'Livraison rapide partout dans votre ville',
-      imageAlignment: Alignment.centerLeft,
-    ),
-    OnboardingPageData(
-      image: 'assets/images/ob3.jpeg',
-      title: 'Des milliers de produits',
-      badge: 'Nourriture, épicerie, vêtements et bien plus',
-      imageAlignment: Alignment.topCenter,
-    ),
-  ];
-
-  bool get _isLastPage => _currentPage == _pages.length - 1;
+  static const _titre = 'Commandez.\nEnvoyez.\nDéplacez-vous.';
+  static const _accroche =
+      'Vos commerçants, vos colis, vos trajets. YAA vous relie à '
+      'tout Conakry, en quelques minutes.';
 
   @override
   void initState() {
     super.initState();
+    // Fond sombre en bas de l'image : les icônes système doivent
+    // rester lisibles en clair
     SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.light,
-      statusBarBrightness: Brightness.dark,
+      statusBarColor          : Colors.transparent,
+      statusBarIconBrightness : Brightness.light,
+      statusBarBrightness     : Brightness.dark,
     ));
-  }
-
-  @override
-  void dispose() {
-    _pageController.dispose();
-    super.dispose();
-  }
-
-  void _nextPage() {
-    if (_isLastPage) return;
-    _pageController.nextPage(
-      duration: const Duration(milliseconds: 350),
-      curve: Curves.easeInOut,
-    );
   }
 
   /// Quitte l'onboarding en retenant qu'il a été vu : on ne le
@@ -72,55 +49,144 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     if (mounted) context.goNamed(route);
   }
 
-  void _skip() {
-    _pageController.animateToPage(
-      _pages.length - 1,
-      duration: const Duration(milliseconds: 400),
-      curve: Curves.easeInOut,
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.dark,
+      backgroundColor: AppColors.primary,
       body: Stack(
+        fit: StackFit.expand,
         children: [
-          // ── PageView plein écran ──────────────────────────────
-          PageView.builder(
-            controller: _pageController,
-            itemCount: _pages.length,
-            onPageChanged: (i) => setState(() => _currentPage = i),
-            itemBuilder: (_, i) => _buildPage(_pages[i]),
+          // ── Visuel plein écran ────────────────────────────────
+          Image.asset(
+            _visuel,
+            fit: BoxFit.cover,
+            // Si le visuel manque, l'écran reste présentable au lieu
+            // d'afficher une zone cassée
+            errorBuilder: (_, __, ___) => const DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin  : Alignment.topCenter,
+                  end    : Alignment.bottomCenter,
+                  colors : [AppColors.primaryLight, AppColors.primaryDark],
+                ),
+              ),
+            ),
           ),
 
-          // ── Barre de progression (top) ────────────────────────
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            child: SafeArea(
-              bottom: false,
-              child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                child: Row(
-                  children: List.generate(_pages.length, (i) {
-                    return Expanded(
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 300),
-                        height: 2.5,
-                        margin: EdgeInsets.only(
-                            right: i < _pages.length - 1 ? 6 : 0),
-                        decoration: BoxDecoration(
-                          color: Colors.white
-                              .withOpacity(i <= _currentPage ? 1.0 : 0.35),
-                          borderRadius: BorderRadius.circular(2),
+          // ── Voile sombre, pour que le texte reste lisible ─────
+          const DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin  : Alignment.topCenter,
+                end    : Alignment.bottomCenter,
+                stops  : [0.0, 0.35, 0.62, 1.0],
+                colors : [
+                  Color(0x00000000),
+                  Color(0x33000000),
+                  Color(0xCC000000),
+                  Color(0xF2000000),
+                ],
+              ),
+            ),
+          ),
+
+          // ── Contenu, aligné en bas ────────────────────────────
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppDimens.screenPadding,
+                0,
+                AppDimens.screenPadding,
+                AppDimens.xl,
+              ),
+              child: Column(
+                mainAxisAlignment  : MainAxisAlignment.end,
+                crossAxisAlignment : CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _titre,
+                    style: AppTextStyles.h1.copyWith(
+                      color      : Colors.white,
+                      fontSize   : 42,
+                      fontWeight : FontWeight.w800,
+                      height     : 1.08,
+                      letterSpacing: -0.5,
+                    ),
+                  ),
+
+                  const SizedBox(height: AppDimens.lg),
+
+                  Text(
+                    _accroche,
+                    style: AppTextStyles.bodyMedium.copyWith(
+                      color    : Colors.white.withValues(alpha: 0.82),
+                      fontSize : 15,
+                      height   : 1.55,
+                    ),
+                  ),
+
+                  const SizedBox(height: AppDimens.xxxl),
+
+                  // ── Entrée principale ───────────────────────────
+                  SizedBox(
+                    width  : double.infinity,
+                    height : 56,
+                    child  : ElevatedButton(
+                      onPressed: () => _quitter(RouteNames.register),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor : AppColors.secondary,
+                        foregroundColor : Colors.white,
+                        elevation       : 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius:
+                              BorderRadius.circular(AppDimens.radiusFull),
                         ),
                       ),
-                    );
-                  }),
-                ),
+                      child: Text(
+                        'Commencer',
+                        style: AppTextStyles.labelMedium.copyWith(
+                          color      : Colors.white,
+                          fontSize   : 16,
+                          fontWeight : FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: AppDimens.lg),
+
+                  // ── Entrée secondaire ───────────────────────────
+                  Center(
+                    child: GestureDetector(
+                      onTap    : () => _quitter(RouteNames.login),
+                      behavior : HitTestBehavior.opaque,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 6),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'Déjà un compte ?',
+                              style: AppTextStyles.bodySmall.copyWith(
+                                color: Colors.white.withValues(alpha: 0.7),
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              'Se connecter',
+                              style: AppTextStyles.bodySmall.copyWith(
+                                color         : Colors.white,
+                                fontWeight    : FontWeight.w700,
+                                decoration    : TextDecoration.underline,
+                                decorationColor: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -128,232 +194,4 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       ),
     );
   }
-
-  // ═══════════════════════════════════════════════════════════
-  // STYLE NETFLIX — Image plein écran + overlay sombre + texte blanc
-  // ═══════════════════════════════════════════════════════════
-
-  Widget _buildPage(OnboardingPageData page) {
-    final safeBottom = MediaQuery.of(context).padding.bottom;
-
-    return Stack(
-      children: [
-        // 1. Image plein écran
-        Positioned.fill(
-          child: Image.asset(
-            page.image,
-            fit: BoxFit.cover,
-            alignment: page.imageAlignment,
-          ),
-        ),
-
-        // 2. Overlay noir semi-transparent sur toute l'image
-        Positioned.fill(
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.45),
-            ),
-          ),
-        ),
-
-        // 3. Dégradé noir en bas pour faire ressortir le texte
-        Positioned(
-          bottom: 0,
-          left: 0,
-          right: 0,
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Colors.transparent,
-                  Colors.black.withOpacity(0.75),
-                ],
-                stops: const [0.0, 1.0],
-              ),
-            ),
-            child: SizedBox(height: 320),
-          ),
-        ),
-
-        // 4. Contenu texte + boutons en bas
-        Positioned(
-          bottom: 0,
-          left: 0,
-          right: 0,
-          child: Padding(
-            padding: EdgeInsets.fromLTRB(24, 0, 24, safeBottom + 24),
-            child: _buildContent(page),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildContent(OnboardingPageData page) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        // Titre blanc
-        Text(
-          page.title,
-          textAlign: TextAlign.center,
-          style: AppTextStyles.h1.copyWith(
-            fontSize: 32,
-            fontWeight: FontWeight.w800,
-            color: Colors.white,
-            height: 1.2,
-            letterSpacing: -0.5,
-          ),
-        ),
-
-        const SizedBox(height: 10),
-
-        // Badge / sous-titre blanc atténué
-        Text(
-          page.badge,
-          textAlign: TextAlign.center,
-          style: AppTextStyles.bodyMedium.copyWith(
-            color: Colors.white.withOpacity(0.75),
-            height: 1.5,
-          ),
-        ),
-
-        const SizedBox(height: 32),
-
-        // Bouton principal
-        _buildPrimaryButton(
-          _isLastPage ? 'Commencer' : 'Suivant',
-          onPressed: _isLastPage
-              ? () => _quitter(RouteNames.register)
-              : _nextPage,
-        ),
-
-        const SizedBox(height: 14),
-
-        // Bouton secondaire
-        if (_isLastPage)
-          _buildSecondaryButton(
-            'J\'ai déjà un compte',
-            onPressed: () => _quitter(RouteNames.login),
-          )
-        else
-          GestureDetector(
-            onTap: _skip,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 6),
-              child: Text(
-                'Passer',
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white.withOpacity(0.7),
-                ),
-              ),
-            ),
-          ),
-      ],
-    );
-  }
-
-  Widget _buildPrimaryButton(String label, {required VoidCallback onPressed}) {
-    return SizedBox(
-      width: double.infinity,
-      height: 52,
-      child: ElevatedButton(
-        onPressed: onPressed,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.secondary,
-          foregroundColor: AppColors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
-          ),
-          elevation: 0,
-        ),
-        child: Text(
-          label,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            letterSpacing: 0.2,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSecondaryButton(String label,
-      {required VoidCallback onPressed}) {
-    return SizedBox(
-      width: double.infinity,
-      height: 48,
-      child: OutlinedButton(
-        onPressed: onPressed,
-        style: OutlinedButton.styleFrom(
-          foregroundColor: Colors.white,
-          side: BorderSide(color: Colors.white.withOpacity(0.5), width: 1.5),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
-          ),
-        ),
-        child: Text(
-          label,
-          style: const TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      ),
-    );
-  }
-
-  // ═══════════════════════════════════════════════════════════
-  // ANCIEN STYLE — Dégradé blanc arc en bas (carte blanche)
-  // Conservé en commentaire pour référence
-  // ═══════════════════════════════════════════════════════════
-
-  // Widget _buildPageArcStyle(OnboardingPageData page) {
-  //   final safeBottom = MediaQuery.of(context).padding.bottom;
-  //   return Stack(
-  //     children: [
-  //       Positioned.fill(
-  //         child: Image.asset(page.image, fit: BoxFit.cover, alignment: page.imageAlignment),
-  //       ),
-  //       Positioned(
-  //         bottom: 0, left: 0, right: 0,
-  //         child: Container(
-  //           height: 280,
-  //           decoration: BoxDecoration(
-  //             gradient: LinearGradient(
-  //               begin: Alignment.topCenter,
-  //               end: Alignment.bottomCenter,
-  //               colors: [
-  //                 Colors.white.withOpacity(0.0),
-  //                 Colors.white.withOpacity(0.55),
-  //                 Colors.white.withOpacity(0.92),
-  //                 Colors.white,
-  //               ],
-  //               stops: [0.0, 0.28, 0.50, 0.68],
-  //             ),
-  //             borderRadius: BorderRadius.only(
-  //               topLeft: Radius.circular(44),
-  //               topRight: Radius.circular(44),
-  //             ),
-  //           ),
-  //           child: Column(
-  //             mainAxisAlignment: MainAxisAlignment.end,
-  //             children: [
-  //               Padding(
-  //                 padding: EdgeInsets.fromLTRB(24, 0, 24, safeBottom + 20),
-  //                 child: _buildContentArcStyle(page),
-  //               ),
-  //             ],
-  //           ),
-  //         ),
-  //       ),
-  //     ],
-  //   );
-  // }
 }

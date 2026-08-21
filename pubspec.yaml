@@ -20,6 +20,9 @@ dependencies:
   # ── Network ─────────────────────────────────────────────
   dio: ^5.7.0
   http: ^1.2.2
+  # MediaType, pour les envois multipart. Arrivait jusqu'ici via http ;
+  # on la déclare pour ne pas dépendre d'un paquet transitif.
+  http_parser: ^4.0.2
 
   # ── Media ───────────────────────────────────────────────
   image_picker: ^1.1.2
@@ -81,6 +84,19 @@ flutter:
 
   # ── Fonts ───────────────────────────────────────────────
   fonts:
+    # Police de marque, alignée sur yaagn.com
+    - family: PlusJakartaSans
+      fonts:
+        - asset: assets/fonts/PlusJakartaSans/PlusJakartaSans-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/PlusJakartaSans/PlusJakartaSans-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/PlusJakartaSans/PlusJakartaSans-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/PlusJakartaSans/PlusJakartaSans-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/PlusJakartaSans/PlusJakartaSans-ExtraBold.ttf
+          weight: 800
     - family: Archivo
       fonts:
         - asset: assets/fonts/Archivo/static/Archivo-Regular.ttf

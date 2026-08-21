@@ -1,3 +1,5 @@
+import '../../../core/utils/devise.dart';
+import '../../../core/utils/phone_formatter.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,21 +12,25 @@ import '../../../core/utils/app_router.dart';
 import '../../../features/cart/providers/cart_notifier.dart';
 import '../../../features/cart/providers/delivery_address_provider.dart';
 import '../../../features/user/providers/user_notifier.dart';
+import '../../../model/course/type_vehicule.dart';
 import '../../../model/order/commande_detail_model.dart';
+import '../../../model/order/livraison_course_model.dart';
 import '../../../model/transaction/transaction_model.dart';
 import '../../../service/location/location_service.dart';
 import '../../../service/api/api_service.dart';
 import '../../../shared/widgets/yaa_button.dart';
 import '../../../shared/widgets/yaa_text_field.dart';
 import 'delivery_address_sheet.dart';
+import 'reception_mode_sheet.dart';
 
 class CheckoutScreen extends ConsumerStatefulWidget {
-  const CheckoutScreen({super.key, this.modeReception = 'LIVRAISON'});
+  const CheckoutScreen({super.key, required this.choix});
 
-  /// 'LIVRAISON' ou 'RETRAIT_CLIENT' — transmis depuis le panier
-  final String modeReception;
+  /// Mode de réception et, en livraison, le véhicule retenu —
+  /// choisis dans le sheet du panier
+  final ChoixReception choix;
 
-  bool get isRetrait => modeReception == 'RETRAIT_CLIENT';
+  bool get isRetrait => choix.mode == ModeReception.retrait;
 
   @override
   ConsumerState<CheckoutScreen> createState() => _CheckoutScreenState();
@@ -44,7 +50,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     super.initState();
     // Pré-remplir le téléphone depuis le profil
     final profile = ref.read(userProvider).profile;
-    _phoneController.text = profile?.telephone ?? '';
+    _phoneController.text = formatPhone(profile?.telephone ?? '');
 
     // Pré-remplir l'adresse : celle choisie pour cette commande,
     // sinon l'adresse par défaut du profil
@@ -82,9 +88,11 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       // connaît déjà l'adresse du client et celle de la structure.
       final transaction = await ApiService().createTransaction(
         panierId              : cart.id,
-        modeReceptionCommande : widget.modeReception,
+        modeReceptionCommande : widget.choix.mode.code,
+        typeVehicule          : widget.choix.typeVehicule,
+        fraisLivraison        : widget.choix.fraisLivraison,
         adresseLivraison      : _addressController.text.trim(),
-        telephoneClient       : _phoneController.text.trim(),
+        telephoneClient       : unformatPhone(_phoneController.text),
         latitude              : latitude,
         longitude             : longitude,
         description           : _noteController.text.trim(),
@@ -237,7 +245,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                     borderRadius : BorderRadius.circular(AppDimens.radiusFull),
                   ),
                   child: Text(
-                    '${total.toStringAsFixed(0)} F',
+                    montantLabel(total),
                     style: AppTextStyles.labelSmall.copyWith(
                       color      : AppColors.dark,
                       fontWeight : FontWeight.w700,
@@ -290,7 +298,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                     _SummaryRow(
                       icon  : Icons.shopping_bag_outlined,
                       label : '$count article${count > 1 ? 's' : ''}',
-                      value : '${total.toStringAsFixed(0)} F',
+                      value : montantLabel(total),
                       bold  : true,
                     ),
                     const SizedBox(height: 10),
@@ -371,15 +379,10 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                       ),
 
                     const SizedBox(height: AppDimens.lg),
-                    YaaTextField(
+                    PhoneTextField(
                       controller      : _phoneController,
                       label           : 'Téléphone',
-                      hint            : 'Ex: 77 123 45 67',
-                      prefixIcon      : Icons.phone_outlined,
-                      keyboardType    : TextInputType.phone,
                       textInputAction : TextInputAction.next,
-                      validator       : (v) =>
-                          v == null || v.trim().isEmpty ? 'Champ requis' : null,
                     ),
 
                     const SizedBox(height: 20),
@@ -415,7 +418,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             child: YaaButton(
               label           : _isSubmitting
                   ? 'Validation...'
-                  : 'Valider la commande · ${total.toStringAsFixed(0)} F',
+                  : 'Valider la commande · ${montantLabel(total)}',
               onPressed       : _isSubmitting ? null : _validerCommande,
               icon            : _isSubmitting ? null : Icons.lock_outline_rounded,
               backgroundColor : AppColors.secondary,
@@ -514,7 +517,12 @@ class _PaymentSheetState extends State<_PaymentSheet> {
   bool    _isPaying      = false;
   String? _error;
 
+  // Seul le paiement en espèces est opérationnel. Les opérateurs
+  // mobiles restent visibles mais désactivés : les masquer donnerait
+  // l'impression qu'ils n'arriveront jamais.
   static const _methods = [
+    _PaymentMethod('Espèces', 'ESPECE', null,
+        AppColors.successLight, AppColors.success, disponible: true),
     _PaymentMethod('Orange Money', 'ORANGE_MONEY', 'assets/images/om.webp',
         Color(0xFFFFF0E6), Color(0xFFFF7900)),
     _PaymentMethod('Wave',         'WAVE',         'assets/images/wave2.webp',
@@ -578,7 +586,7 @@ class _PaymentSheetState extends State<_PaymentSheet> {
           const SizedBox(height: 4),
           Text(
             'Réf : ${tx.reference.substring(0, 8).toUpperCase()}  ·  '
-            '${tx.montant.toStringAsFixed(0)} F',
+            '${montantLabel(tx.montant)}',
             style: AppTextStyles.bodySmall.copyWith(color: AppColors.grey500),
           ),
 
@@ -590,39 +598,47 @@ class _PaymentSheetState extends State<_PaymentSheet> {
           ...List.generate(_methods.length, (i) {
             final m      = _methods[i];
             final active = i == _selectedIndex;
-            return Column(
-              children: [
-                GestureDetector(
-                  onTap    : () => setState(() => _selectedIndex = i),
-                  behavior : HitTestBehavior.opaque,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    child: Row(
-                      children: [
-                        // Logo
-                        Container(
-                          width  : 48,
-                          height : 48,
-                          decoration: BoxDecoration(
-                            color        : m.bgColor,
-                            borderRadius : BorderRadius.circular(12),
-                          ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
-                            child: Image.asset(
-                              m.imagePath,
+            final ouvert = m.disponible;
+
+            // Un moyen indisponible reste lisible mais éteint :
+            // grisé, sans radio, et signalé « Bientôt ».
+            final ligne = Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              child: Row(
+                children: [
+                  // Logo
+                  Container(
+                    width  : 48,
+                    height : 48,
+                    decoration: BoxDecoration(
+                      color        : ouvert ? m.bgColor : AppColors.grey100,
+                      borderRadius : BorderRadius.circular(12),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: m.imagePath == null
+                          ? Icon(Icons.payments_outlined,
+                              color: ouvert ? m.accentColor : AppColors.grey400,
+                              size: 24)
+                          : Image.asset(
+                              m.imagePath!,
                               fit: BoxFit.contain,
                               errorBuilder: (_, __, ___) => Icon(
                                 Icons.payment,
-                                color: m.accentColor,
+                                color: ouvert
+                                    ? m.accentColor
+                                    : AppColors.grey400,
                                 size: 24,
                               ),
                             ),
-                          ),
-                        ),
-                        const SizedBox(width: 14),
-                        // Nom
-                        Expanded(
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  // Nom
+                  Expanded(
+                    child: Row(
+                      children: [
+                        Flexible(
                           child: Text(
                             m.name,
                             style: AppTextStyles.labelMedium.copyWith(
@@ -630,27 +646,61 @@ class _PaymentSheetState extends State<_PaymentSheet> {
                                   ? FontWeight.w700
                                   : FontWeight.w500,
                               fontSize   : 14,
-                              color      : AppColors.dark,
+                              color      : ouvert
+                                  ? AppColors.dark
+                                  : AppColors.grey400,
                             ),
                           ),
                         ),
-                        // Radio
-                        AnimatedContainer(
-                          duration  : const Duration(milliseconds: 200),
-                          width     : 22,
-                          height    : 22,
-                          decoration: BoxDecoration(
-                            shape  : BoxShape.circle,
-                            border : Border.all(
-                              color : active ? AppColors.dark : AppColors.grey300,
-                              width : active ? 6 : 1.5,
+                        if (!ouvert) ...[
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color        : AppColors.grey100,
+                              borderRadius : BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              'Bientôt',
+                              style: AppTextStyles.caption.copyWith(
+                                color      : AppColors.grey500,
+                                fontWeight : FontWeight.w600,
+                              ),
                             ),
                           ),
-                        ),
+                        ],
                       ],
                     ),
                   ),
-                ),
+                  // Radio — masqué sur un moyen indisponible
+                  if (ouvert)
+                    AnimatedContainer(
+                      duration  : const Duration(milliseconds: 200),
+                      width     : 22,
+                      height    : 22,
+                      decoration: BoxDecoration(
+                        shape  : BoxShape.circle,
+                        border : Border.all(
+                          color : active ? AppColors.dark : AppColors.grey300,
+                          width : active ? 6 : 1.5,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            );
+
+            return Column(
+              children: [
+                if (ouvert)
+                  GestureDetector(
+                    onTap    : () => setState(() => _selectedIndex = i),
+                    behavior : HitTestBehavior.opaque,
+                    child    : ligne,
+                  )
+                else
+                  Opacity(opacity: 0.55, child: ligne),
                 if (i < _methods.length - 1)
                   const Divider(height: 1, color: AppColors.grey200),
               ],
@@ -678,7 +728,7 @@ class _PaymentSheetState extends State<_PaymentSheet> {
 
           // ── Bouton Payer ───────────────────────────────────
           YaaButton(
-            label           : 'Payer · ${tx.montant.toStringAsFixed(0)} F',
+            label           : 'Payer · ${montantLabel(tx.montant)}',
             onPressed       : _isPaying ? null : _payer,
             isLoading       : _isPaying,
             icon            : _isPaying ? null : Icons.lock_outline_rounded,
@@ -693,12 +743,24 @@ class _PaymentSheetState extends State<_PaymentSheet> {
 // ── Modèle de méthode de paiement ────────────────────────────
 class _PaymentMethod {
   const _PaymentMethod(
-      this.name, this.code, this.imagePath, this.bgColor, this.accentColor);
+    this.name,
+    this.code,
+    this.imagePath,
+    this.bgColor,
+    this.accentColor, {
+    this.disponible = false,
+  });
+
   final String name;
   final String code;
-  final String imagePath;
+
+  /// Null pour les moyens sans logo — on retombe sur une icône
+  final String? imagePath;
   final Color  bgColor;
   final Color  accentColor;
+
+  /// Utilisable dès maintenant. Les autres sont affichés grisés.
+  final bool disponible;
 }
 
 // ── Bottom sheet de suivi (post-paiement) ────────────────────
@@ -742,6 +804,16 @@ class _LivreurSearchSheetState extends State<_LivreurSearchSheet>
   String  _statut = 'EN_ATTENTE'; // statut initial après paiement
   int?    _commandeId;
   CommandeDetailModel? _detail; // infos livreur une fois assigné
+
+  /// Le détail de commande n'expose ni la note ni le véhicule du
+  /// coursier : on complète depuis la mission correspondante.
+  Livreur? _livreur;
+
+  String? get _nomLivreur      => _livreur?.fullName  ?? _detail?.livreurFullName;
+  String? get _telLivreur      => _livreur?.telephone ?? _detail?.livreurTelephone;
+  String? get _photoLivreur    => _livreur?.photoUrl  ?? _detail?.livreurImageUrl;
+  double? get _noteLivreur     => _livreur?.noteMoyenne;
+  String? get _vehiculeLivreur => _livreur?.vehicule;
 
   // En retrait, aucun livreur n'est assigné : le parcours s'achève
   // quand la commande est prête à être récupérée.
@@ -794,6 +866,20 @@ class _LivreurSearchSheetState extends State<_LivreurSearchSheet>
               id    : commande.id,
             );
             if (mounted) setState(() => _detail = detail);
+
+            // Photo, note et véhicule ne vivent que sur la mission :
+            // on la retrouve par l'identifiant de la commande.
+            try {
+              final missions = await ApiService().getMissions();
+              final match = missions
+                  .where((m) => m.commandeStructureId == commande.id)
+                  .toList();
+              if (match.isNotEmpty && mounted) {
+                setState(() => _livreur = match.first.livreur);
+              }
+            } catch (e) {
+              debugPrint('⚠️ Infos livreur enrichies indisponibles : $e');
+            }
           }
         }
       } catch (e) {
@@ -1088,7 +1174,7 @@ class _LivreurSearchSheetState extends State<_LivreurSearchSheet>
 
             // Montant
             Text(
-              '${widget.transaction.montant.toStringAsFixed(0)} F',
+              montantLabel(widget.transaction.montant),
               style: AppTextStyles.labelMedium.copyWith(
                 fontWeight : FontWeight.w800,
                 color      : AppColors.dark,
@@ -1177,7 +1263,7 @@ class _LivreurSearchSheetState extends State<_LivreurSearchSheet>
                 ),
               ),
               Text(
-                '${widget.transaction.montant.toStringAsFixed(0)} F',
+                montantLabel(widget.transaction.montant),
                 style: AppTextStyles.labelMedium.copyWith(
                   fontWeight : FontWeight.w800,
                   color      : AppColors.dark,
@@ -1251,6 +1337,10 @@ class _LivreurSearchSheetState extends State<_LivreurSearchSheet>
 
   /// Initiales du livreur pour l'avatar (ex: "Abdoul DIALLO" → "AD")
   String get _livreurInitiales {
+    final depuisMission = _livreur?.initiales;
+    if (depuisMission != null && depuisMission.isNotEmpty) {
+      return depuisMission;
+    }
     final prenom = _detail?.livreurName?.trim()     ?? '';
     final nom    = _detail?.livreurLastName?.trim() ?? '';
     final p = prenom.isNotEmpty ? prenom[0] : '';
@@ -1265,7 +1355,7 @@ class _LivreurSearchSheetState extends State<_LivreurSearchSheet>
           ? Text(
               _livreurInitiales,
               style: const TextStyle(
-                fontFamily : 'Archivo',
+                fontFamily : 'PlusJakartaSans',
                 fontSize   : 30,
                 fontWeight : FontWeight.w800,
                 color      : Colors.white,
@@ -1277,7 +1367,7 @@ class _LivreurSearchSheetState extends State<_LivreurSearchSheet>
   }
 
   Future<void> _appelerLivreur() async {
-    final phone = _detail?.livreurTelephone;
+    final phone = _telLivreur;
     if (phone == null || phone.isEmpty) return;
     final uri = Uri(scheme: 'tel', path: phone);
     if (await canLaunchUrl(uri)) await launchUrl(uri);
@@ -1314,13 +1404,16 @@ class _LivreurSearchSheetState extends State<_LivreurSearchSheet>
             ],
           ),
           child: ClipOval(
-            child: _detail?.livreurImageUrl != null
+            child: _photoLivreur != null
                 ? Image.network(
-                    _detail!.livreurImageUrl!,
+                    _photoLivreur!,
                     width  : 88,
                     height : 88,
                     fit    : BoxFit.cover,
-                    errorBuilder: (_, __, ___) => _buildInitiales(),
+                    errorBuilder: (_, e, __) {
+                      debugPrint('❌ photo livreur ($_photoLivreur) : $e');
+                      return _buildInitiales();
+                    },
                   )
                 : _buildInitiales(),
           ),
@@ -1330,21 +1423,71 @@ class _LivreurSearchSheetState extends State<_LivreurSearchSheet>
 
         // ── Infos du livreur ──────────────────────────────────
         Text(
-          _detail?.livreurFullName ?? 'Votre livreur',
+          _nomLivreur ?? 'Votre livreur',
           style: AppTextStyles.labelMedium.copyWith(
             fontWeight : FontWeight.w800,
             fontSize   : 17,
             color      : AppColors.dark,
           ),
         ),
-        const SizedBox(height: 2),
+
+        // Note et véhicule : ce qui rassure avant d'ouvrir sa porte
+        if (_noteLivreur != null || _vehiculeLivreur != null) ...[
+          const SizedBox(height: 5),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (_noteLivreur != null) ...[
+                Icon(Icons.star_rounded,
+                    size: 16, color: Colors.amber.shade600),
+                const SizedBox(width: 3),
+                Text(
+                  _noteLivreur!.toStringAsFixed(1),
+                  style: AppTextStyles.bodySmall.copyWith(
+                    fontSize   : 13,
+                    fontWeight : FontWeight.w700,
+                    color      : AppColors.dark,
+                  ),
+                ),
+              ],
+              if (_noteLivreur != null && _vehiculeLivreur != null)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: Container(
+                      width: 3, height: 3,
+                      decoration: const BoxDecoration(
+                        color: AppColors.grey400,
+                        shape: BoxShape.circle,
+                      )),
+                ),
+              if (_vehiculeLivreur != null) ...[
+                Icon(
+                  TypeVehicule.depuisCode(_vehiculeLivreur)?.icone
+                      ?? Icons.local_shipping_outlined,
+                  size  : 15,
+                  color : AppColors.grey500,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  TypeVehicule.depuisCode(_vehiculeLivreur)?.libelle
+                      ?? _vehiculeLivreur!,
+                  style: AppTextStyles.bodySmall.copyWith(
+                    fontSize : 13,
+                    color    : AppColors.grey500,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ],
+
+        const SizedBox(height: 4),
         Text(
-          'Votre livreur · en route vers l\'établissement',
+          'En route vers l\'établissement',
           style: AppTextStyles.bodySmall.copyWith(color: AppColors.grey500),
         ),
 
-        if (_detail?.livreurTelephone != null &&
-            _detail!.livreurTelephone!.isNotEmpty) ...[
+        if (_telLivreur != null && _telLivreur!.isNotEmpty) ...[
           const SizedBox(height: 12),
           // Bouton d'appel
           GestureDetector(
@@ -1363,7 +1506,7 @@ class _LivreurSearchSheetState extends State<_LivreurSearchSheet>
                       color: AppColors.success, size: 16),
                   const SizedBox(width: 7),
                   Text(
-                    _detail!.livreurTelephone!,
+                    _telLivreur!,
                     style: AppTextStyles.labelMedium.copyWith(
                       fontWeight : FontWeight.w700,
                       color      : AppColors.success,

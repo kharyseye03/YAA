@@ -43,21 +43,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       badge      : 'Flash Deal',
       title      : '-50% sur votre\n1ère commande',
       subtitle   : 'Code BIENVENUE · valable 7 jours',
-      badgeColor : Color(0xFFFF6B35),
+      badgeColor : AppColors.secondary,
       image      : 'assets/images/slide1.jpg',
     ),
     PromoBannerData(
       badge      : 'Sponsorisé',
       title      : 'Le Djoloff\nvous régale',
       subtitle   : '2 pizzas achetées = 1 offerte',
-      badgeColor : Color(0xFF1A1A2E),
+      badgeColor : AppColors.primary,
       image      : 'assets/images/slide2.png',
     ),
     PromoBannerData(
       badge      : 'Nouveau',
       title      : 'Envoyez vos colis\nen quelques clics',
       subtitle   : 'Un coursier récupère et livre',
-      badgeColor : Color(0xFF27AE60),
+      badgeColor : AppColors.success,
       image      : 'assets/images/slide3.png',
     ),
   ];
@@ -108,35 +108,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         currentIndex: _currentNavIndex,
         onTap: (index) => setState(() => _currentNavIndex = index),
         onCartTap: () => setState(() => _currentNavIndex = 4),
-      ),
-    );
-  }
-
-  Widget _buildSimpleHeader(String title) {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.only(
-        left: AppDimens.screenPadding,
-        right: AppDimens.screenPadding,
-        top: MediaQuery.of(context).padding.top + AppDimens.md,
-        bottom: AppDimens.xl,
-      ),
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Color(0xFF1652F0),
-            Color(0xFF08399A)
-          ],
-        ),
-      ),
-      child: Text(
-        title,
-        style: AppTextStyles.h2.copyWith(
-          color: AppColors.white,
-          fontWeight: FontWeight.w700,
-        ),
       ),
     );
   }

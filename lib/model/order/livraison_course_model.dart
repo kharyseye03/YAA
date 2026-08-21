@@ -1,3 +1,4 @@
+import '../../core/utils/devise.dart';
 import 'package:flutter/material.dart';
 
 import '../../config/api/api_config.dart';
@@ -26,6 +27,69 @@ enum TypeServiceMission {
       );
 }
 
+/// Le coursier assigné à une mission.
+///
+/// Nul tant que le statut est RECHERCHE_COURSIER. Présent sur les
+/// trois types de service dès qu'un coursier prend la mission.
+class Livreur {
+  const Livreur({
+    required this.id,
+    required this.fullName,
+    this.telephone,
+    this.imageFileName,
+    this.latitude,
+    this.longitude,
+    this.vehicule,
+    this.noteMoyenne,
+  });
+
+  /// Usage interne uniquement — cet identifiant ne doit jamais
+  /// apparaître à l'écran.
+  final int id;
+
+  final String  fullName;
+  final String? telephone;
+  final String? imageFileName;
+
+  /// Position **actuelle** du coursier, pas celle qu'il occupait
+  /// pendant la mission : le serveur renvoie la même sur toutes ses
+  /// missions, y compris celles déjà terminées.
+  final double? latitude;
+  final double? longitude;
+
+  /// Véhicule réellement utilisé — peut différer de celui demandé
+  final String? vehicule;
+  final double? noteMoyenne;
+
+  factory Livreur.fromJson(Map<String, dynamic> json) => Livreur(
+        id            : (json['id'] as num?)?.toInt() ?? 0,
+        fullName      : json['fullName'] as String? ?? '',
+        telephone     : json['telephone'] as String?,
+        imageFileName : json['imageFileName'] as String?,
+        latitude      : (json['latitude']  as num?)?.toDouble(),
+        longitude     : (json['longitude'] as num?)?.toDouble(),
+        vehicule      : json['vehicule'] as String?,
+        noteMoyenne   : (json['noteMoyenne'] as num?)?.toDouble(),
+      );
+
+  String? get photoUrl {
+    final f = imageFileName;
+    if (f == null || f.isEmpty) return null;
+    return f.startsWith('http') ? f : ApiConfig.getImageUrl(f);
+  }
+
+  bool get hasPosition => latitude != null && longitude != null;
+
+  /// "AK" — repli quand la photo est absente ou ne charge pas
+  String get initiales => fullName
+      .trim()
+      .split(RegExp(r'\s+'))
+      .take(2)
+      .map((m) => m.isNotEmpty ? m[0] : '')
+      .join()
+      .toUpperCase();
+}
+
 /// Une entrée de la liste unifiée des livraisons, courses et
 /// commandes livrées.
 class LivraisonCourseModel {
@@ -40,14 +104,8 @@ class LivraisonCourseModel {
   /// chercher le détail (produits, structure, livreur).
   final int? commandeStructureId;
 
-  final String? livreurFullName;
-  final String? livreurTelephone;
-  /// Nom de fichier de la photo de profil du coursier
-  final String? livreurProfile;
-  /// Dernière position connue du coursier (null tant qu'aucun
-  /// coursier n'est assigné)
-  final double? latitudeLivreur;
-  final double? longitudeLivreur;
+  /// Le coursier assigné — null tant qu'aucun n'a pris la mission
+  final Livreur? livreur;
 
   final double latitudeDepart;
   final double longitudeDepart;
@@ -80,11 +138,7 @@ class LivraisonCourseModel {
     required this.typeVehicule,
     required this.statut,
     this.commandeStructureId,
-    this.livreurFullName,
-    this.livreurTelephone,
-    this.livreurProfile,
-    this.latitudeLivreur,
-    this.longitudeLivreur,
+    this.livreur,
     this.latitudeDepart   = 0,
     this.longitudeDepart  = 0,
     this.latitudeArrivee  = 0,
@@ -95,7 +149,7 @@ class LivraisonCourseModel {
     this.distanceKm       = 0,
     this.dureeMinutes     = 0,
     this.montant          = 0,
-    this.devise           = 'FCFA',
+    this.devise           = kDevise,
     this.instructions     = '',
     this.telephoneExpediteur,
     this.telephoneDestinataire,
@@ -112,6 +166,24 @@ class LivraisonCourseModel {
       return raw == null ? null : DateTime.tryParse(raw);
     }
 
+    // Le coursier est arrivé sous forme d'objet imbriqué ; certaines
+    // réponses plus anciennes l'exposent encore à plat. On accepte
+    // les deux plutôt que de perdre l'information.
+    final brut = json['livreur'] as Map<String, dynamic>?;
+    final livreur = brut != null
+        ? Livreur.fromJson(brut)
+        : (json['livreurFullName'] as String?)?.isNotEmpty == true
+            ? Livreur(
+                id            : 0,
+                fullName      : json['livreurFullName'] as String,
+                telephone     : json['livreurTelephone'] as String?,
+                imageFileName : json['livreurProfile'] as String?
+                                ?? json['livreurImage'] as String?,
+                latitude      : (json['latitudeLivreur']  as num?)?.toDouble(),
+                longitude     : (json['longitudeLivreur'] as num?)?.toDouble(),
+              )
+            : null;
+
     return LivraisonCourseModel(
       id                    : (json['id'] as num).toInt(),
       code                  : json['code'] as String? ?? '',
@@ -120,11 +192,7 @@ class LivraisonCourseModel {
       typeVehicule          : json['typeVehicule'] as String? ?? '',
       statut                : json['statut'] as String? ?? '',
       commandeStructureId   : (json['commandeStructureId'] as num?)?.toInt(),
-      livreurFullName       : json['livreurFullName']  as String?,
-      livreurTelephone      : json['livreurTelephone'] as String?,
-      livreurProfile        : json['livreurProfile']   as String?,
-      latitudeLivreur       : (json['latitudeLivreur']  as num?)?.toDouble(),
-      longitudeLivreur      : (json['longitudeLivreur'] as num?)?.toDouble(),
+      livreur               : livreur,
       latitudeDepart        : (json['latitudeDepart']   as num?)?.toDouble() ?? 0,
       longitudeDepart       : (json['longitudeDepart']  as num?)?.toDouble() ?? 0,
       latitudeArrivee       : (json['latitudeArrivee']  as num?)?.toDouble() ?? 0,
@@ -135,7 +203,7 @@ class LivraisonCourseModel {
       distanceKm            : (json['distanceKm']     as num?)?.toDouble() ?? 0,
       dureeMinutes          : (json['dureeMinutes']   as num?)?.toInt() ?? 0,
       montant               : (json['montant']        as num?)?.toDouble() ?? 0,
-      devise                : json['devise'] as String? ?? 'FCFA',
+      devise                : json['devise'] as String? ?? kDevise,
       instructions          : json['instructions'] as String? ?? '',
       telephoneExpediteur   : json['telephoneExpediteur']   as String?,
       telephoneDestinataire : json['telephoneDestinataire'] as String?,
@@ -156,17 +224,22 @@ class LivraisonCourseModel {
       commandeStructureId != null;
 
   bool get hasLivreur =>
-      livreurFullName != null && livreurFullName!.isNotEmpty;
+      livreur != null && livreur!.fullName.isNotEmpty;
 
-  /// URL complète de la photo du coursier
-  String? get livreurPhotoUrl {
-    final f = livreurProfile;
-    if (f == null || f.isEmpty) return null;
-    return f.startsWith('http') ? f : ApiConfig.getImageUrl(f);
-  }
+  // ── Accès à plat, pour les écrans ────────────────────────────
+  String? get livreurFullName  => livreur?.fullName;
+  String? get livreurTelephone => livreur?.telephone;
+  String? get livreurPhotoUrl  => livreur?.photoUrl;
+  String? get livreurVehicule  => livreur?.vehicule;
+  double? get livreurNote      => livreur?.noteMoyenne;
+  double? get latitudeLivreur  => livreur?.latitude;
+  double? get longitudeLivreur => livreur?.longitude;
 
+  /// Le serveur renvoie la position **courante** du coursier sur
+  /// toutes ses missions, terminées comprises. La placer sur une
+  /// carte n'a de sens que tant que la mission est en cours.
   bool get hasLivreurPosition =>
-      latitudeLivreur != null && longitudeLivreur != null;
+      isEnCours && (livreur?.hasPosition ?? false);
 
   /// Le coursier a récupéré le colis : il file vers la destination.
   /// Avant ça, il se dirige vers le point de retrait.
@@ -195,5 +268,8 @@ class LivraisonCourseModel {
     return [d, t].where((e) => e != null).join(' · ');
   }
 
-  String get montantLabel => '${montant.toStringAsFixed(0)} $devise';
+  /// « 2 500 GNF » — la devise du serveur fait foi si elle est fournie.
+  /// On appelle formaterMontant plutôt que la fonction montantLabel :
+  /// dans cette classe, ce nom désigne déjà ce getter.
+  String get montantLabel => '${formaterMontant(montant)} $devise';
 }

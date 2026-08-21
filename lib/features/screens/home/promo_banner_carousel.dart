@@ -156,7 +156,7 @@ class _BannerCard extends StatelessWidget {
                     child: Text(
                       data.badge.toUpperCase(),
                       style: const TextStyle(
-                        fontFamily    : 'Archivo',
+                        fontFamily    : 'PlusJakartaSans',
                         fontSize      : 10,
                         fontWeight    : FontWeight.w800,
                         color         : Colors.white,

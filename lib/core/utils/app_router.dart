@@ -12,6 +12,7 @@ import '../../features/auth/verification_screen.dart';
 import '../../features/auth/providers/auth_notifier.dart';
 import '../../features/screens/cart/cart_screen.dart';
 import '../../features/screens/cart/checkout_screen.dart';
+import '../../features/screens/cart/reception_mode_sheet.dart';
 import '../../features/screens/home/home_screen.dart';
 import '../../features/screens/home/notifications.dart';
 import '../../features/screens/course/course_screen.dart';
@@ -20,9 +21,7 @@ import '../../features/course/models/course_models.dart';
 import '../../features/screens/order/order_detail_screen.dart';
 import '../../model/order/livraison_course_model.dart';
 import '../../features/screens/order/order_history_screen.dart';
-import '../../features/screens/order/order_tracking_screen.dart';
 import '../../features/screens/order/orders_screen.dart';
-import '../../features/screens/product/product_detail_screen.dart';
 import '../../features/screens/profile/edit_personal_info_screen.dart';
 import '../../features/screens/profile/personal_info_screen.dart';
 import '../../features/screens/category/category_screen.dart';
@@ -33,8 +32,8 @@ import '../../features/starter/splash/splash_screen.dart';
 
 // Routes qui nécessitent d'être connecté
 const _protectedRoutes = {
-  '/home', '/product-detail', '/cart', '/checkout',
-  '/orders', '/order-detail', '/order-history', '/orderTracking',
+  '/home', '/cart', '/checkout',
+  '/orders', '/order-detail', '/order-history',
   '/course', '/coursier-search',
   '/profile', '/personalInfo', '/editPersonalInfo',
   '/terms', '/notifications', '/search',
@@ -59,7 +58,6 @@ abstract final class RoutePaths {
   static const String forgotVerification = '/forgot-verification';
   static const String resetPassword = '/reset-password';
   static const String home = '/home';
-  static const String productDetail = '/product-detail';
   static const String restaurantList = '/restaurants';
   static const String restaurantDetail = '/restaurants/:id';
   static const String pharmacyList = '/pharmacies';
@@ -77,7 +75,6 @@ abstract final class RoutePaths {
   static const String coursierSearch = '/coursier-search';
   static const String profile = '/profile';
   static const String search = '/search';
-  static const String orderTracking = '/orderTracking';
   static const String personalInfo = '/personalInfo';
   static const String editPersonalInfo = '/editPersonalInfo';
   static const String terms = '/terms';
@@ -97,8 +94,6 @@ abstract final class RouteNames {
   static const String forgotVerification = 'forgotVerification';
   static const String resetPassword = 'resetPassword';
   static const String home = 'home';
-  static const String productDetail = 'productDetail';
-  static const String orderTracking = 'orderTracking';
   static const String restaurantList = 'restaurantList';
   static const String restaurantDetail = 'restaurantDetail';
   static const String pharmacyList = 'pharmacyList';
@@ -210,11 +205,6 @@ final routerProvider = Provider<GoRouter>((ref) {
         name: RouteNames.home,
         builder: (context, state) => const HomeScreen(),
       ),
-      GoRoute(
-        path: RoutePaths.productDetail,
-        name: RouteNames.productDetail,
-        builder: (context, state) => const ProductDetailScreen(),
-      ),
 
       // ── Cart & Checkout ────────────────────────────────────
       GoRoute(
@@ -229,7 +219,8 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: RoutePaths.checkout,
         name: RouteNames.checkout,
         builder: (context, state) => CheckoutScreen(
-          modeReception: state.extra as String? ?? 'LIVRAISON',
+          choix: state.extra as ChoixReception? ??
+              const ChoixReception(mode: ModeReception.livraison),
         ),
       ),
       // ── Orders ─────────────────────────────────────────────
@@ -237,11 +228,6 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: RoutePaths.orders,
         name: RouteNames.orders,
         builder: (context, state) => const OrdersScreen(),
-      ),
-      GoRoute(
-        path: RoutePaths.orderTracking,
-        name: RouteNames.orderTracking,
-        builder: (context, state) => const OrderTrackingScreen(),
       ),
       GoRoute(
         path: RoutePaths.orderDetail,

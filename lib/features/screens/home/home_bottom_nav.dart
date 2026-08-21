@@ -25,7 +25,7 @@ class HomeBottomNav extends ConsumerWidget {
       child: Container(
         height: 68,
         decoration: BoxDecoration(
-          color: const Color(0xFF1A1A2E),
+          color: AppColors.primary,
           borderRadius: BorderRadius.circular(40),
           boxShadow: [
             BoxShadow(

@@ -1,8 +1,8 @@
+import '../../../core/utils/devise.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../config/api/api_config.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimens.dart';
 import '../../../core/constants/app_text_styles.dart';
@@ -132,7 +132,7 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                   child: Text(
                     'Détail commande',
                     style: const TextStyle(
-                      fontFamily : 'Archivo',
+                      fontFamily : 'PlusJakartaSans',
                       fontSize   : 13,
                       fontWeight : FontWeight.w600,
                       color      : Colors.white,
@@ -221,7 +221,7 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                   Text(
                     m.montantLabel,
                     style: const TextStyle(
-                      fontFamily : 'Archivo',
+                      fontFamily : 'PlusJakartaSans',
                       fontSize   : 28,
                       fontWeight : FontWeight.w800,
                       color      : AppColors.dark,
@@ -385,7 +385,7 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                     gradient: LinearGradient(
                       begin   : Alignment.topLeft,
                       end     : Alignment.bottomRight,
-                      colors  : [Color(0xFF1A1A2E), Color(0xFF2A2A45)],
+                      colors  : [AppColors.primary, AppColors.primaryLight],
                     ),
                   ),
                 ),
@@ -462,7 +462,7 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                             Text(
                               status.label,
                               style: TextStyle(
-                                fontFamily : 'Archivo',
+                                fontFamily : 'PlusJakartaSans',
                                 fontSize   : 13,
                                 fontWeight : FontWeight.w700,
                                 color      : status.color,
@@ -475,7 +475,7 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                       Text(
                         'Réf: $ref',
                         style: TextStyle(
-                          fontFamily : 'Archivo',
+                          fontFamily : 'PlusJakartaSans',
                           fontSize   : 12,
                           color      : Colors.white.withValues(alpha: 0.5),
                         ),
@@ -521,9 +521,9 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              '${d.montantTotal.toStringAsFixed(0)} F',
+                              montantLabel(d.montantTotal),
                               style: const TextStyle(
-                                fontFamily : 'Archivo',
+                                fontFamily : 'PlusJakartaSans',
                                 fontSize   : 28,
                                 fontWeight : FontWeight.w800,
                                 color      : AppColors.dark,
@@ -878,7 +878,7 @@ class _ProduitRow extends StatelessWidget {
                 ),
                 const SizedBox(height: 3),
                 Text(
-                  '${produit.prixUnitaire.toStringAsFixed(0)} F × ${produit.quantite}',
+                  '${montantLabel(produit.prixUnitaire)} × ${produit.quantite}',
                   style: AppTextStyles.bodySmall
                       .copyWith(color: AppColors.grey500),
                 ),
@@ -886,7 +886,7 @@ class _ProduitRow extends StatelessWidget {
             ),
           ),
           Text(
-            '${produit.prixTotal.toStringAsFixed(0)} F',
+            montantLabel(produit.prixTotal),
             style: AppTextStyles.labelMedium.copyWith(
               fontWeight : FontWeight.w700,
               color      : AppColors.dark,

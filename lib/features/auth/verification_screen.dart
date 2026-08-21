@@ -276,7 +276,7 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen> {
             child: Text(
               _code[index],
               style: TextStyle(
-                fontFamily: 'Archivo',
+                fontFamily: 'PlusJakartaSans',
                 fontSize: 24,
                 fontWeight: FontWeight.w700,
                 color: AppColors.dark,
@@ -338,7 +338,7 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen> {
               : Text(
             value,
             style: TextStyle(
-              fontFamily: 'Archivo',
+              fontFamily: 'PlusJakartaSans',
               fontSize: 22,
               fontWeight: FontWeight.w600,
               color: AppColors.dark,

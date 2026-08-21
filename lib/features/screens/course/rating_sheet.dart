@@ -305,7 +305,7 @@ class _RatingSheetState extends State<_RatingSheet> {
           : Text(
               ini,
               style: const TextStyle(
-                fontFamily : 'Archivo',
+                fontFamily : 'PlusJakartaSans',
                 fontSize   : 26,
                 fontWeight : FontWeight.w800,
                 color      : Colors.white,

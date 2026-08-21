@@ -272,7 +272,7 @@ class _ForgotVerificationScreenState extends ConsumerState<ForgotVerificationScr
             child: Text(
               _code[index],
               style: const TextStyle(
-                fontFamily : 'Archivo',
+                fontFamily : 'PlusJakartaSans',
                 fontSize   : 20,
                 fontWeight : FontWeight.w700,
                 color      : AppColors.dark,
@@ -327,7 +327,7 @@ class _ForgotVerificationScreenState extends ConsumerState<ForgotVerificationScr
               : Text(
             value,
             style: const TextStyle(
-              fontFamily: 'Archivo',
+              fontFamily: 'PlusJakartaSans',
               fontSize: 22,
               fontWeight: FontWeight.w600,
               color: AppColors.dark,

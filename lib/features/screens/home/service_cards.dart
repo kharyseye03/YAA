@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimens.dart';
 import '../../../core/constants/app_text_styles.dart';
 
@@ -26,8 +27,8 @@ class ServiceCards extends StatelessWidget {
               titre     : 'Livraison',
               sousTitre : 'Faites-vous livrer',
               icon      : Icons.sports_motorsports,
-              gradient  : const [Color(0xFF1A1A2E), Color(0xFF2A2A45)],
-              //gradient  : const [Color(0xFFFF6B35), Color(0xFFCC4400)],
+              gradient  : const [AppColors.primary, AppColors.primaryLight],
+              //gradient  : const [AppColors.secondary, Color(0xFFCC4400)],
               image     : 'assets/images/service-livraison.png',
               onTap     : onLivraison,
             ),
@@ -38,8 +39,8 @@ class ServiceCards extends StatelessWidget {
               titre     : 'Course',
               sousTitre : 'Voiture ou moto',
               icon      : Icons.local_taxi_rounded,
-             // gradient  : const [Color(0xFFFF6B35), Color(0xFFCC4400)],
-              gradient  : const [Color(0xFFFF6B35), Color(0xFFCC4400)],
+             // gradient  : const [AppColors.secondary, Color(0xFFCC4400)],
+              gradient  : const [AppColors.secondary, Color(0xFFCC4400)],
               image     : 'assets/images/service-course.png',
               onTap     : onCourse,
             ),

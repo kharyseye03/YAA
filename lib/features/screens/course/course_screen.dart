@@ -1,3 +1,4 @@
+import '../../../core/utils/devise.dart';
 import 'dart:async';
 import 'dart:ui' as ui;
 
@@ -75,7 +76,7 @@ class _CourseScreenState extends ConsumerState<CourseScreen> {
   // icône pin) directement en Dart, aux couleurs de la marque.
   Future<void> _loadMarkerIcons() async {
     _departIcon = await _createMarker(
-        const Color(0xFF1A1A2E), Icons.location_on_outlined); // bleu
+        AppColors.primary, Icons.location_on_outlined); // bleu
     _arriveeIcon = await _createMarker(
         AppColors.secondary, Icons.location_on_outlined);       // orange
     if (mounted) setState(() {});
@@ -603,7 +604,7 @@ class _CourseScreenState extends ConsumerState<CourseScreen> {
             const SizedBox(height: 12),
           ],
           Row(
-            children: [TypeVehicule.moto, TypeVehicule.voiture]
+            children: [TypeVehicule.moto, TypeVehicule.vehicule]
                 .map((v) => Expanded(
                       child: _VehiclePick(
                         vehicule : v,
@@ -771,14 +772,14 @@ class _CourseScreenState extends ConsumerState<CourseScreen> {
                       ? _estimation!.fraisLivraison.toStringAsFixed(0)
                       : '—',
                   style: const TextStyle(
-                    fontFamily : 'Archivo',
+                    fontFamily : 'PlusJakartaSans',
                     fontWeight : FontWeight.w800,
                     fontSize   : 20,
                     color      : AppColors.dark,
                   ),
                 ),
                 Text(
-                  _estimation?.devise ?? 'FCFA',
+                  _estimation?.devise ?? kDevise,
                   style: AppTextStyles.caption.copyWith(
                     color      : AppColors.grey400,
                     fontWeight : FontWeight.w600,
@@ -832,13 +833,13 @@ class _VehiclePick extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(
-                  vehicule.icon,
+                  vehicule.icone,
                   color : selected ? AppColors.primary : AppColors.grey500,
                   size  : 20,
                 ),
                 const SizedBox(width: 6),
                 Text(
-                  vehicule.label,
+                  vehicule.libelle,
                   style: AppTextStyles.bodySmall.copyWith(
                     fontWeight : FontWeight.w700,
                     color      : selected ? AppColors.primary : AppColors.dark,
@@ -866,14 +867,14 @@ class _VehiclePick extends StatelessWidget {
                         ? estimation!.fraisLivraison.toStringAsFixed(0)
                         : '—',
                     style: TextStyle(
-                      fontFamily : 'Archivo',
+                      fontFamily : 'PlusJakartaSans',
                       fontSize   : 22,
                       fontWeight : FontWeight.w800,
                       color      : selected ? AppColors.dark : AppColors.grey600,
                     ),
                   ),
                   Text(
-                    estimation?.devise ?? 'FCFA',
+                    estimation?.devise ?? kDevise,
                     style: AppTextStyles.caption.copyWith(
                       fontWeight : FontWeight.w600,
                       color      : AppColors.grey400,
