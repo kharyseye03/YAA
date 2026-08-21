@@ -16,11 +16,15 @@ abstract final class AppDimens {
   static const double listItemPadding = 12.0;
 
   // ── Border Radius ────────────────────────────────────────
-  static const double radiusSm = 8.0;
-  static const double radiusMd = 12.0;
-  static const double radiusLg = 16.0;
-  static const double radiusXl = 20.0;
-  static const double radiusFull = 100.0;
+  // Échelle reprise de yaagn.com (--radius-sm/md/lg). Le site est
+  // volontairement peu arrondi : c'est ce qui lui donne son côté net.
+  static const double radiusSm = 6.0;
+  static const double radiusMd = 8.0;
+  static const double radiusLg = 12.0;
+  /// Cartes mises en avant et bottom sheets — l'exception assumée
+  static const double radiusXl = 24.0;
+  /// Pilule : la forme de tous les boutons du site
+  static const double radiusFull = 999.0;
 
   // ── Icon Sizes ───────────────────────────────────────────
   static const double iconSm = 16.0;

@@ -151,7 +151,7 @@ class _CourseDetailsSheetState extends ConsumerState<_CourseDetailsSheet> {
                             Text(
                               estim?.prixLabel ?? '—',
                               style: const TextStyle(
-                                fontFamily : 'Archivo',
+                                fontFamily : 'PlusJakartaSans',
                                 fontSize   : 30,
                                 fontWeight : FontWeight.w800,
                                 color      : AppColors.dark,

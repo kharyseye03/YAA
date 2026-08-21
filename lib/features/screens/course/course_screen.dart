@@ -771,7 +771,7 @@ class _CourseScreenState extends ConsumerState<CourseScreen> {
                       ? _estimation!.fraisLivraison.toStringAsFixed(0)
                       : '—',
                   style: const TextStyle(
-                    fontFamily : 'Archivo',
+                    fontFamily : 'PlusJakartaSans',
                     fontWeight : FontWeight.w800,
                     fontSize   : 20,
                     color      : AppColors.dark,
@@ -866,7 +866,7 @@ class _VehiclePick extends StatelessWidget {
                         ? estimation!.fraisLivraison.toStringAsFixed(0)
                         : '—',
                     style: TextStyle(
-                      fontFamily : 'Archivo',
+                      fontFamily : 'PlusJakartaSans',
                       fontSize   : 22,
                       fontWeight : FontWeight.w800,
                       color      : selected ? AppColors.dark : AppColors.grey600,

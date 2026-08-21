@@ -199,7 +199,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                       Text(
                         '${total.toStringAsFixed(0)} F',
                         style: const TextStyle(
-                          fontFamily : 'Archivo',
+                          fontFamily : 'PlusJakartaSans',
                           fontSize   : 30,
                           fontWeight : FontWeight.w800,
                           color      : AppColors.dark,

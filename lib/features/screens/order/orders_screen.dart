@@ -389,7 +389,7 @@ class CommandeCard extends StatelessWidget {
                   Text(
                     mission.montantLabel,
                     style: const TextStyle(
-                      fontFamily : 'Archivo',
+                      fontFamily : 'PlusJakartaSans',
                       fontSize   : 18,
                       fontWeight : FontWeight.w800,
                       color      : AppColors.dark,

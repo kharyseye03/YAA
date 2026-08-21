@@ -4,7 +4,7 @@ import 'app_colors.dart';
 /// Centralized typography for the YAA application.
 /// Uses Inter as the default font family.
 abstract final class AppTextStyles {
-  static const String _fontFamily = 'Archivo';
+  static const String _fontFamily = 'PlusJakartaSans';
 
   // ── Headings ─────────────────────────────────────────────
   static const TextStyle h1 = TextStyle(

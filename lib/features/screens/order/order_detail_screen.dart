@@ -131,7 +131,7 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                   child: Text(
                     'Détail commande',
                     style: const TextStyle(
-                      fontFamily : 'Archivo',
+                      fontFamily : 'PlusJakartaSans',
                       fontSize   : 13,
                       fontWeight : FontWeight.w600,
                       color      : Colors.white,
@@ -220,7 +220,7 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                   Text(
                     m.montantLabel,
                     style: const TextStyle(
-                      fontFamily : 'Archivo',
+                      fontFamily : 'PlusJakartaSans',
                       fontSize   : 28,
                       fontWeight : FontWeight.w800,
                       color      : AppColors.dark,
@@ -461,7 +461,7 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                             Text(
                               status.label,
                               style: TextStyle(
-                                fontFamily : 'Archivo',
+                                fontFamily : 'PlusJakartaSans',
                                 fontSize   : 13,
                                 fontWeight : FontWeight.w700,
                                 color      : status.color,
@@ -474,7 +474,7 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                       Text(
                         'Réf: $ref',
                         style: TextStyle(
-                          fontFamily : 'Archivo',
+                          fontFamily : 'PlusJakartaSans',
                           fontSize   : 12,
                           color      : Colors.white.withValues(alpha: 0.5),
                         ),
@@ -522,7 +522,7 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                             Text(
                               '${d.montantTotal.toStringAsFixed(0)} F',
                               style: const TextStyle(
-                                fontFamily : 'Archivo',
+                                fontFamily : 'PlusJakartaSans',
                                 fontSize   : 28,
                                 fontWeight : FontWeight.w800,
                                 color      : AppColors.dark,

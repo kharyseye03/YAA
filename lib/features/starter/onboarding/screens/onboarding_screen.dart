@@ -139,7 +139,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         elevation       : 0,
                         shape: RoundedRectangleBorder(
                           borderRadius:
-                              BorderRadius.circular(AppDimens.radiusLg),
+                              BorderRadius.circular(AppDimens.radiusFull),
                         ),
                       ),
                       child: Text(

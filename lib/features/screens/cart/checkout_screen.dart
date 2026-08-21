@@ -1358,7 +1358,7 @@ class _LivreurSearchSheetState extends State<_LivreurSearchSheet>
           ? Text(
               _livreurInitiales,
               style: const TextStyle(
-                fontFamily : 'Archivo',
+                fontFamily : 'PlusJakartaSans',
                 fontSize   : 30,
                 fontWeight : FontWeight.w800,
                 color      : Colors.white,

@@ -424,7 +424,7 @@ class _CoursierSearchScreenState extends State<CoursierSearchScreen>
         child: Text(
           initiales,
           style: const TextStyle(
-            fontFamily : 'Archivo',
+            fontFamily : 'PlusJakartaSans',
             fontSize   : 19,
             fontWeight : FontWeight.w800,
             color      : Colors.white,
