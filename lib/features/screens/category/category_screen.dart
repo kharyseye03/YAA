@@ -538,11 +538,17 @@ class _FullWidthRestaurantCard extends ConsumerWidget {
                 ),
               ),
               const SizedBox(width: 16),
-              Text(
-                restaurant.cuisine,
-                style: AppTextStyles.bodySmall.copyWith(
-                  fontSize: 13,
-                  color: AppColors.grey500,
+              // L'adresse est de longueur imprévisible : elle doit
+              // céder la place plutôt que déborder
+              Expanded(
+                child: Text(
+                  restaurant.cuisine,
+                  style: AppTextStyles.bodySmall.copyWith(
+                    fontSize: 13,
+                    color: AppColors.grey500,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
