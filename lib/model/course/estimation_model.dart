@@ -1,3 +1,5 @@
+import '../../core/utils/devise.dart';
+
 /// Réponse de POST /livraisons-courses/estimation
 class EstimationModel {
   final int    distanceMetres;
@@ -35,7 +37,7 @@ class EstimationModel {
       dureeText      : json['dureeText']       as String? ?? '',
       estimation     : json['estimation']      as String? ?? '',
       fraisLivraison : (json['fraisLivraison'] as num?)?.toDouble() ?? 0,
-      devise         : json['devise']          as String? ?? 'FCFA',
+      devise         : json['devise']          as String? ?? kDevise,
       // Le backend a renommé ce champ : on accepte les deux noms
       typeVehicule   : json['typeVehicule'] as String?
                        ?? json['typeVehiculeTarification'] as String?,
@@ -43,7 +45,7 @@ class EstimationModel {
   }
 
   /// Prix formaté : "2 500 F"
-  String get prixLabel => '${fraisLivraison.toStringAsFixed(0)} F';
+  String get prixLabel => montantLabel(fraisLivraison);
 
   /// Prix avec la devise renvoyée par le serveur : "2 500 FCFA".
   /// On affiche celle qu'il envoie plutôt qu'un symbole codé en dur —
@@ -54,13 +56,3 @@ class EstimationModel {
   String get metaLabel => '$distanceText · $dureeText';
 }
 
-/// Sépare les milliers par une espace insécable : 2500 → "2 500"
-String formaterMontant(double montant) {
-  final entier = montant.toStringAsFixed(0);
-  final tampon = StringBuffer();
-  for (var i = 0; i < entier.length; i++) {
-    if (i > 0 && (entier.length - i) % 3 == 0) tampon.write(' ');
-    tampon.write(entier[i]);
-  }
-  return tampon.toString();
-}

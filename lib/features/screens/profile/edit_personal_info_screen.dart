@@ -1,3 +1,4 @@
+import '../../../core/utils/phone_formatter.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -234,12 +235,11 @@ class _EditPersonalInfoScreenState
                       enabled: false,
                     ),
                     const SizedBox(height: AppDimens.xl),
-                    YaaTextField(
-                      controller: _phoneController,
-                      label: 'Téléphone',
-                      keyboardType: TextInputType.phone,
-                      textInputAction: TextInputAction.done,
-                      enabled: false,
+                    PhoneTextField(
+                      controller      : _phoneController,
+                      label           : 'Téléphone',
+                      textInputAction : TextInputAction.done,
+                      enabled         : false,
                     ),
                     const SizedBox(height: AppDimens.xxl),
                   ],

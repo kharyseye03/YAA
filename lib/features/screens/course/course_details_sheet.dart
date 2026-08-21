@@ -50,7 +50,7 @@ class _CourseDetailsSheetState extends ConsumerState<_CourseDetailsSheet> {
   @override
   void initState() {
     super.initState();
-    // Téléphone du profil, formaté "77 123 45 67"
+    // Téléphone du profil, remis au format guinéen
     _expedTelCtrl.text =
         formatPhone(ref.read(userProvider).profile?.telephone ?? '');
   }
@@ -244,7 +244,7 @@ class _CourseDetailsSheetState extends ConsumerState<_CourseDetailsSheet> {
                             onEditAddress: () => Navigator.of(context).pop(),
                             child: YaaTextField(
                               controller      : _expedTelCtrl,
-                              hint            : '77 123 45 67',
+                              hint            : kExempleTelephone,
                               prefixIcon      : Icons.phone_outlined,
                               keyboardType    : TextInputType.phone,
                               textInputAction : TextInputAction.next,
@@ -266,7 +266,7 @@ class _CourseDetailsSheetState extends ConsumerState<_CourseDetailsSheet> {
                             onEditAddress: () => Navigator.of(context).pop(),
                             child: YaaTextField(
                               controller      : _destTelCtrl,
-                              hint            : '77 123 45 67',
+                              hint            : kExempleTelephone,
                               prefixIcon      : Icons.phone_outlined,
                               keyboardType    : TextInputType.phone,
                               textInputAction : TextInputAction.next,

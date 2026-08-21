@@ -1,3 +1,4 @@
+import '../../../core/utils/devise.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -520,7 +521,7 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              '${d.montantTotal.toStringAsFixed(0)} F',
+                              montantLabel(d.montantTotal),
                               style: const TextStyle(
                                 fontFamily : 'PlusJakartaSans',
                                 fontSize   : 28,
@@ -877,7 +878,7 @@ class _ProduitRow extends StatelessWidget {
                 ),
                 const SizedBox(height: 3),
                 Text(
-                  '${produit.prixUnitaire.toStringAsFixed(0)} F × ${produit.quantite}',
+                  '${montantLabel(produit.prixUnitaire)} × ${produit.quantite}',
                   style: AppTextStyles.bodySmall
                       .copyWith(color: AppColors.grey500),
                 ),
@@ -885,7 +886,7 @@ class _ProduitRow extends StatelessWidget {
             ),
           ),
           Text(
-            '${produit.prixTotal.toStringAsFixed(0)} F',
+            montantLabel(produit.prixTotal),
             style: AppTextStyles.labelMedium.copyWith(
               fontWeight : FontWeight.w700,
               color      : AppColors.dark,

@@ -1,3 +1,4 @@
+import '../../../core/utils/devise.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -400,7 +401,7 @@ class _ProduitCard extends StatelessWidget {
                   const SizedBox(height: 4),
                   // Prix
                   Text(
-                    '${favori.prix.toStringAsFixed(0)} F',
+                    montantLabel(favori.prix),
                     style: AppTextStyles.labelMedium.copyWith(
                       fontWeight : FontWeight.w800,
                       fontSize   : 14,

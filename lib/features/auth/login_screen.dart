@@ -1,5 +1,5 @@
+import '../../core/utils/phone_formatter.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
@@ -156,11 +156,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   keyboardType: TextInputType.phone,
                   textInputAction: TextInputAction.next,
                   inputFormatters: [
-                    FilteringTextInputFormatter.digitsOnly,
-                    LengthLimitingTextInputFormatter(9),
-                    _PhoneFormatter(),
-                  ],
-                  decoration: _inputDeco(hint: 'Ex: 77 890 09 09'),
+                    ...phoneInputFormatters,
+                                    ],
+                  decoration: _inputDeco(hint: kExempleTelephone),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
                       return 'Veuillez entrer votre numéro';
@@ -301,21 +299,3 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 }
 
-// ── Formatter téléphone : XX XXX XX XX ──────────────────────────
-class _PhoneFormatter extends TextInputFormatter {
-  @override
-  TextEditingValue formatEditUpdate(
-      TextEditingValue oldValue, TextEditingValue newValue) {
-    final digits = newValue.text.replaceAll(' ', '');
-    final buffer = StringBuffer();
-    for (int i = 0; i < digits.length; i++) {
-      if (i == 2 || i == 5 || i == 7) buffer.write(' ');
-      buffer.write(digits[i]);
-    }
-    final formatted = buffer.toString();
-    return TextEditingValue(
-      text: formatted,
-      selection: TextSelection.collapsed(offset: formatted.length),
-    );
-  }
-}

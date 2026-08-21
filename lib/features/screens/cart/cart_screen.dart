@@ -1,3 +1,4 @@
+import '../../../core/utils/devise.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../config/api/api_config.dart';
@@ -197,7 +198,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        '${total.toStringAsFixed(0)} F',
+                        montantLabel(total),
                         style: const TextStyle(
                           fontFamily : 'PlusJakartaSans',
                           fontSize   : 30,
@@ -393,7 +394,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
           child: YaaButton(
             label           : isEmpty
                 ? 'Panier vide'
-                : 'Commander · ${total.toStringAsFixed(0)} F',
+                : 'Commander · ${montantLabel(total)}',
             onPressed       : isEmpty ? null : () => _handleCommander(context),
             icon            : isEmpty ? null : Icons.arrow_forward,
             backgroundColor : isEmpty ? AppColors.grey300 : AppColors.secondary,
@@ -448,7 +449,7 @@ class _StructureHeader extends StatelessWidget {
           ),
         ),
         Text(
-          '${group.sousTotal.toStringAsFixed(0)} F',
+          montantLabel(group.sousTotal),
           style: AppTextStyles.labelSmall.copyWith(
             fontWeight : FontWeight.w700,
             color      : AppColors.dark,
@@ -513,7 +514,7 @@ class _CartItemState extends State<_CartItem> {
               ),
               const SizedBox(height: 4),
               Text(
-                '${widget.item.prixUnitaire.toStringAsFixed(0)} F',
+                montantLabel(widget.item.prixUnitaire),
                 style: AppTextStyles.labelMedium.copyWith(
                   fontWeight : FontWeight.w700,
                   fontSize   : 13,

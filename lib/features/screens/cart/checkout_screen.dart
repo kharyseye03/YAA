@@ -1,3 +1,5 @@
+import '../../../core/utils/devise.dart';
+import '../../../core/utils/phone_formatter.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -48,7 +50,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     super.initState();
     // Pré-remplir le téléphone depuis le profil
     final profile = ref.read(userProvider).profile;
-    _phoneController.text = profile?.telephone ?? '';
+    _phoneController.text = formatPhone(profile?.telephone ?? '');
 
     // Pré-remplir l'adresse : celle choisie pour cette commande,
     // sinon l'adresse par défaut du profil
@@ -90,7 +92,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         typeVehicule          : widget.choix.typeVehicule,
         fraisLivraison        : widget.choix.fraisLivraison,
         adresseLivraison      : _addressController.text.trim(),
-        telephoneClient       : _phoneController.text.trim(),
+        telephoneClient       : unformatPhone(_phoneController.text),
         latitude              : latitude,
         longitude             : longitude,
         description           : _noteController.text.trim(),
@@ -243,7 +245,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                     borderRadius : BorderRadius.circular(AppDimens.radiusFull),
                   ),
                   child: Text(
-                    '${total.toStringAsFixed(0)} F',
+                    montantLabel(total),
                     style: AppTextStyles.labelSmall.copyWith(
                       color      : AppColors.dark,
                       fontWeight : FontWeight.w700,
@@ -296,7 +298,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                     _SummaryRow(
                       icon  : Icons.shopping_bag_outlined,
                       label : '$count article${count > 1 ? 's' : ''}',
-                      value : '${total.toStringAsFixed(0)} F',
+                      value : montantLabel(total),
                       bold  : true,
                     ),
                     const SizedBox(height: 10),
@@ -377,15 +379,10 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                       ),
 
                     const SizedBox(height: AppDimens.lg),
-                    YaaTextField(
+                    PhoneTextField(
                       controller      : _phoneController,
                       label           : 'Téléphone',
-                      hint            : 'Ex: 77 123 45 67',
-                      prefixIcon      : Icons.phone_outlined,
-                      keyboardType    : TextInputType.phone,
                       textInputAction : TextInputAction.next,
-                      validator       : (v) =>
-                          v == null || v.trim().isEmpty ? 'Champ requis' : null,
                     ),
 
                     const SizedBox(height: 20),
@@ -421,7 +418,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             child: YaaButton(
               label           : _isSubmitting
                   ? 'Validation...'
-                  : 'Valider la commande · ${total.toStringAsFixed(0)} F',
+                  : 'Valider la commande · ${montantLabel(total)}',
               onPressed       : _isSubmitting ? null : _validerCommande,
               icon            : _isSubmitting ? null : Icons.lock_outline_rounded,
               backgroundColor : AppColors.secondary,
@@ -589,7 +586,7 @@ class _PaymentSheetState extends State<_PaymentSheet> {
           const SizedBox(height: 4),
           Text(
             'Réf : ${tx.reference.substring(0, 8).toUpperCase()}  ·  '
-            '${tx.montant.toStringAsFixed(0)} F',
+            '${montantLabel(tx.montant)}',
             style: AppTextStyles.bodySmall.copyWith(color: AppColors.grey500),
           ),
 
@@ -731,7 +728,7 @@ class _PaymentSheetState extends State<_PaymentSheet> {
 
           // ── Bouton Payer ───────────────────────────────────
           YaaButton(
-            label           : 'Payer · ${tx.montant.toStringAsFixed(0)} F',
+            label           : 'Payer · ${montantLabel(tx.montant)}',
             onPressed       : _isPaying ? null : _payer,
             isLoading       : _isPaying,
             icon            : _isPaying ? null : Icons.lock_outline_rounded,
@@ -1177,7 +1174,7 @@ class _LivreurSearchSheetState extends State<_LivreurSearchSheet>
 
             // Montant
             Text(
-              '${widget.transaction.montant.toStringAsFixed(0)} F',
+              montantLabel(widget.transaction.montant),
               style: AppTextStyles.labelMedium.copyWith(
                 fontWeight : FontWeight.w800,
                 color      : AppColors.dark,
@@ -1266,7 +1263,7 @@ class _LivreurSearchSheetState extends State<_LivreurSearchSheet>
                 ),
               ),
               Text(
-                '${widget.transaction.montant.toStringAsFixed(0)} F',
+                montantLabel(widget.transaction.montant),
                 style: AppTextStyles.labelMedium.copyWith(
                   fontWeight : FontWeight.w800,
                   color      : AppColors.dark,

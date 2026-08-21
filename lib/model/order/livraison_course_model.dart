@@ -1,3 +1,4 @@
+import '../../core/utils/devise.dart';
 import 'package:flutter/material.dart';
 
 import '../../config/api/api_config.dart';
@@ -148,7 +149,7 @@ class LivraisonCourseModel {
     this.distanceKm       = 0,
     this.dureeMinutes     = 0,
     this.montant          = 0,
-    this.devise           = 'FCFA',
+    this.devise           = kDevise,
     this.instructions     = '',
     this.telephoneExpediteur,
     this.telephoneDestinataire,
@@ -202,7 +203,7 @@ class LivraisonCourseModel {
       distanceKm            : (json['distanceKm']     as num?)?.toDouble() ?? 0,
       dureeMinutes          : (json['dureeMinutes']   as num?)?.toInt() ?? 0,
       montant               : (json['montant']        as num?)?.toDouble() ?? 0,
-      devise                : json['devise'] as String? ?? 'FCFA',
+      devise                : json['devise'] as String? ?? kDevise,
       instructions          : json['instructions'] as String? ?? '',
       telephoneExpediteur   : json['telephoneExpediteur']   as String?,
       telephoneDestinataire : json['telephoneDestinataire'] as String?,
@@ -267,5 +268,8 @@ class LivraisonCourseModel {
     return [d, t].where((e) => e != null).join(' · ');
   }
 
-  String get montantLabel => '${montant.toStringAsFixed(0)} $devise';
+  /// « 2 500 GNF » — la devise du serveur fait foi si elle est fournie.
+  /// On appelle formaterMontant plutôt que la fonction montantLabel :
+  /// dans cette classe, ce nom désigne déjà ce getter.
+  String get montantLabel => '${formaterMontant(montant)} $devise';
 }

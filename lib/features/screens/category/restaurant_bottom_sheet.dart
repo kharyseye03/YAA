@@ -1,3 +1,4 @@
+import '../../../core/utils/devise.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -281,7 +282,7 @@ class _RestaurantSheetState extends ConsumerState<_RestaurantSheet> {
                     ),
                     // ── Prix ───────────────────────────
                     Text(
-                      '${total.toStringAsFixed(0)} F',
+                      montantLabel(total),
                       style: AppTextStyles.labelMedium.copyWith(
                         color      : Colors.white,
                         fontWeight : FontWeight.w800,
@@ -607,7 +608,7 @@ class _RestaurantSheetState extends ConsumerState<_RestaurantSheet> {
           .copyWith(fontSize: 14, color: AppColors.dark),
       decoration: InputDecoration(
         labelText: label,
-        suffixText: 'F',
+        suffixText: kDevise,
         isDense: true,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppDimens.radiusMd),

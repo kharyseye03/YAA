@@ -6,7 +6,7 @@ import '../../core/constants/app_dimens.dart';
 import '../../core/constants/app_text_styles.dart';
 import '../../core/utils/app_router.dart';
 import '../../shared/widgets/auth_header.dart';
-import '../../shared/widgets/phone_number_formatter.dart';
+import '../../core/utils/phone_formatter.dart';
 import '../../shared/widgets/yaa_button.dart';
 import '../../shared/widgets/yaa_text_field.dart';
 import 'providers/auth_notifier.dart';

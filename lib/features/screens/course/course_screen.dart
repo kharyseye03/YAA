@@ -1,3 +1,4 @@
+import '../../../core/utils/devise.dart';
 import 'dart:async';
 import 'dart:ui' as ui;
 
@@ -778,7 +779,7 @@ class _CourseScreenState extends ConsumerState<CourseScreen> {
                   ),
                 ),
                 Text(
-                  _estimation?.devise ?? 'FCFA',
+                  _estimation?.devise ?? kDevise,
                   style: AppTextStyles.caption.copyWith(
                     color      : AppColors.grey400,
                     fontWeight : FontWeight.w600,
@@ -873,7 +874,7 @@ class _VehiclePick extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    estimation?.devise ?? 'FCFA',
+                    estimation?.devise ?? kDevise,
                     style: AppTextStyles.caption.copyWith(
                       fontWeight : FontWeight.w600,
                       color      : AppColors.grey400,
