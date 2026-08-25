@@ -73,11 +73,18 @@ dev_dependencies:
 flutter_launcher_icons:
   android: true
   ios: true
-  image_path: "assets/images/icone_officielle.jpeg"
-  # Icône adaptative Android (fond blanc + logo au centre)
+  # Carrés 1024×1024 générés depuis logo_off.png (large, ratio ~2.9:1) :
+  # une icône de launcher doit être carrée, le logo est donc centré
+  # sur un canevas transparent.
+  image_path: "assets/images/launcher_icon.png"
+  # Icône adaptative Android (fond blanc + logo au centre).
+  # Premier plan à part : le masque adaptatif rogne jusqu'à 66 % du
+  # canevas, le logo y est donc plus petit que dans image_path.
   adaptive_icon_background: "#FFFFFF"
-  adaptive_icon_foreground: "assets/images/icone_officielle.jpeg"
+  adaptive_icon_foreground: "assets/images/launcher_icon_foreground.png"
+  # iOS interdit le canal alpha : la transparence est aplatie en blanc.
   remove_alpha_ios: true
+  background_color_ios: "#FFFFFF"
 
 flutter:
   uses-material-design: true

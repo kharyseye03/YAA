@@ -7,8 +7,9 @@ import 'dart:ui';
 /// se perçoit sans qu'on sache le nommer.
 abstract final class AppColors {
   // ── Marque ───────────────────────────────────────────────
-  /// --brand-navy
-  static const Color primary = Color(0xFF102033);
+  /// --brand-navy — relevé sur le logo officiel, plus saturé que la
+  /// valeur du site (#102033) qui ne correspondait pas au lettrage.
+  static const Color primary = Color(0xFF001553);
   /// --brand-navy-2
   static const Color primaryLight = Color(0xFF123457);
   /// --blue-deep
