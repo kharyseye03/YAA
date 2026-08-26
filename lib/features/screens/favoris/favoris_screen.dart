@@ -201,7 +201,7 @@ class _Tabs extends StatelessWidget {
                               horizontal: 7, vertical: 2),
                           decoration: BoxDecoration(
                             color        : active
-                                ? AppColors.dark
+                                ? AppColors.primary
                                 : AppColors.grey200,
                             borderRadius : BorderRadius.circular(20),
                           ),

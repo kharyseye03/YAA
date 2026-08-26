@@ -73,17 +73,20 @@ abstract final class AppColors {
   static const Color error = Color(0xFF9B1C1C);
   /// --danger-soft
   static const Color errorLight = Color(0xFFFFF0F0);
-  static const Color info = Color(0xFF102033);
-  static const Color infoLight = Color(0xFFEEF3F8);
+  static const Color info = primary;
+  static const Color infoLight = primarySurface;
 
   // ── Couleurs de catégorie ────────────────────────────────
-  static const Color restaurant  = Color(0xFFF47A12);
-  static const Color pharmacy    = Color(0xFF168043);
-  static const Color boutique    = Color(0xFF123457);
-  static const Color supermarket = Color(0xFF102033);
+  // Alias, jamais de littéral : ces couleurs reprennent la palette de
+  // marque. Dupliquer la valeur hexa ferait diverger les écrans dès
+  // qu'on retouche une teinte.
+  static const Color restaurant  = secondary;
+  static const Color pharmacy    = success;
+  static const Color boutique    = primaryLight;
+  static const Color supermarket = primary;
 
-  static const Color catRestaurant   = Color(0xFFF47A12);
-  static const Color catPharmacie    = Color(0xFF168043);
-  static const Color catBoutique     = Color(0xFF123457);
-  static const Color catSupermarche  = Color(0xFF102033);
+  static const Color catRestaurant   = restaurant;
+  static const Color catPharmacie    = pharmacy;
+  static const Color catBoutique     = boutique;
+  static const Color catSupermarche  = supermarket;
 }

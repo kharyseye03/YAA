@@ -682,7 +682,7 @@ class _PaymentSheetState extends State<_PaymentSheet> {
                       decoration: BoxDecoration(
                         shape  : BoxShape.circle,
                         border : Border.all(
-                          color : active ? AppColors.dark : AppColors.grey300,
+                          color : active ? AppColors.primary : AppColors.grey300,
                           width : active ? 6 : 1.5,
                         ),
                       ),
