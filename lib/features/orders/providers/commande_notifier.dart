@@ -1,12 +1,52 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../model/order/commande_detail_model.dart';
+import '../../../model/order/commande_model.dart';
 import '../../../model/order/livraison_course_model.dart';
 import '../../../service/api/api_service.dart';
+
+/// Une ligne de la page « Mes commandes ».
+///
+/// La page agrège deux API qui ne partagent aucun modèle :
+/// `/livraisons-courses/client/livraisons-courses` (missions) et
+/// `/commandes-clients` (commandes d'établissement). D'où cette union,
+/// plutôt qu'une conversion de l'une vers l'autre qui obligerait à
+/// inventer les champs manquants (trajet, distance, coursier…).
+sealed class ElementCommande {
+  const ElementCommande();
+
+  /// Date de création, pour trier les deux sources ensemble.
+  DateTime? get date;
+
+  bool get isEnCours;
+}
+
+class ElementMission extends ElementCommande {
+  const ElementMission(this.mission);
+  final LivraisonCourseModel mission;
+
+  @override
+  DateTime? get date => mission.createdDate;
+
+  @override
+  bool get isEnCours => mission.isEnCours;
+}
+
+class ElementCommandeStructure extends ElementCommande {
+  const ElementCommandeStructure(this.commande);
+  final CommandeModel commande;
+
+  @override
+  DateTime? get date => commande.createdDate;
+
+  @override
+  bool get isEnCours => commande.isEnCours;
+}
 
 class CommandeState {
   final bool                       isLoading;
   final List<LivraisonCourseModel> missions;
+  final List<CommandeModel>        commandes;
   final String?                    error;
   // ── Détail ────────────────────────────────────────
   // Renseigné uniquement pour les LIVRAISON_COMMANDE : les autres
@@ -18,6 +58,7 @@ class CommandeState {
   const CommandeState({
     this.isLoading        = false,
     this.missions         = const [],
+    this.commandes        = const [],
     this.error,
     this.isLoadingDetail  = false,
     this.detail,
@@ -27,6 +68,7 @@ class CommandeState {
   CommandeState copyWith({
     bool?                       isLoading,
     List<LivraisonCourseModel>? missions,
+    List<CommandeModel>?        commandes,
     String?                     error,
     bool                        clearError        = false,
     bool                        isLoadingDetail   = false,
@@ -38,6 +80,7 @@ class CommandeState {
     return CommandeState(
       isLoading       : isLoading       ?? this.isLoading,
       missions        : missions        ?? this.missions,
+      commandes       : commandes       ?? this.commandes,
       error           : clearError      ? null : (error ?? this.error),
       isLoadingDetail : isLoadingDetail,
       detail          : clearDetail     ? null : (detail ?? this.detail),
@@ -47,10 +90,33 @@ class CommandeState {
     );
   }
 
-  List<LivraisonCourseModel> get enCours =>
-      missions.where((m) =>  m.isEnCours).toList();
-  List<LivraisonCourseModel> get terminees =>
-      missions.where((m) => !m.isEnCours).toList();
+  /// Les deux sources fusionnées, du plus récent au plus ancien.
+  ///
+  /// Aucun dédoublonnage volontairement : une commande déjà suivie
+  /// comme mission apparaît donc deux fois. C'est un choix assumé, la
+  /// clé de recoupement serait `mission.commandeStructureId`.
+  List<ElementCommande> get elements {
+    final tous = <ElementCommande>[
+      ...missions.map(ElementMission.new),
+      ...commandes.map(ElementCommandeStructure.new),
+    ];
+    tous.sort((a, b) {
+      final da = a.date;
+      final db = b.date;
+      // Les éléments sans date partent en fin de liste plutôt que de
+      // remonter arbitrairement en tête.
+      if (da == null && db == null) return 0;
+      if (da == null) return 1;
+      if (db == null) return -1;
+      return db.compareTo(da);
+    });
+    return tous;
+  }
+
+  List<ElementCommande> get enCours =>
+      elements.where((e) =>  e.isEnCours).toList();
+  List<ElementCommande> get terminees =>
+      elements.where((e) => !e.isEnCours).toList();
 }
 
 class CommandeNotifier extends StateNotifier<CommandeState> {
@@ -60,15 +126,18 @@ class CommandeNotifier extends StateNotifier<CommandeState> {
   Future<void> loadCommandes() async {
     state = state.copyWith(isLoading: true, clearError: true);
     try {
-      final missions = await ApiService().getMissions();
-      // Le plus récent en premier
-      missions.sort((a, b) {
-        final da = a.createdDate;
-        final db = b.createdDate;
-        if (da == null || db == null) return b.id.compareTo(a.id);
-        return db.compareTo(da);
-      });
-      state = state.copyWith(isLoading: false, missions: missions);
+      // Les deux appels sont indépendants : les lancer en parallèle
+      // évite de cumuler les deux temps de réponse. Le tri est fait
+      // à la lecture, par CommandeState.elements.
+      final (missions, commandes) = await (
+        ApiService().getMissions(),
+        ApiService().getCommandes(),
+      ).wait;
+      state = state.copyWith(
+        isLoading : false,
+        missions  : missions,
+        commandes : commandes,
+      );
     } catch (e) {
       debugPrint('❌ loadCommandes: $e');
       state = state.copyWith(

@@ -5,7 +5,9 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimens.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/utils/app_router.dart';
+import '../../../core/utils/devise.dart';
 import '../../../features/orders/providers/commande_notifier.dart';
+import '../../../model/order/commande_model.dart';
 import '../../../model/order/livraison_course_model.dart';
 import '../../../service/location/location_service.dart';
 
@@ -90,13 +92,17 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
                         itemCount      : list.length,
                         separatorBuilder: (_, __) =>
                             const SizedBox(height: 12),
-                        itemBuilder: (_, i) => CommandeCard(
-                          mission : list[i],
-                          onTap   : () => context.pushNamed(
-                            RouteNames.orderDetail,
-                            extra: list[i],
-                          ),
-                        ),
+                        itemBuilder: (_, i) => switch (list[i]) {
+                          ElementMission(:final mission) => CommandeCard(
+                              mission : mission,
+                              onTap   : () => context.pushNamed(
+                                RouteNames.orderDetail,
+                                extra: mission,
+                              ),
+                            ),
+                          ElementCommandeStructure(:final commande) =>
+                            CommandeStructureCard(commande: commande),
+                        },
                       ),
                     ),
         ),
@@ -426,6 +432,204 @@ class CommandeCard extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+// ── Carte commande d'établissement ───────────────────────────
+/// Rendu des éléments venant de `/commandes-clients`.
+///
+/// Deux différences avec [CommandeCard] : pas de trajet A → B, car
+/// l'API ne renvoie que l'adresse de livraison ; et pas de tap, car
+/// l'écran de détail exige un `LivraisonCourseModel` qu'une commande
+/// sans mission ne possède pas.
+class CommandeStructureCard extends StatelessWidget {
+  const CommandeStructureCard({super.key, required this.commande});
+
+  final CommandeModel commande;
+
+  @override
+  Widget build(BuildContext context) {
+    final status = CommandeCard.statusInfo(commande.statut);
+    final ref    = commande.referenceCommande.isNotEmpty
+        ? commande.referenceCommande
+        : '#${commande.id}';
+
+    return Container(
+      decoration: BoxDecoration(
+        color        : Colors.white,
+        borderRadius : BorderRadius.circular(16),
+        boxShadow    : [
+          BoxShadow(
+            color      : Colors.black.withValues(alpha: 0.06),
+            blurRadius : 16,
+            offset     : const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          // ── Top : type + statut ──────────────────────────
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
+            child: Row(
+              children: [
+                Container(
+                  width  : 38,
+                  height : 38,
+                  decoration: BoxDecoration(
+                    color        : AppColors.primarySurface,
+                    borderRadius : BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.shopping_bag_outlined,
+                      size: 18, color: AppColors.primary),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Commande',
+                        style: AppTextStyles.labelMedium.copyWith(
+                          fontWeight : FontWeight.w700,
+                          fontSize   : 14,
+                          color      : AppColors.dark,
+                        ),
+                        maxLines : 1,
+                        overflow : TextOverflow.ellipsis,
+                      ),
+                      Text(
+                        'Réf: $ref',
+                        style: AppTextStyles.caption
+                            .copyWith(color: AppColors.grey400),
+                        maxLines : 1,
+                        overflow : TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color        : status.bgColor,
+                    borderRadius : BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    status.label,
+                    style: AppTextStyles.labelSmall.copyWith(
+                      color      : status.color,
+                      fontWeight : FontWeight.w700,
+                      fontSize   : 11,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 12),
+          const Divider(height: 1, color: AppColors.grey100),
+          const SizedBox(height: 12),
+
+          // ── Établissement puis destination ───────────────
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Column(
+              children: [
+                _ligne(
+                  icone : Icons.storefront_rounded,
+                  teinte: AppColors.primary,
+                  label : 'Établissement',
+                  valeur: commande.structureName,
+                ),
+                const SizedBox(height: 10),
+                _ligne(
+                  icone : Icons.location_on,
+                  teinte: AppColors.secondary,
+                  label : 'Livraison',
+                  valeur: LocationService.cleanAddress(
+                      commande.adresseLivraison),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 12),
+          const Divider(height: 1, color: AppColors.grey100),
+
+          // ── Bas : montant + mode de réception ────────────
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
+            child: Row(
+              children: [
+                Text(
+                  montantLabel(commande.montantTotal),
+                  style: const TextStyle(
+                    fontFamily : 'PlusJakartaSans',
+                    fontSize   : 18,
+                    fontWeight : FontWeight.w800,
+                    color      : AppColors.dark,
+                  ),
+                ),
+                const Spacer(),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color        : AppColors.grey100,
+                    borderRadius : BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    commande.modeReceptionCommande == 'RETRAIT_CLIENT'
+                        ? 'Retrait'
+                        : 'Livraison',
+                    style: AppTextStyles.caption.copyWith(
+                      color      : AppColors.grey600,
+                      fontWeight : FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _ligne({
+    required IconData icone,
+    required Color    teinte,
+    required String   label,
+    required String   valeur,
+  }) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icone, size: 16, color: teinte),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label,
+                  style: AppTextStyles.caption
+                      .copyWith(color: AppColors.grey400)),
+              const SizedBox(height: 1),
+              Text(
+                valeur,
+                style: AppTextStyles.labelSmall
+                    .copyWith(color: AppColors.dark),
+                maxLines : 1,
+                overflow : TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

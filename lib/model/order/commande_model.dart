@@ -13,6 +13,16 @@ class CommandeModel {
   final String telephoneClient;
   final String statut;
 
+  /// MOTO | VEHICULE… Renvoyé par l'API mais absent du modèle
+  /// jusqu'ici.
+  final String? typeVehicule;
+
+  /// Null tant que le backend n'a pas chiffré la livraison.
+  final double? fraisLivraison;
+
+  /// Indispensable pour trier cette liste avec celle des missions.
+  final DateTime? createdDate;
+
   const CommandeModel({
     required this.id,
     required this.structureName,
@@ -26,6 +36,9 @@ class CommandeModel {
     required this.adresseLivraison,
     required this.telephoneClient,
     required this.statut,
+    this.typeVehicule,
+    this.fraisLivraison,
+    this.createdDate,
   });
 
   factory CommandeModel.fromJson(Map<String, dynamic> json) {
@@ -43,6 +56,10 @@ class CommandeModel {
       adresseLivraison   : json['adresseLivraison']    as String? ?? '',
       telephoneClient    : json['telephoneClient']     as String? ?? '',
       statut             : json['statut']              as String? ?? '',
+      typeVehicule       : json['typeVehicule']        as String?,
+      fraisLivraison     : (json['fraisLivraison']     as num?)?.toDouble(),
+      createdDate        :
+          DateTime.tryParse(json['createdDate'] as String? ?? ''),
     );
   }
 

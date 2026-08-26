@@ -220,7 +220,7 @@ class _Section extends StatelessWidget {
               height : 28,
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color        : AppColors.dark,
+                color        : AppColors.primary,
                 borderRadius : BorderRadius.circular(8),
               ),
               child: Text(

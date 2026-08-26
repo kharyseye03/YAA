@@ -227,10 +227,10 @@ class _CategoryFiltersSheetState extends State<_CategoryFiltersSheet> {
         duration: const Duration(milliseconds: 180),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
         decoration: BoxDecoration(
-          color: actif ? AppColors.dark : Colors.white,
+          color: actif ? AppColors.primary : Colors.white,
           borderRadius: BorderRadius.circular(AppDimens.radiusFull),
           border: Border.all(
-            color: actif ? AppColors.dark : AppColors.grey300,
+            color: actif ? AppColors.primary : AppColors.grey300,
           ),
         ),
         child: Row(
@@ -272,7 +272,7 @@ class _CategoryFiltersSheetState extends State<_CategoryFiltersSheet> {
         child: ElevatedButton(
           onPressed: () => Navigator.of(context).pop(_filtres),
           style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.dark,
+            backgroundColor: AppColors.primary,
             elevation: 0,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(AppDimens.radiusFull),

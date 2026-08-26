@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimens.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../model/course/type_vehicule.dart';
 
 /// Deux cartes de service côte à côte sur le home : Livraison / Course.
 /// Fond dégradé + grande icône (les images de fond pourront être
@@ -23,13 +24,15 @@ class ServiceCards extends StatelessWidget {
       child: Row(
         children: [
           Expanded(
+            // Dégradés croisés par rapport à avant : la moto est navy
+            // foncé et disparaîtrait sur un fond navy, la voiture est
+            // blanche et ressort mal sur l'orange clair.
             child: _ServiceCard(
               titre     : 'Livraison',
               sousTitre : 'Faites-vous livrer',
               icon      : Icons.sports_motorsports,
-              gradient  : const [AppColors.primary, AppColors.primaryLight],
-              //gradient  : const [AppColors.secondary, Color(0xFFCC4400)],
-              image     : 'assets/images/service-livraison.png',
+              gradient  : const [AppColors.secondary, Color(0xFFCC4400)],
+              image     : TypeVehicule.moto.asset,
               onTap     : onLivraison,
             ),
           ),
@@ -39,9 +42,8 @@ class ServiceCards extends StatelessWidget {
               titre     : 'Course',
               sousTitre : 'Voiture ou moto',
               icon      : Icons.local_taxi_rounded,
-             // gradient  : const [AppColors.secondary, Color(0xFFCC4400)],
-              gradient  : const [AppColors.secondary, Color(0xFFCC4400)],
-              image     : 'assets/images/service-course.png',
+              gradient  : const [AppColors.primary, AppColors.primaryLight],
+              image     : TypeVehicule.vehicule.asset,
               onTap     : onCourse,
             ),
           ),
@@ -92,7 +94,11 @@ class _ServiceCard extends StatelessWidget {
         ),
         child: Stack(
           children: [
-            // ── Image du véhicule à droite (PNG transparent) ──
+            // ── Véhicule à droite (PNG transparent) ───────────
+            // Aucune hauteur plafonnée : l'image occupe toute la
+            // hauteur de la carte, sa largeur suit le ratio. C'est
+            // ce qui lui donne sa présence, quitte à mordre le texte.
+            // Le Stack rogne ce qui dépasse du cadre arrondi.
             if (image != null)
               Positioned(
                 right  : -6,
@@ -101,7 +107,11 @@ class _ServiceCard extends StatelessWidget {
                 child: Image.asset(
                   image!,
                   fit: BoxFit.contain,
-                  errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                  errorBuilder: (_, __, ___) => Icon(
+                    icon,
+                    size  : 40,
+                    color : Colors.white.withValues(alpha: 0.25),
+                  ),
                 ),
               ),
 

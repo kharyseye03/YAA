@@ -3,17 +3,26 @@ import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_text_styles.dart';
 import '../../service/location/location_service.dart';
 
-/// Suggestion d'autocomplétion Google Places — icône adaptée au type
-/// de lieu (navy blue), nom en gras + adresse en gris dessous.
+/// Suggestion d'autocomplétion Google Places.
+///
+/// Widget unique de l'app pour ce motif : l'écran course, la feuille
+/// d'adresse de livraison et l'écran de localisation à l'inscription
+/// s'appuient tous dessus. Toute retouche ici se propage aux trois —
+/// c'est le but, ne pas dupliquer la mise en forme sur chaque écran.
 class PlaceSuggestionTile extends StatelessWidget {
   const PlaceSuggestionTile({
     super.key,
     required this.suggestion,
     required this.onTap,
+    this.showDivider = true,
   });
 
   final PlaceSuggestion suggestion;
   final VoidCallback onTap;
+
+  /// Filet de séparation sous la ligne. À passer à false sur le
+  /// dernier élément d'une liste.
+  final bool showDivider;
 
   /// Icône selon le type Google Places du lieu
   static IconData iconForTypes(List<String> types) {
@@ -63,6 +72,25 @@ class PlaceSuggestionTile extends StatelessWidget {
     return Icons.location_on_rounded;
   }
 
+  /// Couleur d'accent selon la famille du lieu.
+  ///
+  /// Volontairement limitée à trois teintes de la palette : au-delà,
+  /// la liste vire à l'arc-en-ciel et la couleur cesse de porter du
+  /// sens. Tout ce qui n'est ni restauration ni santé reste en navy.
+  static Color colorForTypes(List<String> types) {
+    for (final type in types) {
+      switch (type) {
+        case 'restaurant' || 'food' || 'cafe' || 'bar' || 'bakery'
+            || 'meal_takeaway' || 'meal_delivery':
+          return AppColors.secondary;
+        case 'pharmacy' || 'drugstore' || 'hospital' || 'doctor'
+            || 'health' || 'dentist':
+          return AppColors.success;
+      }
+    }
+    return AppColors.primary;
+  }
+
   @override
   Widget build(BuildContext context) {
     final icon = iconForTypes(suggestion.types);
@@ -71,13 +99,32 @@ class PlaceSuggestionTile extends StatelessWidget {
         ? suggestion.mainText
         : suggestion.description;
 
+    final accent = colorForTypes(suggestion.types);
+
     return InkWell(
       onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: showDivider
+            ? const BoxDecoration(
+                border: Border(
+                  bottom: BorderSide(color: AppColors.border),
+                ),
+              )
+            : null,
         child: Row(
           children: [
-            Icon(icon, size: 20, color: AppColors.primary),
+            // Pastille teintée : c'est elle qui donne du relief à la
+            // liste, une icône nue se perd dans le texte.
+            Container(
+              width  : 38,
+              height : 38,
+              decoration: BoxDecoration(
+                color        : accent.withValues(alpha: 0.10),
+                borderRadius : BorderRadius.circular(11),
+              ),
+              child: Icon(icon, size: 19, color: accent),
+            ),
             const SizedBox(width: 12),
 
             // Nom du lieu + adresse
@@ -95,7 +142,7 @@ class PlaceSuggestionTile extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                   if (suggestion.secondaryText.isNotEmpty) ...[
-                    const SizedBox(height: 1),
+                    const SizedBox(height: 2),
                     Text(
                       suggestion.secondaryText,
                       style: AppTextStyles.caption.copyWith(
@@ -108,6 +155,12 @@ class PlaceSuggestionTile extends StatelessWidget {
                 ],
               ),
             ),
+
+            // Flèche de report : indique que le tap remplit le champ
+            // plutôt que de naviguer ailleurs.
+            const SizedBox(width: 8),
+            const Icon(Icons.north_west_rounded,
+                size: 17, color: AppColors.grey400),
           ],
         ),
       ),

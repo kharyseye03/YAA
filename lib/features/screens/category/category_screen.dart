@@ -170,9 +170,9 @@ class _CategoryScreenState extends ConsumerState<CategoryScreen> {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          color: actif ? AppColors.dark : Colors.white,
+          color: actif ? AppColors.primary : Colors.white,
           borderRadius: BorderRadius.circular(AppDimens.radiusFull),
-          border: Border.all(color: actif ? AppColors.dark : AppColors.grey300),
+          border: Border.all(color: actif ? AppColors.primary : AppColors.grey300),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -241,10 +241,10 @@ class _CategoryScreenState extends ConsumerState<CategoryScreen> {
             padding:
                 const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             decoration: BoxDecoration(
-              color: isActive ? AppColors.dark : Colors.white,
+              color: isActive ? AppColors.primary : Colors.white,
               borderRadius: BorderRadius.circular(AppDimens.radiusFull),
               border: Border.all(
-                color: isActive ? AppColors.dark : AppColors.grey300,
+                color: isActive ? AppColors.primary : AppColors.grey300,
               ),
             ),
             child: Center(

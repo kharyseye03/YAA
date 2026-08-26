@@ -118,13 +118,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // ── Logo ────────────────────────────────────────
+                // Logo large (ratio ~2.9:1) : on ne contraint que la
+                // largeur, la hauteur suit le ratio naturel.
+                const SizedBox(height: AppDimens.huge),
                 Center(
                   child: Image.asset(
-                    'assets/images/logo2.jpeg',
-                    width: 160,
-                    height: 160,
+                    'assets/images/logo_off.png',
+                    width: 150,
                   ),
                 ),
+                const SizedBox(height: AppDimens.xxxl),
 
                 // ── Titre ────────────────────────────────────────
                 RichText(

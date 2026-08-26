@@ -506,9 +506,9 @@ class _RestaurantSheetState extends ConsumerState<_RestaurantSheet> {
         duration: const Duration(milliseconds: 180),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
         decoration: BoxDecoration(
-          color: actif ? AppColors.dark : Colors.white,
+          color: actif ? AppColors.primary : Colors.white,
           borderRadius: BorderRadius.circular(AppDimens.radiusFull),
-          border: Border.all(color: actif ? AppColors.dark : AppColors.grey300),
+          border: Border.all(color: actif ? AppColors.primary : AppColors.grey300),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -841,7 +841,7 @@ class _RestaurantSheetState extends ConsumerState<_RestaurantSheet> {
                         height: 2.5,
                         width: isActive ? 24 : 0,
                         decoration: BoxDecoration(
-                          color: AppColors.dark,
+                          color: AppColors.primary,
                           borderRadius: BorderRadius.circular(2),
                         ),
                       ),

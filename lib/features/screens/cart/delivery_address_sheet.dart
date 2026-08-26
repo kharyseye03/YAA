@@ -215,12 +215,15 @@ class _DeliveryAddressSheetState
                   child: ListView(
                     shrinkWrap : true,
                     padding    : EdgeInsets.zero,
-                    children   : _suggestions
-                        .map((s) => PlaceSuggestionTile(
-                              suggestion : s,
-                              onTap      : () => _onSuggestionTap(s),
-                            ))
-                        .toList(),
+                    children   : [
+                      for (var i = 0; i < _suggestions.length; i++)
+                        PlaceSuggestionTile(
+                          suggestion  : _suggestions[i],
+                          onTap       : () =>
+                              _onSuggestionTap(_suggestions[i]),
+                          showDivider : i < _suggestions.length - 1,
+                        ),
+                    ],
                   ),
                 ),
               ),

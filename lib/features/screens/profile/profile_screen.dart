@@ -61,7 +61,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           width: 28,
                           height: 28,
                           decoration: BoxDecoration(
-                            color: AppColors.dark,
+                            color: AppColors.primary,
                             shape: BoxShape.circle,
                             border: Border.all(
                                 color: Colors.white, width: 2),

@@ -1,4 +1,3 @@
-import '../../../core/utils/devise.dart';
 import 'dart:async';
 import 'dart:ui' as ui;
 
@@ -6,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:shimmer/shimmer.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimens.dart';
 import '../../../core/constants/app_text_styles.dart';
@@ -416,10 +416,16 @@ class _CourseScreenState extends ConsumerState<CourseScreen> {
   }
 
   Widget _buildSheet() {
-    return Container(
-      width: double.infinity,
+    // La feuille grandit pendant la recherche : à 62 % on ne voit que
+    // deux suggestions, ce qui oblige à scroller dans un espace déjà
+    // réduit par le clavier.
+    return AnimatedContainer(
+      duration : const Duration(milliseconds: 220),
+      curve    : Curves.easeOutCubic,
+      width    : double.infinity,
       constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.62,
+        maxHeight: MediaQuery.of(context).size.height *
+            (_isSearching ? 0.88 : 0.62),
       ),
       decoration: const BoxDecoration(
         color        : Colors.white,
@@ -547,12 +553,14 @@ class _CourseScreenState extends ConsumerState<CourseScreen> {
           : ListView(
               shrinkWrap : true,
               padding    : const EdgeInsets.only(top: 8),
-              children   : _suggestions
-                  .map((s) => PlaceSuggestionTile(
-                        suggestion : s,
-                        onTap      : () => _onSuggestionTap(s),
-                      ))
-                  .toList(),
+              children   : [
+                for (var i = 0; i < _suggestions.length; i++)
+                  PlaceSuggestionTile(
+                    suggestion  : _suggestions[i],
+                    onTap       : () => _onSuggestionTap(_suggestions[i]),
+                    showDivider : i < _suggestions.length - 1,
+                  ),
+              ],
             ),
     );
   }
@@ -564,8 +572,9 @@ class _CourseScreenState extends ConsumerState<CourseScreen> {
 
         // Course → infos trajet + choix véhicule ; Livraison → carte moto
         if (_isCourse) ...[
-          // Distance et durée : identiques pour les 2 véhicules,
-          // donc affichées une seule fois au-dessus
+          // Distance seule : la durée est désormais portée par chaque
+          // tuile véhicule, la répéter ici la ferait apparaître trois
+          // fois sur le même écran.
           if (_estimation != null) ...[
             Container(
               padding: const EdgeInsets.symmetric(
@@ -582,17 +591,6 @@ class _CourseScreenState extends ConsumerState<CourseScreen> {
                   const SizedBox(width: 6),
                   Text(
                     _estimation!.distanceText,
-                    style: AppTextStyles.bodySmall.copyWith(
-                      fontWeight : FontWeight.w700,
-                      color      : AppColors.dark,
-                    ),
-                  ),
-                  const SizedBox(width: 14),
-                  const Icon(Icons.schedule_rounded,
-                      size: 15, color: AppColors.grey500),
-                  const SizedBox(width: 6),
-                  Text(
-                    _estimation!.dureeText,
                     style: AppTextStyles.bodySmall.copyWith(
                       fontWeight : FontWeight.w700,
                       color      : AppColors.dark,
@@ -619,8 +617,11 @@ class _CourseScreenState extends ConsumerState<CourseScreen> {
                     ))
                 .toList(),
           ),
-        ] else
+        ] else ...[
           _buildMotoCard(),
+          const SizedBox(height: 10),
+          _buildOptionsRow(),
+        ],
 
         const SizedBox(height: 16),
 
@@ -692,8 +693,83 @@ class _CourseScreenState extends ConsumerState<CourseScreen> {
     );
   }
 
+  /// Raccourci vers l'étape détails du colis.
+  ///
+  /// Mène volontairement au même endroit que le bouton principal :
+  /// deux entrées visuelles, un seul chemin. Il suit donc la même
+  /// règle d'activation, sinon on ouvrirait l'étape détails sans
+  /// trajet renseigné.
+  Widget _buildOptionsRow() {
+    final actif = _bothSet && !_isSubmitting;
+
+    return InkWell(
+      onTap        : actif ? _onConfirm : null,
+      borderRadius : BorderRadius.circular(14),
+      child: Opacity(
+        opacity: actif ? 1 : 0.45,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+          decoration: BoxDecoration(
+            borderRadius : BorderRadius.circular(14),
+            border       : Border.all(color: AppColors.border),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.inventory_2_outlined,
+                  size: 20, color: AppColors.primary),
+              const SizedBox(width: 10),
+              Text(
+                'Options de livraison',
+                style: AppTextStyles.bodySmall.copyWith(
+                  fontWeight : FontWeight.w600,
+                  color      : AppColors.dark,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Laisser un colis, notes…',
+                  textAlign : TextAlign.right,
+                  maxLines  : 1,
+                  overflow  : TextOverflow.ellipsis,
+                  style: AppTextStyles.caption
+                      .copyWith(color: AppColors.grey500),
+                ),
+              ),
+              const SizedBox(width: 2),
+              const Icon(Icons.chevron_right_rounded,
+                  size: 20, color: AppColors.grey400),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Bloc gris traversé par un reflet, à la place d'une valeur pas
+  /// encore connue.
+  ///
+  /// Volontairement appliqué valeur par valeur, et non à la carte
+  /// entière : le véhicule et son libellé sont connus d'avance, les
+  /// masquer ne donnait qu'une bande grise sans rapport avec ce qui
+  /// allait s'afficher.
+  Widget _shimmerBloc(double w, double h) => Shimmer.fromColors(
+        baseColor      : AppColors.grey200,
+        highlightColor : AppColors.grey100,
+        child: Container(
+          width  : w,
+          height : h,
+          decoration: BoxDecoration(
+            color        : AppColors.grey200,
+            borderRadius : BorderRadius.circular(4),
+          ),
+        ),
+      );
+
   // ── Carte moto (livraison) — inspirée des cartes livreur ─────
   Widget _buildMotoCard() {
+    final pret = _estimation != null;
+
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -710,15 +786,16 @@ class _CourseScreenState extends ConsumerState<CourseScreen> {
       ),
       child: Row(
         children: [
-          // Image moto (sans fond)
+          // Image moto (sans fond) — toujours visible, y compris
+          // pendant l'attente de l'estimation.
           SizedBox(
             width  : 68,
             height : 68,
             child: Image.asset(
-              'assets/images/moto.png',
+              TypeVehicule.moto.asset!,
               fit: BoxFit.contain,
-              errorBuilder: (_, __, ___) => const Icon(
-                  Icons.sports_motorsports,
+              errorBuilder: (_, __, ___) => Icon(
+                  TypeVehicule.moto.icone,
                   color: AppColors.primary, size: 32),
             ),
           ),
@@ -738,19 +815,25 @@ class _CourseScreenState extends ConsumerState<CourseScreen> {
                   ),
                 ),
                 const SizedBox(height: 3),
-                Row(
-                  children: [
-                    const Icon(Icons.route_rounded,
-                        size: 13, color: AppColors.grey400),
-                    const SizedBox(width: 3),
-                    // distance · durée (depuis l'estimation)
-                    Text(
-                      _estimation?.metaLabel ?? '— km · — min',
-                      style: AppTextStyles.bodySmall.copyWith(
-                        color: AppColors.grey500),
-                    ),
-                  ],
-                ),
+                if (pret)
+                  Row(
+                    children: [
+                      const Icon(Icons.route_rounded,
+                          size: 13, color: AppColors.grey400),
+                      const SizedBox(width: 3),
+                      // distance · durée (depuis l'estimation)
+                      Text(
+                        _estimation!.metaLabel,
+                        style: AppTextStyles.bodySmall.copyWith(
+                          color: AppColors.grey500),
+                      ),
+                    ],
+                  )
+                else
+                  Padding(
+                    padding: const EdgeInsets.only(top: 3),
+                    child: _shimmerBloc(104, 11),
+                  ),
               ],
             ),
           ),
@@ -758,19 +841,21 @@ class _CourseScreenState extends ConsumerState<CourseScreen> {
           const SizedBox(width: 8),
 
           // Prix bien visible à droite
-          if (_loadingEstim)
-            const SizedBox(
-              width: 20, height: 20,
-              child: CircularProgressIndicator(strokeWidth: 2.2),
+          if (!pret)
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                _shimmerBloc(58, 18),
+                const SizedBox(height: 6),
+                _shimmerBloc(32, 9),
+              ],
             )
           else
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  _estimation != null
-                      ? _estimation!.fraisLivraison.toStringAsFixed(0)
-                      : '—',
+                  _estimation!.fraisLivraison.toStringAsFixed(0),
                   style: const TextStyle(
                     fontFamily : 'PlusJakartaSans',
                     fontWeight : FontWeight.w800,
@@ -779,7 +864,7 @@ class _CourseScreenState extends ConsumerState<CourseScreen> {
                   ),
                 ),
                 Text(
-                  _estimation?.devise ?? kDevise,
+                  _estimation!.devise,
                   style: AppTextStyles.caption.copyWith(
                     color      : AppColors.grey400,
                     fontWeight : FontWeight.w600,
@@ -809,15 +894,39 @@ class _VehiclePick extends StatelessWidget {
   final EstimationModel? estimation;
   final VoidCallback     onTap;
 
+  /// Visuel du véhicule, avec repli sur l'icône quand aucune image
+  /// n'est définie pour ce type ou que le fichier manque.
+  Widget _visuel() {
+    final icone = Icon(
+      vehicule.icone,
+      size  : 32,
+      color : selected ? AppColors.primary : AppColors.grey500,
+    );
+    final asset = vehicule.asset;
+    if (asset == null) return icone;
+
+    return Image.asset(
+      asset,
+      height       : 46,
+      fit          : BoxFit.contain,
+      errorBuilder : (_, __, ___) => icone,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    // Le squelette ne couvre que la zone prix : le véhicule et son
+    // libellé sont connus d'avance, les masquer empêcherait de
+    // comparer les options pendant le calcul.
+    final pret = estimation != null && !loading;
+
     return GestureDetector(
       onTap    : onTap,
       behavior : HitTestBehavior.opaque,
       child: AnimatedContainer(
         duration : const Duration(milliseconds: 180),
         margin   : const EdgeInsets.symmetric(horizontal: 4),
-        padding  : const EdgeInsets.symmetric(vertical: 14, horizontal: 10),
+        padding  : const EdgeInsets.fromLTRB(10, 12, 10, 12),
         decoration: BoxDecoration(
           color        : selected ? AppColors.primarySurface : Colors.white,
           borderRadius : BorderRadius.circular(16),
@@ -828,63 +937,102 @@ class _VehiclePick extends StatelessWidget {
         ),
         child: Column(
           children: [
-            // Icône + nom du véhicule
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  vehicule.icone,
-                  color : selected ? AppColors.primary : AppColors.grey500,
-                  size  : 20,
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  vehicule.libelle,
-                  style: AppTextStyles.bodySmall.copyWith(
-                    fontWeight : FontWeight.w700,
-                    color      : selected ? AppColors.primary : AppColors.dark,
-                  ),
-                ),
-              ],
+            // Visuel + pastille de sélection
+            SizedBox(
+              height: 46,
+              child: Stack(
+                children: [
+                  Center(child: _visuel()),
+                  if (selected)
+                    Positioned(
+                      top   : 0,
+                      right : 0,
+                      child: Container(
+                        width  : 18,
+                        height : 18,
+                        decoration: const BoxDecoration(
+                          color : AppColors.primary,
+                          shape : BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.check_rounded,
+                            size: 12, color: Colors.white),
+                      ),
+                    ),
+                ],
+              ),
             ),
 
             const SizedBox(height: 8),
 
-            // Prix bien visible
-            if (loading)
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 6),
-                child: SizedBox(
-                  width: 18, height: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2.2),
-                ),
-              )
-            else
+            Text(
+              vehicule.libelle,
+              style: AppTextStyles.bodySmall.copyWith(
+                fontWeight : FontWeight.w700,
+                color      : selected ? AppColors.primary : AppColors.dark,
+              ),
+            ),
+            const SizedBox(height: 1),
+            Text(
+              vehicule.description,
+              maxLines  : 1,
+              overflow  : TextOverflow.ellipsis,
+              textAlign : TextAlign.center,
+              style: AppTextStyles.caption.copyWith(color: AppColors.grey500),
+            ),
+
+            const SizedBox(height: 9),
+
+            if (pret)
               Column(
                 children: [
-                  Text(
-                    estimation != null
-                        ? estimation!.fraisLivraison.toStringAsFixed(0)
-                        : '—',
-                    style: TextStyle(
-                      fontFamily : 'PlusJakartaSans',
-                      fontSize   : 22,
-                      fontWeight : FontWeight.w800,
-                      color      : selected ? AppColors.dark : AppColors.grey600,
+                  // Les tuiles sont étroites : on met le prix à
+                  // l'échelle plutôt que de le tronquer.
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      '${estimation!.fraisLivraison.toStringAsFixed(0)}'
+                      ' ${estimation!.devise}',
+                      style: TextStyle(
+                        fontFamily : 'PlusJakartaSans',
+                        fontSize   : 17,
+                        fontWeight : FontWeight.w800,
+                        color      : selected
+                            ? AppColors.dark
+                            : AppColors.grey600,
+                      ),
                     ),
                   ),
                   Text(
-                    estimation?.devise ?? kDevise,
-                    style: AppTextStyles.caption.copyWith(
-                      fontWeight : FontWeight.w600,
-                      color      : AppColors.grey400,
-                    ),
+                    estimation!.dureeText,
+                    style: AppTextStyles.caption
+                        .copyWith(color: AppColors.grey400),
                   ),
                 ],
+              )
+            else
+              Shimmer.fromColors(
+                baseColor      : AppColors.grey200,
+                highlightColor : AppColors.grey100,
+                child: Column(
+                  children: [
+                    _barre(64, 15),
+                    const SizedBox(height: 5),
+                    _barre(38, 9),
+                  ],
+                ),
               ),
           ],
         ),
       ),
     );
   }
+
+  static Widget _barre(double w, double h) => Container(
+        width  : w,
+        height : h,
+        decoration: BoxDecoration(
+          color        : Colors.white,
+          borderRadius : BorderRadius.circular(4),
+        ),
+      );
 }

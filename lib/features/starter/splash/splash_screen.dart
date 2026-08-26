@@ -154,7 +154,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                         child: ScaleTransition(
                           scale: _logoScale,
                           child: Image.asset(
-                            'assets/images/logo2.jpeg',
+                            'assets/images/logo_off.png',
                             width: size.width * 0.45,
                           ),
                         ),
