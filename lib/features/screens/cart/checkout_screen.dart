@@ -11,6 +11,7 @@ import '../../../core/constants/app_text_styles.dart';
 import '../../../core/utils/app_router.dart';
 import '../../../features/cart/providers/cart_notifier.dart';
 import '../../../features/cart/providers/delivery_address_provider.dart';
+import '../../../features/orders/providers/commande_notifier.dart';
 import '../../../features/user/providers/user_notifier.dart';
 import '../../../model/course/type_vehicule.dart';
 import '../../../model/order/commande_detail_model.dart';
@@ -21,6 +22,7 @@ import '../../../service/api/api_service.dart';
 import '../../../shared/widgets/yaa_button.dart';
 import '../../../shared/widgets/yaa_text_field.dart';
 import 'delivery_address_sheet.dart';
+import '../order/mission_detail_sheet.dart';
 import 'reception_mode_sheet.dart';
 
 class CheckoutScreen extends ConsumerStatefulWidget {
@@ -170,15 +172,20 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           Navigator.of(context).pop();
           if (!mounted) return;
           context.goNamed(RouteNames.home);
-          // L'écran de détail attend une mission de la liste unifiée :
-          // on retrouve celle qui porte cette commande.
+          // Le sheet de détail lit la mission dans le provider : il
+          // faut donc le remplir avant de l'ouvrir, sinon il ne
+          // trouverait rien. On en profite pour rafraîchir la liste
+          // que le client verra en revenant.
           try {
-            final missions = await ApiService().getMissions();
-            final match = missions
+            await ref.read(commandeProvider.notifier).loadCommandes();
+            if (!mounted) return;
+            final match = ref
+                .read(commandeProvider)
+                .missions
                 .where((m) => m.commandeStructureId == commandeId)
                 .toList();
-            if (match.isNotEmpty && mounted) {
-              context.pushNamed(RouteNames.orderDetail, extra: match.first);
+            if (match.isNotEmpty) {
+              showMissionDetailSheet(context, match.first.id);
             }
           } catch (e) {
             debugPrint('⚠️ Suivi commande introuvable : $e');

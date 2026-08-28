@@ -117,6 +117,32 @@ class CommandeState {
       elements.where((e) =>  e.isEnCours).toList();
   List<ElementCommande> get terminees =>
       elements.where((e) => !e.isEnCours).toList();
+
+  // ── Les deux onglets de « Mes commandes » ──────────────────
+  // Chaque onglet montre sa source telle quelle : aucun recoupement
+  // entre les deux API, aucun filtre par type. Une livraison de
+  // commande figure donc dans les deux onglets — c'est ce que
+  // renvoient les serveurs.
+  //
+  // Seul tri conservé : les terminées basculent dans l'Historique du
+  // profil et ne restent pas dans « Mes commandes ».
+
+  static int _duPlusRecent(DateTime? a, DateTime? b) {
+    if (a == null && b == null) return 0;
+    if (a == null) return 1;
+    if (b == null) return -1;
+    return b.compareTo(a);
+  }
+
+  /// Onglet « Achat » — commandes passées chez un commerçant
+  List<CommandeModel> get achatsEnCours =>
+      commandes.where((c) => c.isEnCours).toList()
+        ..sort((a, b) => _duPlusRecent(a.createdDate, b.createdDate));
+
+  /// Onglet « Course » — colis et trajets, tous types confondus
+  List<LivraisonCourseModel> get coursesEnCours =>
+      missions.where((m) => m.isEnCours).toList()
+        ..sort((a, b) => _duPlusRecent(a.createdDate, b.createdDate));
 }
 
 class CommandeNotifier extends StateNotifier<CommandeState> {
