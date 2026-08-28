@@ -156,7 +156,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
         if (cartState.error != null)
           Container(
             width   : double.infinity,
-            padding : const EdgeInsets.symmetric(
+            padding : EdgeInsets.symmetric(
                 horizontal: AppDimens.screenPadding, vertical: 10),
             color   : AppColors.errorLight,
             child   : Row(
@@ -179,7 +179,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
           child: cartState.isLoading
               ? const Center(child: CircularProgressIndicator())
               : SingleChildScrollView(
-                  padding: const EdgeInsets.fromLTRB(
+                  padding: EdgeInsets.fromLTRB(
                     AppDimens.screenPadding,
                     20,
                     AppDimens.screenPadding,

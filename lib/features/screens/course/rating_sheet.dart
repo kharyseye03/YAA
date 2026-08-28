@@ -101,7 +101,7 @@ class _RatingSheetState extends State<_RatingSheet> {
       child: SafeArea(
         top: false,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(
+          padding: EdgeInsets.fromLTRB(
               AppDimens.screenPadding, 20, AppDimens.screenPadding, 16),
           child: Column(
             mainAxisSize: MainAxisSize.min,

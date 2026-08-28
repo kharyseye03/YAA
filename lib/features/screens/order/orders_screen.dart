@@ -70,7 +70,7 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
 
         // ── Titre ─────────────────────────────────────────────
         Padding(
-          padding: const EdgeInsets.fromLTRB(
+          padding: EdgeInsets.fromLTRB(
             AppDimens.screenPadding, 14,
             AppDimens.screenPadding, 10,
           ),
@@ -98,7 +98,7 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
         if (state.error != null)
           Container(
             width   : double.infinity,
-            padding : const EdgeInsets.symmetric(
+            padding : EdgeInsets.symmetric(
                 horizontal: AppDimens.screenPadding, vertical: 10),
             color   : AppColors.errorLight,
             child   : Row(
@@ -174,7 +174,7 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
       );
     }
     return ListView.separated(
-      padding: const EdgeInsets.fromLTRB(
+      padding: EdgeInsets.fromLTRB(
         AppDimens.screenPadding, 16,
         AppDimens.screenPadding, 24,
       ),

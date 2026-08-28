@@ -85,7 +85,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   // ── Recherches populaires (champ vide) ────────────────────────
   Widget _buildPopularTags() {
     return Padding(
-      padding: const EdgeInsets.all(AppDimens.screenPadding),
+      padding: EdgeInsets.all(AppDimens.screenPadding),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -96,7 +96,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               color: AppColors.dark,
             ),
           ),
-          const SizedBox(height: AppDimens.md),
+          SizedBox(height: AppDimens.md),
           Wrap(
             spacing: 8,
             runSpacing: 8,
@@ -154,9 +154,9 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           );
         }
         return ListView.separated(
-          padding: const EdgeInsets.all(AppDimens.screenPadding),
+          padding: EdgeInsets.all(AppDimens.screenPadding),
           itemCount: structures.length,
-          separatorBuilder: (_, __) => const SizedBox(height: AppDimens.md),
+          separatorBuilder: (_, __) => SizedBox(height: AppDimens.md),
           itemBuilder: (_, i) => _ResultCard(structure: structures[i]),
         );
       },

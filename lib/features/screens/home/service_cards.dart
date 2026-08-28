@@ -20,7 +20,7 @@ class ServiceCards extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppDimens.screenPadding),
+      padding: EdgeInsets.symmetric(horizontal: AppDimens.screenPadding),
       child: Row(
         children: [
           Expanded(

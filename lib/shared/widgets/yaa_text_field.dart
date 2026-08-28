@@ -56,7 +56,7 @@ class YaaTextField extends StatelessWidget {
       children: [
         if (label != null) ...[
           Text(label!, style: AppTextStyles.labelMedium),
-          const SizedBox(height: AppDimens.sm),
+          SizedBox(height: AppDimens.sm),
         ],
         TextFormField(
           controller: controller,

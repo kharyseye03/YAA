@@ -270,7 +270,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           if (_error != null)
             Container(
               width   : double.infinity,
-              padding : const EdgeInsets.symmetric(
+              padding : EdgeInsets.symmetric(
                   horizontal: AppDimens.screenPadding, vertical: 10),
               color   : AppColors.errorLight,
               child   : Row(
@@ -290,7 +290,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           // ── Contenu ─────────────────────────────────────────
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(
+              padding: EdgeInsets.fromLTRB(
                 AppDimens.screenPadding, 20,
                 AppDimens.screenPadding, 24,
               ),
@@ -385,7 +385,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                             v == null || v.trim().isEmpty ? 'Champ requis' : null,
                       ),
 
-                    const SizedBox(height: AppDimens.lg),
+                    SizedBox(height: AppDimens.lg),
                     PhoneTextField(
                       controller      : _phoneController,
                       label           : 'Téléphone',

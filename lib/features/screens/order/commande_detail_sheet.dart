@@ -83,7 +83,7 @@ class _CommandeDetailSheetState extends ConsumerState<_CommandeDetailSheet> {
 
     return SheetDetail(
       enfant: detail == null && resume == null
-          ? const Padding(
+          ? Padding(
               padding: EdgeInsets.all(AppDimens.xxxl),
               child: Center(child: Text('Commande introuvable')),
             )
@@ -104,7 +104,7 @@ class _CommandeDetailSheetState extends ConsumerState<_CommandeDetailSheet> {
         // ① État
         if (phase != null)
           Padding(
-            padding: const EdgeInsets.only(bottom: AppDimens.xl),
+            padding: EdgeInsets.only(bottom: AppDimens.xl),
             child: RechercheAnimation(
               titre   : phase.titre,
               message : phase.message,
@@ -121,7 +121,7 @@ class _CommandeDetailSheetState extends ConsumerState<_CommandeDetailSheet> {
 
         // ② Le livreur, dès qu'il est assigné
         if (d != null && d.hasLivreur) ...[
-          const SizedBox(height: AppDimens.lg),
+          SizedBox(height: AppDimens.lg),
           CarteCoursier(
             nom       : d.livreurFullName ?? '',
             telephone : d.livreurTelephone,
@@ -129,14 +129,14 @@ class _CommandeDetailSheetState extends ConsumerState<_CommandeDetailSheet> {
           ),
         ],
 
-        const SizedBox(height: AppDimens.xl),
+        SizedBox(height: AppDimens.xl),
 
         // ③ Le trajet — de l'établissement jusqu'au client.
         // Pas de distance ni de durée : cette API ne les calcule pas,
         // elles n'existent que sur la mission de livraison.
         if (d != null) ...[
           const SectionTitre('Trajet'),
-          const SizedBox(height: AppDimens.md),
+          SizedBox(height: AppDimens.md),
           TrajetAB(
             depart       : d.structureAdresse,
             arrivee      : d.adresseLivraison,
@@ -145,25 +145,25 @@ class _CommandeDetailSheetState extends ConsumerState<_CommandeDetailSheet> {
                 ? 'À retirer sur place'
                 : 'Livraison',
           ),
-          const SizedBox(height: AppDimens.xl),
+          SizedBox(height: AppDimens.xl),
         ],
 
         // ④ Le contenu
         const SectionTitre('Votre commande'),
-        const SizedBox(height: AppDimens.md),
+        SizedBox(height: AppDimens.md),
         ContenuCommande(detail: d),
 
         // ⑤ Consignes
         if (d != null && d.description.isNotEmpty) ...[
-          const SizedBox(height: AppDimens.xl),
+          SizedBox(height: AppDimens.xl),
           const SectionTitre('Consignes'),
-          const SizedBox(height: AppDimens.sm),
+          SizedBox(height: AppDimens.sm),
           EncadreConsigne(d.description),
         ],
 
-        const SizedBox(height: AppDimens.xl),
+        SizedBox(height: AppDimens.xl),
         const Divider(height: 1, color: AppColors.grey200),
-        const SizedBox(height: AppDimens.lg),
+        SizedBox(height: AppDimens.lg),
 
         // ⑥ Le montant. Les frais de livraison ne figurent pas dans
         // cette API : ils vivent sur la mission correspondante.

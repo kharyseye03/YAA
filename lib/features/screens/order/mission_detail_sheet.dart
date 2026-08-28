@@ -81,7 +81,7 @@ class _MissionDetailSheetState extends ConsumerState<_MissionDetailSheet> {
       behavior : HitTestBehavior.opaque,
       child: Container(
         width   : double.infinity,
-        padding : const EdgeInsets.all(AppDimens.lg),
+        padding : EdgeInsets.all(AppDimens.lg),
         decoration: BoxDecoration(
           color        : AppColors.secondaryLight,
           borderRadius : BorderRadius.circular(AppDimens.radiusLg),
@@ -96,7 +96,7 @@ class _MissionDetailSheetState extends ConsumerState<_MissionDetailSheet> {
                 color      : AppColors.dark,
               ),
             ),
-            const SizedBox(height: AppDimens.sm),
+            SizedBox(height: AppDimens.sm),
             Text(
               'Votre avis aide ${m.livreur!.fullName.split(' ').first} '
               'et les prochains clients.',
@@ -104,7 +104,7 @@ class _MissionDetailSheetState extends ConsumerState<_MissionDetailSheet> {
               style: AppTextStyles.bodySmall
                   .copyWith(color: AppColors.textSoft, height: 1.4),
             ),
-            const SizedBox(height: AppDimens.md),
+            SizedBox(height: AppDimens.md),
             // Étoiles muettes : elles annoncent le geste, la notation
             // se fait dans le sheet dédié
             Row(
@@ -118,7 +118,7 @@ class _MissionDetailSheetState extends ConsumerState<_MissionDetailSheet> {
                 ),
               ),
             ),
-            const SizedBox(height: AppDimens.md),
+            SizedBox(height: AppDimens.md),
             Text(
               'Toucher pour noter',
               style: AppTextStyles.caption.copyWith(
@@ -155,7 +155,7 @@ class _MissionDetailSheetState extends ConsumerState<_MissionDetailSheet> {
 
     return SheetDetail(
       enfant: mission == null
-          ? const Padding(
+          ? Padding(
               padding: EdgeInsets.all(AppDimens.xxxl),
               child: Center(child: Text('Mission introuvable')),
             )
@@ -174,7 +174,7 @@ class _MissionDetailSheetState extends ConsumerState<_MissionDetailSheet> {
         // ① État — animation pendant l'attente, badge sinon
         if (enRecherche)
           Padding(
-            padding: const EdgeInsets.only(bottom: AppDimens.xl),
+            padding: EdgeInsets.only(bottom: AppDimens.xl),
             child: RechercheAnimation(
               titre   : 'Recherche d\'un ${course ? 'chauffeur' : 'livreur'}',
               message : 'Nous cherchons quelqu\'un de disponible '
@@ -194,7 +194,7 @@ class _MissionDetailSheetState extends ConsumerState<_MissionDetailSheet> {
 
         // ② Le coursier, dès qu'il est assigné
         if (m.livreur != null) ...[
-          const SizedBox(height: AppDimens.lg),
+          SizedBox(height: AppDimens.lg),
           CarteCoursier(
             nom       : m.livreur!.fullName,
             telephone : m.livreur!.telephone,
@@ -208,15 +208,15 @@ class _MissionDetailSheetState extends ConsumerState<_MissionDetailSheet> {
         // l'app ; une commande d'établissement n'y passe jamais, et
         // rares sont les clients qui restent sur l'écran jusqu'au bout.
         if (_notationAProposer(m)) ...[
-          const SizedBox(height: AppDimens.lg),
+          SizedBox(height: AppDimens.lg),
           _relanceNotation(m),
         ],
 
-        const SizedBox(height: AppDimens.xl),
+        SizedBox(height: AppDimens.xl),
 
         // ③ Le trajet, toujours
         const SectionTitre('Trajet'),
-        const SizedBox(height: AppDimens.md),
+        SizedBox(height: AppDimens.md),
         TrajetAB(
           depart  : m.adresseDepart,
           arrivee : m.adresseArrivee,
@@ -225,39 +225,39 @@ class _MissionDetailSheetState extends ConsumerState<_MissionDetailSheet> {
 
         // ④ Le contenu, pour une commande d'établissement
         if (m.hasDetail) ...[
-          const SizedBox(height: AppDimens.xl),
+          SizedBox(height: AppDimens.xl),
           const SectionTitre('Votre commande'),
-          const SizedBox(height: AppDimens.md),
+          SizedBox(height: AppDimens.md),
           ContenuCommande(detail: detail),
         ],
 
         // ⑤ Consignes et contacts, pour un envoi de colis
         if (m.typeService == TypeServiceMission.livraison) ...[
           if (m.instructions.isNotEmpty) ...[
-            const SizedBox(height: AppDimens.xl),
+            SizedBox(height: AppDimens.xl),
             const SectionTitre('Consignes'),
-            const SizedBox(height: AppDimens.sm),
+            SizedBox(height: AppDimens.sm),
             EncadreConsigne(m.instructions),
           ],
           if (m.telephoneExpediteur != null ||
               m.telephoneDestinataire != null) ...[
-            const SizedBox(height: AppDimens.xl),
+            SizedBox(height: AppDimens.xl),
             const SectionTitre('Contacts'),
-            const SizedBox(height: AppDimens.md),
+            SizedBox(height: AppDimens.md),
             if (m.telephoneExpediteur != null)
               LigneContact(
                   role: 'Expéditeur', numero: m.telephoneExpediteur!),
             if (m.telephoneDestinataire != null) ...[
-              const SizedBox(height: AppDimens.sm),
+              SizedBox(height: AppDimens.sm),
               LigneContact(
                   role: 'Destinataire', numero: m.telephoneDestinataire!),
             ],
           ],
         ],
 
-        const SizedBox(height: AppDimens.xl),
+        SizedBox(height: AppDimens.xl),
         const Divider(height: 1, color: AppColors.grey200),
-        const SizedBox(height: AppDimens.lg),
+        SizedBox(height: AppDimens.lg),
 
         // ⑥ Les montants
         _montants(m, detail),
@@ -280,11 +280,11 @@ class _MissionDetailSheetState extends ConsumerState<_MissionDetailSheet> {
     return Column(
       children: [
         LigneMontant('Commande', montantLabel(produits)),
-        const SizedBox(height: AppDimens.sm),
+        SizedBox(height: AppDimens.sm),
         LigneMontant('Livraison', montantLabel(m.montant, devise: m.devise)),
-        const SizedBox(height: AppDimens.md),
+        SizedBox(height: AppDimens.md),
         const Divider(height: 1, color: AppColors.grey200),
-        const SizedBox(height: AppDimens.md),
+        SizedBox(height: AppDimens.md),
         LigneMontant(
           'Total',
           montantLabel(produits + m.montant, devise: m.devise),
@@ -304,7 +304,7 @@ class ContenuCommande extends StatelessWidget {
   Widget build(BuildContext context) {
     final d = detail;
     if (d == null) {
-      return const Padding(
+      return Padding(
         padding: EdgeInsets.symmetric(vertical: AppDimens.lg),
         child: Center(
           child: SizedBox(
@@ -323,7 +323,7 @@ class ContenuCommande extends StatelessWidget {
           children: [
             const Icon(Icons.storefront_rounded,
                 size: 18, color: AppColors.primary),
-            const SizedBox(width: AppDimens.sm),
+            SizedBox(width: AppDimens.sm),
             Expanded(
               child: Text(
                 d.structureName,
@@ -335,7 +335,7 @@ class ContenuCommande extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: AppDimens.md),
+        SizedBox(height: AppDimens.md),
         ...d.commandeProduits.map(
           (p) => LigneProduit(
             nom          : p.nom,

@@ -188,7 +188,7 @@ class _ReceptionModeSheetState extends State<_ReceptionModeSheet> {
 
           Flexible(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(
+              padding: EdgeInsets.symmetric(
                   horizontal: AppDimens.screenPadding),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

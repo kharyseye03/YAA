@@ -37,7 +37,7 @@ class _Label extends StatelessWidget {
 // ── InputDecoration uniforme ─────────────────────────────────────
 InputDecoration _inputDeco({String? hint}) => InputDecoration(
       hintText: hint,
-      contentPadding: const EdgeInsets.symmetric(
+      contentPadding: EdgeInsets.symmetric(
           horizontal: AppDimens.lg, vertical: AppDimens.lg),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(AppDimens.radiusMd),
@@ -115,7 +115,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       backgroundColor: AppColors.white,
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(
+          padding: EdgeInsets.symmetric(
               horizontal: AppDimens.screenPadding),
           child: Form(
             key: _formKey,
@@ -124,7 +124,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               children: [
                 // Le titre collait au haut de l'écran : on lui laisse
                 // de l'air, la page défile de toute façon
-                const SizedBox(height: AppDimens.huge),
+                SizedBox(height: AppDimens.huge),
 
                 // ── Titre ────────────────────────────────────────
                 RichText(
@@ -140,14 +140,14 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     ],
                   ),
                 ),
-                const SizedBox(height: AppDimens.xs),
+                SizedBox(height: AppDimens.xs),
                 Text(
                   'Renseignez vos informations pour commencer.',
                   style: AppTextStyles.bodySmall
                       .copyWith(color: AppColors.grey600),
                 ),
 
-                const SizedBox(height: AppDimens.xxl),
+                SizedBox(height: AppDimens.xxl),
 
                 // ── Prénom + Nom côte à côte ─────────────────────
                 Row(
@@ -174,7 +174,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                         ],
                       ),
                     ),
-                    const SizedBox(width: AppDimens.md),
+                    SizedBox(width: AppDimens.md),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -200,7 +200,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   ],
                 ),
 
-                const SizedBox(height: AppDimens.lg),
+                SizedBox(height: AppDimens.lg),
 
                 // ── Téléphone ────────────────────────────────────
                 const _Label('Numéro de téléphone'),
@@ -222,7 +222,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   },
                 ),
 
-                const SizedBox(height: AppDimens.lg),
+                SizedBox(height: AppDimens.lg),
 
                 // ── Email ────────────────────────────────────────
                 const _Label('Adresse email'),
@@ -243,7 +243,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   },
                 ),
 
-                const SizedBox(height: AppDimens.lg),
+                SizedBox(height: AppDimens.lg),
 
                 // ── Conditions ───────────────────────────────────
                 RichText(
@@ -277,9 +277,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
                 // ── Erreur inline ────────────────────────────────
                 if (state.error != null) ...[
-                  const SizedBox(height: AppDimens.lg),
+                  SizedBox(height: AppDimens.lg),
                   Container(
-                    padding: const EdgeInsets.all(AppDimens.md),
+                    padding: EdgeInsets.all(AppDimens.md),
                     decoration: BoxDecoration(
                       color: AppColors.errorLight,
                       borderRadius:
@@ -289,7 +289,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       children: [
                         const Icon(Icons.error_outline_rounded,
                             color: AppColors.error, size: 18),
-                        const SizedBox(width: AppDimens.sm),
+                        SizedBox(width: AppDimens.sm),
                         Expanded(
                           child: Text(
                             state.error!,
@@ -302,7 +302,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   ),
                 ],
 
-                const SizedBox(height: AppDimens.xxl),
+                SizedBox(height: AppDimens.xxl),
 
                 // ── Bouton confirmer ─────────────────────────────
                 SizedBox(
@@ -322,7 +322,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   ),
                 ),
 
-                const SizedBox(height: AppDimens.lg),
+                SizedBox(height: AppDimens.lg),
 
                 // ── Lien connexion ───────────────────────────────
                 Center(
@@ -350,7 +350,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   ),
                 ),
 
-                const SizedBox(height: AppDimens.xxl),
+                SizedBox(height: AppDimens.xxl),
               ],
             ),
           ),

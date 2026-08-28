@@ -65,13 +65,13 @@ class _PasswordScreenState extends ConsumerState<PasswordScreen> {
               const AuthHeader(),
               Expanded(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(
+                  padding: EdgeInsets.symmetric(
                     horizontal: AppDimens.screenPadding,
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const SizedBox(height: AppDimens.lg),
+                      SizedBox(height: AppDimens.lg),
 
                       Text(
                         'Créez votre mot de\npasse',
@@ -82,7 +82,7 @@ class _PasswordScreenState extends ConsumerState<PasswordScreen> {
                         ),
                       ),
 
-                      const SizedBox(height: AppDimens.md),
+                      SizedBox(height: AppDimens.md),
 
                       Text(
                         'Choisissez un mot de passe sécurisé pour\nprotéger votre compte.',
@@ -92,7 +92,7 @@ class _PasswordScreenState extends ConsumerState<PasswordScreen> {
                         ),
                       ),
 
-                      const SizedBox(height: AppDimens.xxxl),
+                      SizedBox(height: AppDimens.xxxl),
 
                       YaaTextField(
                         controller      : _passwordController,
@@ -120,7 +120,7 @@ class _PasswordScreenState extends ConsumerState<PasswordScreen> {
                         },
                       ),
 
-                      const SizedBox(height: AppDimens.xl),
+                      SizedBox(height: AppDimens.xl),
 
                       YaaTextField(
                         controller      : _confirmController,
@@ -149,7 +149,7 @@ class _PasswordScreenState extends ConsumerState<PasswordScreen> {
                         },
                       ),
 
-                      const SizedBox(height: AppDimens.xxxl),
+                      SizedBox(height: AppDimens.xxxl),
                     ],
                   ),
                 ),
@@ -157,7 +157,7 @@ class _PasswordScreenState extends ConsumerState<PasswordScreen> {
 
               // Bouton ancré en bas
               Padding(
-                padding: const EdgeInsets.fromLTRB(
+                padding: EdgeInsets.fromLTRB(
                   AppDimens.screenPadding,
                   0,
                   AppDimens.screenPadding,

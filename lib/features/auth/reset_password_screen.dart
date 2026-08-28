@@ -67,7 +67,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
             const AuthHeader(),
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.symmetric(
+                padding: EdgeInsets.symmetric(
                   horizontal: AppDimens.screenPadding,
                 ),
                 child: Form(
@@ -75,7 +75,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const SizedBox(height: AppDimens.lg),
+                      SizedBox(height: AppDimens.lg),
 
                       // Title — italic style matching Figma
                       Text(
@@ -88,7 +88,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
                         ),
                       ),
 
-                      const SizedBox(height: AppDimens.md),
+                      SizedBox(height: AppDimens.md),
 
                       // Subtitle
                       Text(
@@ -99,7 +99,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
                         ),
                       ),
 
-                      const SizedBox(height: AppDimens.xxxl),
+                      SizedBox(height: AppDimens.xxxl),
 
                       // New password
                       YaaTextField(
@@ -130,7 +130,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
                         },
                       ),
 
-                      const SizedBox(height: AppDimens.xl),
+                      SizedBox(height: AppDimens.xl),
 
                       // Confirm password
                       YaaTextField(
@@ -174,7 +174,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
                         },
                       ),
 
-                      const SizedBox(height: AppDimens.xxl),
+                      SizedBox(height: AppDimens.xxl),
                     ],
                   ),
                 ),

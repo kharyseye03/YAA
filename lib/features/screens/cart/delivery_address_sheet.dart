@@ -203,7 +203,7 @@ class _DeliveryAddressSheetState
                 ),
               ),
             ] else if (_suggestions.isNotEmpty) ...[
-              const SizedBox(height: AppDimens.sm),
+              SizedBox(height: AppDimens.sm),
               ConstrainedBox(
                 constraints: const BoxConstraints(maxHeight: 220),
                 child: Container(

@@ -439,7 +439,7 @@ class _CoursierSearchScreenState extends State<CoursierSearchScreen>
       child: SafeArea(
         top: false,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(
+          padding: EdgeInsets.fromLTRB(
               AppDimens.screenPadding, 14, AppDimens.screenPadding, 14),
           child: Column(
             mainAxisSize: MainAxisSize.min,

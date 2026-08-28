@@ -52,7 +52,7 @@ abstract final class AppTheme {
           backgroundColor: AppColors.primary,
           foregroundColor: AppColors.white,
           elevation: 0,
-          minimumSize: const Size(double.infinity, AppDimens.buttonHeight),
+          minimumSize: Size(double.infinity, AppDimens.buttonHeight),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppDimens.radiusMd),
           ),
@@ -65,7 +65,7 @@ abstract final class AppTheme {
         style: OutlinedButton.styleFrom(
           foregroundColor: AppColors.primary,
           elevation: 0,
-          minimumSize: const Size(double.infinity, AppDimens.buttonHeight),
+          minimumSize: Size(double.infinity, AppDimens.buttonHeight),
           side: const BorderSide(color: AppColors.primary, width: 1.5),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppDimens.radiusMd),
@@ -88,7 +88,7 @@ abstract final class AppTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: AppColors.white,
-        contentPadding: const EdgeInsets.symmetric(
+        contentPadding: EdgeInsets.symmetric(
           horizontal: AppDimens.lg,
           vertical: AppDimens.lg,
         ),
@@ -163,14 +163,14 @@ abstract final class AppTheme {
           borderRadius: BorderRadius.circular(AppDimens.radiusFull),
         ),
         side: BorderSide.none,
-        padding: const EdgeInsets.symmetric(
+        padding: EdgeInsets.symmetric(
           horizontal: AppDimens.md,
           vertical: AppDimens.xs,
         ),
       ),
 
       // ── Bottom Sheet ───────────────────────────────────
-      bottomSheetTheme: const BottomSheetThemeData(
+      bottomSheetTheme: BottomSheetThemeData(
         backgroundColor: AppColors.white,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(

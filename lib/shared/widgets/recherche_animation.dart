@@ -61,7 +61,7 @@ class _RechercheAnimationState extends State<RechercheAnimation>
                     color      : AppColors.dark,
                   ),
                 ),
-                const SizedBox(height: AppDimens.xxl),
+                SizedBox(height: AppDimens.xxl),
                 SizedBox(
                   height: 56,
                   child: LayoutBuilder(
@@ -121,7 +121,7 @@ class _RechercheAnimationState extends State<RechercheAnimation>
           },
         ),
         if (widget.message.isNotEmpty) ...[
-          const SizedBox(height: AppDimens.xl),
+          SizedBox(height: AppDimens.xl),
           Container(
             width   : double.infinity,
             padding : const EdgeInsets.all(14),

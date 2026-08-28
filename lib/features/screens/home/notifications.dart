@@ -195,7 +195,7 @@ class _NotifTile extends StatelessWidget {
           ? AppColors.grey100.withValues(alpha: 0.6)
           : Colors.white,
       child: Padding(
-        padding: const EdgeInsets.symmetric(
+        padding: EdgeInsets.symmetric(
           horizontal : AppDimens.screenPadding,
           vertical   : 14,
         ),
