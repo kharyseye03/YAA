@@ -1,3 +1,4 @@
+import '../../../service/storage/notation_storage.dart';
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimens.dart';
@@ -65,6 +66,9 @@ class _RatingSheetState extends State<_RatingSheet> {
         livraisonCourseId : widget.mission.id,
         note              : _note,
       );
+      // Retenu localement pour ne pas redemander le même avis depuis
+      // le détail de la mission
+      await NotationStorage.instance.marquerNotee(widget.mission.id);
       if (!mounted) return;
       Navigator.of(context).pop();
     } catch (e) {

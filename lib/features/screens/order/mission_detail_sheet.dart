@@ -8,7 +8,9 @@ import '../../../core/utils/devise.dart';
 import '../../../features/orders/providers/commande_notifier.dart';
 import '../../../model/order/commande_detail_model.dart';
 import '../../../model/order/livraison_course_model.dart';
+import '../../../service/storage/notation_storage.dart';
 import '../../../shared/widgets/recherche_animation.dart';
+import '../course/rating_sheet.dart';
 import 'detail_widgets.dart';
 import 'orders_screen.dart' show CommandeCard;
 
@@ -48,7 +50,94 @@ class _MissionDetailSheetState extends ConsumerState<_MissionDetailSheet> {
       Future.microtask(
           () => ref.read(commandeProvider.notifier).loadDetail(m));
     }
+    _verifierNotation();
   }
+
+  /// null tant qu'on ne sait pas encore si la mission a été notée
+  bool? _dejaNotee;
+
+  Future<void> _verifierNotation() async {
+    final vu = await NotationStorage.instance.dejaNotee(widget.missionId);
+    if (mounted) setState(() => _dejaNotee = vu);
+  }
+
+  Future<void> _ouvrirNotation(LivraisonCourseModel m) async {
+    await showRatingSheet(context, m);
+    // Le sheet enregistre lui-même : on relit plutôt que de supposer
+    // que le client est allé au bout.
+    await _verifierNotation();
+  }
+
+  /// On ne relance que sur une mission achevée, confiée à quelqu'un,
+  /// et pas encore notée.
+  bool _notationAProposer(LivraisonCourseModel m) =>
+      m.statut == 'COURSE_TERMINEE' &&
+      m.livreur != null &&
+      _dejaNotee == false;
+
+  Widget _relanceNotation(LivraisonCourseModel m) {
+    return GestureDetector(
+      onTap    : () => _ouvrirNotation(m),
+      behavior : HitTestBehavior.opaque,
+      child: Container(
+        width   : double.infinity,
+        padding : const EdgeInsets.all(AppDimens.lg),
+        decoration: BoxDecoration(
+          color        : AppColors.secondaryLight,
+          borderRadius : BorderRadius.circular(AppDimens.radiusLg),
+        ),
+        child: Column(
+          children: [
+            Text(
+              'Comment s\'est passée votre ${_motService(m)} ?',
+              textAlign: TextAlign.center,
+              style: AppTextStyles.labelMedium.copyWith(
+                fontWeight : FontWeight.w700,
+                color      : AppColors.dark,
+              ),
+            ),
+            const SizedBox(height: AppDimens.sm),
+            Text(
+              'Votre avis aide ${m.livreur!.fullName.split(' ').first} '
+              'et les prochains clients.',
+              textAlign: TextAlign.center,
+              style: AppTextStyles.bodySmall
+                  .copyWith(color: AppColors.textSoft, height: 1.4),
+            ),
+            const SizedBox(height: AppDimens.md),
+            // Étoiles muettes : elles annoncent le geste, la notation
+            // se fait dans le sheet dédié
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(
+                5,
+                (_) => Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 3),
+                  child: Icon(Icons.star_rounded,
+                      size: 30, color: Colors.amber.shade600),
+                ),
+              ),
+            ),
+            const SizedBox(height: AppDimens.md),
+            Text(
+              'Toucher pour noter',
+              style: AppTextStyles.caption.copyWith(
+                color      : AppColors.secondaryDark,
+                fontWeight : FontWeight.w700,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _motService(LivraisonCourseModel m) =>
+      switch (m.typeService) {
+        TypeServiceMission.course            => 'course',
+        TypeServiceMission.livraison         => 'livraison',
+        TypeServiceMission.livraisonCommande => 'commande',
+      };
 
   LivraisonCourseModel? _chercher(List<LivraisonCourseModel> missions) {
     for (final m in missions) {
@@ -112,6 +201,15 @@ class _MissionDetailSheetState extends ConsumerState<_MissionDetailSheet> {
             photoUrl  : m.livreur!.photoUrl,
             note      : m.livreur!.noteMoyenne,
           ),
+        ],
+
+        // Relance de notation — pour les trois types de service.
+        // L'écran de suivi ne la propose qu'aux missions créées depuis
+        // l'app ; une commande d'établissement n'y passe jamais, et
+        // rares sont les clients qui restent sur l'écran jusqu'au bout.
+        if (_notationAProposer(m)) ...[
+          const SizedBox(height: AppDimens.lg),
+          _relanceNotation(m),
         ],
 
         const SizedBox(height: AppDimens.xl),
