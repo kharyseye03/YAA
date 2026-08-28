@@ -95,7 +95,7 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
           if (state.error != null)
             Container(
               width   : double.infinity,
-              padding : const EdgeInsets.symmetric(
+              padding : EdgeInsets.symmetric(
                   horizontal: AppDimens.screenPadding, vertical: 10),
               color   : AppColors.errorLight,
               child   : Row(
@@ -123,7 +123,7 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
                             .read(commandeProvider.notifier)
                             .loadCommandes(),
                         child: ListView.separated(
-                          padding: const EdgeInsets.fromLTRB(
+                          padding: EdgeInsets.fromLTRB(
                             AppDimens.screenPadding, 16,
                             AppDimens.screenPadding, 24,
                           ),

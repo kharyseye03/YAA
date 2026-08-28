@@ -43,7 +43,7 @@ class _FavorisScreenState extends ConsumerState<FavorisScreen> {
 
         // ── En-tête ───────────────────────────────────────────
         Padding(
-          padding: const EdgeInsets.fromLTRB(
+          padding: EdgeInsets.fromLTRB(
             AppDimens.screenPadding, 14,
             AppDimens.screenPadding, 0,
           ),
@@ -70,7 +70,7 @@ class _FavorisScreenState extends ConsumerState<FavorisScreen> {
         if (state.error != null)
           Container(
             width  : double.infinity,
-            padding: const EdgeInsets.symmetric(
+            padding: EdgeInsets.symmetric(
                 horizontal: AppDimens.screenPadding, vertical: 10),
             color  : AppColors.errorLight,
             child  : Row(
@@ -111,7 +111,7 @@ class _FavorisScreenState extends ConsumerState<FavorisScreen> {
       );
     }
     return ListView.separated(
-      padding: const EdgeInsets.fromLTRB(
+      padding: EdgeInsets.fromLTRB(
           AppDimens.screenPadding, 16,
           AppDimens.screenPadding, 90),
       itemCount: state.favoris.length,
@@ -138,7 +138,7 @@ class _FavorisScreenState extends ConsumerState<FavorisScreen> {
       );
     }
     return ListView.separated(
-      padding: const EdgeInsets.fromLTRB(
+      padding: EdgeInsets.fromLTRB(
           AppDimens.screenPadding, 16,
           AppDimens.screenPadding, 90),
       itemCount: state.produitsFavoris.length,

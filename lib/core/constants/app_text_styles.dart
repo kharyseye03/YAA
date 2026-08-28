@@ -1,97 +1,101 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'app_colors.dart';
 
-/// Centralized typography for the YAA application.
-/// Uses Inter as the default font family.
+/// Typographie de l'application.
+///
+/// Les tailles passent par ScreenUtil (.sp) : elles suivent l'écran
+/// depuis la référence 375 × 812. Ce sont donc des **getters**, pas
+/// des constantes — leur valeur dépend de l'appareil.
 abstract final class AppTextStyles {
   static const String _fontFamily = 'PlusJakartaSans';
 
   // ── Headings ─────────────────────────────────────────────
-  static const TextStyle h1 = TextStyle(
+  static TextStyle get h1 => TextStyle(
     fontFamily: _fontFamily,
-    fontSize: 28,
+    fontSize: 28.sp,
     fontWeight: FontWeight.w700,
     color: AppColors.dark,
     height: 1.3,
   );
 
-  static const TextStyle h2 = TextStyle(
+  static TextStyle get h2 => TextStyle(
     fontFamily: _fontFamily,
-    fontSize: 24,
+    fontSize: 24.sp,
     fontWeight: FontWeight.w700,
     color: AppColors.dark,
     height: 1.3,
   );
 
-  static const TextStyle h3 = TextStyle(
+  static TextStyle get h3 => TextStyle(
     fontFamily: _fontFamily,
-    fontSize: 20,
+    fontSize: 20.sp,
     fontWeight: FontWeight.w600,
     color: AppColors.dark,
     height: 1.3,
   );
 
-  static const TextStyle h4 = TextStyle(
+  static TextStyle get h4 => TextStyle(
     fontFamily: _fontFamily,
-    fontSize: 18,
+    fontSize: 18.sp,
     fontWeight: FontWeight.w600,
     color: AppColors.dark,
     height: 1.4,
   );
 
   // ── Body ─────────────────────────────────────────────────
-  static const TextStyle bodyLarge = TextStyle(
+  static TextStyle get bodyLarge => TextStyle(
     fontFamily: _fontFamily,
-    fontSize: 16,
+    fontSize: 16.sp,
     fontWeight: FontWeight.w400,
     color: AppColors.grey800,
     height: 1.5,
   );
 
-  static const TextStyle bodyMedium = TextStyle(
+  static TextStyle get bodyMedium => TextStyle(
     fontFamily: _fontFamily,
-    fontSize: 14,
+    fontSize: 14.sp,
     fontWeight: FontWeight.w400,
     color: AppColors.grey800,
     height: 1.5,
   );
 
-  static const TextStyle bodySmall = TextStyle(
+  static TextStyle get bodySmall => TextStyle(
     fontFamily: _fontFamily,
-    fontSize: 12,
+    fontSize: 12.sp,
     fontWeight: FontWeight.w400,
     color: AppColors.grey600,
     height: 1.5,
   );
 
   // ── Labels & Buttons ─────────────────────────────────────
-  static const TextStyle labelLarge = TextStyle(
+  static TextStyle get labelLarge => TextStyle(
     fontFamily: _fontFamily,
-    fontSize: 16,
+    fontSize: 16.sp,
     fontWeight: FontWeight.w600,
     color: AppColors.dark,
     height: 1.4,
   );
 
-  static const TextStyle labelMedium = TextStyle(
+  static TextStyle get labelMedium => TextStyle(
     fontFamily: _fontFamily,
-    fontSize: 14,
+    fontSize: 14.sp,
     fontWeight: FontWeight.w600,
     color: AppColors.dark,
     height: 1.4,
   );
 
-  static const TextStyle labelSmall = TextStyle(
+  static TextStyle get labelSmall => TextStyle(
     fontFamily: _fontFamily,
-    fontSize: 12,
+    fontSize: 12.sp,
     fontWeight: FontWeight.w600,
     color: AppColors.grey700,
     height: 1.4,
   );
 
-  static const TextStyle button = TextStyle(
+  static TextStyle get button => TextStyle(
     fontFamily: _fontFamily,
-    fontSize: 16,
+    fontSize: 16.sp,
     fontWeight: FontWeight.w600,
     color: AppColors.white,
     height: 1.4,
@@ -99,17 +103,17 @@ abstract final class AppTextStyles {
   );
 
   // ── Caption & Overline ───────────────────────────────────
-  static const TextStyle caption = TextStyle(
+  static TextStyle get caption => TextStyle(
     fontFamily: _fontFamily,
-    fontSize: 11,
+    fontSize: 11.sp,
     fontWeight: FontWeight.w400,
     color: AppColors.grey500,
     height: 1.4,
   );
 
-  static const TextStyle overline = TextStyle(
+  static TextStyle get overline => TextStyle(
     fontFamily: _fontFamily,
-    fontSize: 10,
+    fontSize: 10.sp,
     fontWeight: FontWeight.w600,
     color: AppColors.grey500,
     height: 1.4,
@@ -117,33 +121,33 @@ abstract final class AppTextStyles {
   );
 
   // ── Price Styles ─────────────────────────────────────────
-  static const TextStyle priceLarge = TextStyle(
+  static TextStyle get priceLarge => TextStyle(
     fontFamily: _fontFamily,
-    fontSize: 22,
+    fontSize: 22.sp,
     fontWeight: FontWeight.w700,
     color: AppColors.primary,
     height: 1.3,
   );
 
-  static const TextStyle priceMedium = TextStyle(
+  static TextStyle get priceMedium => TextStyle(
     fontFamily: _fontFamily,
-    fontSize: 16,
+    fontSize: 16.sp,
     fontWeight: FontWeight.w700,
     color: AppColors.primary,
     height: 1.3,
   );
 
-  static const TextStyle priceSmall = TextStyle(
+  static TextStyle get priceSmall => TextStyle(
     fontFamily: _fontFamily,
-    fontSize: 14,
+    fontSize: 14.sp,
     fontWeight: FontWeight.w600,
     color: AppColors.primary,
     height: 1.3,
   );
 
-  static const TextStyle priceOld = TextStyle(
+  static TextStyle get priceOld => TextStyle(
     fontFamily: _fontFamily,
-    fontSize: 13,
+    fontSize: 13.sp,
     fontWeight: FontWeight.w400,
     color: AppColors.grey500,
     height: 1.3,

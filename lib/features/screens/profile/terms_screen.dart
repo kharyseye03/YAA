@@ -21,7 +21,7 @@ class TermsScreen extends StatelessWidget {
           _Header(),
           Expanded(
             child: ListView(
-              padding: const EdgeInsets.fromLTRB(
+              padding: EdgeInsets.fromLTRB(
                   AppDimens.screenPadding, 20,
                   AppDimens.screenPadding, 40),
               children: [

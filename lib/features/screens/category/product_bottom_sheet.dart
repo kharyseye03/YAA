@@ -48,7 +48,7 @@ class _ProductSheetState extends ConsumerState<_ProductSheet> {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(
           child: Padding(
-            padding: const EdgeInsets.all(AppDimens.xl),
+            padding: EdgeInsets.all(AppDimens.xl),
             child: Text(
               e.toString().replaceAll('Exception: ', ''),
               style: AppTextStyles.bodyMedium.copyWith(color: AppColors.error),
@@ -226,7 +226,7 @@ class _ProductSheetState extends ConsumerState<_ProductSheet> {
 
   Widget _buildContent(dynamic produit) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(
+      padding: EdgeInsets.fromLTRB(
         AppDimens.screenPadding,
         AppDimens.sm,
         AppDimens.screenPadding,
@@ -243,13 +243,13 @@ class _ProductSheetState extends ConsumerState<_ProductSheet> {
                 label: '4.8',
                 iconColor: const Color(0xFFFFC107),
               ),
-              const SizedBox(width: AppDimens.sm),
+              SizedBox(width: AppDimens.sm),
               _InfoChip(
                 icon: Icons.people_outline_rounded,
                 label: '124 avis',
                 iconColor: AppColors.grey500,
               ),
-              const SizedBox(width: AppDimens.sm),
+              SizedBox(width: AppDimens.sm),
               _InfoChip(
                 icon: Icons.access_time_rounded,
                 label: '20-30 min',
@@ -258,7 +258,7 @@ class _ProductSheetState extends ConsumerState<_ProductSheet> {
             ],
           ),
 
-          const SizedBox(height: AppDimens.md),
+          SizedBox(height: AppDimens.md),
 
           // ── Nom + Prix ───────────────────────────────
           Row(
@@ -275,7 +275,7 @@ class _ProductSheetState extends ConsumerState<_ProductSheet> {
                   ),
                 ),
               ),
-              const SizedBox(width: AppDimens.md),
+              SizedBox(width: AppDimens.md),
               Text(
                 '${produit.prix.toInt()} F',
                 style: AppTextStyles.labelLarge.copyWith(
@@ -287,7 +287,7 @@ class _ProductSheetState extends ConsumerState<_ProductSheet> {
             ],
           ),
 
-          const SizedBox(height: AppDimens.md),
+          SizedBox(height: AppDimens.md),
 
           // ── Description ──────────────────────────────
           Text(
@@ -298,12 +298,12 @@ class _ProductSheetState extends ConsumerState<_ProductSheet> {
             ),
           ),
 
-          const SizedBox(height: AppDimens.xl),
+          SizedBox(height: AppDimens.xl),
 
           // ── Séparateur ───────────────────────────────
           Container(height: 1, color: AppColors.grey100),
 
-          const SizedBox(height: AppDimens.xl),
+          SizedBox(height: AppDimens.xl),
 
           // ── Section taille ───────────────────────────
           _SectionLabel(
@@ -311,7 +311,7 @@ class _ProductSheetState extends ConsumerState<_ProductSheet> {
             subtitle: 'Requis · Choisissez 1',
           ),
 
-          const SizedBox(height: AppDimens.md),
+          SizedBox(height: AppDimens.md),
 
           Row(
             children: List.generate(_sizes.length, (i) {
@@ -360,7 +360,7 @@ class _ProductSheetState extends ConsumerState<_ProductSheet> {
             }),
           ),
 
-          const SizedBox(height: AppDimens.xl),
+          SizedBox(height: AppDimens.xl),
 
           // ── Section extras ───────────────────────────
           _SectionLabel(
@@ -368,7 +368,7 @@ class _ProductSheetState extends ConsumerState<_ProductSheet> {
             subtitle: 'Optionnel',
           ),
 
-          const SizedBox(height: AppDimens.md),
+          SizedBox(height: AppDimens.md),
 
           Wrap(
             spacing: AppDimens.sm,
@@ -381,7 +381,7 @@ class _ProductSheetState extends ConsumerState<_ProductSheet> {
             ],
           ),
 
-          const SizedBox(height: AppDimens.xxl),
+          SizedBox(height: AppDimens.xxl),
         ],
       ),
     );
@@ -447,7 +447,7 @@ class _ProductSheetState extends ConsumerState<_ProductSheet> {
             ),
           ),
 
-          const SizedBox(width: AppDimens.md),
+          SizedBox(width: AppDimens.md),
 
           // ── Bouton Ajouter ───────────────────────────
           Expanded(

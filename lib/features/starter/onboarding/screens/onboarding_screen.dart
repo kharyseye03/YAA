@@ -93,7 +93,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           // ── Contenu, aligné en bas ────────────────────────────
           SafeArea(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(
+              padding: EdgeInsets.fromLTRB(
                 AppDimens.screenPadding,
                 0,
                 AppDimens.screenPadding,
@@ -114,7 +114,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     ),
                   ),
 
-                  const SizedBox(height: AppDimens.lg),
+                  SizedBox(height: AppDimens.lg),
 
                   Text(
                     _accroche,
@@ -125,7 +125,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     ),
                   ),
 
-                  const SizedBox(height: AppDimens.xxxl),
+                  SizedBox(height: AppDimens.xxxl),
 
                   // ── Entrée principale ───────────────────────────
                   SizedBox(
@@ -153,7 +153,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     ),
                   ),
 
-                  const SizedBox(height: AppDimens.lg),
+                  SizedBox(height: AppDimens.lg),
 
                   // ── Entrée secondaire ───────────────────────────
                   Center(

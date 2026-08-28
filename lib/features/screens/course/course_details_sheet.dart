@@ -123,7 +123,7 @@ class _CourseDetailsSheetState extends ConsumerState<_CourseDetailsSheet> {
         child: SafeArea(
           top: false,
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(
+            padding: EdgeInsets.fromLTRB(
                 AppDimens.screenPadding, 12, AppDimens.screenPadding, 12),
             child: Form(
               key: _formKey,

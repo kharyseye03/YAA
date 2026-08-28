@@ -62,7 +62,7 @@ class _CategoryFiltersSheetState extends State<_CategoryFiltersSheet> {
           const Divider(height: 1, color: AppColors.grey200),
           Flexible(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(
+              padding: EdgeInsets.fromLTRB(
                 AppDimens.screenPadding,
                 AppDimens.lg,
                 AppDimens.screenPadding,
@@ -94,7 +94,7 @@ class _CategoryFiltersSheetState extends State<_CategoryFiltersSheet> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: AppDimens.xl),
+                    SizedBox(height: AppDimens.xl),
                   ],
 
                   _buildSection(
@@ -111,7 +111,7 @@ class _CategoryFiltersSheetState extends State<_CategoryFiltersSheet> {
                       );
                     }).toList(),
                   ),
-                  const SizedBox(height: AppDimens.xl),
+                  SizedBox(height: AppDimens.xl),
 
                   _buildSection(
                     'Temps de livraison',
@@ -127,7 +127,7 @@ class _CategoryFiltersSheetState extends State<_CategoryFiltersSheet> {
                       );
                     }).toList(),
                   ),
-                  const SizedBox(height: AppDimens.xl),
+                  SizedBox(height: AppDimens.xl),
 
                   _buildSection(
                     'Trier par',
@@ -165,7 +165,7 @@ class _CategoryFiltersSheetState extends State<_CategoryFiltersSheet> {
 
   Widget _buildEntete() {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(
+      padding: EdgeInsets.fromLTRB(
         AppDimens.screenPadding, 0, AppDimens.sm, AppDimens.md),
       child: Row(
         children: [
@@ -208,7 +208,7 @@ class _CategoryFiltersSheetState extends State<_CategoryFiltersSheet> {
             color: AppColors.dark,
           ),
         ),
-        const SizedBox(height: AppDimens.md),
+        SizedBox(height: AppDimens.md),
         Wrap(spacing: 8, runSpacing: 10, children: puces),
       ],
     );

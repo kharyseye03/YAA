@@ -64,7 +64,7 @@ class PersonalInfoScreen extends ConsumerWidget {
           // ── Contenu ─────────────────────────────────────────
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(
+              padding: EdgeInsets.symmetric(
                 horizontal : AppDimens.screenPadding,
               ),
               child: Column(

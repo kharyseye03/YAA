@@ -48,7 +48,7 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
         _rafraichissement?.cancel();
         return;
       }
-      ref.read(commandeProvider.notifier).loadCommandes();
+      ref.read(commandeProvider.notifier).loadCommandes(silencieux: true);
     });
   }
 
@@ -70,7 +70,7 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
 
         // ── Titre ─────────────────────────────────────────────
         Padding(
-          padding: const EdgeInsets.fromLTRB(
+          padding: EdgeInsets.fromLTRB(
             AppDimens.screenPadding, 14,
             AppDimens.screenPadding, 10,
           ),
@@ -98,7 +98,7 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
         if (state.error != null)
           Container(
             width   : double.infinity,
-            padding : const EdgeInsets.symmetric(
+            padding : EdgeInsets.symmetric(
                 horizontal: AppDimens.screenPadding, vertical: 10),
             color   : AppColors.errorLight,
             child   : Row(
@@ -117,7 +117,10 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
 
         // ── Contenu ───────────────────────────────────────────
         Expanded(
-          child: state.isLoading
+          // Le loader plein écran n'a de sens que s'il n'y a encore
+          // rien à montrer. Sinon on garde la liste affichée : le
+          // RefreshIndicator porte déjà son propre témoin.
+          child: state.isLoading && achats.isEmpty && courses.isEmpty
               ? const Center(child: CircularProgressIndicator())
               : RefreshIndicator(
                   onRefresh: () =>
@@ -171,7 +174,7 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
       );
     }
     return ListView.separated(
-      padding: const EdgeInsets.fromLTRB(
+      padding: EdgeInsets.fromLTRB(
         AppDimens.screenPadding, 16,
         AppDimens.screenPadding, 24,
       ),

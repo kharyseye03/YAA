@@ -99,7 +99,7 @@ class CarteCoursier extends StatelessWidget {
             ),
           ),
 
-          const SizedBox(height: AppDimens.md),
+          SizedBox(height: AppDimens.md),
 
           Text(
             nom,
@@ -112,7 +112,7 @@ class CarteCoursier extends StatelessWidget {
           ),
 
           if (note != null || aTelephone) ...[
-            const SizedBox(height: AppDimens.md),
+            SizedBox(height: AppDimens.md),
             Row(
               mainAxisSize      : MainAxisSize.min,
               mainAxisAlignment : MainAxisAlignment.center,
@@ -137,7 +137,7 @@ class CarteCoursier extends StatelessWidget {
                     ],
                   ),
                 if (note != null && aTelephone)
-                  const SizedBox(width: AppDimens.lg),
+                  SizedBox(width: AppDimens.lg),
                 if (aTelephone)
                   GestureDetector(
                     onTap: () => appelerNumero(telephone),
@@ -221,7 +221,7 @@ class TrajetAB extends StatelessWidget {
           child: Row(
             children: [
               Container(width: 2, height: 26, color: AppColors.grey200),
-              const SizedBox(width: AppDimens.lg),
+              SizedBox(width: AppDimens.lg),
               if (meta.isNotEmpty)
                 Text(
                   meta,
@@ -269,7 +269,7 @@ class _Point extends StatelessWidget {
             border : Border.all(color: couleur, width: 2),
           ),
         ),
-        const SizedBox(width: AppDimens.md),
+        SizedBox(width: AppDimens.md),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -317,7 +317,7 @@ class LigneProduit extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: AppDimens.md),
+      padding: EdgeInsets.only(bottom: AppDimens.md),
       child: Row(
         children: [
           // Vignette, avec la quantité posée dessus
@@ -360,7 +360,7 @@ class LigneProduit extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(width: AppDimens.md),
+          SizedBox(width: AppDimens.md),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -383,7 +383,7 @@ class LigneProduit extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(width: AppDimens.sm),
+          SizedBox(width: AppDimens.sm),
           Text(
             montantLabel(prixTotal),
             style: AppTextStyles.labelSmall.copyWith(
@@ -456,7 +456,7 @@ class EncadreConsigne extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width   : double.infinity,
-      padding : const EdgeInsets.all(AppDimens.md),
+      padding : EdgeInsets.all(AppDimens.md),
       decoration: BoxDecoration(
         color        : AppColors.secondaryLight,
         borderRadius : BorderRadius.circular(AppDimens.radiusLg),
@@ -485,7 +485,7 @@ class LigneContact extends StatelessWidget {
       child: Row(
         children: [
           const Icon(Icons.phone_outlined, size: 17, color: AppColors.textSoft),
-          const SizedBox(width: AppDimens.md),
+          SizedBox(width: AppDimens.md),
           Expanded(
             child: Text(
               role,
@@ -519,7 +519,7 @@ class SheetDetail extends StatelessWidget {
       constraints: BoxConstraints(
         maxHeight: MediaQuery.of(context).size.height * 0.9,
       ),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color        : Colors.white,
         borderRadius : BorderRadius.vertical(
             top: Radius.circular(AppDimens.radiusXl)),
@@ -581,7 +581,7 @@ class EnTeteDetail extends StatelessWidget {
           ),
           child: Icon(icone, size: 20, color: AppColors.primary),
         ),
-        const SizedBox(width: AppDimens.md),
+        SizedBox(width: AppDimens.md),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -606,7 +606,7 @@ class EnTeteDetail extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(width: AppDimens.sm),
+        SizedBox(width: AppDimens.sm),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(

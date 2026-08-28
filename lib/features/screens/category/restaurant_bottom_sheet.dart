@@ -339,7 +339,7 @@ class _RestaurantSheetState extends ConsumerState<_RestaurantSheet> {
         SliverToBoxAdapter(
           child: Padding(
             key: _sectionKeys![i],
-            padding: const EdgeInsets.fromLTRB(
+            padding: EdgeInsets.fromLTRB(
                 AppDimens.screenPadding, AppDimens.lg,
                 AppDimens.screenPadding, 0),
             child: Text(
@@ -349,7 +349,7 @@ class _RestaurantSheetState extends ConsumerState<_RestaurantSheet> {
           ),
         ),
         SliverPadding(
-          padding: const EdgeInsets.fromLTRB(
+          padding: EdgeInsets.fromLTRB(
               AppDimens.screenPadding, AppDimens.md,
               AppDimens.screenPadding, 0),
           sliver: SliverGrid(
@@ -357,7 +357,7 @@ class _RestaurantSheetState extends ConsumerState<_RestaurantSheet> {
               (_, j) => _ApiMenuItemCard(produit: section.produits[j]),
               childCount: section.produits.length,
             ),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount   : 2,
               crossAxisSpacing : AppDimens.md,
               mainAxisSpacing  : AppDimens.md,
@@ -372,13 +372,13 @@ class _RestaurantSheetState extends ConsumerState<_RestaurantSheet> {
   Widget _buildCatalogueVide() {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(AppDimens.xl),
+        padding: EdgeInsets.all(AppDimens.xl),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             const Icon(Icons.inventory_2_outlined,
                 size: 44, color: AppColors.grey300),
-            const SizedBox(height: AppDimens.md),
+            SizedBox(height: AppDimens.md),
             Text(
               'Aucun produit disponible pour le moment',
               style: AppTextStyles.bodyMedium.copyWith(color: AppColors.grey500),
@@ -399,7 +399,7 @@ class _RestaurantSheetState extends ConsumerState<_RestaurantSheet> {
       children: [
         _buildBarreRecherche(),
         _buildFiltresRapides(),
-        const SizedBox(height: AppDimens.md),
+        SizedBox(height: AppDimens.md),
         const Divider(height: 1, color: AppColors.grey200),
         Expanded(child: _buildResultats()),
       ],
@@ -408,7 +408,7 @@ class _RestaurantSheetState extends ConsumerState<_RestaurantSheet> {
 
   Widget _buildBarreRecherche() {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(
+      padding: EdgeInsets.fromLTRB(
           AppDimens.screenPadding, 8, AppDimens.screenPadding, AppDimens.sm),
       child: Row(
         children: [
@@ -459,7 +459,7 @@ class _RestaurantSheetState extends ConsumerState<_RestaurantSheet> {
       height: 38,
       child: ListView(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(
+        padding: EdgeInsets.symmetric(
             horizontal: AppDimens.screenPadding),
         children: [
           _chipFiltre(
@@ -562,7 +562,7 @@ class _RestaurantSheetState extends ConsumerState<_RestaurantSheet> {
         content: Row(
           children: [
             Expanded(child: _champPrix(minCtrl, 'Min')),
-            const SizedBox(width: AppDimens.md),
+            SizedBox(width: AppDimens.md),
             Expanded(child: _champPrix(maxCtrl, 'Max')),
           ],
         ),
@@ -638,7 +638,7 @@ class _RestaurantSheetState extends ConsumerState<_RestaurantSheet> {
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (e, _) => Center(
         child: Padding(
-          padding: const EdgeInsets.all(AppDimens.xl),
+          padding: EdgeInsets.all(AppDimens.xl),
           child: Text(
             e.toString().replaceAll('Exception: ', ''),
             style: AppTextStyles.bodyMedium.copyWith(color: AppColors.error),
@@ -651,14 +651,14 @@ class _RestaurantSheetState extends ConsumerState<_RestaurantSheet> {
           return _buildAucunResultat();
         }
         return GridView.builder(
-          padding: const EdgeInsets.fromLTRB(
+          padding: EdgeInsets.fromLTRB(
             AppDimens.screenPadding,
             AppDimens.md,
             AppDimens.screenPadding,
             100,
           ),
           itemCount: produits.length,
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount   : 2,
             crossAxisSpacing : AppDimens.md,
             mainAxisSpacing  : AppDimens.md,
@@ -673,12 +673,12 @@ class _RestaurantSheetState extends ConsumerState<_RestaurantSheet> {
   Widget _buildInvite() {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(AppDimens.xl),
+        padding: EdgeInsets.all(AppDimens.xl),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(LucideIcons.search, size: 40, color: AppColors.grey300),
-            const SizedBox(height: AppDimens.md),
+            SizedBox(height: AppDimens.md),
             Text(
               'Cherchez un produit chez ${widget.restaurant.name}',
               style: AppTextStyles.bodyMedium.copyWith(color: AppColors.grey500),
@@ -693,13 +693,13 @@ class _RestaurantSheetState extends ConsumerState<_RestaurantSheet> {
   Widget _buildAucunResultat() {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(AppDimens.xl),
+        padding: EdgeInsets.all(AppDimens.xl),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             const Icon(Icons.search_off_rounded,
                 size: 44, color: AppColors.grey400),
-            const SizedBox(height: AppDimens.md),
+            SizedBox(height: AppDimens.md),
             Text(
               _terme.isEmpty
                   ? 'Aucun produit ne correspond à ces filtres'
@@ -715,7 +715,7 @@ class _RestaurantSheetState extends ConsumerState<_RestaurantSheet> {
 
   Widget _buildHeader() {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(
+      padding: EdgeInsets.fromLTRB(
           AppDimens.screenPadding, 8, AppDimens.screenPadding, 0),
       child: Row(
         children: [
@@ -733,7 +733,7 @@ class _RestaurantSheetState extends ConsumerState<_RestaurantSheet> {
               child: Icon(LucideIcons.search, size: 22, color: AppColors.dark),
             ),
           ),
-          const SizedBox(width: AppDimens.md),
+          SizedBox(width: AppDimens.md),
           Icon(LucideIcons.heart, size: 22, color: AppColors.dark),
         ],
       ),
@@ -742,7 +742,7 @@ class _RestaurantSheetState extends ConsumerState<_RestaurantSheet> {
 
   Widget _buildRestaurantInfo() {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(
+      padding: EdgeInsets.fromLTRB(
           AppDimens.screenPadding, AppDimens.lg,
           AppDimens.screenPadding, AppDimens.md),
       child: Column(
@@ -756,7 +756,7 @@ class _RestaurantSheetState extends ConsumerState<_RestaurantSheet> {
               color: AppColors.dark,
             ),
           ),
-          const SizedBox(height: AppDimens.md),
+          SizedBox(height: AppDimens.md),
           Row(
             children: [
               const Icon(Icons.star, size: 16, color: AppColors.dark),
@@ -814,10 +814,10 @@ class _RestaurantSheetState extends ConsumerState<_RestaurantSheet> {
             height: 42,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(
+              padding: EdgeInsets.symmetric(
                   horizontal: AppDimens.screenPadding),
               itemCount: tabs.length,
-              separatorBuilder: (_, __) => const SizedBox(width: AppDimens.xl),
+              separatorBuilder: (_, __) => SizedBox(width: AppDimens.xl),
               itemBuilder: (_, i) {
                 final isActive = i == _activeTab;
                 return GestureDetector(

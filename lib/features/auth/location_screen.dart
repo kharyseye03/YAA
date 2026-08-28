@@ -158,13 +158,13 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
             // ── Scrollable content ──────────────────────────────────
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(
+                padding: EdgeInsets.symmetric(
                   horizontal: AppDimens.screenPadding,
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const SizedBox(height: AppDimens.lg),
+                    SizedBox(height: AppDimens.lg),
 
                     Text(
                       'Où livrer vos\ncommande ?',
@@ -175,7 +175,7 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
                       ),
                     ),
 
-                    const SizedBox(height: AppDimens.md),
+                    SizedBox(height: AppDimens.md),
 
                     Text(
                       'Autorisez l\'accès à votre position pour voir les\nboutiques et restaurants proches de vous.',
@@ -185,7 +185,7 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
                       ),
                     ),
 
-                    const SizedBox(height: AppDimens.xl),
+                    SizedBox(height: AppDimens.xl),
 
                     // ── Champ adresse avec autocomplétion ────────────
                     YaaTextField(
@@ -212,7 +212,7 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
 
                     // ── Suggestions ──────────────────────────────────
                     if (_suggestions.isNotEmpty) ...[
-                      const SizedBox(height: AppDimens.sm),
+                      SizedBox(height: AppDimens.sm),
                       Container(
                         decoration: BoxDecoration(
                           color        : AppColors.white,
@@ -277,7 +277,7 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
 
             // ── Buttons anchored at bottom ───────────────────────────
             Padding(
-              padding: const EdgeInsets.fromLTRB(
+              padding: EdgeInsets.fromLTRB(
                 AppDimens.screenPadding,
                 0,
                 AppDimens.screenPadding,
@@ -293,7 +293,7 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
                       onPressed : _onContinue,
                       isLoading : ref.watch(authProvider).isLoading,
                     ),
-                    const SizedBox(height: AppDimens.md),
+                    SizedBox(height: AppDimens.md),
                   ],
                   YaaButton(
                     label      : 'Utiliser ma position actuelle',
@@ -332,7 +332,7 @@ class _LocationSuccessSheet extends StatelessWidget {
           // Coins arrondis sur les 4 côtés
           borderRadius: BorderRadius.all(Radius.circular(24)),
         ),
-        padding: const EdgeInsets.fromLTRB(
+        padding: EdgeInsets.fromLTRB(
           AppDimens.screenPadding,
           16,
           AppDimens.screenPadding,
@@ -351,7 +351,7 @@ class _LocationSuccessSheet extends StatelessWidget {
               ),
             ),
 
-            const SizedBox(height: AppDimens.xl),
+            SizedBox(height: AppDimens.xl),
 
             // Success icon — double cercle
             Container(
@@ -378,7 +378,7 @@ class _LocationSuccessSheet extends StatelessWidget {
               ),
             ),
 
-            const SizedBox(height: AppDimens.lg),
+            SizedBox(height: AppDimens.lg),
 
             // Title
             Text(
@@ -389,7 +389,7 @@ class _LocationSuccessSheet extends StatelessWidget {
               ),
             ),
 
-            const SizedBox(height: AppDimens.sm),
+            SizedBox(height: AppDimens.sm),
 
             // Subtitle
             Text(
@@ -401,7 +401,7 @@ class _LocationSuccessSheet extends StatelessWidget {
               ),
             ),
 
-            const SizedBox(height: AppDimens.xl),
+            SizedBox(height: AppDimens.xl),
 
             // CTA
             YaaButton(

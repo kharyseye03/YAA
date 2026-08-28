@@ -149,8 +149,17 @@ class CommandeNotifier extends StateNotifier<CommandeState> {
   CommandeNotifier() : super(const CommandeState());
 
   // ── Liste ──────────────────────────────────────────────────
-  Future<void> loadCommandes() async {
-    state = state.copyWith(isLoading: true, clearError: true);
+  /// Charge les deux listes.
+  ///
+  /// [silencieux] pour les rappels périodiques : on ne lève pas
+  /// `isLoading`, donc la liste ne se remplace pas par un indicateur
+  /// de chargement toutes les vingt secondes. Une mise à jour de
+  /// statut doit se remarquer parce que le badge a changé, pas parce
+  /// que l'écran a clignoté.
+  Future<void> loadCommandes({bool silencieux = false}) async {
+    if (!silencieux) {
+      state = state.copyWith(isLoading: true, clearError: true);
+    }
     try {
       // Les deux appels sont indépendants : les lancer en parallèle
       // évite de cumuler les deux temps de réponse. Le tri est fait
@@ -166,6 +175,10 @@ class CommandeNotifier extends StateNotifier<CommandeState> {
       );
     } catch (e) {
       debugPrint('❌ loadCommandes: $e');
+      // En silencieux, un échec réseau ne doit pas faire surgir un
+      // bandeau rouge sur une liste qui s'affiche correctement : on
+      // garde les données précédentes et on retentera au prochain tour.
+      if (silencieux) return;
       state = state.copyWith(
         isLoading : false,
         error     : e.toString().replaceAll('Exception: ', ''),

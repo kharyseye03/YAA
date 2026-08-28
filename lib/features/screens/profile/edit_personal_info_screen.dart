@@ -78,20 +78,20 @@ class _EditPersonalInfoScreenState
       ),
       builder: (_) => SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(AppDimens.lg),
+          padding: EdgeInsets.all(AppDimens.lg),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
                 width: 40, height: 4,
-                margin: const EdgeInsets.only(bottom: AppDimens.lg),
+                margin: EdgeInsets.only(bottom: AppDimens.lg),
                 decoration: BoxDecoration(
                   color: AppColors.grey300,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
               Text('Choisir une photo', style: AppTextStyles.h4.copyWith(fontWeight: FontWeight.w700)),
-              const SizedBox(height: AppDimens.xl),
+              SizedBox(height: AppDimens.xl),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
@@ -107,7 +107,7 @@ class _EditPersonalInfoScreenState
                   ),
                 ],
               ),
-              const SizedBox(height: AppDimens.lg),
+              SizedBox(height: AppDimens.lg),
             ],
           ),
         ),
@@ -128,7 +128,7 @@ class _EditPersonalInfoScreenState
             ),
             child: Icon(icon, color: AppColors.primary, size: 28),
           ),
-          const SizedBox(height: AppDimens.sm),
+          SizedBox(height: AppDimens.sm),
           Text(label, style: AppTextStyles.bodySmall.copyWith(fontWeight: FontWeight.w500)),
         ],
       ),
@@ -177,12 +177,12 @@ class _EditPersonalInfoScreenState
           _buildHeader(context),
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: AppDimens.screenPadding),
+              padding: EdgeInsets.symmetric(horizontal: AppDimens.screenPadding),
               child: Form(
                 key: _formKey,
                 child: Column(
                   children: [
-                    const SizedBox(height: AppDimens.xxl),
+                    SizedBox(height: AppDimens.xxl),
 
                     // ── Avatar ───────────────────────────────
                     GestureDetector(
@@ -211,7 +211,7 @@ class _EditPersonalInfoScreenState
                       ),
                     ),
 
-                    const SizedBox(height: AppDimens.xxxl),
+                    SizedBox(height: AppDimens.xxxl),
 
                     YaaTextField(
                       controller: _firstNameController,
@@ -219,14 +219,14 @@ class _EditPersonalInfoScreenState
                       textInputAction: TextInputAction.next,
                       validator: (v) => v == null || v.trim().isEmpty ? 'Champ requis' : null,
                     ),
-                    const SizedBox(height: AppDimens.xl),
+                    SizedBox(height: AppDimens.xl),
                     YaaTextField(
                       controller: _lastNameController,
                       label: 'Nom',
                       textInputAction: TextInputAction.next,
                       validator: (v) => v == null || v.trim().isEmpty ? 'Champ requis' : null,
                     ),
-                    const SizedBox(height: AppDimens.xl),
+                    SizedBox(height: AppDimens.xl),
                     YaaTextField(
                       controller: _emailController,
                       label: 'Email',
@@ -234,14 +234,14 @@ class _EditPersonalInfoScreenState
                       textInputAction: TextInputAction.next,
                       enabled: false,
                     ),
-                    const SizedBox(height: AppDimens.xl),
+                    SizedBox(height: AppDimens.xl),
                     PhoneTextField(
                       controller      : _phoneController,
                       label           : 'Téléphone',
                       textInputAction : TextInputAction.done,
                       enabled         : false,
                     ),
-                    const SizedBox(height: AppDimens.xxl),
+                    SizedBox(height: AppDimens.xxl),
                   ],
                 ),
               ),

@@ -63,7 +63,7 @@ class _CategoryScreenState extends ConsumerState<CategoryScreen> {
         children: [
           _buildHeader(),
           _buildFilters(),
-          const SizedBox(height: AppDimens.md),
+          SizedBox(height: AppDimens.md),
           Expanded(
             child: ref.watch(structuresFiltreesProvider(StructuresQuery(
               categorieId : widget.args.categoryId,
@@ -87,7 +87,7 @@ class _CategoryScreenState extends ConsumerState<CategoryScreen> {
                 }
 
                 return ListView.separated(
-                  padding: const EdgeInsets.fromLTRB(
+                  padding: EdgeInsets.fromLTRB(
                     AppDimens.screenPadding,
                     0,
                     AppDimens.screenPadding,
@@ -95,7 +95,7 @@ class _CategoryScreenState extends ConsumerState<CategoryScreen> {
                   ),
                   itemCount: liste.length,
                   separatorBuilder: (_, __) =>
-                      const SizedBox(height: AppDimens.lg),
+                      SizedBox(height: AppDimens.lg),
                   itemBuilder: (_, i) {
                     final s = liste[i];
                     return _FullWidthRestaurantCard(
@@ -145,14 +145,14 @@ class _CategoryScreenState extends ConsumerState<CategoryScreen> {
       height: 40,
       child: Row(
         children: [
-          const SizedBox(width: AppDimens.screenPadding),
+          SizedBox(width: AppDimens.screenPadding),
           _buildBoutonFiltres(categories),
           if (categories.isEmpty)
             const Spacer()
           else ...[
-            const SizedBox(width: AppDimens.md),
+            SizedBox(width: AppDimens.md),
             Container(width: 1, height: 22, color: AppColors.grey300),
-            const SizedBox(width: AppDimens.md),
+            SizedBox(width: AppDimens.md),
             Expanded(child: _buildChipsCategories(categories)),
           ],
         ],
@@ -219,7 +219,7 @@ class _CategoryScreenState extends ConsumerState<CategoryScreen> {
     return ListView.separated(
       controller      : _chipsCtrl,
       scrollDirection : Axis.horizontal,
-      padding         : const EdgeInsets.only(right: AppDimens.screenPadding),
+      padding         : EdgeInsets.only(right: AppDimens.screenPadding),
       // +1 pour la puce « Tous » en tête
       itemCount        : categories.length + 1,
       separatorBuilder : (_, __) => const SizedBox(width: _espaceChips),
@@ -328,14 +328,14 @@ class _CategoryScreenState extends ConsumerState<CategoryScreen> {
 
     return Center(
       child: Padding(
-        padding: const EdgeInsets.symmetric(
+        padding: EdgeInsets.symmetric(
             horizontal: AppDimens.screenPadding),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(Icons.storefront_outlined,
                 size: 44, color: AppColors.grey400),
-            const SizedBox(height: AppDimens.md),
+            SizedBox(height: AppDimens.md),
             Text(
               message,
               style:
@@ -343,7 +343,7 @@ class _CategoryScreenState extends ConsumerState<CategoryScreen> {
               textAlign: TextAlign.center,
             ),
             if (!_filtres.estVierge) ...[
-              const SizedBox(height: AppDimens.sm),
+              SizedBox(height: AppDimens.sm),
               TextButton(
                 onPressed: () =>
                     setState(() => _filtres = const CategoryFilters()),
@@ -390,7 +390,7 @@ class _CategoryScreenState extends ConsumerState<CategoryScreen> {
               ),
             ),
           ),
-          const SizedBox(width: AppDimens.md),
+          SizedBox(width: AppDimens.md),
           Text(
             widget.args.categoryName,
             style: AppTextStyles.h3.copyWith(

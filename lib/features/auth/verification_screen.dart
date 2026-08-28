@@ -127,13 +127,13 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen> {
             // Content
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.symmetric(
+                padding: EdgeInsets.symmetric(
                   horizontal: AppDimens.screenPadding,
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const SizedBox(height: AppDimens.lg),
+                    SizedBox(height: AppDimens.lg),
 
                     // Title
                     Text(
@@ -145,7 +145,7 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen> {
                       ),
                     ),
 
-                    const SizedBox(height: AppDimens.md),
+                    SizedBox(height: AppDimens.md),
 
                     // Subtitle with phone number
                     RichText(
@@ -169,12 +169,12 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen> {
                       ),
                     ),
 
-                    const SizedBox(height: AppDimens.xxxl),
+                    SizedBox(height: AppDimens.xxxl),
 
                     // OTP Code boxes
                     _buildOtpBoxes(),
 
-                    const SizedBox(height: AppDimens.xxl),
+                    SizedBox(height: AppDimens.xxl),
 
                     // Resend text
                     Center(
@@ -186,7 +186,7 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen> {
                               color: AppColors.grey700,
                             ),
                           ),
-                          const SizedBox(height: AppDimens.sm),
+                          SizedBox(height: AppDimens.sm),
                           _resendSeconds > 0
                               ? Text(
                             'Renvoyer le code dans $_resendSeconds',
@@ -209,7 +209,7 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen> {
                       ),
                     ),
 
-                    const SizedBox(height: AppDimens.xxl),
+                    SizedBox(height: AppDimens.xxl),
 
                     // Number pad
                     _buildNumberPad(),
@@ -229,7 +229,7 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen> {
                       },
                     ),
 
-                    const SizedBox(height: AppDimens.xxl),
+                    SizedBox(height: AppDimens.xxl),
                   ],
                 ),
               ),
@@ -293,11 +293,11 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen> {
     return Column(
       children: [
         _buildKeyRow(['1', '2', '3']),
-        const SizedBox(height: AppDimens.md),
+        SizedBox(height: AppDimens.md),
         _buildKeyRow(['4', '5', '6']),
-        const SizedBox(height: AppDimens.md),
+        SizedBox(height: AppDimens.md),
         _buildKeyRow(['7', '8', '9']),
-        const SizedBox(height: AppDimens.md),
+        SizedBox(height: AppDimens.md),
         _buildKeyRow(['', '0', 'back']),
       ],
     );

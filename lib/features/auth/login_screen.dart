@@ -39,7 +39,7 @@ InputDecoration _inputDeco({String? hint, Widget? suffixIcon}) =>
     InputDecoration(
       hintText: hint,
       suffixIcon: suffixIcon,
-      contentPadding: const EdgeInsets.symmetric(
+      contentPadding: EdgeInsets.symmetric(
           horizontal: AppDimens.lg, vertical: AppDimens.lg),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(AppDimens.radiusMd),
@@ -110,7 +110,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       backgroundColor: AppColors.white,
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(
+          padding: EdgeInsets.symmetric(
               horizontal: AppDimens.screenPadding),
           child: Form(
             key: _formKey,
@@ -120,14 +120,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 // ── Logo ────────────────────────────────────────
                 // Logo large (ratio ~2.9:1) : on ne contraint que la
                 // largeur, la hauteur suit le ratio naturel.
-                const SizedBox(height: AppDimens.huge),
+                SizedBox(height: AppDimens.huge),
                 Center(
                   child: Image.asset(
                     'assets/images/logo_off.png',
                     width: 150,
                   ),
                 ),
-                const SizedBox(height: AppDimens.xxxl),
+                SizedBox(height: AppDimens.xxxl),
 
                 // ── Titre ────────────────────────────────────────
                 RichText(
@@ -143,14 +143,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ],
                   ),
                 ),
-                const SizedBox(height: AppDimens.xs),
+                SizedBox(height: AppDimens.xs),
                 Text(
                   'Connectez-vous pour accéder à votre espace.',
                   style: AppTextStyles.bodySmall
                       .copyWith(color: AppColors.grey600),
                 ),
 
-                const SizedBox(height: AppDimens.xxl),
+                SizedBox(height: AppDimens.xxl),
 
                 // ── Téléphone ───────────────────────────────────
                 const _Label('Numéro de téléphone'),
@@ -173,7 +173,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     return null;
                   },
                 ),
-                const SizedBox(height: AppDimens.lg),
+                SizedBox(height: AppDimens.lg),
 
                 // ── Mot de passe ────────────────────────────────
                 const _Label('Mot de passe'),
@@ -202,7 +202,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     return null;
                   },
                 ),
-                const SizedBox(height: AppDimens.md),
+                SizedBox(height: AppDimens.md),
 
                 // ── Mot de passe oublié ─────────────────────────
                 Align(
@@ -220,9 +220,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                 // ── Erreur inline ───────────────────────────────
                 if (state.error != null) ...[
-                  const SizedBox(height: AppDimens.lg),
+                  SizedBox(height: AppDimens.lg),
                   Container(
-                    padding: const EdgeInsets.all(AppDimens.md),
+                    padding: EdgeInsets.all(AppDimens.md),
                     decoration: BoxDecoration(
                       color: AppColors.errorLight,
                       borderRadius:
@@ -232,7 +232,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       children: [
                         const Icon(Icons.error_outline_rounded,
                             color: AppColors.error, size: 18),
-                        const SizedBox(width: AppDimens.sm),
+                        SizedBox(width: AppDimens.sm),
                         Expanded(
                           child: Text(
                             state.error!,
@@ -245,7 +245,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ),
                 ],
 
-                const SizedBox(height: AppDimens.xxxl),
+                SizedBox(height: AppDimens.xxxl),
 
                 // ── Bouton connexion ────────────────────────────
                 SizedBox(
@@ -265,7 +265,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ),
                 ),
 
-                const SizedBox(height: AppDimens.lg),
+                SizedBox(height: AppDimens.lg),
 
                 // ── Lien inscription ────────────────────────────
                 Center(
@@ -292,7 +292,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ),
                 ),
 
-                const SizedBox(height: AppDimens.xxl),
+                SizedBox(height: AppDimens.xxl),
               ],
             ),
           ),

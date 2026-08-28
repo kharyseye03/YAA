@@ -63,13 +63,13 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
             AuthHeader(onBack: () => context.goNamed(RouteNames.login)),
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.symmetric(
+                padding: EdgeInsets.symmetric(
                   horizontal: AppDimens.screenPadding,
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const SizedBox(height: AppDimens.lg),
+                    SizedBox(height: AppDimens.lg),
 
                     Text(
                       'Mot de passe oublié',
@@ -80,7 +80,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                       ),
                     ),
 
-                    const SizedBox(height: AppDimens.md),
+                    SizedBox(height: AppDimens.md),
 
                     Text(
                       'Entrer votre numéro de téléphone ou votre\nadresse email pour recevoir un OTP',
@@ -90,11 +90,11 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                       ),
                     ),
 
-                    const SizedBox(height: AppDimens.xxl),
+                    SizedBox(height: AppDimens.xxl),
 
                     _buildToggleTabs(),
 
-                    const SizedBox(height: AppDimens.xxl),
+                    SizedBox(height: AppDimens.xxl),
 
                     if (_isPhone)
                       PhoneTextField(controller: _phoneController)
@@ -126,7 +126,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                       },
                     ),
 
-                    const SizedBox(height: AppDimens.xxl),
+                    SizedBox(height: AppDimens.xxl),
                   ],
                 ),
               ),

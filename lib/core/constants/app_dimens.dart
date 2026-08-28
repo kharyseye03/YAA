@@ -1,51 +1,74 @@
-/// Centralized spacing, sizing, and dimension constants.
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+
+/// Espacements, tailles et rayons de l'application.
+///
+/// Toutes les valeurs passent par ScreenUtil : elles sont exprimées
+/// dans la taille de référence déclarée au démarrage (375 × 812) puis
+/// mises à l'échelle selon l'écran réel. Un padding de 20 devient donc
+/// plus serré sur un petit téléphone et plus large sur une tablette.
+///
+/// ⚠️ Ce sont des **getters**, plus des constantes : leur valeur
+/// dépend de l'écran, elle ne peut pas être connue à la compilation.
+/// D'où l'absence de `const` devant les widgets qui les utilisent.
+///
+/// Le suffixe choisi compte :
+/// - `.r` pour tout ce qui doit rester proportionné dans les deux sens
+///   (espacements, rayons, icônes) — évite les formes déformées ;
+/// - `.h` pour les hauteurs qui doivent suivre la verticale ;
+/// - `.sp` réservé au texte, dans AppTextStyles.
 abstract final class AppDimens {
-  // ── Spacing ──────────────────────────────────────────────
-  static const double xs = 4.0;
-  static const double sm = 8.0;
-  static const double md = 12.0;
-  static const double lg = 16.0;
-  static const double xl = 20.0;
-  static const double xxl = 24.0;
-  static const double xxxl = 32.0;
-  static const double huge = 48.0;
+  // ── Espacements ──────────────────────────────────────────
+  static double get xs   => 4.r;
+  static double get sm   => 8.r;
+  static double get md   => 12.r;
+  static double get lg   => 16.r;
+  static double get xl   => 20.r;
+  static double get xxl  => 24.r;
+  static double get xxxl => 32.r;
+  static double get huge => 48.r;
 
-  // ── Padding ──────────────────────────────────────────────
-  static const double screenPadding = 20.0;
-  static const double cardPadding = 16.0;
-  static const double listItemPadding = 12.0;
+  // ── Marges intérieures ───────────────────────────────────
+  static double get screenPadding   => 20.r;
+  static double get cardPadding     => 16.r;
+  static double get listItemPadding => 12.r;
 
-  // ── Border Radius ────────────────────────────────────────
+  // ── Rayons ───────────────────────────────────────────────
   // Échelle reprise de yaagn.com (--radius-sm/md/lg). Le site est
   // volontairement peu arrondi : c'est ce qui lui donne son côté net.
-  static const double radiusSm = 6.0;
-  static const double radiusMd = 8.0;
-  static const double radiusLg = 12.0;
+  static double get radiusSm => 6.r;
+  static double get radiusMd => 8.r;
+  static double get radiusLg => 12.r;
+
   /// Cartes mises en avant et bottom sheets — l'exception assumée
-  static const double radiusXl = 24.0;
-  /// Pilule : la forme de tous les boutons du site
+  static double get radiusXl => 24.r;
+
+  /// Pilule : la forme de tous les boutons du site. Volontairement
+  /// non mis à l'échelle — au-delà de la moitié de la hauteur, la
+  /// forme ne change plus, autant garder une valeur stable.
   static const double radiusFull = 999.0;
 
-  // ── Icon Sizes ───────────────────────────────────────────
-  static const double iconSm = 16.0;
-  static const double iconMd = 20.0;
-  static const double iconLg = 24.0;
-  static const double iconXl = 32.0;
+  // ── Tailles d'icônes ─────────────────────────────────────
+  static double get iconSm => 16.r;
+  static double get iconMd => 20.r;
+  static double get iconLg => 24.r;
+  static double get iconXl => 32.r;
 
-  // ── Button Heights ───────────────────────────────────────
-  static const double buttonHeight = 52.0;
-  static const double buttonHeightSm = 40.0;
+  // ── Hauteurs de bouton ───────────────────────────────────
+  static double get buttonHeight   => 52.h;
+  static double get buttonHeightSm => 40.h;
 
-  // ── Image Sizes ──────────────────────────────────────────
-  static const double avatarSm = 32.0;
-  static const double avatarMd = 48.0;
-  static const double avatarLg = 64.0;
-  static const double avatarXl = 80.0;
+  // ── Tailles d'avatar ─────────────────────────────────────
+  static double get avatarSm => 32.r;
+  static double get avatarMd => 48.r;
+  static double get avatarLg => 64.r;
+  static double get avatarXl => 80.r;
 
-  // ── Bottom Nav ───────────────────────────────────────────
-  static const double bottomNavHeight = 72.0;
+  // ── Barre de navigation ──────────────────────────────────
+  static double get bottomNavHeight => 72.h;
 
-  // ── Misc ─────────────────────────────────────────────────
+  // ── Divers ───────────────────────────────────────────────
+  // Une bordure d'un pixel doit rester d'un pixel : la mettre à
+  // l'échelle la ferait disparaître ou doubler selon l'écran.
   static const double dividerThickness = 1.0;
-  static const double cardElevation = 2.0;
+  static const double cardElevation    = 2.0;
 }

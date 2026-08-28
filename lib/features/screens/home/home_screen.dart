@@ -118,32 +118,32 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: AppDimens.lg),
+          SizedBox(height: AppDimens.lg),
 
 // Promo banner — hidden in search mode
           if (_currentNavIndex == 0) ...[
             Padding(
-              padding: const EdgeInsets.symmetric(
+              padding: EdgeInsets.symmetric(
                   horizontal: AppDimens.screenPadding),
               child: PromoBannerCarousel(banners: _banners),
             ),
-            const SizedBox(height: AppDimens.xxl),
+            SizedBox(height: AppDimens.xxl),
           ],
 
 // Search bar
           Padding(
-            padding: const EdgeInsets.symmetric(
+            padding: EdgeInsets.symmetric(
                 horizontal: AppDimens.screenPadding),
             child: SearchBarWidget(
               onTap: () => context.pushNamed(RouteNames.search),
             ),
           ),
 
-          const SizedBox(height: AppDimens.xxl),
+          SizedBox(height: AppDimens.xxl),
 
 // Categories section
           Padding(
-            padding: const EdgeInsets.symmetric(
+            padding: EdgeInsets.symmetric(
                 horizontal: AppDimens.screenPadding),
             child: Text(
               'Explorer par catégorie',
@@ -153,10 +153,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
           ),
 
-          const SizedBox(height: AppDimens.md),
+          SizedBox(height: AppDimens.md),
 
           ref.watch(categoriesProvider).when(
-            loading: () => const Padding(
+            loading: () => Padding(
               padding: EdgeInsets.symmetric(horizontal: AppDimens.screenPadding),
               child: Center(child: CircularProgressIndicator()),
             ),
@@ -198,7 +198,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 );
               });
               return Padding(
-                padding: const EdgeInsets.symmetric(
+                padding: EdgeInsets.symmetric(
                     horizontal: AppDimens.screenPadding),
                 child: CategoryList(
                   categories: categories,
@@ -208,11 +208,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             },
           ),
 
-          const SizedBox(height: AppDimens.xxl),
+          SizedBox(height: AppDimens.xxl),
 
 // ── Cartes de service : Livraison / Course ─────────────
           _buildSectionHeader('Livraison & Course'),
-          const SizedBox(height: AppDimens.md),
+          SizedBox(height: AppDimens.md),
           ServiceCards(
             onLivraison: () => context.pushNamed(
               RouteNames.course,
@@ -224,7 +224,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
           ),
 
-          const SizedBox(height: AppDimens.xxl),
+          SizedBox(height: AppDimens.xxl),
 
 // ── Section : Restaurants proches ──────────────────────
           _buildSectionHeader('Autour de vous', onSeeAll: () {
@@ -240,7 +240,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               );
             }
           }),
-          const SizedBox(height: AppDimens.md),
+          SizedBox(height: AppDimens.md),
           SizedBox(
             height: 200,
             child: ref.watch(nearbyStructuresProvider).when(
@@ -266,11 +266,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 }
                 return ListView.separated(
                   scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(
+                  padding: EdgeInsets.symmetric(
                       horizontal: AppDimens.screenPadding),
                   itemCount: structures.length,
                   separatorBuilder: (_, __) =>
-                      const SizedBox(width: AppDimens.md),
+                      SizedBox(width: AppDimens.md),
                   itemBuilder: (_, i) {
                     final s = structures[i];
                     return RestaurantCard(
@@ -301,7 +301,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
           ),
 
-          const SizedBox(height: AppDimens.xxl),
+          SizedBox(height: AppDimens.xxl),
         ],
       ),
     );
@@ -309,7 +309,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   Widget _buildSectionHeader(String title, {VoidCallback? onSeeAll}) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppDimens.screenPadding),
+      padding: EdgeInsets.symmetric(horizontal: AppDimens.screenPadding),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         crossAxisAlignment: CrossAxisAlignment.center,

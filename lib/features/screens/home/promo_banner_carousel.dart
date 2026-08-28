@@ -71,7 +71,7 @@ class _PromoBannerCarouselState extends State<PromoBannerCarousel> {
           ),
         ),
 
-        const SizedBox(height: AppDimens.md),
+        SizedBox(height: AppDimens.md),
 
         // ── Dots ────────────────────────────────────────────────
         Row(
