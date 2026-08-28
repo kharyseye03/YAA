@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimens.dart';
 import '../../../core/constants/app_text_styles.dart';
-import '../../../core/utils/app_router.dart';
 import '../../../features/orders/providers/commande_notifier.dart';
+import 'commande_detail_sheet.dart';
+import 'mission_detail_sheet.dart';
 import 'orders_screen.dart';
 
 /// Historique des commandes terminées (LIVRE, ANNULE, REJETE).
@@ -130,16 +130,21 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
                           itemCount       : list.length,
                           separatorBuilder: (_, __) =>
                               const SizedBox(height: 12),
+                          // Mêmes sheets que « Mes commandes » : une
+                          // commande terminée doit se lire comme une
+                          // commande en cours, pas dans un autre écran.
                           itemBuilder: (_, i) => switch (list[i]) {
                             ElementMission(:final mission) => CommandeCard(
                                 mission : mission,
-                                onTap   : () => context.pushNamed(
-                                  RouteNames.orderDetail,
-                                  extra: mission,
-                                ),
+                                onTap   : () => showMissionDetailSheet(
+                                    context, mission.id),
                               ),
                             ElementCommandeStructure(:final commande) =>
-                              CommandeStructureCard(commande: commande),
+                              CommandeStructureCard(
+                                commande : commande,
+                                onTap    : () => showCommandeDetailSheet(
+                                    context, commande.id),
+                              ),
                           },
                         ),
                       ),

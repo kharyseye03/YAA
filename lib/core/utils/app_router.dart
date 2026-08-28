@@ -18,7 +18,6 @@ import '../../features/screens/home/notifications.dart';
 import '../../features/screens/course/course_screen.dart';
 import '../../features/screens/course/coursier_search_screen.dart';
 import '../../features/course/models/course_models.dart';
-import '../../features/screens/order/order_detail_screen.dart';
 import '../../model/order/livraison_course_model.dart';
 import '../../features/screens/order/order_history_screen.dart';
 import '../../features/screens/order/orders_screen.dart';
@@ -33,7 +32,7 @@ import '../../features/starter/splash/splash_screen.dart';
 // Routes qui nécessitent d'être connecté
 const _protectedRoutes = {
   '/home', '/cart', '/checkout',
-  '/orders', '/order-detail', '/order-history',
+  '/orders', '/order-history',
   '/course', '/coursier-search',
   '/profile', '/personalInfo', '/editPersonalInfo',
   '/terms', '/notifications', '/search',
@@ -69,7 +68,6 @@ abstract final class RoutePaths {
   static const String cart = '/cart';
   static const String checkout = '/checkout';
   static const String orders = '/orders';
-  static const String orderDetail = '/order-detail';
   static const String orderHistory = '/order-history';
   static const String course = '/course';
   static const String coursierSearch = '/coursier-search';
@@ -105,7 +103,6 @@ abstract final class RouteNames {
   static const String cart = 'cart';
   static const String checkout = 'checkout';
   static const String orders = 'orders';
-  static const String orderDetail = 'orderDetail';
   static const String orderHistory = 'orderHistory';
   static const String course = 'course';
   static const String coursierSearch = 'coursierSearch';
@@ -228,13 +225,6 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: RoutePaths.orders,
         name: RouteNames.orders,
         builder: (context, state) => const OrdersScreen(),
-      ),
-      GoRoute(
-        path: RoutePaths.orderDetail,
-        name: RouteNames.orderDetail,
-        builder: (context, state) => OrderDetailScreen(
-          mission: state.extra as LivraisonCourseModel,
-        ),
       ),
       GoRoute(
         path: RoutePaths.orderHistory,

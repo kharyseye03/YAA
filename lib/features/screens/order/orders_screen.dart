@@ -1,14 +1,15 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimens.dart';
 import '../../../core/constants/app_text_styles.dart';
-import '../../../core/utils/app_router.dart';
 import '../../../core/utils/devise.dart';
 import '../../../features/orders/providers/commande_notifier.dart';
 import '../../../model/order/commande_model.dart';
 import '../../../model/order/livraison_course_model.dart';
+import 'commande_detail_sheet.dart';
+import 'mission_detail_sheet.dart';
 import '../../../service/location/location_service.dart';
 
 class OrdersScreen extends ConsumerStatefulWidget {
@@ -19,17 +20,49 @@ class OrdersScreen extends ConsumerStatefulWidget {
 }
 
 class _OrdersScreenState extends ConsumerState<OrdersScreen> {
+  /// 0 = Achat (commandes chez un commerçant), 1 = Course (colis
+  /// et trajets). Chaque onglet a sa propre API.
+  int _onglet = 0;
+
+  Timer? _rafraichissement;
+
+  /// Les statuts avancent côté serveur sans prévenir l'app. Sans ce
+  /// rappel, le client doit tirer la liste vers le bas pour voir qu'un
+  /// coursier a pris sa commande — et l'écran paraît figé.
+  static const _periode = Duration(seconds: 20);
+
   @override
   void initState() {
     super.initState();
     Future.microtask(
         () => ref.read(commandeProvider.notifier).loadCommandes());
+
+    _rafraichissement = Timer.periodic(_periode, (_) {
+      final etat = ref.read(commandeProvider);
+      // Plus rien en cours dans aucun onglet : inutile de continuer à
+      // interroger le serveur. Le geste « tirer pour rafraîchir »
+      // reste disponible si le client veut forcer.
+      final rienEnCours =
+          etat.achatsEnCours.isEmpty && etat.coursesEnCours.isEmpty;
+      if (rienEnCours && !etat.isLoading) {
+        _rafraichissement?.cancel();
+        return;
+      }
+      ref.read(commandeProvider.notifier).loadCommandes();
+    });
+  }
+
+  @override
+  void dispose() {
+    _rafraichissement?.cancel();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final state = ref.watch(commandeProvider);
-    final list  = state.enCours;
+    final state   = ref.watch(commandeProvider);
+    final achats  = state.achatsEnCours;
+    final courses = state.coursesEnCours;
 
     return Column(
       children: [
@@ -52,6 +85,13 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
               ),
             ],
           ),
+        ),
+
+        // ── Onglets ───────────────────────────────────────────
+        _Tabs(
+          current : _onglet,
+          onTap   : (i) => setState(() => _onglet = i),
+          counts  : [achats.length, courses.length],
         ),
 
         // ── Erreur ────────────────────────────────────────────
@@ -79,32 +119,152 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
         Expanded(
           child: state.isLoading
               ? const Center(child: CircularProgressIndicator())
-              : list.isEmpty
-                  ? const _Empty()
-                  : RefreshIndicator(
-                      onRefresh: () =>
-                          ref.read(commandeProvider.notifier).loadCommandes(),
-                      child: ListView.separated(
-                        padding: const EdgeInsets.fromLTRB(
-                          AppDimens.screenPadding, 16,
-                          AppDimens.screenPadding, 24,
+              : RefreshIndicator(
+                  onRefresh: () =>
+                      ref.read(commandeProvider.notifier).loadCommandes(),
+                  child: _onglet == 0
+                      ? _buildListe(
+                          vide     : achats.isEmpty,
+                          message  : 'Aucune commande en cours',
+                          detail   : 'Vos achats chez un commerçant '
+                              'apparaîtront ici.',
+                          count    : achats.length,
+                          builder  : (i) => CommandeStructureCard(
+                            commande : achats[i],
+                            onTap    : () => showCommandeDetailSheet(
+                                context, achats[i].id),
+                          ),
+                        )
+                      : _buildListe(
+                          vide     : courses.isEmpty,
+                          message  : 'Aucune course en cours',
+                          detail   : 'Vos colis et trajets apparaîtront ici.',
+                          count    : courses.length,
+                          builder  : (i) => CommandeCard(
+                            mission : courses[i],
+                            onTap   : () => showMissionDetailSheet(context, courses[i].id),
+                          ),
                         ),
-                        itemCount      : list.length,
-                        separatorBuilder: (_, __) =>
-                            const SizedBox(height: 12),
-                        itemBuilder: (_, i) => switch (list[i]) {
-                          ElementMission(:final mission) => CommandeCard(
-                              mission : mission,
-                              onTap   : () => context.pushNamed(
-                                RouteNames.orderDetail,
-                                extra: mission,
-                              ),
-                            ),
-                          ElementCommandeStructure(:final commande) =>
-                            CommandeStructureCard(commande: commande),
-                        },
+                ),
+        ),
+      ],
+    );
+  }
+
+  /// Liste d'un onglet, ou son état vide. Le `ListView` est conservé
+  /// même vide pour que le geste « tirer pour rafraîchir » continue de
+  /// fonctionner — sur un simple `Center`, il n'y a rien à tirer.
+  Widget _buildListe({
+    required bool   vide,
+    required String message,
+    required String detail,
+    required int    count,
+    required Widget Function(int) builder,
+  }) {
+    if (vide) {
+      return ListView(
+        physics : const AlwaysScrollableScrollPhysics(),
+        children: [
+          SizedBox(height: MediaQuery.of(context).size.height * 0.18),
+          _Empty(message: message, detail: detail),
+        ],
+      );
+    }
+    return ListView.separated(
+      padding: const EdgeInsets.fromLTRB(
+        AppDimens.screenPadding, 16,
+        AppDimens.screenPadding, 24,
+      ),
+      physics         : const AlwaysScrollableScrollPhysics(),
+      itemCount       : count,
+      separatorBuilder: (_, __) => const SizedBox(height: 12),
+      itemBuilder     : (_, i) => builder(i),
+    );
+  }
+}
+
+// ── Onglets ───────────────────────────────────────────────────
+class _Tabs extends StatelessWidget {
+  const _Tabs({
+    required this.current,
+    required this.onTap,
+    required this.counts,
+  });
+
+  final int               current;
+  final ValueChanged<int> onTap;
+  final List<int>         counts;
+
+  @override
+  Widget build(BuildContext context) {
+    const labels = ['Achat', 'Course'];
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Row(
+          children: List.generate(2, (i) {
+            final active = i == current;
+            return Expanded(
+              child: GestureDetector(
+                onTap    : () => onTap(i),
+                behavior : HitTestBehavior.opaque,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        labels[i],
+                        style: AppTextStyles.labelMedium.copyWith(
+                          fontSize   : 14,
+                          fontWeight :
+                              active ? FontWeight.w700 : FontWeight.w500,
+                          color      :
+                              active ? AppColors.dark : AppColors.grey400,
+                        ),
                       ),
-                    ),
+                      if (counts[i] > 0) ...[
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 7, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: active
+                                ? AppColors.primary
+                                : AppColors.grey200,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            '${counts[i]}',
+                            style: AppTextStyles.labelSmall.copyWith(
+                              fontSize   : 11,
+                              fontWeight : FontWeight.w700,
+                              color      : active
+                                  ? Colors.white
+                                  : AppColors.grey500,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+            );
+          }),
+        ),
+        // Trait actif sous l'onglet retenu
+        Row(
+          children: List.generate(2, (i) {
+            final active = i == current;
+            return Expanded(
+              child: AnimatedContainer(
+                duration : const Duration(milliseconds: 200),
+                height   : 2,
+                color    : active ? AppColors.dark : AppColors.grey200,
+              ),
+            );
+          }),
         ),
       ],
     );
@@ -444,9 +604,14 @@ class CommandeCard extends StatelessWidget {
 /// l'écran de détail exige un `LivraisonCourseModel` qu'une commande
 /// sans mission ne possède pas.
 class CommandeStructureCard extends StatelessWidget {
-  const CommandeStructureCard({super.key, required this.commande});
+  const CommandeStructureCard({
+    super.key,
+    required this.commande,
+    this.onTap,
+  });
 
   final CommandeModel commande;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -455,7 +620,10 @@ class CommandeStructureCard extends StatelessWidget {
         ? commande.referenceCommande
         : '#${commande.id}';
 
-    return Container(
+    return GestureDetector(
+      onTap    : onTap,
+      behavior : HitTestBehavior.opaque,
+      child: Container(
       decoration: BoxDecoration(
         color        : Colors.white,
         borderRadius : BorderRadius.circular(16),
@@ -597,6 +765,7 @@ class CommandeStructureCard extends StatelessWidget {
           ),
         ],
       ),
+      ),
     );
   }
 
@@ -636,7 +805,10 @@ class CommandeStructureCard extends StatelessWidget {
 
 // ── État vide ─────────────────────────────────────────────────
 class _Empty extends StatelessWidget {
-  const _Empty();
+  const _Empty({required this.message, required this.detail});
+
+  final String message;
+  final String detail;
 
   @override
   Widget build(BuildContext context) {
@@ -656,7 +828,7 @@ class _Empty extends StatelessWidget {
           ),
           const SizedBox(height: 14),
           Text(
-            'Aucune commande en cours',
+            message,
             style: AppTextStyles.labelMedium.copyWith(
               fontWeight : FontWeight.w700,
               color      : AppColors.dark,
@@ -664,8 +836,9 @@ class _Empty extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            'Vos commandes apparaîtront ici.',
+            detail,
             style: AppTextStyles.bodySmall.copyWith(color: AppColors.grey500),
+            textAlign: TextAlign.center,
           ),
         ],
       ),
