@@ -58,6 +58,14 @@ class _RatingSheetState extends State<_RatingSheet> {
       : const ['En retard', 'Peu aimable', 'Colis abîmé',
                'Difficile à joindre', 'Mauvais itinéraire'];
 
+  /// Le mot qui désigne le service rendu. Un trajet de personne est
+  /// une course, pas une livraison — et le titre disait « livraison »
+  /// pour tout le monde pendant que le sous-titre disait « course ».
+  String get _motService =>
+      widget.mission.typeService == TypeServiceMission.course
+          ? 'course'
+          : 'livraison';
+
   Future<void> _envoyer() async {
     if (_note == 0) return;
     setState(() { _isSubmitting = true; _error = null; });
@@ -125,7 +133,7 @@ class _RatingSheetState extends State<_RatingSheet> {
               const SizedBox(height: 16),
 
               Text(
-                'Votre livraison est terminée',
+                'Votre $_motService est terminée',
                 style: AppTextStyles.h3.copyWith(
                   fontWeight : FontWeight.w800,
                   color      : AppColors.dark,
@@ -135,8 +143,9 @@ class _RatingSheetState extends State<_RatingSheet> {
               const SizedBox(height: 4),
               Text(
                 m.hasLivreur
-                    ? 'Comment s\'est passée votre course avec ${m.livreurFullName} ?'
-                    : 'Comment s\'est passée votre course ?',
+                    ? 'Comment s\'est passée votre $_motService '
+                      'avec ${m.livreurFullName} ?'
+                    : 'Comment s\'est passée votre $_motService ?',
                 textAlign : TextAlign.center,
                 style     : AppTextStyles.bodySmall
                     .copyWith(color: AppColors.grey500, height: 1.4),

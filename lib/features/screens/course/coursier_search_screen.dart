@@ -4,16 +4,15 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimens.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/utils/app_router.dart';
-import '../../../model/course/type_vehicule.dart';
 import '../../../model/order/livraison_course_model.dart';
 import '../../../service/api/api_service.dart';
 import '../../../service/location/location_service.dart';
 import '../../../shared/utils/map_markers.dart';
+import '../order/detail_widgets.dart';
 import 'rating_sheet.dart';
 
 /// Écran affiché juste après la création d'une livraison ou d'une
@@ -281,13 +280,6 @@ class _CoursierSearchScreenState extends State<CoursierSearchScreen>
     };
   }
 
-  Future<void> _appelerCoursier() async {
-    final phone = _mission.livreurTelephone;
-    if (phone == null || phone.isEmpty) return;
-    final uri = Uri(scheme: 'tel', path: phone);
-    if (await canLaunchUrl(uri)) await launchUrl(uri);
-  }
-
   void _retourAccueil() => context.goNamed(RouteNames.home);
 
   @override
@@ -418,20 +410,6 @@ class _CoursierSearchScreenState extends State<CoursierSearchScreen>
     );
   }
 
-  Widget _initialesAvatar(String initiales) => Container(
-        color: AppColors.primary,
-        alignment: Alignment.center,
-        child: Text(
-          initiales,
-          style: const TextStyle(
-            fontFamily : 'PlusJakartaSans',
-            fontSize   : 19,
-            fontWeight : FontWeight.w800,
-            color      : Colors.white,
-          ),
-        ),
-      );
-
   Widget _pointDepart() {
     return Container(
       width  : 22,
@@ -533,124 +511,16 @@ class _CoursierSearchScreenState extends State<CoursierSearchScreen>
     );
   }
 
+  /// Même présentation que dans le détail d'une commande : photo
+  /// centrée, nom, puis note et appel. Le type de véhicule n'y figure
+  /// pas — il n'apprend rien au client, qui verra bien ce qui arrive.
   Widget _buildCoursier() {
-    final livreur   = _mission.livreur!;
-    final initiales = livreur.initiales;
-    final photo     = livreur.photoUrl;
-
-    return Row(
-      children: [
-        // Photo du coursier, initiales en repli
-        Container(
-          width  : 54,
-          height : 54,
-          decoration: const BoxDecoration(
-            color : AppColors.primary,
-            shape : BoxShape.circle,
-          ),
-          child: ClipOval(
-            child: photo != null
-                ? Image.network(
-                    photo,
-                    width  : 54,
-                    height : 54,
-                    fit    : BoxFit.cover,
-                    errorBuilder: (_, e, __) {
-                      debugPrint('❌ photo coursier ($photo) : $e');
-                      return _initialesAvatar(initiales);
-                    },
-                  )
-                : _initialesAvatar(initiales),
-          ),
-        ),
-        const SizedBox(width: 14),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Coursier trouvé !',
-                  style: AppTextStyles.caption
-                      .copyWith(color: AppColors.success)),
-              const SizedBox(height: 2),
-              Text(
-                livreur.fullName,
-                style: AppTextStyles.labelMedium.copyWith(
-                  fontWeight : FontWeight.w800,
-                  fontSize   : 16,
-                  color      : AppColors.dark,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              // Note et véhicule : ce qui rassure avant d'ouvrir sa
-              // porte à quelqu'un
-              if (livreur.noteMoyenne != null ||
-                  livreur.vehicule != null) ...[
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    if (livreur.noteMoyenne != null) ...[
-                      Icon(Icons.star_rounded,
-                          size: 15, color: Colors.amber.shade600),
-                      const SizedBox(width: 3),
-                      Text(
-                        livreur.noteMoyenne!.toStringAsFixed(1),
-                        style: AppTextStyles.bodySmall.copyWith(
-                          fontSize   : 12,
-                          fontWeight : FontWeight.w700,
-                          color      : AppColors.dark,
-                        ),
-                      ),
-                    ],
-                    if (livreur.noteMoyenne != null &&
-                        livreur.vehicule != null)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 7),
-                        child: Container(
-                            width: 3, height: 3,
-                            decoration: const BoxDecoration(
-                              color: AppColors.grey400,
-                              shape: BoxShape.circle,
-                            )),
-                      ),
-                    if (livreur.vehicule != null) ...[
-                      Icon(
-                        TypeVehicule.depuisCode(livreur.vehicule)?.icone
-                            ?? Icons.local_shipping_outlined,
-                        size  : 14,
-                        color : AppColors.grey500,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        TypeVehicule.depuisCode(livreur.vehicule)?.libelle
-                            ?? livreur.vehicule!,
-                        style: AppTextStyles.bodySmall.copyWith(
-                          fontSize : 12,
-                          color    : AppColors.grey500,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ],
-            ],
-          ),
-        ),
-        if (livreur.telephone != null && livreur.telephone!.isNotEmpty)
-          GestureDetector(
-            onTap: _appelerCoursier,
-            child: Container(
-              width  : 44,
-              height : 44,
-              decoration: const BoxDecoration(
-                color : AppColors.successLight,
-                shape : BoxShape.circle,
-              ),
-              child: const Icon(Icons.phone_rounded,
-                  color: AppColors.success, size: 20),
-            ),
-          ),
-      ],
+    final livreur = _mission.livreur!;
+    return CarteCoursier(
+      nom       : livreur.fullName,
+      telephone : livreur.telephone,
+      photoUrl  : livreur.photoUrl,
+      note      : livreur.noteMoyenne,
     );
   }
 

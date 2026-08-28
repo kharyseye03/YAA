@@ -52,5 +52,12 @@
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>
         </intent>
+        <!-- Sans cette déclaration, Android 11+ masque le composeur :
+             canLaunchUrl('tel:…') renvoie false et le bouton Appeler
+             reste sans effet, sans la moindre erreur. -->
+        <intent>
+            <action android:name="android.intent.action.DIAL"/>
+            <data android:scheme="tel"/>
+        </intent>
     </queries>
 </manifest>
