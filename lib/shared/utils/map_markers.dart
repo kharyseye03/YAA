@@ -14,7 +14,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 /// dépend de la densité de l'appareil.
 Future<BitmapDescriptor> createImageMarker(
   String assetPath, {
-  double largeur = 110,
+  double largeur = 55,
 }) async {
   final data  = await rootBundle.load(assetPath);
   final codec = await ui.instantiateImageCodec(
@@ -35,7 +35,7 @@ Future<BitmapDescriptor> createImageMarker(
 Future<BitmapDescriptor> createPinMarker(
   Color color,
   IconData icon, {
-  double scale = 1.0,
+  double scale = 0.7,
 }) async {
   final double w       = 78 * scale;
   final double circleR = 29 * scale;

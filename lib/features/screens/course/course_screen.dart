@@ -1,11 +1,14 @@
+import '../../../shared/utils/map_markers.dart';
 import 'dart:async';
-import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:shimmer/shimmer.dart';
+// Préfixé : MapsConfig déclare son propre LatLng (un record), qui
+// entrerait en conflit avec la classe LatLng de google_maps_flutter.
+import '../../../config/maps/maps_config.dart' as config;
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimens.dart';
 import '../../../core/constants/app_text_styles.dart';
@@ -30,7 +33,13 @@ class CourseScreen extends ConsumerStatefulWidget {
 }
 
 class _CourseScreenState extends ConsumerState<CourseScreen> {
-  static const _dakar = LatLng(14.6928, -17.4467);
+  /// Centre de repli tant que le GPS n'a pas répondu. Vient de
+  /// MapsConfig pour rester cohérent avec le pays auquel
+  /// l'autocomplétion est restreinte.
+  static const _villeParDefaut = LatLng(
+    config.MapsConfig.villeLat,
+    config.MapsConfig.villeLng,
+  );
 
   final _locationService = LocationService();
   final _departCtrl      = TextEditingController();
@@ -44,7 +53,7 @@ class _CourseScreenState extends ConsumerState<CourseScreen> {
 
   CoursePoint?  _depart;
   CoursePoint?  _arrivee;
-  LatLng        _myPosition = _dakar;
+  LatLng        _myPosition = _villeParDefaut;
   TypeVehicule  _vehicule   = TypeVehicule.moto;
 
   // Tracé du trajet + marqueurs personnalisés
@@ -75,58 +84,11 @@ class _CourseScreenState extends ConsumerState<CourseScreen> {
   // Génère les marqueurs (cercle coloré + anneau blanc + pointe +
   // icône pin) directement en Dart, aux couleurs de la marque.
   Future<void> _loadMarkerIcons() async {
-    _departIcon = await _createMarker(
+    _departIcon = await createPinMarker(
         AppColors.primary, Icons.location_on_outlined); // bleu
-    _arriveeIcon = await _createMarker(
+    _arriveeIcon = await createPinMarker(
         AppColors.secondary, Icons.location_on_outlined);       // orange
     if (mounted) setState(() {});
-  }
-
-  /// Dessine un marqueur type "pin arrondi" et le convertit en
-  /// BitmapDescriptor utilisable par Google Maps.
-  Future<BitmapDescriptor> _createMarker(Color color, IconData icon) async {
-    const double w = 78, circleR = 29, stemH = 14;
-    final center = Offset(w / 2, circleR + 5);
-    final recorder = ui.PictureRecorder();
-    final canvas   = Canvas(recorder);
-
-    // Ombre douce
-    canvas.drawCircle(
-      center.translate(0, 2),
-      circleR + 4,
-      Paint()..color = Colors.black.withValues(alpha: 0.15),
-    );
-    // Anneau blanc
-    canvas.drawCircle(center, circleR + 4, Paint()..color = Colors.white);
-    // Cercle coloré
-    final fill = Paint()..color = color;
-    canvas.drawCircle(center, circleR, fill);
-    // Pointe (triangle vers le bas)
-    final stem = Path()
-      ..moveTo(center.dx - 9, center.dy + circleR - 4)
-      ..lineTo(center.dx + 9, center.dy + circleR - 4)
-      ..lineTo(center.dx, center.dy + circleR + stemH)
-      ..close();
-    canvas.drawPath(stem, fill);
-    // Icône pin blanche au centre
-    final tp = TextPainter(textDirection: TextDirection.ltr)
-      ..text = TextSpan(
-        text: String.fromCharCode(icon.codePoint),
-        style: TextStyle(
-          fontSize    : 30,
-          fontFamily  : icon.fontFamily,
-          package     : icon.fontPackage,
-          color       : Colors.white,
-        ),
-      )
-      ..layout();
-    tp.paint(canvas, center - Offset(tp.width / 2, tp.height / 2));
-
-    final img = await recorder
-        .endRecording()
-        .toImage(w.toInt(), (circleR + 5 + circleR + stemH + 4).toInt());
-    final data = await img.toByteData(format: ui.ImageByteFormat.png);
-    return BitmapDescriptor.bytes(data!.buffer.asUint8List());
   }
 
   // Estimation automatique dès que le trajet est complet.
@@ -419,13 +381,17 @@ class _CourseScreenState extends ConsumerState<CourseScreen> {
     // La feuille grandit pendant la recherche : à 62 % on ne voit que
     // deux suggestions, ce qui oblige à scroller dans un espace déjà
     // réduit par le clavier.
+    //
+    // Au repos, 70 % : les deux véhicules empilés ne tenaient pas dans
+    // 62 %. Le plafond reste une proportion de l'écran — il n'y a rien
+    // à mettre à l'échelle ici, la carte garde toujours sa part.
     return AnimatedContainer(
       duration : const Duration(milliseconds: 220),
       curve    : Curves.easeOutCubic,
       width    : double.infinity,
       constraints: BoxConstraints(
         maxHeight: MediaQuery.of(context).size.height *
-            (_isSearching ? 0.88 : 0.62),
+            (_isSearching ? 0.88 : 0.70),
       ),
       decoration: const BoxDecoration(
         color        : Colors.white,
@@ -480,10 +446,13 @@ class _CourseScreenState extends ConsumerState<CourseScreen> {
               _buildAddressFields(),
 
               // ── Contenu dynamique ───────────────────────────
+              // Les deux branches sont Flexible : sous une hauteur
+              // plafonnée, un enfant non flexible reçoit une contrainte
+              // infinie et déborde au lieu de s'adapter.
               if (_isSearching)
                 _buildSuggestions()
               else
-                _buildConfirm(),
+                Flexible(child: _buildConfirm()),
             ],
           ),
         ),
@@ -566,62 +535,92 @@ class _CourseScreenState extends ConsumerState<CourseScreen> {
   }
 
   Widget _buildConfirm() {
+    // Le bouton reste posé en bas, hors du défilement : c'est l'action
+    // de l'écran, elle ne doit jamais demander de scroller pour être
+    // atteinte. Seul le choix du véhicule glisse, et uniquement sur les
+    // écrans trop courts pour l'afficher entier.
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        const SizedBox(height: 16),
+        Flexible(
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                const SizedBox(height: 16),
 
-        // Course → infos trajet + choix véhicule ; Livraison → carte moto
-        if (_isCourse) ...[
-          // Distance seule : la durée est désormais portée par chaque
-          // tuile véhicule, la répéter ici la ferait apparaître trois
-          // fois sur le même écran.
-          if (_estimation != null) ...[
-            Container(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 14, vertical: 10),
-              decoration: BoxDecoration(
-                color        : AppColors.grey100,
-                borderRadius : BorderRadius.circular(12),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.route_rounded,
-                      size: 15, color: AppColors.grey500),
-                  const SizedBox(width: 6),
-                  Text(
-                    _estimation!.distanceText,
-                    style: AppTextStyles.bodySmall.copyWith(
-                      fontWeight : FontWeight.w700,
-                      color      : AppColors.dark,
+                // Course → trajet + choix véhicule ; Livraison → moto
+                if (_isCourse) ...[
+                  // Distance seule : la durée est désormais portée par
+                  // chaque tuile véhicule, la répéter ici la ferait
+                  // apparaître trois fois sur le même écran.
+                  if (_estimation != null) ...[
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 10),
+                      decoration: BoxDecoration(
+                        color        : AppColors.grey100,
+                        borderRadius : BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.route_rounded,
+                              size: 15, color: AppColors.grey500),
+                          const SizedBox(width: 6),
+                          Text(
+                            _estimation!.distanceText,
+                            style: AppTextStyles.bodySmall.copyWith(
+                              fontWeight : FontWeight.w700,
+                              color      : AppColors.dark,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+                  // Aligné à gauche comme les champs d'adresse au-dessus :
+                  // un titre de section démarre là où le contenu démarre.
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'Choisir un moyen de transport',
+                      textAlign: TextAlign.left,
+                      style: AppTextStyles.labelMedium.copyWith(
+                        fontWeight : FontWeight.w700,
+                        fontSize   : 15,
+                        color      : AppColors.dark,
+                      ),
                     ),
                   ),
+                  SizedBox(height: AppDimens.md),
+
+                  // Empilées plutôt que côte à côte : les prix s'alignent
+                  // dans une colonne, et c'est eux qu'on compare.
+                  for (final v in [TypeVehicule.moto, TypeVehicule.vehicule])
+                    ...[
+                    _VehiclePick(
+                      vehicule : v,
+                      selected : v == _vehicule,
+                      loading  : _loadingEstim,
+                      // Chaque véhicule affiche son propre prix
+                      estimation : _estimations[v],
+                      // Les 2 estimations sont déjà chargées :
+                      // changer de véhicule n'appelle plus l'API
+                      onTap    : () => setState(() => _vehicule = v),
+                    ),
+                    if (v != TypeVehicule.vehicule)
+                      SizedBox(height: AppDimens.sm),
+                  ],
+                ] else ...[
+                  _buildMotoCard(),
+                  const SizedBox(height: 10),
+                  _buildOptionsRow(),
                 ],
-              ),
+              ],
             ),
-            const SizedBox(height: 12),
-          ],
-          Row(
-            children: [TypeVehicule.moto, TypeVehicule.vehicule]
-                .map((v) => Expanded(
-                      child: _VehiclePick(
-                        vehicule : v,
-                        selected : v == _vehicule,
-                        loading  : _loadingEstim,
-                        // Chaque véhicule affiche son propre prix
-                        estimation : _estimations[v],
-                        // Les 2 estimations sont déjà chargées :
-                        // changer de véhicule n'appelle plus l'API
-                        onTap    : () => setState(() => _vehicule = v),
-                      ),
-                    ))
-                .toList(),
           ),
-        ] else ...[
-          _buildMotoCard(),
-          const SizedBox(height: 10),
-          _buildOptionsRow(),
-        ],
+        ),
 
         const SizedBox(height: 16),
 
@@ -879,6 +878,12 @@ class _CourseScreenState extends ConsumerState<CourseScreen> {
 }
 
 // ── Choix véhicule compact (course) ──────────────────────────
+/// Une ligne du sélecteur de véhicule.
+///
+/// Disposition horizontale plutôt qu'en tuiles carrées : le visuel à
+/// gauche, le libellé au centre, le prix à droite. Chaque ligne se lit
+/// d'un balayage vertical, et les prix s'alignent dans une colonne —
+/// ce qui est précisément ce qu'on compare.
 class _VehiclePick extends StatelessWidget {
   const _VehiclePick({
     required this.vehicule,
@@ -899,7 +904,7 @@ class _VehiclePick extends StatelessWidget {
   Widget _visuel() {
     final icone = Icon(
       vehicule.icone,
-      size  : 32,
+      size  : 30,
       color : selected ? AppColors.primary : AppColors.grey500,
     );
     final asset = vehicule.asset;
@@ -907,7 +912,8 @@ class _VehiclePick extends StatelessWidget {
 
     return Image.asset(
       asset,
-      height       : 46,
+      height       : 44,
+      width        : 62,
       fit          : BoxFit.contain,
       errorBuilder : (_, __, ___) => icone,
     );
@@ -925,87 +931,70 @@ class _VehiclePick extends StatelessWidget {
       behavior : HitTestBehavior.opaque,
       child: AnimatedContainer(
         duration : const Duration(milliseconds: 180),
-        margin   : const EdgeInsets.symmetric(horizontal: 4),
-        padding  : const EdgeInsets.fromLTRB(10, 12, 10, 12),
+        padding  : const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
           color        : selected ? AppColors.primarySurface : Colors.white,
-          borderRadius : BorderRadius.circular(16),
+          borderRadius : BorderRadius.circular(14),
           border: Border.all(
             color : selected ? AppColors.primary : AppColors.grey200,
             width : selected ? 1.5 : 1,
           ),
         ),
-        child: Column(
+        child: Row(
           children: [
-            // Visuel + pastille de sélection
-            SizedBox(
-              height: 46,
-              child: Stack(
+            SizedBox(width: 62, child: Center(child: _visuel())),
+            const SizedBox(width: 12),
+
+            // Libellé et argument, à gauche
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Center(child: _visuel()),
-                  if (selected)
-                    Positioned(
-                      top   : 0,
-                      right : 0,
-                      child: Container(
-                        width  : 18,
-                        height : 18,
-                        decoration: const BoxDecoration(
-                          color : AppColors.primary,
-                          shape : BoxShape.circle,
-                        ),
-                        child: const Icon(Icons.check_rounded,
-                            size: 12, color: Colors.white),
-                      ),
+                  Text(
+                    vehicule.libelle,
+                    style: AppTextStyles.labelMedium.copyWith(
+                      fontSize   : 15,
+                      fontWeight : FontWeight.w700,
+                      color      : selected
+                          ? AppColors.primary
+                          : AppColors.dark,
                     ),
+                  ),
+                  const SizedBox(height: 1),
+                  Text(
+                    vehicule.description,
+                    maxLines : 1,
+                    overflow : TextOverflow.ellipsis,
+                    style: AppTextStyles.caption
+                        .copyWith(color: AppColors.textSoft),
+                  ),
                 ],
               ),
             ),
 
-            const SizedBox(height: 8),
+            const SizedBox(width: 10),
 
-            Text(
-              vehicule.libelle,
-              style: AppTextStyles.bodySmall.copyWith(
-                fontWeight : FontWeight.w700,
-                color      : selected ? AppColors.primary : AppColors.dark,
-              ),
-            ),
-            const SizedBox(height: 1),
-            Text(
-              vehicule.description,
-              maxLines  : 1,
-              overflow  : TextOverflow.ellipsis,
-              textAlign : TextAlign.center,
-              style: AppTextStyles.caption.copyWith(color: AppColors.grey500),
-            ),
-
-            const SizedBox(height: 9),
-
+            // Prix et durée, à droite — alignés d'une ligne à l'autre
             if (pret)
               Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  // Les tuiles sont étroites : on met le prix à
-                  // l'échelle plutôt que de le tronquer.
-                  FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Text(
-                      '${estimation!.fraisLivraison.toStringAsFixed(0)}'
-                      ' ${estimation!.devise}',
-                      style: TextStyle(
-                        fontFamily : 'PlusJakartaSans',
-                        fontSize   : 17,
-                        fontWeight : FontWeight.w800,
-                        color      : selected
-                            ? AppColors.dark
-                            : AppColors.grey600,
-                      ),
+                  Text(
+                    '${estimation!.fraisLivraison.toStringAsFixed(0)}'
+                    ' ${estimation!.devise}',
+                    style: TextStyle(
+                      fontFamily : 'PlusJakartaSans',
+                      fontSize   : 17,
+                      fontWeight : FontWeight.w800,
+                      color      : selected
+                          ? AppColors.dark
+                          : AppColors.grey600,
                     ),
                   ),
                   Text(
                     estimation!.dureeText,
                     style: AppTextStyles.caption
-                        .copyWith(color: AppColors.grey400),
+                        .copyWith(color: AppColors.textMuted),
                   ),
                 ],
               )
@@ -1014,13 +1003,31 @@ class _VehiclePick extends StatelessWidget {
                 baseColor      : AppColors.grey200,
                 highlightColor : AppColors.grey100,
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    _barre(64, 15),
+                    _barre(72, 15),
                     const SizedBox(height: 5),
-                    _barre(38, 9),
+                    _barre(42, 9),
                   ],
                 ),
               ),
+
+            // Pastille de sélection en bout de ligne
+            const SizedBox(width: 10),
+            AnimatedOpacity(
+              duration: const Duration(milliseconds: 180),
+              opacity : selected ? 1 : 0,
+              child: Container(
+                width  : 20,
+                height : 20,
+                decoration: const BoxDecoration(
+                  color : AppColors.primary,
+                  shape : BoxShape.circle,
+                ),
+                child: const Icon(Icons.check_rounded,
+                    size: 13, color: Colors.white),
+              ),
+            ),
           ],
         ),
       ),

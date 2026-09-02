@@ -126,6 +126,8 @@ class _CommandeDetailSheetState extends ConsumerState<_CommandeDetailSheet> {
             nom       : d.livreurFullName ?? '',
             telephone : d.livreurTelephone,
             photoUrl  : d.livreurImageUrl,
+            note      : d.livreurNote,
+            vehicule  : d.vehiculeCoursier,
           ),
         ],
 

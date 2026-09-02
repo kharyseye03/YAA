@@ -1,3 +1,4 @@
+import '../../../shared/widgets/image_reseau.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -436,12 +437,12 @@ class _FullWidthRestaurantCard extends ConsumerWidget {
             children: [
               ClipRRect(
                 borderRadius: BorderRadius.circular(AppDimens.radiusLg),
-                child: Image.network(
-                  restaurant.imageUrl,
+                child: ImageReseau(
+                  url: restaurant.imageUrl,
                   height: 160,
                   width: double.infinity,
                   fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => Container(
+                  fallback: Container(
                     height: 160,
                     width: double.infinity,
                     color: AppColors.grey200,

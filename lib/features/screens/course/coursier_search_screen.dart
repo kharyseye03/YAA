@@ -106,7 +106,7 @@ class _CoursierSearchScreenState extends State<CoursierSearchScreen>
     } catch (e) {
       debugPrint('⚠️ marqueur moto indisponible : $e');
       _pinLivreur = await createPinMarker(
-          AppColors.dark, Icons.sports_motorsports, scale: 1.15);
+          AppColors.dark, Icons.sports_motorsports, scale: 0.8);
     }
     if (mounted) setState(() {});
   }
@@ -521,6 +521,7 @@ class _CoursierSearchScreenState extends State<CoursierSearchScreen>
       telephone : livreur.telephone,
       photoUrl  : livreur.photoUrl,
       note      : livreur.noteMoyenne,
+      vehicule  : livreur.vehiculeCoursier,
     );
   }
 

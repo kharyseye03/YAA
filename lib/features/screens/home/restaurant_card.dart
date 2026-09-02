@@ -1,3 +1,4 @@
+import '../../../shared/widgets/image_reseau.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../../core/constants/app_colors.dart';
@@ -48,12 +49,12 @@ class RestaurantCard extends StatelessWidget {
               children: [
                 ClipRRect(
                   borderRadius: BorderRadius.circular(AppDimens.radiusLg),
-                  child: Image.network(
-                    restaurant.imageUrl,
-                    height: 130,
-                    width: 270,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
+                  child: ImageReseau(
+                    url     : restaurant.imageUrl,
+                    height  : 130,
+                    width   : 270,
+                    radius  : AppDimens.radiusLg,
+                    fallback: Container(
                       height: 130,
                       width: 270,
                       decoration: BoxDecoration(

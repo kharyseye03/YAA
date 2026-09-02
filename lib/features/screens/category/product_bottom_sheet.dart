@@ -1,3 +1,4 @@
+import '../../../shared/widgets/image_reseau.dart';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -84,12 +85,12 @@ class _ProductSheetState extends ConsumerState<_ProductSheet> {
         // ── Image hero ──────────────────────────────────
         ClipRRect(
           borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-          child: Image.network(
-            produit.imageUrl,
+          child: ImageReseau(
+            url: produit.imageUrl,
             height: 300,
             width: double.infinity,
             fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => Container(
+            fallback: Container(
               height: 300,
               color: AppColors.grey100,
               child: const Center(

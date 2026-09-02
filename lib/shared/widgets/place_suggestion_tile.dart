@@ -72,24 +72,13 @@ class PlaceSuggestionTile extends StatelessWidget {
     return Icons.location_on_rounded;
   }
 
-  /// Couleur d'accent selon la famille du lieu.
+  /// Teinte unique de la liste.
   ///
-  /// Volontairement limitée à trois teintes de la palette : au-delà,
-  /// la liste vire à l'arc-en-ciel et la couleur cesse de porter du
-  /// sens. Tout ce qui n'est ni restauration ni santé reste en navy.
-  static Color colorForTypes(List<String> types) {
-    for (final type in types) {
-      switch (type) {
-        case 'restaurant' || 'food' || 'cafe' || 'bar' || 'bakery'
-            || 'meal_takeaway' || 'meal_delivery':
-          return AppColors.secondary;
-        case 'pharmacy' || 'drugstore' || 'hospital' || 'doctor'
-            || 'health' || 'dentist':
-          return AppColors.success;
-      }
-    }
-    return AppColors.primary;
-  }
+  /// Trois couleurs selon la famille du lieu donnaient une liste
+  /// bariolée où l'œil cherchait un sens qui n'existait pas : la
+  /// couleur ne disait rien que l'icône ne disait déjà. Le navy de
+  /// marque laisse le libellé porter l'information.
+  static const Color accent = AppColors.primary;
 
   @override
   Widget build(BuildContext context) {
@@ -98,8 +87,6 @@ class PlaceSuggestionTile extends StatelessWidget {
     final mainText = suggestion.mainText.isNotEmpty
         ? suggestion.mainText
         : suggestion.description;
-
-    final accent = colorForTypes(suggestion.types);
 
     return InkWell(
       onTap: onTap,
@@ -155,6 +142,19 @@ class PlaceSuggestionTile extends StatelessWidget {
                 ],
               ),
             ),
+
+            // Distance à droite : elle sert à départager deux lieux
+            // au nom voisin, pas à estimer un trajet.
+            if (suggestion.distanceLabel.isNotEmpty) ...[
+              const SizedBox(width: 8),
+              Text(
+                suggestion.distanceLabel,
+                style: AppTextStyles.caption.copyWith(
+                  color      : AppColors.textSoft,
+                  fontWeight : FontWeight.w700,
+                ),
+              ),
+            ],
 
             // Flèche de report : indique que le tap remplit le champ
             // plutôt que de naviguer ailleurs.

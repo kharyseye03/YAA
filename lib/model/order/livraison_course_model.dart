@@ -27,6 +27,33 @@ enum TypeServiceMission {
       );
 }
 
+/// Le véhicule du coursier, tel que déclaré à son inscription.
+///
+/// C'est l'immatriculation qui compte : c'est elle qui permet au
+/// client de reconnaître la moto qui arrive devant chez lui.
+class VehiculeCoursier {
+  const VehiculeCoursier({this.marque, this.immatriculation, this.couleur});
+
+  final String? marque;
+  final String? immatriculation;
+  final String? couleur;
+
+  factory VehiculeCoursier.fromJson(Map<String, dynamic> json) =>
+      VehiculeCoursier(
+        marque          : json['marque'] as String?,
+        immatriculation : json['immatriculation'] as String?,
+        couleur         : json['couleur'] as String?,
+      );
+
+  /// « TVS 125 · Noir » — ce qui décrit l'engin, sans la plaque
+  String get description =>
+      [marque, couleur].where((e) => e != null && e.isNotEmpty).join(' · ');
+
+  bool get estVide =>
+      (immatriculation == null || immatriculation!.isEmpty) &&
+      description.isEmpty;
+}
+
 /// Le coursier assigné à une mission.
 ///
 /// Nul tant que le statut est RECHERCHE_COURSIER. Présent sur les
@@ -41,6 +68,7 @@ class Livreur {
     this.longitude,
     this.vehicule,
     this.noteMoyenne,
+    this.vehiculeCoursier,
   });
 
   /// Usage interne uniquement — cet identifiant ne doit jamais
@@ -61,6 +89,10 @@ class Livreur {
   final String? vehicule;
   final double? noteMoyenne;
 
+  /// Marque, immatriculation et couleur de l'engin. Null si le
+  /// coursier ne les a pas renseignées.
+  final VehiculeCoursier? vehiculeCoursier;
+
   factory Livreur.fromJson(Map<String, dynamic> json) => Livreur(
         id            : (json['id'] as num?)?.toInt() ?? 0,
         fullName      : json['fullName'] as String? ?? '',
@@ -70,6 +102,10 @@ class Livreur {
         longitude     : (json['longitude'] as num?)?.toDouble(),
         vehicule      : json['vehicule'] as String?,
         noteMoyenne   : (json['noteMoyenne'] as num?)?.toDouble(),
+        vehiculeCoursier: json['vehiculeCoursier'] == null
+            ? null
+            : VehiculeCoursier.fromJson(
+                json['vehiculeCoursier'] as Map<String, dynamic>),
       );
 
   String? get photoUrl {

@@ -1,3 +1,5 @@
+import '../../../shared/widgets/image_reseau.dart';
+import '../../../model/order/livraison_course_model.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -49,12 +51,16 @@ class CarteCoursier extends StatelessWidget {
     this.telephone,
     this.photoUrl,
     this.note,
+    this.vehicule,
   });
 
   final String  nom;
   final String? telephone;
   final String? photoUrl;
   final double? note;
+
+  /// Affiché sous le nom quand le coursier l'a renseigné
+  final VehiculeCoursier? vehicule;
 
   String get _initiales => nom
       .trim()
@@ -89,12 +95,12 @@ class CarteCoursier extends StatelessWidget {
             child: ClipOval(
               child: photoUrl == null
                   ? _avatarInitiales()
-                  : Image.network(
-                      photoUrl!,
+                  : ImageReseau(
+                      url: photoUrl!,
                       width  : 76,
                       height : 76,
                       fit    : BoxFit.cover,
-                      errorBuilder: (_, __, ___) => _avatarInitiales(),
+                      fallback: _avatarInitiales(),
                     ),
             ),
           ),
@@ -110,6 +116,52 @@ class CarteCoursier extends StatelessWidget {
               color      : AppColors.dark,
             ),
           ),
+
+          // ── Le véhicule ────────────────────────────────────
+          // L'immatriculation est mise en avant comme une plaque :
+          // c'est le seul élément qui permet de reconnaître l'engin
+          // qui se gare devant chez soi.
+          if (vehicule != null && !vehicule!.estVide) ...[
+            // Le modèle et la couleur d'abord : c'est ce qu'on repère
+            // de loin. La plaque ensuite, pour confirmer de près.
+            if (vehicule!.description.isNotEmpty) ...[
+              SizedBox(height: AppDimens.xs),
+              Text(
+                vehicule!.description.toUpperCase(),
+                textAlign: TextAlign.center,
+                style: AppTextStyles.labelSmall.copyWith(
+                  fontSize      : 13,
+                  fontWeight    : FontWeight.w700,
+                  letterSpacing : 0.3,
+                  color         : AppColors.textSoft,
+                ),
+                maxLines : 1,
+                overflow : TextOverflow.ellipsis,
+              ),
+            ],
+            if (vehicule!.immatriculation?.isNotEmpty ?? false) ...[
+              SizedBox(height: AppDimens.sm),
+              Container(
+                padding: EdgeInsets.symmetric(
+                    horizontal: AppDimens.md, vertical: 6),
+                decoration: BoxDecoration(
+                  color        : AppColors.white,
+                  borderRadius : BorderRadius.circular(AppDimens.radiusSm),
+                  border       : Border.all(
+                      color: AppColors.dark, width: 1.6),
+                ),
+                child: Text(
+                  vehicule!.immatriculation!.toUpperCase(),
+                  style: AppTextStyles.labelMedium.copyWith(
+                    fontSize      : 19,
+                    fontWeight    : FontWeight.w800,
+                    letterSpacing : 1.4,
+                    color         : AppColors.dark,
+                  ),
+                ),
+              ),
+            ],
+          ],
 
           if (note != null || aTelephone) ...[
             SizedBox(height: AppDimens.md),
@@ -327,12 +379,12 @@ class LigneProduit extends StatelessWidget {
                 borderRadius: BorderRadius.circular(AppDimens.radiusMd),
                 child: imageUrl == null
                     ? const _VignetteVide()
-                    : Image.network(
-                        imageUrl!,
+                    : ImageReseau(
+                        url: imageUrl!,
                         width  : 48,
                         height : 48,
                         fit    : BoxFit.cover,
-                        errorBuilder: (_, __, ___) => const _VignetteVide(),
+                        fallback: const _VignetteVide(),
                       ),
               ),
               Positioned(

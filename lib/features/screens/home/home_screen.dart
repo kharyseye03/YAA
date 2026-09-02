@@ -9,6 +9,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimens.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/utils/app_router.dart';
+import '../../../shared/widgets/map_prewarm.dart';
 import '../cart/cart_screen.dart';
 import '../favoris/favoris_screen.dart';
 import '../order/orders_screen.dart';
@@ -78,26 +79,37 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: Column(
+      body: Stack(
         children: [
-          // ── Header ───────────────────────────────────────
-          if (_currentNavIndex == 0)
-            HomeHeader(
-              onNotificationTap: () => context.goNamed(RouteNames.notifications),
-            ),
+          Column(
+            children: [
+              // ── Header ───────────────────────────────────────
+              if (_currentNavIndex == 0)
+                HomeHeader(
+                  onNotificationTap: () =>
+                      context.goNamed(RouteNames.notifications),
+                ),
 
-          // ── Content based on tab ─────────────────────────
-          Expanded(
-            child: _currentNavIndex == 1
-                ? const OrdersScreen()
-                : _currentNavIndex == 2
-                ? const FavorisScreen()
-                : _currentNavIndex == 3
-                ? const ProfileScreen()
-                : _currentNavIndex == 4
-                ? CartScreen(onAddMore: () => setState(() => _currentNavIndex = 0))
-                : _buildHomeContent(),
+              // ── Content based on tab ─────────────────────────
+              Expanded(
+                child: _currentNavIndex == 1
+                    ? const OrdersScreen()
+                    : _currentNavIndex == 2
+                    ? const FavorisScreen()
+                    : _currentNavIndex == 3
+                    ? const ProfileScreen()
+                    : _currentNavIndex == 4
+                    ? CartScreen(
+                        onAddMore: () => setState(() => _currentNavIndex = 0))
+                    : _buildHomeContent(),
+              ),
+            ],
           ),
+
+          // Hors écran : initialise le SDK Maps pendant que
+          // l'utilisateur est ici, pour que Course et Livraison
+          // s'ouvrent sur une carte déjà prête. Voir MapPrewarm.
+          const MapPrewarm(),
         ],
       ),
 

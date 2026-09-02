@@ -4,7 +4,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimens.dart';
 import '../../../core/constants/app_text_styles.dart';
@@ -13,7 +12,6 @@ import '../../../features/cart/providers/cart_notifier.dart';
 import '../../../features/cart/providers/delivery_address_provider.dart';
 import '../../../features/orders/providers/commande_notifier.dart';
 import '../../../features/user/providers/user_notifier.dart';
-import '../../../model/course/type_vehicule.dart';
 import '../../../model/order/commande_detail_model.dart';
 import '../../../model/order/livraison_course_model.dart';
 import '../../../model/transaction/transaction_model.dart';
@@ -22,6 +20,7 @@ import '../../../service/api/api_service.dart';
 import '../../../shared/widgets/yaa_button.dart';
 import '../../../shared/widgets/yaa_text_field.dart';
 import 'delivery_address_sheet.dart';
+import '../order/detail_widgets.dart';
 import '../order/mission_detail_sheet.dart';
 import 'reception_mode_sheet.dart';
 
@@ -820,7 +819,6 @@ class _LivreurSearchSheetState extends State<_LivreurSearchSheet>
   String? get _telLivreur      => _livreur?.telephone ?? _detail?.livreurTelephone;
   String? get _photoLivreur    => _livreur?.photoUrl  ?? _detail?.livreurImageUrl;
   double? get _noteLivreur     => _livreur?.noteMoyenne;
-  String? get _vehiculeLivreur => _livreur?.vehicule;
 
   // En retrait, aucun livreur n'est assigné : le parcours s'achève
   // quand la commande est prête à être récupérée.
@@ -1342,44 +1340,6 @@ class _LivreurSearchSheetState extends State<_LivreurSearchSheet>
     );
   }
 
-  /// Initiales du livreur pour l'avatar (ex: "Abdoul DIALLO" → "AD")
-  String get _livreurInitiales {
-    final depuisMission = _livreur?.initiales;
-    if (depuisMission != null && depuisMission.isNotEmpty) {
-      return depuisMission;
-    }
-    final prenom = _detail?.livreurName?.trim()     ?? '';
-    final nom    = _detail?.livreurLastName?.trim() ?? '';
-    final p = prenom.isNotEmpty ? prenom[0] : '';
-    final n = nom.isNotEmpty    ? nom[0]    : '';
-    return (p + n).toUpperCase();
-  }
-
-  /// Avatar fallback : initiales sur fond navy
-  Widget _buildInitiales() {
-    return Center(
-      child: _livreurInitiales.isNotEmpty
-          ? Text(
-              _livreurInitiales,
-              style: const TextStyle(
-                fontFamily : 'PlusJakartaSans',
-                fontSize   : 30,
-                fontWeight : FontWeight.w800,
-                color      : Colors.white,
-              ),
-            )
-          : const Icon(Icons.person_rounded,
-              color: Colors.white, size: 40),
-    );
-  }
-
-  Future<void> _appelerLivreur() async {
-    final phone = _telLivreur;
-    if (phone == null || phone.isEmpty) return;
-    final uri = Uri(scheme: 'tel', path: phone);
-    if (await canLaunchUrl(uri)) await launchUrl(uri);
-  }
-
   // ── État : livreur trouvé ────────────────────────────────────
   Widget _buildLivreurTrouve() {
     return Column(
@@ -1395,136 +1355,24 @@ class _LivreurSearchSheetState extends State<_LivreurSearchSheet>
 
         const SizedBox(height: 20),
 
-        // ── Photo du livreur (initiales si pas de photo) ──────
-        Container(
-          width  : 88,
-          height : 88,
-          decoration: BoxDecoration(
-            shape : BoxShape.circle,
-            color : AppColors.primary,
-            boxShadow: [
-              BoxShadow(
-                color      : AppColors.primary.withValues(alpha: 0.25),
-                blurRadius : 16,
-                offset     : const Offset(0, 6),
-              ),
-            ],
-          ),
-          child: ClipOval(
-            child: _photoLivreur != null
-                ? Image.network(
-                    _photoLivreur!,
-                    width  : 88,
-                    height : 88,
-                    fit    : BoxFit.cover,
-                    errorBuilder: (_, e, __) {
-                      debugPrint('❌ photo livreur ($_photoLivreur) : $e');
-                      return _buildInitiales();
-                    },
-                  )
-                : _buildInitiales(),
-          ),
+        // ── Le coursier ───────────────────────────────────────
+        // Même widget que le détail d'une mission : la fiche du
+        // livreur doit être identique quel que soit le service.
+        CarteCoursier(
+          nom      : _nomLivreur ?? 'Votre livreur',
+          telephone: _telLivreur,
+          photoUrl : _photoLivreur,
+          note     : _noteLivreur,
+          vehicule : _livreur?.vehiculeCoursier,
         ),
 
-        const SizedBox(height: 14),
-
-        // ── Infos du livreur ──────────────────────────────────
-        Text(
-          _nomLivreur ?? 'Votre livreur',
-          style: AppTextStyles.labelMedium.copyWith(
-            fontWeight : FontWeight.w800,
-            fontSize   : 17,
-            color      : AppColors.dark,
-          ),
-        ),
-
-        // Note et véhicule : ce qui rassure avant d'ouvrir sa porte
-        if (_noteLivreur != null || _vehiculeLivreur != null) ...[
-          const SizedBox(height: 5),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (_noteLivreur != null) ...[
-                Icon(Icons.star_rounded,
-                    size: 16, color: Colors.amber.shade600),
-                const SizedBox(width: 3),
-                Text(
-                  _noteLivreur!.toStringAsFixed(1),
-                  style: AppTextStyles.bodySmall.copyWith(
-                    fontSize   : 13,
-                    fontWeight : FontWeight.w700,
-                    color      : AppColors.dark,
-                  ),
-                ),
-              ],
-              if (_noteLivreur != null && _vehiculeLivreur != null)
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  child: Container(
-                      width: 3, height: 3,
-                      decoration: const BoxDecoration(
-                        color: AppColors.grey400,
-                        shape: BoxShape.circle,
-                      )),
-                ),
-              if (_vehiculeLivreur != null) ...[
-                Icon(
-                  TypeVehicule.depuisCode(_vehiculeLivreur)?.icone
-                      ?? Icons.local_shipping_outlined,
-                  size  : 15,
-                  color : AppColors.grey500,
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  TypeVehicule.depuisCode(_vehiculeLivreur)?.libelle
-                      ?? _vehiculeLivreur!,
-                  style: AppTextStyles.bodySmall.copyWith(
-                    fontSize : 13,
-                    color    : AppColors.grey500,
-                  ),
-                ),
-              ],
-            ],
-          ),
-        ],
-
-        const SizedBox(height: 4),
+        const SizedBox(height: 12),
         Text(
           'En route vers l\'établissement',
-          style: AppTextStyles.bodySmall.copyWith(color: AppColors.grey500),
+          style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSoft),
         ),
 
-        if (_telLivreur != null && _telLivreur!.isNotEmpty) ...[
-          const SizedBox(height: 12),
-          // Bouton d'appel
-          GestureDetector(
-            onTap: _appelerLivreur,
-            child: Container(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 18, vertical: 9),
-              decoration: BoxDecoration(
-                color        : AppColors.successLight,
-                borderRadius : BorderRadius.circular(AppDimens.radiusFull),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.phone_rounded,
-                      color: AppColors.success, size: 16),
-                  const SizedBox(width: 7),
-                  Text(
-                    _telLivreur!,
-                    style: AppTextStyles.labelMedium.copyWith(
-                      fontWeight : FontWeight.w700,
-                      color      : AppColors.success,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-
+        const SizedBox(height: 20),
         const SizedBox(height: 20),
 
         // ── Itinéraire ────────────────────────────────────────

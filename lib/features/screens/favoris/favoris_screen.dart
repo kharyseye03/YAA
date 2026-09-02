@@ -1,3 +1,4 @@
+import '../../../shared/widgets/image_reseau.dart';
 import '../../../core/utils/devise.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -279,9 +280,9 @@ class _StructureCard extends StatelessWidget {
               bottomLeft : Radius.circular(16),
             ),
             child: favori.logoUrl != null
-                ? Image.network(favori.logoUrl!,
+                ? ImageReseau(url: favori.logoUrl!,
                     width: 90, height: 90, fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => _fallback(Icons.storefront_outlined))
+                    fallback: _fallback(Icons.storefront_outlined))
                 : _fallback(Icons.storefront_outlined),
           ),
 
@@ -380,9 +381,9 @@ class _ProduitCard extends StatelessWidget {
               bottomLeft : Radius.circular(16),
             ),
             child: favori.imageUrl != null
-                ? Image.network(favori.imageUrl!,
+                ? ImageReseau(url: favori.imageUrl!,
                     width: 90, height: 90, fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => _fallback())
+                    fallback: _fallback())
                 : _fallback(),
           ),
 

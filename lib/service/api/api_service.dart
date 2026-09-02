@@ -29,6 +29,18 @@ class ApiService {
   factory ApiService() => _instance;
   ApiService._internal();
 
+  /// Client HTTP unique, conservé pour toute la vie de l'application.
+  ///
+  /// Les fonctions de premier niveau de `package:http` — `http.get`,
+  /// `http.post`… — créent un client, l'utilisent une fois et le
+  /// ferment. Chaque appel refaisait donc la résolution DNS, la
+  /// connexion TCP **et la poignée de main TLS** : mesurée entre 300 ms
+  /// et 2 s, pour un serveur qui répond en 150 ms.
+  ///
+  /// Un client partagé garde la connexion ouverte (keep-alive) : seule
+  /// la première requête paie ce prix.
+  final http.Client _client = http.Client();
+
   // ════════════════════════════════════════════════════
   // AUTHENTIFICATION — Renouvellement automatique du token
   // ════════════════════════════════════════════════════
@@ -132,7 +144,7 @@ class ApiService {
 
       final response = await _send(
         auth    : auth,
-        request : (headers) => http.post(
+        request : (headers) => _client.post(
           url,
           headers : headers,
           body    : json.encode(body),
@@ -180,7 +192,7 @@ class ApiService {
 
       final response = await _send(
         auth    : auth,
-        request : (headers) => http.put(
+        request : (headers) => _client.put(
           url,
           headers : headers,
           body    : json.encode(body),
@@ -231,7 +243,7 @@ class ApiService {
 
       final response = await _send(
         auth    : auth,
-        request : (headers) => http.delete(uri, headers: headers),
+        request : (headers) => _client.delete(uri, headers: headers),
       );
 
       ApiLogger.reponse(
@@ -277,7 +289,7 @@ class ApiService {
 
       final response = await _send(
         auth    : auth,
-        request : (headers) => http.get(uri, headers: headers),
+        request : (headers) => _client.get(uri, headers: headers),
       );
 
       ApiLogger.reponse(
@@ -323,7 +335,7 @@ class ApiService {
 
       final response = await _send(
         auth    : auth,
-        request : (headers) => http.get(uri, headers: headers),
+        request : (headers) => _client.get(uri, headers: headers),
       );
 
       ApiLogger.reponse(
@@ -756,7 +768,10 @@ class ApiService {
       ApiLogger.requete('PUT multipart', uri);
       final chrono = Stopwatch()..start();
 
-      final streamed = await request.send().timeout(
+      // request.send() ouvrirait son propre client : on passe par le
+      // client partagé pour réutiliser la connexion, comme partout
+      // ailleurs.
+      final streamed = await _client.send(request).timeout(
         const Duration(seconds: ApiConfig.connectionTimeout),
         onTimeout: () => throw TimeoutException('Le serveur ne répond pas.'),
       );
@@ -1038,7 +1053,7 @@ class ApiService {
 
       final response = await _send(
         auth    : true,
-        request : (headers) => http.get(uri, headers: headers),
+        request : (headers) => _client.get(uri, headers: headers),
       );
 
       ApiLogger.reponse(
@@ -1090,7 +1105,7 @@ class ApiService {
 
       final response = await _send(
         auth    : true,
-        request : (headers) => http.get(uri, headers: headers),
+        request : (headers) => _client.get(uri, headers: headers),
       );
 
       ApiLogger.reponse(

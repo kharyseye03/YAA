@@ -1,3 +1,4 @@
+import '../../../shared/widgets/image_reseau.dart';
 import '../../../core/utils/devise.dart';
 import 'dart:async';
 
@@ -905,10 +906,10 @@ class _ApiMenuItemCard extends StatelessWidget {
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  Image.network(
-                    produit.imageUrl,
+                  ImageReseau(
+                    url: produit.imageUrl,
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
+                    fallback: Container(
                       color: AppColors.grey200,
                       child: const Icon(Icons.image_outlined,
                           color: AppColors.grey400),

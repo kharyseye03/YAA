@@ -31,6 +31,10 @@ dependencies:
   geolocator: ^13.0.2
   geocoding: ^3.0.0
   google_maps_flutter: ^2.9.0
+  # Déjà tirée par google_maps_flutter, déclarée ici parce qu'on
+  # l'importe directement dans main() pour choisir le renderer.
+  google_maps_flutter_android: ^2.19.0
+  google_maps_flutter_platform_interface: ^2.12.0
 
   # ── Data & Serialization ────────────────────────────────
   freezed_annotation: ^2.4.4

@@ -1,3 +1,4 @@
+import '../../../shared/widgets/image_reseau.dart';
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
@@ -107,10 +108,10 @@ class _CategoryItem extends StatelessWidget {
               ),
               child: ClipOval(
                 child: data.imageUrl != null
-                    ? Image.network(
-                        data.imageUrl!,
+                    ? ImageReseau(
+                        url: data.imageUrl!,
                         fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) =>
+                        fallback:
                             data.fallbackAsset != null
                                 ? Image.asset(
                                     data.fallbackAsset!,

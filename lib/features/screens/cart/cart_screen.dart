@@ -1,3 +1,4 @@
+import '../../../shared/widgets/image_reseau.dart';
 import '../../../core/utils/devise.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -486,12 +487,12 @@ class _CartItemState extends State<_CartItem> {
         ClipRRect(
           borderRadius: BorderRadius.circular(10),
           child: widget.item.image != null
-              ? Image.network(
-                  ApiConfig.getImageUrl(widget.item.image!),
+              ? ImageReseau(
+                  url: ApiConfig.getImageUrl(widget.item.image!),
                   width  : 56,
                   height : 56,
                   fit    : BoxFit.cover,
-                  errorBuilder: (_, __, ___) => _placeholder(),
+                  fallback: _placeholder(),
                 )
               : _placeholder(),
         ),

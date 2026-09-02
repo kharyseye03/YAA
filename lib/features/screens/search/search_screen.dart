@@ -1,3 +1,4 @@
+import '../../../shared/widgets/image_reseau.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -191,12 +192,12 @@ class _ResultCard extends StatelessWidget {
           // Logo
           ClipRRect(
             borderRadius: BorderRadius.circular(AppDimens.radiusMd),
-            child: Image.network(
-              structure.logoUrl,
+            child: ImageReseau(
+              url: structure.logoUrl,
               width: 64,
               height: 64,
               fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Container(
+              fallback: Container(
                 width: 64,
                 height: 64,
                 color: AppColors.grey100,

@@ -200,6 +200,7 @@ class _MissionDetailSheetState extends ConsumerState<_MissionDetailSheet> {
             telephone : m.livreur!.telephone,
             photoUrl  : m.livreur!.photoUrl,
             note      : m.livreur!.noteMoyenne,
+            vehicule  : m.livreur!.vehiculeCoursier,
           ),
         ],
 

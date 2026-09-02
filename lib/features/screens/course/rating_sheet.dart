@@ -1,3 +1,4 @@
+import '../../../shared/widgets/image_reseau.dart';
 import '../../../service/storage/notation_storage.dart';
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
@@ -123,9 +124,9 @@ class _RatingSheetState extends State<_RatingSheet> {
                 ),
                 child: ClipOval(
                   child: photo != null
-                      ? Image.network(photo,
+                      ? ImageReseau(url: photo,
                           width: 78, height: 78, fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => _initiales())
+                          fallback: _initiales())
                       : _initiales(),
                 ),
               ),
