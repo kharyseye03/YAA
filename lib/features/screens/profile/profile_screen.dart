@@ -2,14 +2,31 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/app_contacts.dart';
 import '../../../core/constants/app_dimens.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/utils/app_router.dart';
+import '../../../core/utils/phone_formatter.dart';
+import '../../../service/location/location_service.dart';
 import '../../../shared/widgets/user_avatar.dart';
 import '../../auth/providers/auth_notifier.dart';
+import '../../cart/providers/delivery_address_provider.dart';
 import '../../user/providers/user_notifier.dart';
+import '../cart/delivery_address_sheet.dart';
 
+/// Profil du client.
+///
+/// Les lignes sont groupées en cartes posées sur un fond gris, plutôt
+/// qu'alignées à plat. La liste précédente séparait ses blocs par deux
+/// styles de filets mélangés — certains pleine largeur, d'autres
+/// indentés — ce qui créait des groupes sans jamais dire lesquels.
+///
+/// Chaque ligne porte aussi la **valeur du moment** en sous-titre :
+/// « Informations personnelles / Mame Khary · 622 12 34 56 ». Une
+/// ligne qui renseigne vaut mieux qu'une ligne qui pointe ailleurs, et
+/// ça supprime la ligne « Téléphone », qui menait au même écran.
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
 
@@ -18,242 +35,327 @@ class ProfileScreen extends ConsumerStatefulWidget {
 }
 
 class _ProfileScreenState extends ConsumerState<ProfileScreen> {
-  bool _notificationsEnabled = true;
+  /// Ouvre un lien externe sans jamais laisser l'appui sans effet.
+  ///
+  /// Sur Android 11+, `canLaunchUrl` renvoie false pour un schéma que
+  /// le manifeste ne déclare pas — le bouton semble alors cassé. Les
+  /// schémas tel, mailto et https sont déclarés dans `<queries>` ; si
+  /// l'appareil n'a malgré tout aucune application pour l'ouvrir, on
+  /// le dit au lieu de ne rien faire.
+  Future<void> _ouvrir(Uri uri, String siImpossible) async {
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+      return;
+    }
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(siImpossible)),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    final top = MediaQuery.of(context).padding.top;
-    final user = ref.watch(userProvider);
+    final top     = MediaQuery.of(context).padding.top;
+    final user    = ref.watch(userProvider);
     final profile = user.profile;
 
-    return SingleChildScrollView(
+    // L'adresse retenue pour la prochaine commande, sinon celle du
+    // profil. Même règle que dans le panier, pour que les deux écrans
+    // ne montrent jamais deux adresses différentes.
+    final adresse = ref.watch(deliveryAddressProvider)?.adresse
+        ?? profile?.address;
+
+    final telephone = profile?.telephone == null
+        ? null
+        : formatPhone(telephoneLocal(profile!.telephone));
+
+    return Container(
+      color: AppColors.background,
+      child: SingleChildScrollView(
+        child: Column(
+          children: [
+            SizedBox(height: top + AppDimens.xl),
+
+            // ── Identité ──────────────────────────────────
+            _enTete(user, profile),
+
+            SizedBox(height: AppDimens.xl),
+
+            // ── Compte ────────────────────────────────────
+            _Carte(children: [
+              _Ligne(
+                icon     : Icons.person_outline_rounded,
+                label    : 'Informations personnelles',
+                // Le nom et le numéro rendent la ligne utile sans
+                // avoir à l'ouvrir. C'est aussi ce qui remplace
+                // l'ancienne ligne « Téléphone », qui menait ici.
+                subtitle : [profile?.fullName, telephone]
+                    .where((e) => e != null && e.isNotEmpty)
+                    .join(' · '),
+                onTap    : () => context.pushNamed(RouteNames.personalInfo),
+              ),
+              _Ligne(
+                icon     : Icons.location_on_outlined,
+                label    : 'Adresse de livraison',
+                subtitle : adresse == null
+                    ? 'Non renseignée'
+                    : LocationService.cleanAddress(adresse),
+                // Même feuille que depuis le panier : l'adresse se
+                // choisit d'un seul endroit dans l'application.
+                onTap    : () => showDeliveryAddressSheet(context),
+              ),
+            ]),
+
+            SizedBox(height: AppDimens.lg),
+
+            _Carte(children: [
+              _Ligne(
+                icon     : Icons.receipt_long_outlined,
+                label    : 'Historique des commandes',
+                subtitle : 'Vos commandes terminées',
+                onTap    : () => context.pushNamed(RouteNames.orderHistory),
+              ),
+            ]),
+
+            SizedBox(height: AppDimens.lg),
+
+            // ── Recrutement ───────────────────────────────
+            _CarteCoursier(
+              onTap: () => _ouvrir(
+                Uri.parse(AppContacts.lienDevenirCoursier),
+                'Aucun navigateur disponible',
+              ),
+            ),
+
+            SizedBox(height: AppDimens.lg),
+
+            // ── Aide ──────────────────────────────────────
+            _Carte(children: [
+              _Ligne(
+                icon     : Icons.phone_outlined,
+                label    : 'Appeler le support',
+                subtitle : AppContacts.telephoneSupport,
+                onTap    : () => _ouvrir(
+                  Uri(scheme: 'tel', path: AppContacts.telephoneSupport),
+                  'Aucune application téléphone',
+                ),
+              ),
+              _Ligne(
+                icon     : Icons.mail_outline_rounded,
+                label    : 'Écrire au support',
+                subtitle : AppContacts.emailSupport,
+                onTap    : () => _ouvrir(
+                  Uri(scheme: 'mailto', path: AppContacts.emailSupport),
+                  'Aucune application e-mail',
+                ),
+              ),
+              _Ligne(
+                icon     : Icons.description_outlined,
+                label    : 'Conditions d\'utilisation',
+                onTap    : () => context.pushNamed(RouteNames.terms),
+              ),
+            ]),
+
+            SizedBox(height: AppDimens.xl),
+
+            _boutonDeconnexion(),
+
+            SizedBox(height: AppDimens.md),
+
+            // La version aide au signalement de bug : le testeur peut
+            // dire sur quelle build il est tombé.
+            Text(
+              'YAA · version 1.0.0',
+              style: AppTextStyles.caption.copyWith(color: AppColors.textMuted),
+            ),
+
+            SizedBox(height: 90.h),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _enTete(dynamic user, dynamic profile) {
+    return Column(
+      children: [
+        Stack(
+          children: [
+            user.isLoading
+                ? Container(
+                    width  : 88.r,
+                    height : 88.r,
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: AppColors.grey200,
+                    ),
+                    child: Center(
+                      child: SizedBox(
+                        width : 20.r,
+                        height: 20.r,
+                        child : CircularProgressIndicator(
+                            strokeWidth: 2.r, color: AppColors.primary),
+                      ),
+                    ),
+                  )
+                : UserAvatar(imageUrl: profile?.imageUrl),
+            Positioned(
+              bottom: 0,
+              right : 0,
+              child: GestureDetector(
+                onTap: () => context.pushNamed(RouteNames.editPersonalInfo),
+                child: Container(
+                  width  : 28.r,
+                  height : 28.r,
+                  decoration: BoxDecoration(
+                    color : AppColors.primary,
+                    shape : BoxShape.circle,
+                    border: Border.all(color: AppColors.background, width: 2),
+                  ),
+                  child: Icon(Icons.edit_rounded,
+                      color: Colors.white, size: 13.r),
+                ),
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: AppDimens.md),
+        Text(
+          profile?.fullName ?? '—',
+          style: AppTextStyles.h3.copyWith(
+            fontWeight: FontWeight.w800,
+            color     : AppColors.dark,
+          ),
+        ),
+        SizedBox(height: AppDimens.xs),
+        Text(
+          profile?.email ?? '—',
+          style: AppTextStyles.bodySmall.copyWith(color: AppColors.textMuted),
+        ),
+      ],
+    );
+  }
+
+  Widget _boutonDeconnexion() {
+    // Texte seul, sans carte ni icône : la déconnexion est banale et
+    // quotidienne. Elle ne mérite pas le rouge d'alerte qu'elle
+    // partageait auparavant avec la suppression de compte.
+    return TextButton(
+      onPressed: () async {
+        final confirm = await showDialog<bool>(
+          context: context,
+          builder: (_) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16.r),
+            ),
+            title: Text(
+              'Se déconnecter',
+              style: AppTextStyles.labelLarge
+                  .copyWith(fontWeight: FontWeight.w700),
+            ),
+            content: Text(
+              'Êtes-vous sûr de vouloir vous déconnecter ?',
+              style: AppTextStyles.bodySmall
+                  .copyWith(color: AppColors.textSoft),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: Text('Annuler',
+                    style: AppTextStyles.bodySmall
+                        .copyWith(color: AppColors.textSoft)),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: Text(
+                  'Se déconnecter',
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color     : AppColors.error,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+        if (confirm != true) return;
+        await ref.read(authProvider.notifier).logout();
+        // `mounted` de l'État, et non `context.mounted` : c'est bien
+        // ce widget qui doit être encore là pour naviguer.
+        if (!mounted) return;
+        context.goNamed(RouteNames.login);
+      },
+      child: Text(
+        'Se déconnecter',
+        style: AppTextStyles.labelMedium.copyWith(
+          fontWeight: FontWeight.w600,
+          color     : AppColors.textSoft,
+        ),
+      ),
+    );
+  }
+}
+
+// ── Carte groupée ─────────────────────────────────────────────
+class _Carte extends StatelessWidget {
+  const _Carte({required this.children});
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: AppDimens.screenPadding),
+      decoration: BoxDecoration(
+        color        : AppColors.surface,
+        borderRadius : BorderRadius.circular(AppDimens.radiusLg),
+      ),
       child: Column(
         children: [
-          SizedBox(height: top + 24),
-
-          // ── Photo + nom ───────────────────────────────
-          Center(
-            child: Column(
-              children: [
-                Stack(
-                  children: [
-                    user.isLoading
-                        ? Container(
-                            width: 88.r,
-                            height: 88.r,
-                            decoration: const BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: AppColors.grey100,
-                            ),
-                            child: Center(
-                              child: CircularProgressIndicator(
-                                  strokeWidth: 2.r,
-                                  color: AppColors.primary),
-                            ),
-                          )
-                        : UserAvatar(imageUrl: profile?.imageUrl),
-                    Positioned(
-                      bottom: 0.h,
-                      right: 0.w,
-                      child: GestureDetector(
-                        onTap: () => context.pushNamed(
-                            RouteNames.editPersonalInfo),
-                        child: Container(
-                          width: 28.r,
-                          height: 28.r,
-                          decoration: BoxDecoration(
-                            color: AppColors.primary,
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                                color: Colors.white, width: 2),
-                          ),
-                          child: Icon(Icons.edit_rounded,
-                              color: Colors.white, size: 13.r),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-
-                SizedBox(height: 14.h),
-
-                Text(
-                  profile?.fullName ?? '—',
-                  style: AppTextStyles.h3.copyWith(
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.dark,
-                  ),
-                ),
-
-                SizedBox(height: 4.h),
-
-                Text(
-                  profile?.email ?? '—',
-                  style: AppTextStyles.bodySmall.copyWith(
-                    color: AppColors.grey400,
-                    fontSize: 13.sp,
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          SizedBox(height: 36.h),
-          const Divider(height: 1, color: AppColors.grey200),
-
-          // ── Infos personnelles ────────────────────────
-          _Row(
-            icon: Icons.person_outline_rounded,
-            label: 'Informations personnelles',
-            onTap: () => context.pushNamed(RouteNames.personalInfo),
-          ),
-          const _Divider(),
-          _Row(
-            icon: Icons.location_on_outlined,
-            label: 'Adresse de livraison',
-            onTap: () {},
-          ),
-          const _Divider(),
-          _Row(
-            icon: Icons.phone_outlined,
-            label: profile?.telephone ?? 'Téléphone',
-            subtitle: profile?.telephone != null ? null : 'Non renseigné',
-            onTap: () => context.pushNamed(RouteNames.personalInfo),
-          ),
-
-          SizedBox(height: 8.h),
-          const Divider(height: 1, color: AppColors.grey200),
-          SizedBox(height: 8.h),
-
-          // ── Historique ────────────────────────────────
-          _Row(
-            icon: Icons.history_rounded,
-            label: 'Historique des commandes',
-            subtitle: 'Vos commandes terminées',
-            onTap: () => context.pushNamed(RouteNames.orderHistory),
-          ),
-
-          SizedBox(height: 8.h),
-          const Divider(height: 1, color: AppColors.grey200),
-          SizedBox(height: 8.h),
-
-          // ── Préférences ───────────────────────────────
-          _ToggleRow(
-            icon: Icons.notifications_none_rounded,
-            label: 'Notifications',
-            value: _notificationsEnabled,
-            onChanged: (v) => setState(() => _notificationsEnabled = v),
-          ),
-          const _Divider(),
-          _Row(
-            icon: Icons.language_rounded,
-            label: 'Langue',
-            subtitle: 'Français',
-            onTap: () {},
-          ),
-          const _Divider(),
-          _Row(
-            icon: Icons.description_outlined,
-            label: 'Conditions d\'utilisation',
-            onTap: () => context.pushNamed(RouteNames.terms),
-          ),
-
-          SizedBox(height: 8.h),
-          const Divider(height: 1, color: AppColors.grey200),
-          SizedBox(height: 8.h),
-
-          // ── Déconnexion ───────────────────────────────
-          _Row(
-            icon: Icons.logout_rounded,
-            label: 'Se déconnecter',
-            labelColor: AppColors.error,
-            iconColor: AppColors.error,
-            onTap: () async {
-              final confirm = await showDialog<bool>(
-                context: context,
-                builder: (_) => AlertDialog(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16.r),
-                  ),
-                  title: Text(
-                    'Se déconnecter',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 17.sp,
-                    ),
-                  ),
-                  content: Text(
-                    'Êtes-vous sûr de vouloir vous déconnecter ?',
-                    style: TextStyle(fontSize: 14.sp, color: Color(0xFF666666)),
-                  ),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.of(context).pop(false),
-                      child: const Text(
-                        'Annuler',
-                        style: TextStyle(color: Color(0xFF666666)),
-                      ),
-                    ),
-                    TextButton(
-                      onPressed: () => Navigator.of(context).pop(true),
-                      child: const Text(
-                        'Se déconnecter',
-                        style: TextStyle(
-                          color: AppColors.error,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              );
-              if (confirm != true) return;
-              await ref.read(authProvider.notifier).logout();
-              if (context.mounted) context.goNamed(RouteNames.login);
-            },
-          ),
-
-          SizedBox(height: 80.h),
+          for (var i = 0; i < children.length; i++) ...[
+            children[i],
+            // Filet entre deux lignes seulement, jamais après la
+            // dernière : le bord de la carte fait déjà la séparation.
+            if (i < children.length - 1)
+              Padding(
+                padding: EdgeInsets.only(left: 52.w),
+                child: const Divider(height: 1, color: AppColors.grey100),
+              ),
+          ],
         ],
       ),
     );
   }
 }
 
-// ── Ligne simple ──────────────────────────────────────────
-class _Row extends StatelessWidget {
-  const _Row({
+// ── Ligne de carte ────────────────────────────────────────────
+class _Ligne extends StatelessWidget {
+  const _Ligne({
     required this.icon,
     required this.label,
+    required this.onTap,
     this.subtitle,
-    this.labelColor,
-    this.iconColor,
-    this.onTap,
   });
 
-  final IconData icon;
-  final String label;
-  final String? subtitle;
-  final Color? labelColor;
-  final Color? iconColor;
-  final VoidCallback? onTap;
+  final IconData     icon;
+  final String       label;
+  final String?      subtitle;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
+    final sousTitre = subtitle;
     return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
+      onTap    : onTap,
+      behavior : HitTestBehavior.opaque,
       child: Padding(
         padding: EdgeInsets.symmetric(
-          horizontal: AppDimens.screenPadding,
-          vertical: 14.h,
+          horizontal: AppDimens.md,
+          vertical  : AppDimens.md,
         ),
         child: Row(
           children: [
-            Icon(icon,
-                size: 20.r,
-                color: iconColor ?? AppColors.grey600),
-            SizedBox(width: 16.w),
+            Icon(icon, size: 20.r, color: AppColors.textSoft),
+            SizedBox(width: AppDimens.md),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -261,27 +363,26 @@ class _Row extends StatelessWidget {
                   Text(
                     label,
                     style: AppTextStyles.labelMedium.copyWith(
-                      fontSize: 14.sp,
+                      fontSize  : 14.sp,
                       fontWeight: FontWeight.w600,
-                      color: labelColor ?? AppColors.dark,
+                      color     : AppColors.dark,
                     ),
                   ),
-                  if (subtitle != null) ...[
-                    const SizedBox(height: 2),
+                  if (sousTitre != null && sousTitre.isNotEmpty) ...[
+                    SizedBox(height: 2.h),
                     Text(
-                      subtitle!,
-                      style: AppTextStyles.bodySmall.copyWith(
-                        color: AppColors.grey400,
-                        fontSize: 12.sp,
-                      ),
+                      sousTitre,
+                      maxLines : 1,
+                      overflow : TextOverflow.ellipsis,
+                      style: AppTextStyles.caption
+                          .copyWith(color: AppColors.textMuted),
                     ),
                   ],
                 ],
               ),
             ),
-            if (onTap != null && labelColor == null)
-              Icon(Icons.chevron_right,
-                  size: 18.r, color: AppColors.grey300),
+            Icon(Icons.chevron_right,
+                size: 18.r, color: AppColors.grey400),
           ],
         ),
       ),
@@ -289,67 +390,69 @@ class _Row extends StatelessWidget {
   }
 }
 
-// ── Ligne avec toggle ─────────────────────────────────────
-class _ToggleRow extends StatelessWidget {
-  const _ToggleRow({
-    required this.icon,
-    required this.label,
-    required this.value,
-    required this.onChanged,
-  });
-
-  final IconData icon;
-  final String label;
-  final bool value;
-  final ValueChanged<bool> onChanged;
+// ── Carte « Devenir coursier » ────────────────────────────────
+/// Seule carte sombre de l'écran, et seul endroit de l'application
+/// client où YAA peut recruter ses coursiers. Le contraste attire
+/// l'œil sans avoir besoin de crier.
+class _CarteCoursier extends StatelessWidget {
+  const _CarteCoursier({required this.onTap});
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.symmetric(
-        horizontal: AppDimens.screenPadding,
-        vertical: 10.h,
-      ),
-      child: Row(
-        children: [
-          Icon(icon, size: 20.r, color: AppColors.grey600),
-          SizedBox(width: 16.w),
-          Expanded(
-            child: Text(
-              label,
-              style: AppTextStyles.labelMedium.copyWith(
-                fontSize: 14.sp,
-                fontWeight: FontWeight.w600,
-                color: AppColors.dark,
+    return GestureDetector(
+      onTap    : onTap,
+      behavior : HitTestBehavior.opaque,
+      child: Container(
+        margin : EdgeInsets.symmetric(horizontal: AppDimens.screenPadding),
+        padding: EdgeInsets.symmetric(
+          horizontal: AppDimens.md,
+          vertical  : AppDimens.lg,
+        ),
+        decoration: BoxDecoration(
+          color        : AppColors.primary,
+          borderRadius : BorderRadius.circular(AppDimens.radiusLg),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width  : 36.r,
+              height : 36.r,
+              decoration: BoxDecoration(
+                color : AppColors.secondary,
+                shape : BoxShape.circle,
+              ),
+              child: Icon(Icons.two_wheeler_rounded,
+                  color: Colors.white, size: 20.r),
+            ),
+            SizedBox(width: AppDimens.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Devenir coursier YAA',
+                    style: AppTextStyles.labelMedium.copyWith(
+                      fontSize  : 14.sp,
+                      fontWeight: FontWeight.w700,
+                      color     : Colors.white,
+                    ),
+                  ),
+                  SizedBox(height: 2.h),
+                  Text(
+                    'Roulez, livrez, gagnez',
+                    style: AppTextStyles.caption.copyWith(
+                      color: Colors.white.withValues(alpha: 0.75),
+                    ),
+                  ),
+                ],
               ),
             ),
-          ),
-          Transform.scale(
-            scale: 0.85,
-            child: Switch(
-              value: value,
-              onChanged: onChanged,
-              activeThumbColor: Colors.white,
-              activeTrackColor: AppColors.dark,
-              trackOutlineColor:
-                  WidgetStateProperty.all(Colors.transparent),
-            ),
-          ),
-        ],
+            Icon(Icons.chevron_right,
+                size: 18.r, color: AppColors.secondary),
+          ],
+        ),
       ),
-    );
-  }
-}
-
-// ── Divider interne ───────────────────────────────────────
-class _Divider extends StatelessWidget {
-  const _Divider();
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(left: 52.w),
-      child: Divider(height: 1, color: AppColors.grey200),
     );
   }
 }
