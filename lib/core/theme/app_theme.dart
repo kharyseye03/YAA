@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter/services.dart';
 import '../constants/constants.dart';
 
@@ -26,7 +27,7 @@ abstract final class AppTheme {
       scaffoldBackgroundColor: AppColors.scaffold,
 
       // ── AppBar ──────────────────────────────────────────
-      appBarTheme: const AppBarTheme(
+      appBarTheme: AppBarTheme(
         elevation: 0,
         scrolledUnderElevation: 0.5,
         centerTitle: true,
@@ -35,7 +36,7 @@ abstract final class AppTheme {
         foregroundColor: AppColors.dark,
         titleTextStyle: TextStyle(
           fontFamily: 'PlusJakartaSans',
-          fontSize: 18,
+          fontSize: 18.sp,
           fontWeight: FontWeight.w600,
           color: AppColors.dark,
         ),
@@ -129,19 +130,19 @@ abstract final class AppTheme {
       ),
 
       // ── Bottom Navigation ──────────────────────────────
-      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+      bottomNavigationBarTheme: BottomNavigationBarThemeData(
         type: BottomNavigationBarType.fixed,
         backgroundColor: AppColors.white,
         selectedItemColor: AppColors.primary,
         unselectedItemColor: AppColors.grey500,
         selectedLabelStyle: TextStyle(
           fontFamily: 'PlusJakartaSans',
-          fontSize: 11,
+          fontSize: 11.sp,
           fontWeight: FontWeight.w600,
         ),
         unselectedLabelStyle: TextStyle(
           fontFamily: 'PlusJakartaSans',
-          fontSize: 11,
+          fontSize: 11.sp,
           fontWeight: FontWeight.w400,
         ),
         elevation: 8,

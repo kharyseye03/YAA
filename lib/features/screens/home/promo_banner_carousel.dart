@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimens.dart';
 import '../../../core/constants/app_text_styles.dart';
@@ -55,14 +56,14 @@ class _PromoBannerCarouselState extends State<PromoBannerCarousel> {
       children: [
         // ── Cartes ──────────────────────────────────────────────
         SizedBox(
-          height: 150,
+          height: 150.h,
           child: PageView.builder(
             controller: _controller,
             itemCount: widget.banners.length,
             padEnds: false, // aligne la 1ère carte à gauche
             onPageChanged: (i) => setState(() => _currentPage = i),
             itemBuilder: (_, i) => Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 6),
+              padding: EdgeInsets.symmetric(horizontal: 6.w),
               child: _BannerCard(
                 data: widget.banners[i],
                 onTap: () => widget.onBannerTap?.call(i),
@@ -80,9 +81,9 @@ class _PromoBannerCarouselState extends State<PromoBannerCarousel> {
             final isActive = i == _currentPage;
             return AnimatedContainer(
               duration: const Duration(milliseconds: 300),
-              margin: const EdgeInsets.symmetric(horizontal: 3),
+              margin: EdgeInsets.symmetric(horizontal: 3.w),
               width: isActive ? 20 : 6,
-              height: 6,
+              height: 6.h,
               decoration: BoxDecoration(
                 color: isActive
                     ? widget.banners[_currentPage].badgeColor
@@ -108,7 +109,7 @@ class _BannerCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(18.r),
         child: Stack(
           fit: StackFit.expand,
           children: [
@@ -140,24 +141,24 @@ class _BannerCard extends StatelessWidget {
 
             // ── Contenu texte ──────────────────────────────────
             Padding(
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.all(16.r),
               child: Column(
                 crossAxisAlignment : CrossAxisAlignment.start,
                 mainAxisAlignment  : MainAxisAlignment.spaceBetween,
                 children: [
                   // Badge en haut à gauche
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 4),
+                    padding: EdgeInsets.symmetric(
+                        horizontal: 10.w, vertical: 4.h),
                     decoration: BoxDecoration(
                       color        : data.badgeColor,
-                      borderRadius : BorderRadius.circular(6),
+                      borderRadius : BorderRadius.circular(6.r),
                     ),
                     child: Text(
                       data.badge.toUpperCase(),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily    : 'PlusJakartaSans',
-                        fontSize      : 10,
+                        fontSize      : 10.sp,
                         fontWeight    : FontWeight.w800,
                         color         : Colors.white,
                         letterSpacing : 0.5,
@@ -173,19 +174,19 @@ class _BannerCard extends StatelessWidget {
                         data.title,
                         style: AppTextStyles.labelLarge.copyWith(
                           color      : Colors.white,
-                          fontSize   : 19,
+                          fontSize   : 19.sp,
                           fontWeight : FontWeight.w800,
                           height     : 1.15,
                         ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      const SizedBox(height: 3),
+                      SizedBox(height: 3.h),
                       Text(
                         data.subtitle,
                         style: AppTextStyles.bodySmall.copyWith(
                           color    : Colors.white.withValues(alpha: 0.9),
-                          fontSize : 12,
+                          fontSize : 12.sp,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimens.dart';
@@ -41,7 +42,7 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
               top    : MediaQuery.of(context).padding.top + 12,
               left   : AppDimens.screenPadding,
               right  : AppDimens.screenPadding,
-              bottom : 16,
+              bottom : 16.h,
             ),
             child: Row(
               children: [
@@ -49,17 +50,17 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
                   onTap    : () => Navigator.of(context).pop(),
                   behavior : HitTestBehavior.opaque,
                   child: Container(
-                    width  : 38,
-                    height : 38,
+                    width  : 38.r,
+                    height : 38.r,
                     decoration: BoxDecoration(
                       color        : AppColors.grey100,
-                      borderRadius : BorderRadius.circular(10),
+                      borderRadius : BorderRadius.circular(10.r),
                     ),
-                    child: const Icon(Icons.chevron_left_rounded,
-                        color: AppColors.dark, size: 22),
+                    child: Icon(Icons.chevron_left_rounded,
+                        color: AppColors.dark, size: 22.r),
                   ),
                 ),
-                const SizedBox(width: 12),
+                SizedBox(width: 12.w),
                 Text(
                   'Historique',
                   style: AppTextStyles.h3.copyWith(
@@ -70,8 +71,8 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
                 const Spacer(),
                 if (list.isNotEmpty)
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 5),
+                    padding: EdgeInsets.symmetric(
+                        horizontal: 12.w, vertical: 5.h),
                     decoration: BoxDecoration(
                       color        : AppColors.grey100,
                       borderRadius : BorderRadius.circular(AppDimens.radiusFull),
@@ -81,7 +82,7 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
                       style: AppTextStyles.labelSmall.copyWith(
                         color      : AppColors.dark,
                         fontWeight : FontWeight.w700,
-                        fontSize   : 13,
+                        fontSize   : 13.sp,
                       ),
                     ),
                   ),
@@ -96,13 +97,13 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
             Container(
               width   : double.infinity,
               padding : EdgeInsets.symmetric(
-                  horizontal: AppDimens.screenPadding, vertical: 10),
+                  horizontal: AppDimens.screenPadding, vertical: 10.h),
               color   : AppColors.errorLight,
               child   : Row(
                 children: [
-                  const Icon(Icons.error_outline_rounded,
-                      color: AppColors.error, size: 16),
-                  const SizedBox(width: 8),
+                  Icon(Icons.error_outline_rounded,
+                      color: AppColors.error, size: 16.r),
+                  SizedBox(width: 8.w),
                   Expanded(
                     child: Text(state.error!,
                         style: AppTextStyles.bodySmall
@@ -129,7 +130,7 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
                           ),
                           itemCount       : list.length,
                           separatorBuilder: (_, __) =>
-                              const SizedBox(height: 12),
+                              SizedBox(height: 12.h),
                           // Mêmes sheets que « Mes commandes » : une
                           // commande terminée doit se lire comme une
                           // commande en cours, pas dans un autre écran.
@@ -166,16 +167,16 @@ class _EmptyHistory extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width  : 72,
-            height : 72,
+            width  : 72.r,
+            height : 72.r,
             decoration: const BoxDecoration(
               color : AppColors.grey100,
               shape : BoxShape.circle,
             ),
-            child: const Icon(Icons.history_rounded,
-                size: 32, color: AppColors.grey400),
+            child: Icon(Icons.history_rounded,
+                size: 32.r, color: AppColors.grey400),
           ),
-          const SizedBox(height: 14),
+          SizedBox(height: 14.h),
           Text(
             'Aucune commande terminée',
             style: AppTextStyles.labelMedium.copyWith(
@@ -183,7 +184,7 @@ class _EmptyHistory extends StatelessWidget {
               color      : AppColors.dark,
             ),
           ),
-          const SizedBox(height: 4),
+          SizedBox(height: 4.h),
           Text(
             'Vos commandes livrées apparaîtront ici.',
             style: AppTextStyles.bodySmall.copyWith(color: AppColors.grey500),

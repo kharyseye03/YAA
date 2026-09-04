@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import '../../../core/errors/messages_erreur.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../features/auth/providers/auth_notifier.dart';
 import '../../../model/cart/cart_model.dart';
@@ -56,7 +57,7 @@ class CartNotifier extends StateNotifier<CartState> {
       debugPrint('❌ loadCart: $e');
       state = state.copyWith(
         isLoading: false,
-        error: e.toString().replaceAll('Exception: ', ''),
+        error: MessagesErreur.depuisException(e),
       );
     }
   }
@@ -77,7 +78,7 @@ class CartNotifier extends StateNotifier<CartState> {
       debugPrint('❌ addToCart: $e');
       state = state.copyWith(
         isAdding: false,
-        error: e.toString().replaceAll('Exception: ', ''),
+        error: MessagesErreur.depuisException(e),
       );
       return false;
     }
@@ -92,7 +93,7 @@ class CartNotifier extends StateNotifier<CartState> {
     } catch (e) {
       debugPrint('❌ removeItem: $e');
       state = state.copyWith(
-        error: e.toString().replaceAll('Exception: ', ''),
+        error: MessagesErreur.depuisException(e),
       );
     }
   }
@@ -108,7 +109,7 @@ class CartNotifier extends StateNotifier<CartState> {
     } catch (e) {
       debugPrint('❌ clearCartFromServer: $e');
       state = state.copyWith(
-        error: e.toString().replaceAll('Exception: ', ''),
+        error: MessagesErreur.depuisException(e),
       );
     }
   }

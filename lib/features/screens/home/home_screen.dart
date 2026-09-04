@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -126,7 +127,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   Widget _buildHomeContent() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.only(bottom: 90),
+      padding: EdgeInsets.only(bottom: 90.h),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -254,7 +255,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           }),
           SizedBox(height: AppDimens.md),
           SizedBox(
-            height: 200,
+            height: 200.h,
             child: ref.watch(nearbyStructuresProvider).when(
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (_, __) => Center(
@@ -334,7 +335,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             GestureDetector(
               onTap: onSeeAll,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 5.h),
                 decoration: BoxDecoration(
                   color: AppColors.grey100,
                   borderRadius: BorderRadius.circular(AppDimens.radiusFull),
@@ -347,11 +348,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       style: AppTextStyles.bodySmall.copyWith(
                         color: AppColors.dark,
                         fontWeight: FontWeight.w600,
-                        fontSize: 12,
+                        fontSize: 12.sp,
                       ),
                     ),
-                    const SizedBox(width: 3),
-                    Icon(Icons.chevron_right, size: 15, color: AppColors.dark),
+                    SizedBox(width: 3.w),
+                    Icon(Icons.chevron_right, size: 15.r, color: AppColors.dark),
                   ],
                 ),
               ),

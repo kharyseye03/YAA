@@ -18,9 +18,12 @@ abstract final class AppColors {
   static const Color primarySurface = Color(0xFFEEF3F8);
 
   /// --brand-orange
-  static const Color secondary = Color(0xFFF47A12);
+  static const Color secondary = Color(0xFFFF6608);
   /// --brand-orange-hover
   static const Color secondaryDark = Color(0xFFDD6808);
+  /// Fin du dégradé des cartes de service : plus profond que
+  /// secondaryDark, pour que le blanc du texte tienne jusqu'en bas.
+  static const Color secondaryDeep = Color(0xFFCC4400);
   /// --brand-orange-soft
   static const Color secondaryLight = Color(0xFFFFF3E8);
 

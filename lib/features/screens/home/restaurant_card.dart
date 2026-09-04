@@ -1,6 +1,7 @@
 import '../../../shared/widgets/image_reseau.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimens.dart';
 import '../../../core/constants/app_text_styles.dart';
@@ -40,7 +41,7 @@ class RestaurantCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: SizedBox(
-        width: 270,
+        width: 270.w,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -51,21 +52,21 @@ class RestaurantCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(AppDimens.radiusLg),
                   child: ImageReseau(
                     url     : restaurant.imageUrl,
-                    height  : 130,
-                    width   : 270,
+                    height  : 130.h,
+                    width   : 270.w,
                     radius  : AppDimens.radiusLg,
                     fallback: Container(
-                      height: 130,
-                      width: 270,
+                      height: 130.h,
+                      width: 270.w,
                       decoration: BoxDecoration(
                         color: AppColors.grey200,
                         borderRadius:
                             BorderRadius.circular(AppDimens.radiusLg),
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.storefront_outlined,
                         color: AppColors.grey400,
-                        size: 40,
+                        size: 40.r,
                       ),
                     ),
                   ),
@@ -73,14 +74,14 @@ class RestaurantCard extends StatelessWidget {
 
                 // Bouton favori (cœur)
                 Positioned(
-                  top: 10,
-                  right: 10,
+                  top: 10.h,
+                  right: 10.w,
                   child: GestureDetector(
                     onTap: onFavoriteTap,
                     child: SvgPicture.asset(
                       'assets/icones/heart.svg',
-                      width: 22,
-                      height: 22,
+                      width: 22.r,
+                      height: 22.r,
                       colorFilter: const ColorFilter.mode(
                         Colors.white,
                         BlendMode.srcIn,
@@ -91,7 +92,7 @@ class RestaurantCard extends StatelessWidget {
               ],
             ),
 
-            const SizedBox(height: 10),
+            SizedBox(height: 10.h),
 
             // ── Nom + Rating ─────────────────────────────────────
             Row(
@@ -102,20 +103,20 @@ class RestaurantCard extends StatelessWidget {
                     restaurant.name,
                     style: AppTextStyles.labelMedium.copyWith(
                       fontWeight: FontWeight.w700,
-                      fontSize: 15,
+                      fontSize: 15.sp,
                       color: AppColors.dark,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                const SizedBox(width: 8),
-                Icon(Icons.star, size: 14, color: Colors.black),
-                const SizedBox(width: 3),
+                SizedBox(width: 8.w),
+                Icon(Icons.star, size: 14.r, color: Colors.black),
+                SizedBox(width: 3.w),
                 Text(
                   restaurant.rating.toStringAsFixed(1),
                   style: AppTextStyles.bodySmall.copyWith(
-                    fontSize: 13,
+                    fontSize: 13.sp,
                     fontWeight: FontWeight.w600,
                     color: AppColors.dark,
                   ),
@@ -123,37 +124,37 @@ class RestaurantCard extends StatelessWidget {
               ],
             ),
 
-            const SizedBox(height: 4),
+            SizedBox(height: 4.h),
 
             // ── Temps de livraison ────────────────────────────────
             Row(
               children: [
                 SvgPicture.asset(
                   'assets/icones/motorcycle-fill.svg',
-                  width: 16,
-                  height: 16,
+                  width: 16.r,
+                  height: 16.r,
                   colorFilter: const ColorFilter.mode(
                     AppColors.black,
                     BlendMode.srcIn,
                   ),
                 ),
-                const SizedBox(width: 5),
+                SizedBox(width: 5.w),
                 Text(
                   restaurant.deliveryTime,
                   style: AppTextStyles.bodySmall.copyWith(
-                    fontSize: 12,
+                    fontSize: 12.sp,
                     color: AppColors.grey500,
                   ),
                 ),
                 if (restaurant.distance != null) ...[
-                  const SizedBox(width: 8),
-                  const Icon(Icons.location_on_outlined,
-                      size: 14, color: AppColors.grey500),
+                  SizedBox(width: 8.w),
+                  Icon(Icons.location_on_outlined,
+                      size: 14.r, color: AppColors.grey500),
                   const SizedBox(width: 2),
                   Text(
                     restaurant.distance!,
                     style: AppTextStyles.bodySmall.copyWith(
-                      fontSize: 12,
+                      fontSize: 12.sp,
                       color: AppColors.grey500,
                     ),
                   ),

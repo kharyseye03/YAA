@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_colors.dart';
@@ -112,9 +113,9 @@ class _MissionDetailSheetState extends ConsumerState<_MissionDetailSheet> {
               children: List.generate(
                 5,
                 (_) => Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 3),
+                  padding: EdgeInsets.symmetric(horizontal: 3.w),
                   child: Icon(Icons.star_rounded,
-                      size: 30, color: Colors.amber.shade600),
+                      size: 30.r, color: Colors.amber.shade600),
                 ),
               ),
             ),
@@ -309,9 +310,9 @@ class ContenuCommande extends StatelessWidget {
         padding: EdgeInsets.symmetric(vertical: AppDimens.lg),
         child: Center(
           child: SizedBox(
-            width  : 20,
-            height : 20,
-            child  : CircularProgressIndicator(strokeWidth: 2),
+            width  : 20.r,
+            height : 20.r,
+            child  : CircularProgressIndicator(strokeWidth: 2.r),
           ),
         ),
       );
@@ -322,8 +323,8 @@ class ContenuCommande extends StatelessWidget {
       children: [
         Row(
           children: [
-            const Icon(Icons.storefront_rounded,
-                size: 18, color: AppColors.primary),
+            Icon(Icons.storefront_rounded,
+                size: 18.r, color: AppColors.primary),
             SizedBox(width: AppDimens.sm),
             Expanded(
               child: Text(

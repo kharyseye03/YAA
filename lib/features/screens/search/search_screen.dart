@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimens.dart';
 import '../../../core/constants/app_text_styles.dart';
@@ -71,7 +72,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             prefixIcon: PhosphorIcon(
               PhosphorIcons.magnifyingGlass(),
               color: AppColors.grey400,
-              size: 20,
+              size: 20.r,
             ),
           ),
           onChanged: _onChanged,
@@ -106,8 +107,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             ].map((tag) => GestureDetector(
               onTap: () => _onTagTap(tag),
               child: Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 14, vertical: 8),
+                padding: EdgeInsets.symmetric(
+                    horizontal: 14.w, vertical: 8.h),
                 decoration: BoxDecoration(
                   color: AppColors.grey100,
                   borderRadius:
@@ -194,19 +195,19 @@ class _ResultCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(AppDimens.radiusMd),
             child: ImageReseau(
               url: structure.logoUrl,
-              width: 64,
-              height: 64,
+              width: 64.r,
+              height: 64.r,
               fit: BoxFit.cover,
               fallback: Container(
-                width: 64,
-                height: 64,
+                width: 64.r,
+                height: 64.r,
                 color: AppColors.grey100,
-                child: const Icon(Icons.storefront_outlined,
-                    color: AppColors.grey400, size: 26),
+                child: Icon(Icons.storefront_outlined,
+                    color: AppColors.grey400, size: 26.r),
               ),
             ),
           ),
-          const SizedBox(width: 12),
+          SizedBox(width: 12.w),
 
           // Infos
           Expanded(
@@ -217,13 +218,13 @@ class _ResultCard extends StatelessWidget {
                   structure.name,
                   style: AppTextStyles.labelMedium.copyWith(
                     fontWeight: FontWeight.w700,
-                    fontSize: 15,
+                    fontSize: 15.sp,
                     color: AppColors.dark,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 3),
+                SizedBox(height: 3.h),
                 Text(
                   '${structure.categorie} • ${structure.adresse}',
                   style: AppTextStyles.bodySmall.copyWith(
@@ -232,28 +233,28 @@ class _ResultCard extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 3),
+                SizedBox(height: 3.h),
                 Row(
                   children: [
                     Icon(Icons.star_rounded,
-                        size: 14, color: Colors.amber.shade600),
+                        size: 14.r, color: Colors.amber.shade600),
                     const SizedBox(width: 2),
                     Text(
                       '${structure.nombreEtoile}',
                       style: AppTextStyles.bodySmall.copyWith(
-                        fontSize: 12,
+                        fontSize: 12.sp,
                         fontWeight: FontWeight.w600,
                         color: AppColors.dark,
                       ),
                     ),
-                    const SizedBox(width: 10),
-                    const Icon(Icons.access_time_rounded,
-                        size: 13, color: AppColors.grey500),
-                    const SizedBox(width: 3),
+                    SizedBox(width: 10.w),
+                    Icon(Icons.access_time_rounded,
+                        size: 13.r, color: AppColors.grey500),
+                    SizedBox(width: 3.w),
                     Text(
                       structure.tempsLivraison,
                       style: AppTextStyles.bodySmall.copyWith(
-                        fontSize: 12,
+                        fontSize: 12.sp,
                         color: AppColors.grey500,
                       ),
                     ),
@@ -263,8 +264,8 @@ class _ResultCard extends StatelessWidget {
             ),
           ),
 
-          const Icon(Icons.chevron_right_rounded,
-              color: AppColors.grey400, size: 22),
+          Icon(Icons.chevron_right_rounded,
+              color: AppColors.grey400, size: 22.r),
         ],
       ),
     );

@@ -1,4 +1,5 @@
 import '../../../core/utils/phone_formatter.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -73,8 +74,8 @@ class _EditPersonalInfoScreenState
   void _showImageSourceSheet() {
     showModalBottomSheet(
       context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
       ),
       builder: (_) => SafeArea(
         child: Padding(
@@ -83,11 +84,11 @@ class _EditPersonalInfoScreenState
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
-                width: 40, height: 4,
+                width: 40.w, height: 4.h,
                 margin: EdgeInsets.only(bottom: AppDimens.lg),
                 decoration: BoxDecoration(
                   color: AppColors.grey300,
-                  borderRadius: BorderRadius.circular(2),
+                  borderRadius: BorderRadius.circular(2.r),
                 ),
               ),
               Text('Choisir une photo', style: AppTextStyles.h4.copyWith(fontWeight: FontWeight.w700)),
@@ -121,12 +122,12 @@ class _EditPersonalInfoScreenState
       child: Column(
         children: [
           Container(
-            width: 64, height: 64,
+            width: 64.r, height: 64.r,
             decoration: BoxDecoration(
               color: AppColors.primarySurface,
               borderRadius: BorderRadius.circular(AppDimens.radiusMd),
             ),
-            child: Icon(icon, color: AppColors.primary, size: 28),
+            child: Icon(icon, color: AppColors.primary, size: 28.r),
           ),
           SizedBox(height: AppDimens.sm),
           Text(label, style: AppTextStyles.bodySmall.copyWith(fontWeight: FontWeight.w500)),
@@ -196,15 +197,15 @@ class _EditPersonalInfoScreenState
                                 : null,
                           ),
                           Positioned(
-                            bottom: 0, right: 0,
+                            bottom: 0.h, right: 0.w,
                             child: Container(
-                              width: 32, height: 32,
+                              width: 32.r, height: 32.r,
                               decoration: BoxDecoration(
                                 color: AppColors.primary,
                                 shape: BoxShape.circle,
                                 border: Border.all(color: AppColors.white, width: 2),
                               ),
-                              child: const Icon(Icons.camera_alt_outlined, color: AppColors.white, size: 16),
+                              child: Icon(Icons.camera_alt_outlined, color: AppColors.white, size: 16.r),
                             ),
                           ),
                         ],
@@ -253,7 +254,7 @@ class _EditPersonalInfoScreenState
             padding: EdgeInsets.only(
               left   : AppDimens.screenPadding,
               right  : AppDimens.screenPadding,
-              top    : 12,
+              top    : 12.h,
               bottom : MediaQuery.of(context).padding.bottom + 12,
             ),
             decoration: const BoxDecoration(
@@ -279,7 +280,7 @@ class _EditPersonalInfoScreenState
             top    : MediaQuery.of(context).padding.top + 12,
             left   : AppDimens.screenPadding,
             right  : AppDimens.screenPadding,
-            bottom : 16,
+            bottom : 16.h,
           ),
           child: Row(
             children: [
@@ -287,20 +288,20 @@ class _EditPersonalInfoScreenState
                 onTap    : () => Navigator.of(context).pop(),
                 behavior : HitTestBehavior.opaque,
                 child: Container(
-                  width  : 38,
-                  height : 38,
+                  width  : 38.r,
+                  height : 38.r,
                   decoration: BoxDecoration(
                     color        : AppColors.grey100,
-                    borderRadius : BorderRadius.circular(10),
+                    borderRadius : BorderRadius.circular(10.r),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.chevron_left_rounded,
                     color : AppColors.dark,
-                    size  : 22,
+                    size  : 22.r,
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: 12.w),
               Text(
                 'Modifier mes informations',
                 style: AppTextStyles.h3.copyWith(

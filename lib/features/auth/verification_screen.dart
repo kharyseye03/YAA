@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -139,7 +140,7 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen> {
                     Text(
                       'Vérifiez votre numéro',
                       style: AppTextStyles.h1.copyWith(
-                        fontSize: 28,
+                        fontSize: 28.sp,
                         fontWeight: FontWeight.w800,
                         color: AppColors.primary,
                       ),
@@ -257,7 +258,7 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen> {
         return Container(
           width: boxSize,
           height: boxSize,
-          margin: const EdgeInsets.symmetric(horizontal: 5),
+          margin: EdgeInsets.symmetric(horizontal: 5.w),
           decoration: BoxDecoration(
             color: isActive
                 ? AppColors.primarySurface
@@ -277,7 +278,7 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen> {
               _code[index],
               style: TextStyle(
                 fontFamily: 'PlusJakartaSans',
-                fontSize: 24,
+                fontSize: 24.sp,
                 fontWeight: FontWeight.w700,
                 color: AppColors.dark,
               ),
@@ -308,7 +309,7 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen> {
       mainAxisAlignment: MainAxisAlignment.center,
       children: keys.map((key) {
         if (key.isEmpty) {
-          return const SizedBox(width: 90, height: 56);
+          return SizedBox(width: 90.w, height: 56.h);
         }
         return _buildKey(key);
       }).toList(),
@@ -321,9 +322,9 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen> {
     return GestureDetector(
       onTap: () => isBackspace ? _onBackspace() : _onKeyTap(value),
       child: Container(
-        width: 90,
-        height: 56,
-        margin: const EdgeInsets.symmetric(horizontal: 6),
+        width: 90.w,
+        height: 56.h,
+        margin: EdgeInsets.symmetric(horizontal: 6.w),
         decoration: BoxDecoration(
           color: AppColors.grey100,
           borderRadius: BorderRadius.circular(AppDimens.radiusMd),
@@ -333,13 +334,13 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen> {
               ? Icon(
             Icons.backspace_outlined,
             color: AppColors.grey700,
-            size: 22,
+            size: 22.r,
           )
               : Text(
             value,
             style: TextStyle(
               fontFamily: 'PlusJakartaSans',
-              fontSize: 22,
+              fontSize: 22.sp,
               fontWeight: FontWeight.w600,
               color: AppColors.dark,
             ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
@@ -38,43 +39,43 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   children: [
                     user.isLoading
                         ? Container(
-                            width: 88,
-                            height: 88,
+                            width: 88.r,
+                            height: 88.r,
                             decoration: const BoxDecoration(
                               shape: BoxShape.circle,
                               color: AppColors.grey100,
                             ),
-                            child: const Center(
+                            child: Center(
                               child: CircularProgressIndicator(
-                                  strokeWidth: 2,
+                                  strokeWidth: 2.r,
                                   color: AppColors.primary),
                             ),
                           )
                         : UserAvatar(imageUrl: profile?.imageUrl),
                     Positioned(
-                      bottom: 0,
-                      right: 0,
+                      bottom: 0.h,
+                      right: 0.w,
                       child: GestureDetector(
                         onTap: () => context.pushNamed(
                             RouteNames.editPersonalInfo),
                         child: Container(
-                          width: 28,
-                          height: 28,
+                          width: 28.r,
+                          height: 28.r,
                           decoration: BoxDecoration(
                             color: AppColors.primary,
                             shape: BoxShape.circle,
                             border: Border.all(
                                 color: Colors.white, width: 2),
                           ),
-                          child: const Icon(Icons.edit_rounded,
-                              color: Colors.white, size: 13),
+                          child: Icon(Icons.edit_rounded,
+                              color: Colors.white, size: 13.r),
                         ),
                       ),
                     ),
                   ],
                 ),
 
-                const SizedBox(height: 14),
+                SizedBox(height: 14.h),
 
                 Text(
                   profile?.fullName ?? '—',
@@ -84,20 +85,20 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   ),
                 ),
 
-                const SizedBox(height: 4),
+                SizedBox(height: 4.h),
 
                 Text(
                   profile?.email ?? '—',
                   style: AppTextStyles.bodySmall.copyWith(
                     color: AppColors.grey400,
-                    fontSize: 13,
+                    fontSize: 13.sp,
                   ),
                 ),
               ],
             ),
           ),
 
-          const SizedBox(height: 36),
+          SizedBox(height: 36.h),
           const Divider(height: 1, color: AppColors.grey200),
 
           // ── Infos personnelles ────────────────────────
@@ -120,9 +121,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             onTap: () => context.pushNamed(RouteNames.personalInfo),
           ),
 
-          const SizedBox(height: 8),
+          SizedBox(height: 8.h),
           const Divider(height: 1, color: AppColors.grey200),
-          const SizedBox(height: 8),
+          SizedBox(height: 8.h),
 
           // ── Historique ────────────────────────────────
           _Row(
@@ -132,9 +133,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             onTap: () => context.pushNamed(RouteNames.orderHistory),
           ),
 
-          const SizedBox(height: 8),
+          SizedBox(height: 8.h),
           const Divider(height: 1, color: AppColors.grey200),
-          const SizedBox(height: 8),
+          SizedBox(height: 8.h),
 
           // ── Préférences ───────────────────────────────
           _ToggleRow(
@@ -157,9 +158,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             onTap: () => context.pushNamed(RouteNames.terms),
           ),
 
-          const SizedBox(height: 8),
+          SizedBox(height: 8.h),
           const Divider(height: 1, color: AppColors.grey200),
-          const SizedBox(height: 8),
+          SizedBox(height: 8.h),
 
           // ── Déconnexion ───────────────────────────────
           _Row(
@@ -172,18 +173,18 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 context: context,
                 builder: (_) => AlertDialog(
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(16.r),
                   ),
-                  title: const Text(
+                  title: Text(
                     'Se déconnecter',
                     style: TextStyle(
                       fontWeight: FontWeight.w700,
-                      fontSize: 17,
+                      fontSize: 17.sp,
                     ),
                   ),
-                  content: const Text(
+                  content: Text(
                     'Êtes-vous sûr de vouloir vous déconnecter ?',
-                    style: TextStyle(fontSize: 14, color: Color(0xFF666666)),
+                    style: TextStyle(fontSize: 14.sp, color: Color(0xFF666666)),
                   ),
                   actions: [
                     TextButton(
@@ -220,7 +221,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             onTap: () {},
           ),
 
-          const SizedBox(height: 80),
+          SizedBox(height: 80.h),
         ],
       ),
     );
@@ -253,14 +254,14 @@ class _Row extends StatelessWidget {
       child: Padding(
         padding: EdgeInsets.symmetric(
           horizontal: AppDimens.screenPadding,
-          vertical: 14,
+          vertical: 14.h,
         ),
         child: Row(
           children: [
             Icon(icon,
-                size: 20,
+                size: 20.r,
                 color: iconColor ?? AppColors.grey600),
-            const SizedBox(width: 16),
+            SizedBox(width: 16.w),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -268,7 +269,7 @@ class _Row extends StatelessWidget {
                   Text(
                     label,
                     style: AppTextStyles.labelMedium.copyWith(
-                      fontSize: 14,
+                      fontSize: 14.sp,
                       fontWeight: FontWeight.w600,
                       color: labelColor ?? AppColors.dark,
                     ),
@@ -279,7 +280,7 @@ class _Row extends StatelessWidget {
                       subtitle!,
                       style: AppTextStyles.bodySmall.copyWith(
                         color: AppColors.grey400,
-                        fontSize: 12,
+                        fontSize: 12.sp,
                       ),
                     ),
                   ],
@@ -287,8 +288,8 @@ class _Row extends StatelessWidget {
               ),
             ),
             if (onTap != null && labelColor == null)
-              const Icon(Icons.chevron_right,
-                  size: 18, color: AppColors.grey300),
+              Icon(Icons.chevron_right,
+                  size: 18.r, color: AppColors.grey300),
           ],
         ),
       ),
@@ -315,17 +316,17 @@ class _ToggleRow extends StatelessWidget {
     return Padding(
       padding: EdgeInsets.symmetric(
         horizontal: AppDimens.screenPadding,
-        vertical: 10,
+        vertical: 10.h,
       ),
       child: Row(
         children: [
-          Icon(icon, size: 20, color: AppColors.grey600),
-          const SizedBox(width: 16),
+          Icon(icon, size: 20.r, color: AppColors.grey600),
+          SizedBox(width: 16.w),
           Expanded(
             child: Text(
               label,
               style: AppTextStyles.labelMedium.copyWith(
-                fontSize: 14,
+                fontSize: 14.sp,
                 fontWeight: FontWeight.w600,
                 color: AppColors.dark,
               ),
@@ -354,8 +355,8 @@ class _Divider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.only(left: 52),
+    return Padding(
+      padding: EdgeInsets.only(left: 52.w),
       child: Divider(height: 1, color: AppColors.grey200),
     );
   }

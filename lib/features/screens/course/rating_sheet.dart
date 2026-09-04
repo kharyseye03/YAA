@@ -1,6 +1,8 @@
 import '../../../shared/widgets/image_reseau.dart';
+import '../../../core/errors/messages_erreur.dart';
 import '../../../service/storage/notation_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimens.dart';
 import '../../../core/constants/app_text_styles.dart';
@@ -84,7 +86,7 @@ class _RatingSheetState extends State<_RatingSheet> {
       if (!mounted) return;
       setState(() {
         _isSubmitting = false;
-        _error        = e.toString().replaceAll('Exception: ', '');
+        _error        = MessagesErreur.depuisException(e);
       });
     }
   }
@@ -95,9 +97,9 @@ class _RatingSheetState extends State<_RatingSheet> {
     final photo = m.livreurPhotoUrl;
 
     return Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color        : Colors.white,
-        borderRadius : BorderRadius.vertical(top: Radius.circular(28)),
+        borderRadius : BorderRadius.vertical(top: Radius.circular(28.r)),
       ),
       child: SafeArea(
         top: false,
@@ -109,15 +111,15 @@ class _RatingSheetState extends State<_RatingSheet> {
             children: [
               // ── Avatar du coursier ────────────────────────
               Container(
-                width  : 78,
-                height : 78,
+                width  : 78.r,
+                height : 78.r,
                 decoration: BoxDecoration(
                   color : AppColors.primary,
                   shape : BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
                       color      : AppColors.primary.withValues(alpha: 0.25),
-                      blurRadius : 18,
+                      blurRadius : 18.r,
                       offset     : const Offset(0, 8),
                     ),
                   ],
@@ -125,13 +127,13 @@ class _RatingSheetState extends State<_RatingSheet> {
                 child: ClipOval(
                   child: photo != null
                       ? ImageReseau(url: photo,
-                          width: 78, height: 78, fit: BoxFit.cover,
+                          width: 78.r, height: 78.r, fit: BoxFit.cover,
                           fallback: _initiales())
                       : _initiales(),
                 ),
               ),
 
-              const SizedBox(height: 16),
+              SizedBox(height: 16.h),
 
               Text(
                 'Votre $_motService est terminée',
@@ -141,7 +143,7 @@ class _RatingSheetState extends State<_RatingSheet> {
                 ),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 4),
+              SizedBox(height: 4.h),
               Text(
                 m.hasLivreur
                     ? 'Comment s\'est passée votre $_motService '
@@ -152,7 +154,7 @@ class _RatingSheetState extends State<_RatingSheet> {
                     .copyWith(color: AppColors.grey500, height: 1.4),
               ),
 
-              const SizedBox(height: 22),
+              SizedBox(height: 22.h),
 
               // ── Étoiles ───────────────────────────────────
               Row(
@@ -171,7 +173,7 @@ class _RatingSheetState extends State<_RatingSheet> {
                     child: AnimatedContainer(
                       duration : const Duration(milliseconds: 150),
                       padding  : EdgeInsets.symmetric(
-                          horizontal: 6, vertical: active ? 0 : 3),
+                          horizontal: 6.w, vertical: active ? 0 : 3),
                       child: Icon(
                         active ? Icons.star_rounded : Icons.star_outline_rounded,
                         size  : active ? 46 : 40,
@@ -188,10 +190,10 @@ class _RatingSheetState extends State<_RatingSheet> {
               AnimatedSwitcher(
                 duration: const Duration(milliseconds: 200),
                 child: _note == 0
-                    ? const SizedBox(height: 22)
+                    ? SizedBox(height: 22.h)
                     : SizedBox(
                         key    : ValueKey(_note),
-                        height : 22,
+                        height : 22.h,
                         child  : Center(
                           child: Text(
                             _libelles[_note]!,
@@ -206,7 +208,7 @@ class _RatingSheetState extends State<_RatingSheet> {
 
               // ── Propositions rapides ──────────────────────
               if (_note > 0) ...[
-                const SizedBox(height: 14),
+                SizedBox(height: 14.h),
                 Wrap(
                   alignment : WrapAlignment.center,
                   spacing   : 8,
@@ -219,8 +221,8 @@ class _RatingSheetState extends State<_RatingSheet> {
                       }),
                       child: AnimatedContainer(
                         duration : const Duration(milliseconds: 150),
-                        padding  : const EdgeInsets.symmetric(
-                            horizontal: 14, vertical: 9),
+                        padding  : EdgeInsets.symmetric(
+                            horizontal: 14.w, vertical: 9.h),
                         decoration: BoxDecoration(
                           color : choisi
                               ? AppColors.primarySurface
@@ -253,19 +255,19 @@ class _RatingSheetState extends State<_RatingSheet> {
 
               // ── Erreur ────────────────────────────────────
               if (_error != null) ...[
-                const SizedBox(height: 14),
+                SizedBox(height: 14.h),
                 Container(
                   width   : double.infinity,
-                  padding : const EdgeInsets.all(10),
+                  padding : EdgeInsets.all(10.r),
                   decoration: BoxDecoration(
                     color        : AppColors.errorLight,
-                    borderRadius : BorderRadius.circular(10),
+                    borderRadius : BorderRadius.circular(10.r),
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.error_outline_rounded,
-                          color: AppColors.error, size: 16),
-                      const SizedBox(width: 8),
+                      Icon(Icons.error_outline_rounded,
+                          color: AppColors.error, size: 16.r),
+                      SizedBox(width: 8.w),
                       Expanded(
                         child: Text(_error!,
                             style: AppTextStyles.bodySmall
@@ -276,7 +278,7 @@ class _RatingSheetState extends State<_RatingSheet> {
                 ),
               ],
 
-              const SizedBox(height: 22),
+              SizedBox(height: 22.h),
 
               YaaButton(
                 label     : 'Envoyer mon avis',
@@ -315,12 +317,12 @@ class _RatingSheetState extends State<_RatingSheet> {
       color     : AppColors.primary,
       alignment : Alignment.center,
       child: ini.isEmpty
-          ? const Icon(Icons.person_rounded, color: Colors.white, size: 34)
+          ? Icon(Icons.person_rounded, color: Colors.white, size: 34.r)
           : Text(
               ini,
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily : 'PlusJakartaSans',
-                fontSize   : 26,
+                fontSize   : 26.sp,
                 fontWeight : FontWeight.w800,
                 color      : Colors.white,
               ),

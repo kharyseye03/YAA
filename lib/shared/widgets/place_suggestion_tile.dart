@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_text_styles.dart';
 import '../../service/location/location_service.dart';
@@ -91,7 +92,7 @@ class PlaceSuggestionTile extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
         decoration: showDivider
             ? const BoxDecoration(
                 border: Border(
@@ -104,15 +105,15 @@ class PlaceSuggestionTile extends StatelessWidget {
             // Pastille teintée : c'est elle qui donne du relief à la
             // liste, une icône nue se perd dans le texte.
             Container(
-              width  : 38,
-              height : 38,
+              width  : 38.r,
+              height : 38.r,
               decoration: BoxDecoration(
                 color        : accent.withValues(alpha: 0.10),
-                borderRadius : BorderRadius.circular(11),
+                borderRadius : BorderRadius.circular(11.r),
               ),
-              child: Icon(icon, size: 19, color: accent),
+              child: Icon(icon, size: 19.r, color: accent),
             ),
-            const SizedBox(width: 12),
+            SizedBox(width: 12.w),
 
             // Nom du lieu + adresse
             Expanded(
@@ -146,7 +147,7 @@ class PlaceSuggestionTile extends StatelessWidget {
             // Distance à droite : elle sert à départager deux lieux
             // au nom voisin, pas à estimer un trajet.
             if (suggestion.distanceLabel.isNotEmpty) ...[
-              const SizedBox(width: 8),
+              SizedBox(width: 8.w),
               Text(
                 suggestion.distanceLabel,
                 style: AppTextStyles.caption.copyWith(
@@ -158,9 +159,9 @@ class PlaceSuggestionTile extends StatelessWidget {
 
             // Flèche de report : indique que le tap remplit le champ
             // plutôt que de naviguer ailleurs.
-            const SizedBox(width: 8),
-            const Icon(Icons.north_west_rounded,
-                size: 17, color: AppColors.grey400),
+            SizedBox(width: 8.w),
+            Icon(Icons.north_west_rounded,
+                size: 17.r, color: AppColors.grey400),
           ],
         ),
       ),

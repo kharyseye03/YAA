@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import '../../config/maps/maps_config.dart' as config;
+import '../../main.dart' show rendererCarte;
 
 /// Carte invisible qui absorbe le coût de démarrage du SDK Maps.
 ///
@@ -34,6 +35,19 @@ class MapPrewarm extends StatefulWidget {
 class _MapPrewarmState extends State<MapPrewarm> {
   GoogleMapController? _controller;
 
+  /// Le choix du renderer est lancé au démarrage sans bloquer
+  /// l'affichage ; on attend ici qu'il aboutisse. Créer une carte
+  /// avant sa fin figerait le renderer hérité pour tout le processus.
+  bool _pret = false;
+
+  @override
+  void initState() {
+    super.initState();
+    rendererCarte.whenComplete(() {
+      if (mounted) setState(() => _pret = true);
+    });
+  }
+
   @override
   void dispose() {
     _controller?.dispose();
@@ -42,6 +56,7 @@ class _MapPrewarmState extends State<MapPrewarm> {
 
   @override
   Widget build(BuildContext context) {
+    if (!_pret) return const SizedBox.shrink();
     // Hors écran plutôt qu'en Opacity(0) : une vue native reste une
     // surface native, et l'opacité ne garantit pas qu'elle ne vienne
     // pas se peindre par-dessus le contenu. À -100 px, la question

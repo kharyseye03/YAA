@@ -1,5 +1,6 @@
 import '../../../shared/widgets/image_reseau.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
 
@@ -34,7 +35,7 @@ class CategoryList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 88,
+      height: 88.h,
       child: LayoutBuilder(
         builder: (context, constraints) {
           // Largeur totale nécessaire : items (68) + espacements (16)
@@ -58,9 +59,9 @@ class CategoryList extends StatelessWidget {
           // Sinon → scroll horizontal comme avant
           return ListView.separated(
             scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 2),
+            padding: EdgeInsets.symmetric(horizontal: 2.w),
             itemCount: categories.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 16),
+            separatorBuilder: (_, __) => SizedBox(width: 16.w),
             itemBuilder: (_, i) => _CategoryItem(
               data: categories[i],
               isActive: i == activeIndex,
@@ -83,14 +84,14 @@ class _CategoryItem extends StatelessWidget {
     return GestureDetector(
       onTap: data.onTap,
       child: SizedBox(
-        width: 68,
+        width: 68.w,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             AnimatedContainer(
               duration: const Duration(milliseconds: 200),
-              width: 58,
-              height: 58,
+              width: 58.r,
+              height: 58.r,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: isActive
@@ -100,7 +101,7 @@ class _CategoryItem extends StatelessWidget {
                     ? [
                         BoxShadow(
                           color: data.color.withValues(alpha: 0.35),
-                          blurRadius: 10,
+                          blurRadius: 10.r,
                           offset: const Offset(0, 4),
                         ),
                       ]
@@ -123,18 +124,18 @@ class _CategoryItem extends StatelessWidget {
                                     data.icon ?? Icons.category_outlined,
                                     color:
                                         isActive ? Colors.white : data.color,
-                                    size: 26,
+                                    size: 26.r,
                                   ),
                       )
                     : Icon(
                         data.icon ?? Icons.category_outlined,
                         color: isActive ? Colors.white : data.color,
-                        size: 26,
+                        size: 26.r,
                       ),
               ),
             ),
 
-            const SizedBox(height: 6),
+            SizedBox(height: 6.h),
 
             Text(
               data.label,
@@ -142,7 +143,7 @@ class _CategoryItem extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: AppTextStyles.bodySmall.copyWith(
-                fontSize: 11.5,
+                fontSize: 11.5.sp,
                 fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
                 color: isActive ? data.color : AppColors.grey700,
               ),

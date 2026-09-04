@@ -1,4 +1,6 @@
 import 'dart:async';
+import '../../core/errors/messages_erreur.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -50,7 +52,7 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _isLoadingGps = false);
-      _showError(e.toString().replaceAll('Exception: ', ''));
+      _showError(MessagesErreur.depuisException(e));
     }
   }
 
@@ -92,7 +94,7 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _isLoadingPlace = false);
-      _showError(e.toString().replaceAll('Exception: ', ''));
+      _showError(MessagesErreur.depuisException(e));
     }
   }
 
@@ -169,7 +171,7 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
                     Text(
                       'Où livrer vos\ncommande ?',
                       style: AppTextStyles.h1.copyWith(
-                        fontSize: 28,
+                        fontSize: 28.sp,
                         fontWeight: FontWeight.w800,
                         color: AppColors.primary,
                       ),
@@ -194,18 +196,18 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
                       prefixIcon : Icons.search_rounded,
                       onChanged  : _onAdresseChanged,
                       suffixIcon : _isLoadingPlace
-                          ? const Padding(
-                              padding: EdgeInsets.all(14),
+                          ? Padding(
+                              padding: EdgeInsets.all(14.r),
                               child: SizedBox(
-                                width: 18, height: 18,
-                                child: CircularProgressIndicator(strokeWidth: 2),
+                                width: 18.r, height: 18.r,
+                                child: CircularProgressIndicator(strokeWidth: 2.r),
                               ),
                             )
                           : _selectedLocation != null
-                              ? const Padding(
-                                  padding: EdgeInsets.all(12),
+                              ? Padding(
+                                  padding: EdgeInsets.all(12.r),
                                   child: Icon(Icons.check_circle_rounded,
-                                      color: AppColors.success, size: 22),
+                                      color: AppColors.success, size: 22.r),
                                 )
                               : null,
                     ),
@@ -221,7 +223,7 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
                           boxShadow    : [
                             BoxShadow(
                               color      : Colors.black.withValues(alpha: 0.06),
-                              blurRadius : 12,
+                              blurRadius : 12.r,
                               offset     : const Offset(0, 4),
                             ),
                           ],
@@ -240,28 +242,28 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
                       ),
                     ],
 
-                    const SizedBox(height: 40),
+                    SizedBox(height: 40.h),
 
                     // Location icon — double cercle centré
                     Center(
                       child: Container(
-                        width: 180,
-                        height: 180,
+                        width: 180.r,
+                        height: 180.r,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           color: AppColors.primarySurface,
                         ),
                         child: Center(
                           child: Container(
-                            width: 90,
-                            height: 90,
+                            width: 90.r,
+                            height: 90.r,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               color: AppColors.primary.withValues(alpha: 0.12),
                             ),
-                            child: const Icon(
+                            child: Icon(
                               Icons.location_on_outlined,
-                              size: 44,
+                              size: 44.r,
                               color: AppColors.primary,
                             ),
                           ),
@@ -269,7 +271,7 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
                       ),
                     ),
 
-                    const SizedBox(height: 40),
+                    SizedBox(height: 40.h),
                   ],
                 ),
               ),
@@ -325,12 +327,12 @@ class _LocationSuccessSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     // Padding sur les côtés et en bas pour l'effet "flottant"
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 0, 12, 24),
+      padding: EdgeInsets.fromLTRB(12.w, 0.h, 12.w, 24.h),
       child: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           color: AppColors.white,
           // Coins arrondis sur les 4 côtés
-          borderRadius: BorderRadius.all(Radius.circular(24)),
+          borderRadius: BorderRadius.all(Radius.circular(24.r)),
         ),
         padding: EdgeInsets.fromLTRB(
           AppDimens.screenPadding,
@@ -343,11 +345,11 @@ class _LocationSuccessSheet extends StatelessWidget {
           children: [
             // Drag handle
             Container(
-              width: 40,
-              height: 4,
+              width: 40.w,
+              height: 4.h,
               decoration: BoxDecoration(
                 color: AppColors.grey300,
-                borderRadius: BorderRadius.circular(2),
+                borderRadius: BorderRadius.circular(2.r),
               ),
             ),
 
@@ -355,23 +357,23 @@ class _LocationSuccessSheet extends StatelessWidget {
 
             // Success icon — double cercle
             Container(
-              width: 100,
-              height: 100,
+              width: 100.r,
+              height: 100.r,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: AppColors.primarySurface,
               ),
               child: Center(
                 child: Container(
-                  width: 64,
-                  height: 64,
+                  width: 64.r,
+                  height: 64.r,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: AppColors.primary.withValues(alpha: 0.12),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.check_circle_outline_rounded,
-                    size: 32,
+                    size: 32.r,
                     color: AppColors.primary,
                   ),
                 ),

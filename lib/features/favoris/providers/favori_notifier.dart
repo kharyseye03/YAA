@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import '../../../core/errors/messages_erreur.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../model/favori/produit_favori_model.dart';
 import '../../../model/favori/structure_favori_model.dart';
@@ -72,7 +73,7 @@ class FavoriNotifier extends StateNotifier<FavoriState> {
       debugPrint('❌ loadFavoris: $e');
       state = state.copyWith(
         isLoading : false,
-        error     : e.toString().replaceAll('Exception: ', ''),
+        error     : MessagesErreur.depuisException(e),
       );
     }
   }
@@ -112,7 +113,7 @@ class FavoriNotifier extends StateNotifier<FavoriState> {
       state = state.copyWith(
         favoris     : snapshotFavoris,
         favorisIds  : snapshotIds,
-        error       : e.toString().replaceAll('Exception: ', ''),
+        error       : MessagesErreur.depuisException(e),
         togglingIds : state.togglingIds.difference({structureId}),
       );
     }
@@ -162,7 +163,7 @@ class FavoriNotifier extends StateNotifier<FavoriState> {
       // Rollback
       state = state.copyWith(
         produitsFavorisIds : snapshotIds,
-        error              : e.toString().replaceAll('Exception: ', ''),
+        error              : MessagesErreur.depuisException(e),
         togglingIds        : state.togglingIds.difference({produitId}),
       );
     }

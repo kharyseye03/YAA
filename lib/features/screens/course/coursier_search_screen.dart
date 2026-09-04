@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimens.dart';
 import '../../../core/constants/app_text_styles.dart';
@@ -70,10 +71,22 @@ class _CoursierSearchScreenState extends State<CoursierSearchScreen>
   LatLng get _arrivee =>
       LatLng(_mission.latitudeArrivee, _mission.longitudeArrivee);
 
+  /// Les pins dépendent de la densité de l'écran, qui se lit dans
+  /// MediaQuery — interdit depuis initState. D'où ce garde-fou :
+  /// didChangeDependencies peut être rappelé, le chargement non.
+  bool _pinsCharges = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_pinsCharges) return;
+    _pinsCharges = true;
+    _loadPins(MediaQuery.devicePixelRatioOf(context));
+  }
+
   @override
   void initState() {
     super.initState();
-    _loadPins();
     // Si un coursier est déjà là à l'ouverture (retour sur l'écran)
     if (_coursierTrouve) _refreshMap();
     if (_terminee) {
@@ -94,19 +107,23 @@ class _CoursierSearchScreenState extends State<CoursierSearchScreen>
     super.dispose();
   }
 
-  Future<void> _loadPins() async {
+  Future<void> _loadPins(double densite) async {
     _pinDepart  = await createPinMarker(
-        AppColors.primary, Icons.trip_origin_rounded);
+        AppColors.primary, Icons.trip_origin_rounded, densite: densite);
     _pinArrivee = await createPinMarker(
-        AppColors.secondary, Icons.location_on_outlined);
-    // Le coursier est représenté par son véhicule, sur une pastille
-    // blanche. Repli sur un pin classique si l'image manque.
+        AppColors.secondary, Icons.location_on_outlined, densite: densite);
+    // Le coursier est représenté par son véhicule vu de dessus, posé
+    // nu sur la carte. Repli sur un pin classique si l'image manque.
     try {
-      _pinLivreur = await createImageMarker('assets/images/moto.png');
+      _pinLivreur = await createImageMarker(
+        'assets/images/suivi_moto.png',
+        densite: densite,
+      );
     } catch (e) {
       debugPrint('⚠️ marqueur moto indisponible : $e');
       _pinLivreur = await createPinMarker(
-          AppColors.dark, Icons.sports_motorsports, scale: 0.8);
+          AppColors.dark, Icons.sports_motorsports,
+          scale: 0.8, densite: densite);
     }
     if (mounted) setState(() {});
   }
@@ -316,7 +333,7 @@ class _CoursierSearchScreenState extends State<CoursierSearchScreen>
               zoomGesturesEnabled     : _coursierTrouve,
               rotateGesturesEnabled   : false,
               tiltGesturesEnabled     : false,
-              padding: const EdgeInsets.only(bottom: 220),
+              padding: EdgeInsets.only(bottom: 220.h),
             ),
 
             // ── Voile sombre (uniquement pendant la recherche) ──
@@ -337,8 +354,8 @@ class _CoursierSearchScreenState extends State<CoursierSearchScreen>
                     child: AnimatedBuilder(
                       animation: _pulse,
                       builder: (context, _) => SizedBox(
-                        width  : 320,
-                        height : 320,
+                        width  : 320.r,
+                        height : 320.r,
                         child: Stack(
                           alignment: Alignment.center,
                           children: [
@@ -362,21 +379,21 @@ class _CoursierSearchScreenState extends State<CoursierSearchScreen>
                 onTap    : _retourAccueil,
                 behavior : HitTestBehavior.opaque,
                 child: Container(
-                  width  : 42,
-                  height : 42,
+                  width  : 42.r,
+                  height : 42.r,
                   decoration: BoxDecoration(
                     color : Colors.white,
                     shape : BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
                         color      : Colors.black.withValues(alpha: 0.2),
-                        blurRadius : 8,
+                        blurRadius : 8.r,
                         offset     : const Offset(0, 2),
                       ),
                     ],
                   ),
-                  child: const Icon(Icons.arrow_back_rounded,
-                      color: AppColors.dark, size: 20),
+                  child: Icon(Icons.arrow_back_rounded,
+                      color: AppColors.dark, size: 20.r),
                 ),
               ),
             ),
@@ -412,16 +429,16 @@ class _CoursierSearchScreenState extends State<CoursierSearchScreen>
 
   Widget _pointDepart() {
     return Container(
-      width  : 22,
-      height : 22,
+      width  : 22.r,
+      height : 22.r,
       decoration: BoxDecoration(
         color  : AppColors.secondary,
         shape  : BoxShape.circle,
-        border : Border.all(color: Colors.white, width: 4),
+        border : Border.all(color: Colors.white, width: 4.w),
         boxShadow: [
           BoxShadow(
             color      : Colors.black.withValues(alpha: 0.3),
-            blurRadius : 8,
+            blurRadius : 8.r,
           ),
         ],
       ),
@@ -432,9 +449,9 @@ class _CoursierSearchScreenState extends State<CoursierSearchScreen>
   Widget _buildPanel() {
     return Container(
       width: double.infinity,
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color        : Colors.white,
-        borderRadius : BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius : BorderRadius.vertical(top: Radius.circular(24.r)),
       ),
       child: SafeArea(
         top: false,
@@ -446,26 +463,26 @@ class _CoursierSearchScreenState extends State<CoursierSearchScreen>
             children: [
               // Poignée
               Container(
-                width: 40, height: 4,
+                width: 40.w, height: 4.h,
                 decoration: BoxDecoration(
                   color        : AppColors.grey300,
-                  borderRadius : BorderRadius.circular(2),
+                  borderRadius : BorderRadius.circular(2.r),
                 ),
               ),
-              const SizedBox(height: 18),
+              SizedBox(height: 18.h),
 
               if (_coursierTrouve)
                 _buildCoursier()
               else
                 _buildRecherche(),
 
-              const SizedBox(height: 16),
+              SizedBox(height: 16.h),
               const Divider(height: 1, color: AppColors.grey200),
-              const SizedBox(height: 14),
+              SizedBox(height: 14.h),
 
               _buildTrajet(),
 
-              const SizedBox(height: 14),
+              SizedBox(height: 14.h),
 
               TextButton(
                 onPressed : _retourAccueil,
@@ -498,7 +515,7 @@ class _CoursierSearchScreenState extends State<CoursierSearchScreen>
                 color      : AppColors.dark,
               ),
             ),
-            const SizedBox(height: 4),
+            SizedBox(height: 4.h),
             Text(
               'Nous prévenons les coursiers disponibles autour de vous.',
               textAlign : TextAlign.center,
@@ -532,27 +549,27 @@ class _CoursierSearchScreenState extends State<CoursierSearchScreen>
         children: [
           Column(
             children: [
-              const SizedBox(height: 3),
+              SizedBox(height: 3.h),
               Container(
-                width: 11, height: 11,
+                width: 11.r, height: 11.r,
                 decoration: BoxDecoration(
                   shape  : BoxShape.circle,
-                  border : Border.all(color: AppColors.primary, width: 3),
+                  border : Border.all(color: AppColors.primary, width: 3.w),
                 ),
               ),
               Expanded(
                 child: Container(
                   width : 1.5,
                   color : AppColors.grey300,
-                  margin: const EdgeInsets.symmetric(vertical: 3),
+                  margin: EdgeInsets.symmetric(vertical: 3.h),
                 ),
               ),
-              const Icon(Icons.location_on,
-                  color: AppColors.secondary, size: 16),
-              const SizedBox(height: 3),
+              Icon(Icons.location_on,
+                  color: AppColors.secondary, size: 16.r),
+              SizedBox(height: 3.h),
             ],
           ),
-          const SizedBox(width: 12),
+          SizedBox(width: 12.w),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -566,7 +583,7 @@ class _CoursierSearchScreenState extends State<CoursierSearchScreen>
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 12),
+                SizedBox(height: 12.h),
                 Text(
                   LocationService.cleanAddress(_mission.adresseArrivee),
                   style: AppTextStyles.bodySmall.copyWith(
@@ -579,7 +596,7 @@ class _CoursierSearchScreenState extends State<CoursierSearchScreen>
               ],
             ),
           ),
-          const SizedBox(width: 10),
+          SizedBox(width: 10.w),
           Text(
             _mission.montantLabel,
             style: AppTextStyles.labelMedium.copyWith(

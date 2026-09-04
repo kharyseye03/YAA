@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../core/constants/constants.dart';
 
 /// Primary CTA button used across the app.
@@ -70,7 +71,7 @@ class YaaButton extends StatelessWidget {
             : [
                 BoxShadow(
                   color      : fond.withValues(alpha: 0.20),
-                  blurRadius : 26,
+                  blurRadius : 26.r,
                   offset     : const Offset(0, 12),
                 ),
               ],
@@ -94,10 +95,10 @@ class YaaButton extends StatelessWidget {
   Widget _buildChild(Color color) {
     if (isLoading) {
       return SizedBox(
-        width: 22,
-        height: 22,
+        width: 22.r,
+        height: 22.r,
         child: CircularProgressIndicator(
-          strokeWidth: 2.5,
+          strokeWidth: 2.5.r,
           valueColor: AlwaysStoppedAnimation<Color>(color),
         ),
       );

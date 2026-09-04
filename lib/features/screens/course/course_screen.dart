@@ -1,4 +1,5 @@
 import '../../../shared/utils/map_markers.dart';
+import '../../../core/errors/messages_erreur.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -6,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 // Préfixé : MapsConfig déclare son propre LatLng (un record), qui
 // entrerait en conflit avec la classe LatLng de google_maps_flutter.
 import '../../../config/maps/maps_config.dart' as config;
@@ -74,20 +76,34 @@ class _CourseScreenState extends ConsumerState<CourseScreen> {
   bool get _bothSet    => _depart != null && _arrivee != null;
   bool get _isSearching => _suggestions.isNotEmpty || _loadingPlace;
 
+  /// Les marqueurs dépendent de la densité de l'écran, qui se lit
+  /// dans MediaQuery — interdit depuis initState. D'où ce garde-fou :
+  /// didChangeDependencies peut être rappelé, le chargement non.
+  bool _iconesChargees = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_iconesChargees) return;
+    _iconesChargees = true;
+    _loadMarkerIcons(MediaQuery.devicePixelRatioOf(context));
+  }
+
   @override
   void initState() {
     super.initState();
-    _loadMarkerIcons();
     _initPosition();
   }
 
   // Génère les marqueurs (cercle coloré + anneau blanc + pointe +
   // icône pin) directement en Dart, aux couleurs de la marque.
-  Future<void> _loadMarkerIcons() async {
+  Future<void> _loadMarkerIcons(double densite) async {
     _departIcon = await createPinMarker(
-        AppColors.primary, Icons.location_on_outlined); // bleu
+        AppColors.primary, Icons.location_on_outlined,
+        densite: densite); // bleu
     _arriveeIcon = await createPinMarker(
-        AppColors.secondary, Icons.location_on_outlined);       // orange
+        AppColors.secondary, Icons.location_on_outlined,
+        densite: densite); // orange
     if (mounted) setState(() {});
   }
 
@@ -337,7 +353,7 @@ class _CourseScreenState extends ConsumerState<CourseScreen> {
             zoomControlsEnabled      : false,
             markers                  : _markers,
             polylines                : _polylines,
-            padding: const EdgeInsets.only(bottom: 280),
+            padding: EdgeInsets.only(bottom: 280.h),
           ),
 
           // ── Bouton retour ───────────────────────────────────
@@ -348,21 +364,21 @@ class _CourseScreenState extends ConsumerState<CourseScreen> {
               onTap    : () => Navigator.of(context).pop(),
               behavior : HitTestBehavior.opaque,
               child: Container(
-                width  : 42,
-                height : 42,
+                width  : 42.r,
+                height : 42.r,
                 decoration: BoxDecoration(
                   color : Colors.white,
                   shape : BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
                       color      : Colors.black.withValues(alpha: 0.12),
-                      blurRadius : 8,
+                      blurRadius : 8.r,
                       offset     : const Offset(0, 2),
                     ),
                   ],
                 ),
-                child: const Icon(Icons.arrow_back_rounded,
-                    color: AppColors.dark, size: 20),
+                child: Icon(Icons.arrow_back_rounded,
+                    color: AppColors.dark, size: 20.r),
               ),
             ),
           ),
@@ -393,11 +409,11 @@ class _CourseScreenState extends ConsumerState<CourseScreen> {
         maxHeight: MediaQuery.of(context).size.height *
             (_isSearching ? 0.88 : 0.70),
       ),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color        : Colors.white,
-        borderRadius : BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius : BorderRadius.vertical(top: Radius.circular(24.r)),
         boxShadow    : [
-          BoxShadow(color: Colors.black26, blurRadius: 20),
+          BoxShadow(color: Colors.black26, blurRadius: 20.r),
         ],
       ),
       child: SafeArea(
@@ -410,13 +426,13 @@ class _CourseScreenState extends ConsumerState<CourseScreen> {
             children: [
               // Poignée
               Container(
-                width: 40, height: 4,
+                width: 40.w, height: 4.h,
                 decoration: BoxDecoration(
                   color        : AppColors.grey300,
-                  borderRadius : BorderRadius.circular(2),
+                  borderRadius : BorderRadius.circular(2.r),
                 ),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16.h),
 
               // ── Titre ───────────────────────────────────────
               Align(
@@ -440,7 +456,7 @@ class _CourseScreenState extends ConsumerState<CourseScreen> {
                       .copyWith(color: AppColors.grey500),
                 ),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16.h),
 
               // ── Champs A → B ────────────────────────────────
               _buildAddressFields(),
@@ -467,27 +483,27 @@ class _CourseScreenState extends ConsumerState<CourseScreen> {
         children: [
           Column(
             children: [
-              const SizedBox(height: 20),
+              SizedBox(height: 20.h),
               Container(
-                width: 12, height: 12,
+                width: 12.r, height: 12.r,
                 decoration: BoxDecoration(
                   shape  : BoxShape.circle,
-                  border : Border.all(color: AppColors.primary, width: 3.5),
+                  border : Border.all(color: AppColors.primary, width: 3.5.w),
                 ),
               ),
               Expanded(
                 child: Container(
                   width : 1.5,
                   color : AppColors.grey300,
-                  margin: const EdgeInsets.symmetric(vertical: 4),
+                  margin: EdgeInsets.symmetric(vertical: 4.h),
                 ),
               ),
-              const Icon(Icons.location_on,
-                  color: AppColors.secondary, size: 18),
-              const SizedBox(height: 20),
+              Icon(Icons.location_on,
+                  color: AppColors.secondary, size: 18.r),
+              SizedBox(height: 20.h),
             ],
           ),
-          const SizedBox(width: 12),
+          SizedBox(width: 12.w),
           Expanded(
             child: Column(
               children: [
@@ -497,7 +513,7 @@ class _CourseScreenState extends ConsumerState<CourseScreen> {
                   onChanged  : (v) => _onChanged(v, isDepart: true),
                   onTap      : () => _editingDepart = true,
                 ),
-                const SizedBox(height: 10),
+                SizedBox(height: 10.h),
                 YaaTextField(
                   controller : _arriveeCtrl,
                   hint       : 'Où allez-vous ?',
@@ -515,13 +531,13 @@ class _CourseScreenState extends ConsumerState<CourseScreen> {
   Widget _buildSuggestions() {
     return Flexible(
       child: _loadingPlace
-          ? const Padding(
-              padding: EdgeInsets.all(24),
+          ? Padding(
+              padding: EdgeInsets.all(24.r),
               child: CircularProgressIndicator(),
             )
           : ListView(
               shrinkWrap : true,
-              padding    : const EdgeInsets.only(top: 8),
+              padding    : EdgeInsets.only(top: 8.h),
               children   : [
                 for (var i = 0; i < _suggestions.length; i++)
                   PlaceSuggestionTile(
@@ -546,7 +562,7 @@ class _CourseScreenState extends ConsumerState<CourseScreen> {
           child: SingleChildScrollView(
             child: Column(
               children: [
-                const SizedBox(height: 16),
+                SizedBox(height: 16.h),
 
                 // Course → trajet + choix véhicule ; Livraison → moto
                 if (_isCourse) ...[
@@ -555,18 +571,18 @@ class _CourseScreenState extends ConsumerState<CourseScreen> {
                   // apparaître trois fois sur le même écran.
                   if (_estimation != null) ...[
                     Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 14, vertical: 10),
+                      padding: EdgeInsets.symmetric(
+                          horizontal: 14.w, vertical: 10.h),
                       decoration: BoxDecoration(
                         color        : AppColors.grey100,
-                        borderRadius : BorderRadius.circular(12),
+                        borderRadius : BorderRadius.circular(12.r),
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(Icons.route_rounded,
-                              size: 15, color: AppColors.grey500),
-                          const SizedBox(width: 6),
+                          Icon(Icons.route_rounded,
+                              size: 15.r, color: AppColors.grey500),
+                          SizedBox(width: 6.w),
                           Text(
                             _estimation!.distanceText,
                             style: AppTextStyles.bodySmall.copyWith(
@@ -577,7 +593,7 @@ class _CourseScreenState extends ConsumerState<CourseScreen> {
                         ],
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    SizedBox(height: 12.h),
                   ],
                   // Aligné à gauche comme les champs d'adresse au-dessus :
                   // un titre de section démarre là où le contenu démarre.
@@ -588,7 +604,7 @@ class _CourseScreenState extends ConsumerState<CourseScreen> {
                       textAlign: TextAlign.left,
                       style: AppTextStyles.labelMedium.copyWith(
                         fontWeight : FontWeight.w700,
-                        fontSize   : 15,
+                        fontSize   : 15.sp,
                         color      : AppColors.dark,
                       ),
                     ),
@@ -614,7 +630,7 @@ class _CourseScreenState extends ConsumerState<CourseScreen> {
                   ],
                 ] else ...[
                   _buildMotoCard(),
-                  const SizedBox(height: 10),
+                  SizedBox(height: 10.h),
                   _buildOptionsRow(),
                 ],
               ],
@@ -622,7 +638,7 @@ class _CourseScreenState extends ConsumerState<CourseScreen> {
           ),
         ),
 
-        const SizedBox(height: 16),
+        SizedBox(height: 16.h),
 
         // Bouton toujours visible, grisé tant que A→B incomplet
         SizedBox(
@@ -672,7 +688,7 @@ class _CourseScreenState extends ConsumerState<CourseScreen> {
       setState(() => _isSubmitting = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content         : Text(e.toString().replaceAll('Exception: ', '')),
+          content         : Text(MessagesErreur.depuisException(e)),
           backgroundColor : AppColors.error,
           behavior        : SnackBarBehavior.floating,
         ),
@@ -703,20 +719,20 @@ class _CourseScreenState extends ConsumerState<CourseScreen> {
 
     return InkWell(
       onTap        : actif ? _onConfirm : null,
-      borderRadius : BorderRadius.circular(14),
+      borderRadius : BorderRadius.circular(14.r),
       child: Opacity(
         opacity: actif ? 1 : 0.45,
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+          padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 13.h),
           decoration: BoxDecoration(
-            borderRadius : BorderRadius.circular(14),
+            borderRadius : BorderRadius.circular(14.r),
             border       : Border.all(color: AppColors.border),
           ),
           child: Row(
             children: [
-              const Icon(Icons.inventory_2_outlined,
-                  size: 20, color: AppColors.primary),
-              const SizedBox(width: 10),
+              Icon(Icons.inventory_2_outlined,
+                  size: 20.r, color: AppColors.primary),
+              SizedBox(width: 10.w),
               Text(
                 'Options de livraison',
                 style: AppTextStyles.bodySmall.copyWith(
@@ -724,7 +740,7 @@ class _CourseScreenState extends ConsumerState<CourseScreen> {
                   color      : AppColors.dark,
                 ),
               ),
-              const SizedBox(width: 8),
+              SizedBox(width: 8.w),
               Expanded(
                 child: Text(
                   'Laisser un colis, notes…',
@@ -736,8 +752,8 @@ class _CourseScreenState extends ConsumerState<CourseScreen> {
                 ),
               ),
               const SizedBox(width: 2),
-              const Icon(Icons.chevron_right_rounded,
-                  size: 20, color: AppColors.grey400),
+              Icon(Icons.chevron_right_rounded,
+                  size: 20.r, color: AppColors.grey400),
             ],
           ),
         ),
@@ -760,7 +776,7 @@ class _CourseScreenState extends ConsumerState<CourseScreen> {
           height : h,
           decoration: BoxDecoration(
             color        : AppColors.grey200,
-            borderRadius : BorderRadius.circular(4),
+            borderRadius : BorderRadius.circular(4.r),
           ),
         ),
       );
@@ -770,15 +786,15 @@ class _CourseScreenState extends ConsumerState<CourseScreen> {
     final pret = _estimation != null;
 
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: EdgeInsets.all(14.r),
       decoration: BoxDecoration(
         color        : Colors.white,
-        borderRadius : BorderRadius.circular(16),
+        borderRadius : BorderRadius.circular(16.r),
         border       : Border.all(color: AppColors.primary, width: 1.5),
         boxShadow: [
           BoxShadow(
             color      : Colors.black.withValues(alpha: 0.05),
-            blurRadius : 12,
+            blurRadius : 12.r,
             offset     : const Offset(0, 4),
           ),
         ],
@@ -788,17 +804,17 @@ class _CourseScreenState extends ConsumerState<CourseScreen> {
           // Image moto (sans fond) — toujours visible, y compris
           // pendant l'attente de l'estimation.
           SizedBox(
-            width  : 68,
-            height : 68,
+            width  : 68.r,
+            height : 68.r,
             child: Image.asset(
               TypeVehicule.moto.asset!,
               fit: BoxFit.contain,
               errorBuilder: (_, __, ___) => Icon(
                   TypeVehicule.moto.icone,
-                  color: AppColors.primary, size: 32),
+                  color: AppColors.primary, size: 32.r),
             ),
           ),
-          const SizedBox(width: 12),
+          SizedBox(width: 12.w),
 
           // Titre + métadonnées (distance · durée)
           Expanded(
@@ -809,17 +825,17 @@ class _CourseScreenState extends ConsumerState<CourseScreen> {
                   'Livraison par moto',
                   style: AppTextStyles.labelMedium.copyWith(
                     fontWeight : FontWeight.w800,
-                    fontSize   : 15,
+                    fontSize   : 15.sp,
                     color      : AppColors.dark,
                   ),
                 ),
-                const SizedBox(height: 3),
+                SizedBox(height: 3.h),
                 if (pret)
                   Row(
                     children: [
-                      const Icon(Icons.route_rounded,
-                          size: 13, color: AppColors.grey400),
-                      const SizedBox(width: 3),
+                      Icon(Icons.route_rounded,
+                          size: 13.r, color: AppColors.grey400),
+                      SizedBox(width: 3.w),
                       // distance · durée (depuis l'estimation)
                       Text(
                         _estimation!.metaLabel,
@@ -830,14 +846,14 @@ class _CourseScreenState extends ConsumerState<CourseScreen> {
                   )
                 else
                   Padding(
-                    padding: const EdgeInsets.only(top: 3),
+                    padding: EdgeInsets.only(top: 3.h),
                     child: _shimmerBloc(104, 11),
                   ),
               ],
             ),
           ),
 
-          const SizedBox(width: 8),
+          SizedBox(width: 8.w),
 
           // Prix bien visible à droite
           if (!pret)
@@ -845,7 +861,7 @@ class _CourseScreenState extends ConsumerState<CourseScreen> {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 _shimmerBloc(58, 18),
-                const SizedBox(height: 6),
+                SizedBox(height: 6.h),
                 _shimmerBloc(32, 9),
               ],
             )
@@ -855,10 +871,10 @@ class _CourseScreenState extends ConsumerState<CourseScreen> {
               children: [
                 Text(
                   _estimation!.fraisLivraison.toStringAsFixed(0),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily : 'PlusJakartaSans',
                     fontWeight : FontWeight.w800,
-                    fontSize   : 20,
+                    fontSize   : 20.sp,
                     color      : AppColors.dark,
                   ),
                 ),
@@ -904,7 +920,7 @@ class _VehiclePick extends StatelessWidget {
   Widget _visuel() {
     final icone = Icon(
       vehicule.icone,
-      size  : 30,
+      size  : 30.r,
       color : selected ? AppColors.primary : AppColors.grey500,
     );
     final asset = vehicule.asset;
@@ -912,8 +928,8 @@ class _VehiclePick extends StatelessWidget {
 
     return Image.asset(
       asset,
-      height       : 44,
-      width        : 62,
+      height       : 44.h,
+      width        : 62.w,
       fit          : BoxFit.contain,
       errorBuilder : (_, __, ___) => icone,
     );
@@ -931,10 +947,10 @@ class _VehiclePick extends StatelessWidget {
       behavior : HitTestBehavior.opaque,
       child: AnimatedContainer(
         duration : const Duration(milliseconds: 180),
-        padding  : const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        padding  : EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
         decoration: BoxDecoration(
           color        : selected ? AppColors.primarySurface : Colors.white,
-          borderRadius : BorderRadius.circular(14),
+          borderRadius : BorderRadius.circular(14.r),
           border: Border.all(
             color : selected ? AppColors.primary : AppColors.grey200,
             width : selected ? 1.5 : 1,
@@ -942,8 +958,8 @@ class _VehiclePick extends StatelessWidget {
         ),
         child: Row(
           children: [
-            SizedBox(width: 62, child: Center(child: _visuel())),
-            const SizedBox(width: 12),
+            SizedBox(width: 62.w, child: Center(child: _visuel())),
+            SizedBox(width: 12.w),
 
             // Libellé et argument, à gauche
             Expanded(
@@ -953,7 +969,7 @@ class _VehiclePick extends StatelessWidget {
                   Text(
                     vehicule.libelle,
                     style: AppTextStyles.labelMedium.copyWith(
-                      fontSize   : 15,
+                      fontSize   : 15.sp,
                       fontWeight : FontWeight.w700,
                       color      : selected
                           ? AppColors.primary
@@ -972,7 +988,7 @@ class _VehiclePick extends StatelessWidget {
               ),
             ),
 
-            const SizedBox(width: 10),
+            SizedBox(width: 10.w),
 
             // Prix et durée, à droite — alignés d'une ligne à l'autre
             if (pret)
@@ -984,7 +1000,7 @@ class _VehiclePick extends StatelessWidget {
                     ' ${estimation!.devise}',
                     style: TextStyle(
                       fontFamily : 'PlusJakartaSans',
-                      fontSize   : 17,
+                      fontSize   : 17.sp,
                       fontWeight : FontWeight.w800,
                       color      : selected
                           ? AppColors.dark
@@ -1006,26 +1022,26 @@ class _VehiclePick extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     _barre(72, 15),
-                    const SizedBox(height: 5),
+                    SizedBox(height: 5.h),
                     _barre(42, 9),
                   ],
                 ),
               ),
 
             // Pastille de sélection en bout de ligne
-            const SizedBox(width: 10),
+            SizedBox(width: 10.w),
             AnimatedOpacity(
               duration: const Duration(milliseconds: 180),
               opacity : selected ? 1 : 0,
               child: Container(
-                width  : 20,
-                height : 20,
+                width  : 20.r,
+                height : 20.r,
                 decoration: const BoxDecoration(
                   color : AppColors.primary,
                   shape : BoxShape.circle,
                 ),
-                child: const Icon(Icons.check_rounded,
-                    size: 13, color: Colors.white),
+                child: Icon(Icons.check_rounded,
+                    size: 13.r, color: Colors.white),
               ),
             ),
           ],
@@ -1039,7 +1055,7 @@ class _VehiclePick extends StatelessWidget {
         height : h,
         decoration: BoxDecoration(
           color        : Colors.white,
-          borderRadius : BorderRadius.circular(4),
+          borderRadius : BorderRadius.circular(4.r),
         ),
       );
 }

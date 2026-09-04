@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimens.dart';
 import '../../../core/constants/app_text_styles.dart';
@@ -50,9 +51,9 @@ class _CategoryFiltersSheetState extends State<_CategoryFiltersSheet> {
       constraints: BoxConstraints(
         maxHeight: MediaQuery.of(context).size.height * 0.85,
       ),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -153,9 +154,9 @@ class _CategoryFiltersSheetState extends State<_CategoryFiltersSheet> {
 
   Widget _buildPoignee() {
     return Container(
-      width: 40,
-      height: 4,
-      margin: const EdgeInsets.symmetric(vertical: 12),
+      width: 40.w,
+      height: 4.h,
+      margin: EdgeInsets.symmetric(vertical: 12.h),
       decoration: BoxDecoration(
         color: AppColors.grey300,
         borderRadius: BorderRadius.circular(AppDimens.radiusFull),
@@ -204,7 +205,7 @@ class _CategoryFiltersSheetState extends State<_CategoryFiltersSheet> {
           titre,
           style: AppTextStyles.labelMedium.copyWith(
             fontWeight: FontWeight.w700,
-            fontSize: 15,
+            fontSize: 15.sp,
             color: AppColors.dark,
           ),
         ),
@@ -225,7 +226,7 @@ class _CategoryFiltersSheetState extends State<_CategoryFiltersSheet> {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+        padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 9.h),
         decoration: BoxDecoration(
           color: actif ? AppColors.primary : Colors.white,
           borderRadius: BorderRadius.circular(AppDimens.radiusFull),
@@ -237,13 +238,13 @@ class _CategoryFiltersSheetState extends State<_CategoryFiltersSheet> {
           mainAxisSize: MainAxisSize.min,
           children: [
             if (icone != null) ...[
-              Icon(icone, size: 15, color: couleurIcone ?? AppColors.dark),
-              const SizedBox(width: 4),
+              Icon(icone, size: 15.r, color: couleurIcone ?? AppColors.dark),
+              SizedBox(width: 4.w),
             ],
             Text(
               libelle,
               style: AppTextStyles.bodySmall.copyWith(
-                fontSize: 13,
+                fontSize: 13.sp,
                 fontWeight: FontWeight.w600,
                 color: actif ? Colors.white : AppColors.dark,
               ),
@@ -268,7 +269,7 @@ class _CategoryFiltersSheetState extends State<_CategoryFiltersSheet> {
       ),
       child: SizedBox(
         width: double.infinity,
-        height: 52,
+        height: 52.h,
         child: ElevatedButton(
           onPressed: () => Navigator.of(context).pop(_filtres),
           style: ElevatedButton.styleFrom(

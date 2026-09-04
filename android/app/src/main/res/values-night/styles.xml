@@ -12,7 +12,11 @@
          running.
 
          This Theme is only used starting with V2 of Flutter's Android embedding. -->
+    <!-- Blanc et non ?android:colorBackground : sur ce thème Black il
+         vaut noir, et cette couleur reste visible derrière l'interface
+         Flutter le temps qu'elle s'initialise. L'app est claire, son
+         fond de fenêtre doit l'être aussi, y compris en mode sombre. -->
     <style name="NormalTheme" parent="@android:style/Theme.Black.NoTitleBar">
-        <item name="android:windowBackground">?android:colorBackground</item>
+        <item name="android:windowBackground">@color/splash_background</item>
     </style>
 </resources>

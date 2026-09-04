@@ -12,13 +12,14 @@ import 'features/auth/providers/auth_notifier.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Les deux en parallèle : le renderer n'a rien à voir avec les
-  // préférences, les enchaîner ajouterait leurs durées au démarrage.
-  final resultats = await Future.wait([
-    SharedPreferences.getInstance(),
-    _choisirRendererCarte(),
-  ]);
-  final prefs = resultats.first as SharedPreferences;
+  // Lancé sans être attendu : tant que ce Future n'est pas terminé,
+  // rien ne s'affiche, et l'utilisateur regarde une fenêtre vide. La
+  // première carte n'arrive qu'après le splash et l'authentification,
+  // largement le temps qu'il aboutisse — MapPrewarm l'attend
+  // explicitement avant de créer quoi que ce soit.
+  rendererCarte = _choisirRendererCarte();
+
+  final prefs = await SharedPreferences.getInstance();
 
   runApp(
     ProviderScope(
@@ -29,6 +30,13 @@ void main() async {
     ),
   );
 }
+
+/// Choix du renderer, en cours ou terminé.
+///
+/// Exposé pour que le pré-chauffage de carte puisse l'attendre :
+/// créer une carte avant la fin de cette initialisation fige le
+/// renderer hérité pour toute la durée du processus.
+late final Future<void> rendererCarte;
 
 /// Demande le renderer Maps récent, plus rapide à initialiser que
 /// l'ancien.

@@ -1,9 +1,11 @@
 import '../../../core/utils/devise.dart';
+import '../../../core/errors/messages_erreur.dart';
 import '../../../core/utils/phone_formatter.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimens.dart';
 import '../../../core/constants/app_text_styles.dart';
@@ -137,7 +139,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     } catch (e) {
       setState(() {
         _isSubmitting = false;
-        _error = e.toString().replaceAll('Exception: ', '');
+        _error = MessagesErreur.depuisException(e);
       });
     }
   }
@@ -154,8 +156,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       enableDrag         : false,
       isScrollControlled : true,
       backgroundColor    : Colors.white,
-      shape              : const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      shape              : RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
       ),
       builder: (_) => _LivreurSearchSheet(
         transaction    : transaction,
@@ -215,7 +217,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
               top    : MediaQuery.of(context).padding.top + 12,
               left   : AppDimens.screenPadding,
               right  : AppDimens.screenPadding,
-              bottom : 16,
+              bottom : 16.h,
             ),
             child: Row(
               children: [
@@ -223,17 +225,17 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                   onTap    : () => Navigator.of(context).pop(),
                   behavior : HitTestBehavior.opaque,
                   child: Container(
-                    width  : 38,
-                    height : 38,
+                    width  : 38.r,
+                    height : 38.r,
                     decoration: BoxDecoration(
                       color        : AppColors.grey100,
-                      borderRadius : BorderRadius.circular(10),
+                      borderRadius : BorderRadius.circular(10.r),
                     ),
-                    child: const Icon(Icons.chevron_left_rounded,
-                        color: AppColors.dark, size: 22),
+                    child: Icon(Icons.chevron_left_rounded,
+                        color: AppColors.dark, size: 22.r),
                   ),
                 ),
-                const SizedBox(width: 12),
+                SizedBox(width: 12.w),
                 Text(
                   'Commander',
                   style: AppTextStyles.h3.copyWith(
@@ -244,8 +246,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                 const Spacer(),
                 // Badge total
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 12, vertical: 5),
+                  padding: EdgeInsets.symmetric(
+                      horizontal: 12.w, vertical: 5.h),
                   decoration: BoxDecoration(
                     color        : AppColors.grey100,
                     borderRadius : BorderRadius.circular(AppDimens.radiusFull),
@@ -255,7 +257,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                     style: AppTextStyles.labelSmall.copyWith(
                       color      : AppColors.dark,
                       fontWeight : FontWeight.w700,
-                      fontSize   : 13,
+                      fontSize   : 13.sp,
                     ),
                   ),
                 ),
@@ -270,13 +272,13 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             Container(
               width   : double.infinity,
               padding : EdgeInsets.symmetric(
-                  horizontal: AppDimens.screenPadding, vertical: 10),
+                  horizontal: AppDimens.screenPadding, vertical: 10.h),
               color   : AppColors.errorLight,
               child   : Row(
                 children: [
-                  const Icon(Icons.error_outline_rounded,
-                      color: AppColors.error, size: 16),
-                  const SizedBox(width: 8),
+                  Icon(Icons.error_outline_rounded,
+                      color: AppColors.error, size: 16.r),
+                  SizedBox(width: 8.w),
                   Expanded(
                     child: Text(_error!,
                         style: AppTextStyles.bodySmall
@@ -300,14 +302,14 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                   children: [
                     // ── Récapitulatif ────────────────────────
                     _SectionLabel('Récapitulatif'),
-                    const SizedBox(height: 14),
+                    SizedBox(height: 14.h),
                     _SummaryRow(
                       icon  : Icons.shopping_bag_outlined,
                       label : '$count article${count > 1 ? 's' : ''}',
                       value : montantLabel(total),
                       bold  : true,
                     ),
-                    const SizedBox(height: 10),
+                    SizedBox(height: 10.h),
                     _SummaryRow(
                       icon  : widget.isRetrait
                           ? Icons.storefront_outlined
@@ -318,29 +320,29 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                       value : '',
                     ),
 
-                    const SizedBox(height: 20),
+                    SizedBox(height: 20.h),
                     const Divider(height: 1, color: AppColors.grey200),
-                    const SizedBox(height: 20),
+                    SizedBox(height: 20.h),
 
                     // ── Réception ────────────────────────────
                     _SectionLabel(
                         widget.isRetrait ? 'Retrait' : 'Livraison'),
-                    const SizedBox(height: 14),
+                    SizedBox(height: 14.h),
 
                     if (widget.isRetrait) ...[
                       // Retrait : pas d'adresse à saisir, on rappelle
                       // simplement où récupérer la commande
                       Container(
-                        padding: const EdgeInsets.all(14),
+                        padding: EdgeInsets.all(14.r),
                         decoration: BoxDecoration(
                           color        : AppColors.primarySurface,
-                          borderRadius : BorderRadius.circular(12),
+                          borderRadius : BorderRadius.circular(12.r),
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.storefront_outlined,
-                                color: AppColors.primary, size: 20),
-                            const SizedBox(width: 12),
+                            Icon(Icons.storefront_outlined,
+                                color: AppColors.primary, size: 20.r),
+                            SizedBox(width: 12.w),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -378,8 +380,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                         prefixIcon : Icons.location_on_outlined,
                         readOnly   : true,
                         onTap      : () => showDeliveryAddressSheet(context),
-                        suffixIcon : const Icon(Icons.edit_outlined,
-                            size: 18, color: AppColors.grey500),
+                        suffixIcon : Icon(Icons.edit_outlined,
+                            size: 18.r, color: AppColors.grey500),
                         validator  : (v) =>
                             v == null || v.trim().isEmpty ? 'Champ requis' : null,
                       ),
@@ -391,13 +393,13 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                       textInputAction : TextInputAction.next,
                     ),
 
-                    const SizedBox(height: 20),
+                    SizedBox(height: 20.h),
                     const Divider(height: 1, color: AppColors.grey200),
-                    const SizedBox(height: 20),
+                    SizedBox(height: 20.h),
 
                     // ── Note de commande ─────────────────────
                     _SectionLabel('Note de commande'),
-                    const SizedBox(height: 14),
+                    SizedBox(height: 14.h),
                     YaaTextField(
                       controller : _noteController,
                       hint       : 'Instructions spéciales, allergies…',
@@ -414,7 +416,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             padding: EdgeInsets.only(
               left   : AppDimens.screenPadding,
               right  : AppDimens.screenPadding,
-              top    : 12,
+              top    : 12.h,
               bottom : MediaQuery.of(context).padding.bottom + 12,
             ),
             decoration: const BoxDecoration(
@@ -447,7 +449,7 @@ class _SectionLabel extends StatelessWidget {
       text.toUpperCase(),
       style: AppTextStyles.labelSmall.copyWith(
         color         : AppColors.grey500,
-        fontSize      : 11,
+        fontSize      : 11.sp,
         letterSpacing : 0.8,
         fontWeight    : FontWeight.w700,
       ),
@@ -473,15 +475,15 @@ class _SummaryRow extends StatelessWidget {
     return Row(
       children: [
         Container(
-          width  : 34,
-          height : 34,
+          width  : 34.r,
+          height : 34.r,
           decoration: BoxDecoration(
             color        : AppColors.grey100,
-            borderRadius : BorderRadius.circular(10),
+            borderRadius : BorderRadius.circular(10.r),
           ),
-          child: Icon(icon, size: 16, color: AppColors.grey600),
+          child: Icon(icon, size: 16.r, color: AppColors.grey600),
         ),
-        const SizedBox(width: 12),
+        SizedBox(width: 12.w),
         Expanded(
           child: Text(
             label,
@@ -549,7 +551,7 @@ class _PaymentSheetState extends State<_PaymentSheet> {
     } catch (e) {
       setState(() {
         _isPaying = false;
-        _error    = e.toString().replaceAll('Exception: ', '');
+        _error    = MessagesErreur.depuisException(e);
       });
     }
   }
@@ -560,9 +562,9 @@ class _PaymentSheetState extends State<_PaymentSheet> {
     final tx        = widget.transaction;
 
     return Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color        : Colors.white,
-        borderRadius : BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius : BorderRadius.vertical(top: Radius.circular(24.r)),
       ),
       padding: EdgeInsets.fromLTRB(
           AppDimens.screenPadding, 0,
@@ -571,15 +573,15 @@ class _PaymentSheetState extends State<_PaymentSheet> {
         mainAxisSize: MainAxisSize.min,
         children: [
           // Poignée
-          const SizedBox(height: 12),
+          SizedBox(height: 12.h),
           Container(
-            width: 40, height: 4,
+            width: 40.w, height: 4.h,
             decoration: BoxDecoration(
               color        : AppColors.grey300,
-              borderRadius : BorderRadius.circular(2),
+              borderRadius : BorderRadius.circular(2.r),
             ),
           ),
-          const SizedBox(height: 20),
+          SizedBox(height: 20.h),
 
           // ── Titre + référence ──────────────────────────────
           Text(
@@ -589,16 +591,16 @@ class _PaymentSheetState extends State<_PaymentSheet> {
               color      : AppColors.dark,
             ),
           ),
-          const SizedBox(height: 4),
+          SizedBox(height: 4.h),
           Text(
             'Réf : ${tx.reference.substring(0, 8).toUpperCase()}  ·  '
             '${montantLabel(tx.montant)}',
             style: AppTextStyles.bodySmall.copyWith(color: AppColors.grey500),
           ),
 
-          const SizedBox(height: 20),
+          SizedBox(height: 20.h),
           const Divider(height: 1, color: AppColors.grey200),
-          const SizedBox(height: 16),
+          SizedBox(height: 16.h),
 
           // ── Options de paiement ────────────────────────────
           ...List.generate(_methods.length, (i) {
@@ -609,23 +611,23 @@ class _PaymentSheetState extends State<_PaymentSheet> {
             // Un moyen indisponible reste lisible mais éteint :
             // grisé, sans radio, et signalé « Bientôt ».
             final ligne = Padding(
-              padding: const EdgeInsets.symmetric(vertical: 12),
+              padding: EdgeInsets.symmetric(vertical: 12.h),
               child: Row(
                 children: [
                   // Logo
                   Container(
-                    width  : 48,
-                    height : 48,
+                    width  : 48.r,
+                    height : 48.r,
                     decoration: BoxDecoration(
                       color        : ouvert ? m.bgColor : AppColors.grey100,
-                      borderRadius : BorderRadius.circular(12),
+                      borderRadius : BorderRadius.circular(12.r),
                     ),
                     child: ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(12.r),
                       child: m.imagePath == null
                           ? Icon(Icons.payments_outlined,
                               color: ouvert ? m.accentColor : AppColors.grey400,
-                              size: 24)
+                              size: 24.r)
                           : Image.asset(
                               m.imagePath!,
                               fit: BoxFit.contain,
@@ -634,12 +636,12 @@ class _PaymentSheetState extends State<_PaymentSheet> {
                                 color: ouvert
                                     ? m.accentColor
                                     : AppColors.grey400,
-                                size: 24,
+                                size: 24.r,
                               ),
                             ),
                     ),
                   ),
-                  const SizedBox(width: 14),
+                  SizedBox(width: 14.w),
                   // Nom
                   Expanded(
                     child: Row(
@@ -651,7 +653,7 @@ class _PaymentSheetState extends State<_PaymentSheet> {
                               fontWeight : active
                                   ? FontWeight.w700
                                   : FontWeight.w500,
-                              fontSize   : 14,
+                              fontSize   : 14.sp,
                               color      : ouvert
                                   ? AppColors.dark
                                   : AppColors.grey400,
@@ -659,13 +661,13 @@ class _PaymentSheetState extends State<_PaymentSheet> {
                           ),
                         ),
                         if (!ouvert) ...[
-                          const SizedBox(width: 8),
+                          SizedBox(width: 8.w),
                           Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 2),
+                            padding: EdgeInsets.symmetric(
+                                horizontal: 8.w, vertical: 2.h),
                             decoration: BoxDecoration(
                               color        : AppColors.grey100,
-                              borderRadius : BorderRadius.circular(20),
+                              borderRadius : BorderRadius.circular(20.r),
                             ),
                             child: Text(
                               'Bientôt',
@@ -683,8 +685,8 @@ class _PaymentSheetState extends State<_PaymentSheet> {
                   if (ouvert)
                     AnimatedContainer(
                       duration  : const Duration(milliseconds: 200),
-                      width     : 22,
-                      height    : 22,
+                      width     : 22.r,
+                      height    : 22.r,
                       decoration: BoxDecoration(
                         shape  : BoxShape.circle,
                         border : Border.all(
@@ -715,13 +717,13 @@ class _PaymentSheetState extends State<_PaymentSheet> {
 
           // ── Erreur ────────────────────────────────────────
           if (_error != null) ...[
-            const SizedBox(height: 12),
+            SizedBox(height: 12.h),
             Container(
               width   : double.infinity,
-              padding : const EdgeInsets.all(12),
+              padding : EdgeInsets.all(12.r),
               decoration: BoxDecoration(
                 color        : AppColors.errorLight,
-                borderRadius : BorderRadius.circular(10),
+                borderRadius : BorderRadius.circular(10.r),
               ),
               child: Text(
                 _error!,
@@ -730,7 +732,7 @@ class _PaymentSheetState extends State<_PaymentSheet> {
             ),
           ],
 
-          const SizedBox(height: 20),
+          SizedBox(height: 20.h),
 
           // ── Bouton Payer ───────────────────────────────────
           YaaButton(
@@ -914,14 +916,14 @@ class _LivreurSearchSheetState extends State<_LivreurSearchSheet>
         children: [
           // Poignée
           Container(
-            width: 36, height: 4,
+            width: 36.w, height: 4.h,
             decoration: BoxDecoration(
               color        : AppColors.grey300,
-              borderRadius : BorderRadius.circular(2),
+              borderRadius : BorderRadius.circular(2.r),
             ),
           ),
 
-          const SizedBox(height: 24),
+          SizedBox(height: 24.h),
 
           _livreurTrouve
               ? _buildLivreurTrouve()
@@ -984,11 +986,11 @@ class _LivreurSearchSheetState extends State<_LivreurSearchSheet>
                   ),
                 ),
 
-                const SizedBox(height: 24),
+                SizedBox(height: 24.h),
 
                 // ── Scooter qui avance sur une piste pointillée ──
                 SizedBox(
-                  height: 56,
+                  height: 56.h,
                   child: LayoutBuilder(
                     builder: (context, constraints) {
                       final trackWidth = constraints.maxWidth - 48;
@@ -996,17 +998,17 @@ class _LivreurSearchSheetState extends State<_LivreurSearchSheet>
                         children: [
                           // Piste pointillée
                           Positioned(
-                            left  : 0,
-                            right : 0,
-                            top   : 27,
+                            left  : 0.w,
+                            right : 0.w,
+                            top   : 27.h,
                             child: Row(
                               children: List.generate(
                                 20,
                                 (_) => Expanded(
                                   child: Container(
                                     height : 2,
-                                    margin : const EdgeInsets.symmetric(
-                                        horizontal: 3),
+                                    margin : EdgeInsets.symmetric(
+                                        horizontal: 3.w),
                                     color  : AppColors.grey200,
                                   ),
                                 ),
@@ -1016,10 +1018,10 @@ class _LivreurSearchSheetState extends State<_LivreurSearchSheet>
                           // Icône animée (change selon la phase)
                           Positioned(
                             left: trackWidth * _controller.value,
-                            top : 4,
+                            top : 4.h,
                             child: Container(
-                              width  : 48,
-                              height : 48,
+                              width  : 48.r,
+                              height : 48.r,
                               decoration: BoxDecoration(
                                 color : AppColors.primary,
                                 shape : BoxShape.circle,
@@ -1027,13 +1029,13 @@ class _LivreurSearchSheetState extends State<_LivreurSearchSheet>
                                   BoxShadow(
                                     color: AppColors.primary
                                         .withValues(alpha: 0.3),
-                                    blurRadius : 12,
+                                    blurRadius : 12.r,
                                     offset     : const Offset(0, 4),
                                   ),
                                 ],
                               ),
                               child: Icon(phase.icon,
-                                  color: Colors.white, size: 24),
+                                  color: Colors.white, size: 24.r),
                             ),
                           ),
                         ],
@@ -1046,15 +1048,15 @@ class _LivreurSearchSheetState extends State<_LivreurSearchSheet>
           },
         ),
 
-        const SizedBox(height: 20),
+        SizedBox(height: 20.h),
 
         // Message rassurant
         Container(
           width   : double.infinity,
-          padding : const EdgeInsets.all(14),
+          padding : EdgeInsets.all(14.r),
           decoration: BoxDecoration(
             color        : AppColors.grey100,
-            borderRadius : BorderRadius.circular(14),
+            borderRadius : BorderRadius.circular(14.r),
           ),
           child: Text(
             phase.message,
@@ -1066,11 +1068,11 @@ class _LivreurSearchSheetState extends State<_LivreurSearchSheet>
           ),
         ),
 
-        const SizedBox(height: 20),
+        SizedBox(height: 20.h),
 
         _buildTrajet(),
 
-        const SizedBox(height: 12),
+        SizedBox(height: 12.h),
         TextButton(
           onPressed : widget.onGoHome,
           child     : Text(
@@ -1089,9 +1091,9 @@ class _LivreurSearchSheetState extends State<_LivreurSearchSheet>
   Widget _buildTrajet() {
     return Container(
       width   : double.infinity,
-      padding : const EdgeInsets.all(16),
+      padding : EdgeInsets.all(16.r),
       decoration: BoxDecoration(
-        borderRadius : BorderRadius.circular(14),
+        borderRadius : BorderRadius.circular(14.r),
         border       : Border.all(color: AppColors.grey200),
       ),
       // IntrinsicHeight : donne une hauteur finie au Row pour que
@@ -1104,14 +1106,14 @@ class _LivreurSearchSheetState extends State<_LivreurSearchSheet>
             // qu'en livraison, où il y a un trajet)
             Column(
               children: [
-                const SizedBox(height: 3),
+                SizedBox(height: 3.h),
                 Container(
-                  width  : 14,
-                  height : 14,
+                  width  : 14.r,
+                  height : 14.r,
                   decoration: BoxDecoration(
                     shape  : BoxShape.circle,
                     border : Border.all(
-                        color: AppColors.primary, width: 4),
+                        color: AppColors.primary, width: 4.w),
                   ),
                 ),
                 if (!widget.isRetrait) ...[
@@ -1119,16 +1121,16 @@ class _LivreurSearchSheetState extends State<_LivreurSearchSheet>
                     child: Container(
                       width : 1.5,
                       color : AppColors.grey300,
-                      margin: const EdgeInsets.symmetric(vertical: 4),
+                      margin: EdgeInsets.symmetric(vertical: 4.h),
                     ),
                   ),
-                  const Icon(Icons.location_on,
-                      color: AppColors.secondary, size: 18),
+                  Icon(Icons.location_on,
+                      color: AppColors.secondary, size: 18.r),
                 ],
-                const SizedBox(height: 3),
+                SizedBox(height: 3.h),
               ],
             ),
-            const SizedBox(width: 14),
+            SizedBox(width: 14.w),
 
             // Adresses
             Expanded(
@@ -1158,7 +1160,7 @@ class _LivreurSearchSheetState extends State<_LivreurSearchSheet>
                   // En retrait, il n'y a pas de trajet : le client se
                   // déplace lui-même jusqu'à l'établissement.
                   if (!widget.isRetrait) ...[
-                    const SizedBox(height: 16),
+                    SizedBox(height: 16.h),
                     Text('Livraison',
                         style: AppTextStyles.caption
                             .copyWith(color: AppColors.grey400)),
@@ -1197,17 +1199,17 @@ class _LivreurSearchSheetState extends State<_LivreurSearchSheet>
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          width  : 80,
-          height : 80,
+          width  : 80.r,
+          height : 80.r,
           decoration: const BoxDecoration(
             shape : BoxShape.circle,
             color : AppColors.successLight,
           ),
-          child: const Icon(Icons.shopping_bag_rounded,
-              size: 36, color: AppColors.success),
+          child: Icon(Icons.shopping_bag_rounded,
+              size: 36.r, color: AppColors.success),
         ),
 
-        const SizedBox(height: 20),
+        SizedBox(height: 20.h),
 
         Text(
           'Commande prête !',
@@ -1216,7 +1218,7 @@ class _LivreurSearchSheetState extends State<_LivreurSearchSheet>
             color      : AppColors.dark,
           ),
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: 8.h),
         Text(
           'Vous pouvez venir la récupérer.',
           textAlign : TextAlign.center,
@@ -1226,21 +1228,21 @@ class _LivreurSearchSheetState extends State<_LivreurSearchSheet>
           ),
         ),
 
-        const SizedBox(height: 20),
+        SizedBox(height: 20.h),
 
         // Où retirer + montant
         Container(
           width   : double.infinity,
-          padding : const EdgeInsets.all(16),
+          padding : EdgeInsets.all(16.r),
           decoration: BoxDecoration(
-            borderRadius : BorderRadius.circular(14),
+            borderRadius : BorderRadius.circular(14.r),
             border       : Border.all(color: AppColors.grey200),
           ),
           child: Row(
             children: [
-              const Icon(Icons.storefront_outlined,
-                  color: AppColors.primary, size: 20),
-              const SizedBox(width: 12),
+              Icon(Icons.storefront_outlined,
+                  color: AppColors.primary, size: 20.r),
+              SizedBox(width: 12.w),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -1278,13 +1280,13 @@ class _LivreurSearchSheetState extends State<_LivreurSearchSheet>
           ),
         ),
 
-        const SizedBox(height: 16),
+        SizedBox(height: 16.h),
 
         YaaButton(
           label     : 'Voir ma commande',
           onPressed : () => widget.onTrackOrder(_commandeId!),
         ),
-        const SizedBox(height: 6),
+        SizedBox(height: 6.h),
         TextButton(
           onPressed : widget.onGoHome,
           child     : Text(
@@ -1305,16 +1307,16 @@ class _LivreurSearchSheetState extends State<_LivreurSearchSheet>
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          width  : 80,
-          height : 80,
+          width  : 80.r,
+          height : 80.r,
           decoration: const BoxDecoration(
             shape : BoxShape.circle,
             color : AppColors.errorLight,
           ),
-          child: const Icon(Icons.close_rounded,
-              size: 36, color: AppColors.error),
+          child: Icon(Icons.close_rounded,
+              size: 36.r, color: AppColors.error),
         ),
-        const SizedBox(height: 20),
+        SizedBox(height: 20.h),
         Text(
           _statut == 'REJETE' ? 'Commande rejetée' : 'Commande annulée',
           style: AppTextStyles.h3.copyWith(
@@ -1322,7 +1324,7 @@ class _LivreurSearchSheetState extends State<_LivreurSearchSheet>
             color      : AppColors.dark,
           ),
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: 8.h),
         Text(
           'Votre commande n\'a pas pu être traitée.\nContactez l\'établissement pour plus d\'informations.',
           textAlign : TextAlign.center,
@@ -1331,7 +1333,7 @@ class _LivreurSearchSheetState extends State<_LivreurSearchSheet>
             height : 1.5,
           ),
         ),
-        const SizedBox(height: 24),
+        SizedBox(height: 24.h),
         YaaButton(
           label     : 'Retour à l\'accueil',
           onPressed : widget.onGoHome,
@@ -1353,7 +1355,7 @@ class _LivreurSearchSheetState extends State<_LivreurSearchSheet>
           ),
         ),
 
-        const SizedBox(height: 20),
+        SizedBox(height: 20.h),
 
         // ── Le coursier ───────────────────────────────────────
         // Même widget que le détail d'une mission : la fiche du
@@ -1366,25 +1368,25 @@ class _LivreurSearchSheetState extends State<_LivreurSearchSheet>
           vehicule : _livreur?.vehiculeCoursier,
         ),
 
-        const SizedBox(height: 12),
+        SizedBox(height: 12.h),
         Text(
           'En route vers l\'établissement',
           style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSoft),
         ),
 
-        const SizedBox(height: 20),
-        const SizedBox(height: 20),
+        SizedBox(height: 20.h),
+        SizedBox(height: 20.h),
 
         // ── Itinéraire ────────────────────────────────────────
         _buildTrajet(),
 
-        const SizedBox(height: 16),
+        SizedBox(height: 16.h),
 
         YaaButton(
           label     : 'Suivre ma commande',
           onPressed : () => widget.onTrackOrder(_commandeId!),
         ),
-        const SizedBox(height: 6),
+        SizedBox(height: 6.h),
         TextButton(
           onPressed : widget.onGoHome,
           child     : Text(

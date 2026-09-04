@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
@@ -74,7 +75,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                     Text(
                       'Mot de passe oublié',
                       style: AppTextStyles.h1.copyWith(
-                        fontSize   : 28,
+                        fontSize   : 28.sp,
                         fontWeight : FontWeight.w800,
                         color      : AppColors.primary,
                       ),
@@ -139,7 +140,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
 
   Widget _buildToggleTabs() {
     return Container(
-      height: 48,
+      height: 48.h,
       decoration: BoxDecoration(
         color        : AppColors.grey100,
         borderRadius : BorderRadius.circular(AppDimens.radiusFull),
@@ -189,10 +190,10 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
           children: [
             Icon(
               icon,
-              size  : 18,
+              size  : 18.r,
               color : isActive ? AppColors.primary : AppColors.grey600,
             ),
-            const SizedBox(width: 8),
+            SizedBox(width: 8.w),
             Text(
               label,
               style: AppTextStyles.labelMedium.copyWith(

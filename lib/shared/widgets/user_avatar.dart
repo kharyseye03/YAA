@@ -1,6 +1,7 @@
 import '../../shared/widgets/image_reseau.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../core/constants/app_colors.dart';
 
 /// Affiche la photo de profil : URL réseau, fichier local, ou icône par défaut.
@@ -47,5 +48,5 @@ class UserAvatar extends StatelessWidget {
     return _placeholder();
   }
 
-  Widget _placeholder() => const Icon(Icons.person, color: AppColors.grey500, size: 48);
+  Widget _placeholder() => Icon(Icons.person, color: AppColors.grey500, size: 48.r);
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
@@ -107,7 +108,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     _titre,
                     style: AppTextStyles.h1.copyWith(
                       color      : Colors.white,
-                      fontSize   : 42,
+                      fontSize   : 42.sp,
                       fontWeight : FontWeight.w800,
                       height     : 1.08,
                       letterSpacing: -0.5,
@@ -120,7 +121,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     _accroche,
                     style: AppTextStyles.bodyMedium.copyWith(
                       color    : Colors.white.withValues(alpha: 0.82),
-                      fontSize : 15,
+                      fontSize : 15.sp,
                       height   : 1.55,
                     ),
                   ),
@@ -130,7 +131,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   // ── Entrée principale ───────────────────────────
                   SizedBox(
                     width  : double.infinity,
-                    height : 56,
+                    height : 56.h,
                     child  : ElevatedButton(
                       onPressed: () => _quitter(RouteNames.register),
                       style: ElevatedButton.styleFrom(
@@ -146,7 +147,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         'Commencer',
                         style: AppTextStyles.labelMedium.copyWith(
                           color      : Colors.white,
-                          fontSize   : 16,
+                          fontSize   : 16.sp,
                           fontWeight : FontWeight.w700,
                         ),
                       ),
@@ -161,7 +162,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       onTap    : () => _quitter(RouteNames.login),
                       behavior : HitTestBehavior.opaque,
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 6),
+                        padding: EdgeInsets.symmetric(vertical: 6.h),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
@@ -171,7 +172,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                 color: Colors.white.withValues(alpha: 0.7),
                               ),
                             ),
-                            const SizedBox(width: 6),
+                            SizedBox(width: 6.w),
                             Text(
                               'Se connecter',
                               style: AppTextStyles.bodySmall.copyWith(

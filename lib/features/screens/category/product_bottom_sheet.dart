@@ -1,8 +1,10 @@
 import '../../../shared/widgets/image_reseau.dart';
+import '../../../core/errors/messages_erreur.dart';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimens.dart';
 import '../../../core/constants/app_text_styles.dart';
@@ -41,9 +43,9 @@ class _ProductSheetState extends ConsumerState<_ProductSheet> {
 
     return Container(
       height: MediaQuery.of(context).size.height * 0.93,
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28.r)),
       ),
       child: detail.when(
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -51,7 +53,7 @@ class _ProductSheetState extends ConsumerState<_ProductSheet> {
           child: Padding(
             padding: EdgeInsets.all(AppDimens.xl),
             child: Text(
-              e.toString().replaceAll('Exception: ', ''),
+              MessagesErreur.depuisException(e),
               style: AppTextStyles.bodyMedium.copyWith(color: AppColors.error),
               textAlign: TextAlign.center,
             ),
@@ -84,18 +86,18 @@ class _ProductSheetState extends ConsumerState<_ProductSheet> {
       children: [
         // ── Image hero ──────────────────────────────────
         ClipRRect(
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(28.r)),
           child: ImageReseau(
             url: produit.imageUrl,
-            height: 300,
+            height: 300.h,
             width: double.infinity,
             fit: BoxFit.cover,
             fallback: Container(
-              height: 300,
+              height: 300.h,
               color: AppColors.grey100,
-              child: const Center(
+              child: Center(
                 child: Icon(Icons.image_outlined,
-                    color: AppColors.grey400, size: 64),
+                    color: AppColors.grey400, size: 64.r),
               ),
             ),
           ),
@@ -103,14 +105,14 @@ class _ProductSheetState extends ConsumerState<_ProductSheet> {
 
         // ── Gradient haut (lisibilité boutons) ──────────
         Positioned(
-          top: 0,
-          left: 0,
-          right: 0,
+          top: 0.h,
+          left: 0.w,
+          right: 0.w,
           child: ClipRRect(
             borderRadius:
-                const BorderRadius.vertical(top: Radius.circular(28)),
+                BorderRadius.vertical(top: Radius.circular(28.r)),
             child: Container(
-              height: 90,
+              height: 90.h,
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
@@ -124,11 +126,11 @@ class _ProductSheetState extends ConsumerState<_ProductSheet> {
 
         // ── Gradient bas (fondu vers blanc) ─────────────
         Positioned(
-          bottom: 0,
-          left: 0,
-          right: 0,
+          bottom: 0.h,
+          left: 0.w,
+          right: 0.w,
           child: Container(
-            height: 110,
+            height: 110.h,
             decoration: const BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.bottomCenter,
@@ -140,18 +142,18 @@ class _ProductSheetState extends ConsumerState<_ProductSheet> {
         ),
 
         // ── Drag handle ─────────────────────────────────
-        const Positioned(
-          top: 12,
-          left: 0,
-          right: 0,
+        Positioned(
+          top: 12.h,
+          left: 0.w,
+          right: 0.w,
           child: Center(
             child: SizedBox(
-              width: 40,
-              height: 4,
+              width: 40.w,
+              height: 4.h,
               child: DecoratedBox(
                 decoration: BoxDecoration(
                   color: Colors.white54,
-                  borderRadius: BorderRadius.all(Radius.circular(100)),
+                  borderRadius: BorderRadius.all(Radius.circular(100.r)),
                 ),
               ),
             ),
@@ -160,8 +162,8 @@ class _ProductSheetState extends ConsumerState<_ProductSheet> {
 
         // ── Bouton fermer ────────────────────────────────
         Positioned(
-          top: 16,
-          right: 16,
+          top: 16.h,
+          right: 16.w,
           child: _GlassButton(
             icon: Icons.close_rounded,
             onTap: () => Navigator.of(context).pop(),
@@ -170,8 +172,8 @@ class _ProductSheetState extends ConsumerState<_ProductSheet> {
 
         // ── Bouton favori ────────────────────────────────
         Positioned(
-          top: 16,
-          left: 16,
+          top: 16.h,
+          left: 16.w,
           child: _GlassButton(
             icon: ref.watch(favoriProvider).isProduitFavori(widget.produitId)
                 ? Icons.favorite_rounded
@@ -189,18 +191,18 @@ class _ProductSheetState extends ConsumerState<_ProductSheet> {
 
         // ── Badge "Populaire" ────────────────────────────
         Positioned(
-          bottom: 20,
+          bottom: 20.h,
           left: AppDimens.screenPadding,
           child: Container(
             padding:
-                const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
             decoration: BoxDecoration(
               color: AppColors.secondary,
               borderRadius: BorderRadius.circular(AppDimens.radiusFull),
               boxShadow: [
                 BoxShadow(
                   color: AppColors.secondary.withValues(alpha: 0.4),
-                  blurRadius: 8,
+                  blurRadius: 8.r,
                   offset: const Offset(0, 3),
                 ),
               ],
@@ -208,8 +210,8 @@ class _ProductSheetState extends ConsumerState<_ProductSheet> {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text('🔥', style: TextStyle(fontSize: 12)),
-                const SizedBox(width: 5),
+                Text('🔥', style: TextStyle(fontSize: 12.sp)),
+                SizedBox(width: 5.w),
                 Text(
                   'Populaire',
                   style: AppTextStyles.labelSmall.copyWith(
@@ -271,7 +273,7 @@ class _ProductSheetState extends ConsumerState<_ProductSheet> {
                   style: AppTextStyles.h2.copyWith(
                     fontWeight: FontWeight.w800,
                     color: AppColors.dark,
-                    fontSize: 22,
+                    fontSize: 22.sp,
                     height: 1.2,
                   ),
                 ),
@@ -282,7 +284,7 @@ class _ProductSheetState extends ConsumerState<_ProductSheet> {
                 style: AppTextStyles.labelLarge.copyWith(
                   color: AppColors.primary,
                   fontWeight: FontWeight.w800,
-                  fontSize: 18,
+                  fontSize: 18.sp,
                 ),
               ),
             ],
@@ -328,8 +330,8 @@ class _ProductSheetState extends ConsumerState<_ProductSheet> {
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
                     curve: Curves.easeOut,
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 22, vertical: 11),
+                    padding: EdgeInsets.symmetric(
+                        horizontal: 22.w, vertical: 11.h),
                     decoration: BoxDecoration(
                       color: selected
                           ? AppColors.primary
@@ -341,7 +343,7 @@ class _ProductSheetState extends ConsumerState<_ProductSheet> {
                               BoxShadow(
                                 color:
                                     AppColors.primary.withValues(alpha: 0.3),
-                                blurRadius: 8,
+                                blurRadius: 8.r,
                                 offset: const Offset(0, 3),
                               )
                             ]
@@ -401,7 +403,7 @@ class _ProductSheetState extends ConsumerState<_ProductSheet> {
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.07),
-            blurRadius: 20,
+            blurRadius: 20.r,
             offset: const Offset(0, -6),
           ),
         ],
@@ -427,13 +429,13 @@ class _ProductSheetState extends ConsumerState<_ProductSheet> {
                   },
                 ),
                 SizedBox(
-                  width: 32,
+                  width: 32.w,
                   child: Text(
                     '$_quantity',
                     textAlign: TextAlign.center,
                     style: AppTextStyles.labelMedium.copyWith(
                       fontWeight: FontWeight.w700,
-                      fontSize: 16,
+                      fontSize: 16.sp,
                     ),
                   ),
                 ),
@@ -487,7 +489,7 @@ class _ProductSheetState extends ConsumerState<_ProductSheet> {
               child: AnimatedContainer(
                 duration : const Duration(milliseconds: 300),
                 curve    : Curves.easeOut,
-                height   : 54,
+                height   : 54.h,
                 decoration: BoxDecoration(
                   color: _added
                       ? AppColors.success
@@ -508,17 +510,17 @@ class _ProductSheetState extends ConsumerState<_ProductSheet> {
                       : [
                           BoxShadow(
                             color     : AppColors.primary.withValues(alpha: 0.35),
-                            blurRadius: 14,
+                            blurRadius: 14.r,
                             offset    : const Offset(0, 5),
                           ),
                         ],
                 ),
                 alignment: Alignment.center,
                 child: ref.watch(cartProvider).isAdding
-                    ? const SizedBox(
-                        width : 22, height: 22,
+                    ? SizedBox(
+                        width : 22.r, height: 22.r,
                         child : CircularProgressIndicator(
-                          strokeWidth : 2.5,
+                          strokeWidth : 2.5.r,
                           color       : Colors.white,
                         ),
                       )
@@ -526,15 +528,15 @@ class _ProductSheetState extends ConsumerState<_ProductSheet> {
                         ? Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(Icons.check_circle_rounded,
-                                  color: Colors.white, size: 20),
-                              const SizedBox(width: 8),
+                              Icon(Icons.check_circle_rounded,
+                                  color: Colors.white, size: 20.r),
+                              SizedBox(width: 8.w),
                               Text(
                                 'Ajouté au panier !',
                                 style: AppTextStyles.labelMedium.copyWith(
                                   color      : Colors.white,
                                   fontWeight : FontWeight.w700,
-                                  fontSize   : 15,
+                                  fontSize   : 15.sp,
                                 ),
                               ),
                             ],
@@ -544,7 +546,7 @@ class _ProductSheetState extends ConsumerState<_ProductSheet> {
                             style: AppTextStyles.labelMedium.copyWith(
                               color      : Colors.white,
                               fontWeight : FontWeight.w700,
-                              fontSize   : 15,
+                              fontSize   : 15.sp,
                             ),
                           ),
               ),
@@ -576,13 +578,13 @@ class _GlassButton extends StatelessWidget {
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
           child: Container(
-            width: 38,
-            height: 38,
+            width: 38.r,
+            height: 38.r,
             decoration: BoxDecoration(
               color: Colors.black.withValues(alpha: 0.22),
               shape: BoxShape.circle,
             ),
-            child: Icon(icon, size: 20, color: iconColor),
+            child: Icon(icon, size: 20.r, color: iconColor),
           ),
         ),
       ),
@@ -603,7 +605,7 @@ class _InfoChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
       decoration: BoxDecoration(
         color: AppColors.grey100,
         borderRadius: BorderRadius.circular(AppDimens.radiusFull),
@@ -611,8 +613,8 @@ class _InfoChip extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 14, color: iconColor),
-          const SizedBox(width: 4),
+          Icon(icon, size: 14.r, color: iconColor),
+          SizedBox(width: 4.w),
           Text(
             label,
             style: AppTextStyles.caption.copyWith(
@@ -672,7 +674,7 @@ class _ExtraChipState extends State<_ExtraChip> {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         curve: Curves.easeOut,
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+        padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 9.h),
         decoration: BoxDecoration(
           color: _selected ? AppColors.primarySurface : AppColors.grey100,
           borderRadius: BorderRadius.circular(AppDimens.radiusFull),
@@ -687,10 +689,10 @@ class _ExtraChipState extends State<_ExtraChip> {
             AnimatedSwitcher(
               duration: const Duration(milliseconds: 200),
               child: _selected
-                  ? const Padding(
-                      padding: EdgeInsets.only(right: 5),
+                  ? Padding(
+                      padding: EdgeInsets.only(right: 5.w),
                       child: Icon(Icons.check_circle_rounded,
-                          size: 14, color: AppColors.primary),
+                          size: 14.r, color: AppColors.primary),
                     )
                   : const SizedBox.shrink(),
             ),
@@ -701,7 +703,7 @@ class _ExtraChipState extends State<_ExtraChip> {
                 fontWeight: FontWeight.w600,
               ),
             ),
-            const SizedBox(width: 4),
+            SizedBox(width: 4.w),
             Text(
               widget.price,
               style: AppTextStyles.caption.copyWith(
@@ -725,9 +727,9 @@ class _QuantityButton extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: SizedBox(
-        width: 44,
-        height: 44,
-        child: Icon(icon, size: 20, color: AppColors.dark),
+        width: 44.r,
+        height: 44.r,
+        child: Icon(icon, size: 20.r, color: AppColors.dark),
       ),
     );
   }
