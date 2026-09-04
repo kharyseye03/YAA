@@ -33,8 +33,30 @@ String formatPhone(String value) {
 }
 
 /// `622 12 34 56` → `622123456`, la forme attendue par l'API.
-/// Tolère aussi un indicatif collé par le backend (`+224…`).
 String unformatPhone(String value) => value.replaceAll(RegExp(r'\D'), '');
+
+/// Ramène un numéro **venant du serveur** à ses 9 chiffres locaux.
+///
+/// Le backend ne stocke pas toujours la même forme : `771234567`,
+/// mais aussi `+221771234567` ou `00224622123456` selon la façon dont
+/// le compte a été créé. Chargé tel quel dans le champ, un numéro à
+/// indicatif fait 12 chiffres — la validation le rejette avec « Le
+/// numéro doit contenir 9 chiffres », sur une valeur que
+/// l'utilisateur n'a pas saisie et qu'il ne comprend pas.
+///
+/// On garde les **neuf derniers** chiffres : un indicatif est
+/// toujours en tête, jamais en queue. [formatPhone] garde les neuf
+/// premiers, ce qui est juste pendant la frappe mais faux ici — il
+/// transformerait `+221 77 123 45 67` en `221 77 12 34`, un numéro
+/// plausible et pourtant inexistant.
+///
+/// À appliquer chaque fois qu'une valeur stockée entre dans un champ.
+String telephoneLocal(String value) {
+  final chiffres = unformatPhone(value);
+  return chiffres.length <= kLongueurTelephone
+      ? chiffres
+      : chiffres.substring(chiffres.length - kLongueurTelephone);
+}
 
 /// Valide un numéro saisi. Renvoie null si tout va bien.
 String? validatePhone(String? value) {

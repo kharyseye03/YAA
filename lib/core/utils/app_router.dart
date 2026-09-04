@@ -24,6 +24,7 @@ import '../../features/screens/order/orders_screen.dart';
 import '../../features/screens/profile/edit_personal_info_screen.dart';
 import '../../features/screens/profile/personal_info_screen.dart';
 import '../../features/screens/category/category_screen.dart';
+import '../../features/screens/home/autour_de_vous_screen.dart';
 import '../../features/screens/profile/terms_screen.dart';
 import '../../features/screens/search/search_screen.dart';
 import '../../features/starter/onboarding/screens/onboarding_screen.dart';
@@ -73,6 +74,7 @@ abstract final class RoutePaths {
   static const String coursierSearch = '/coursier-search';
   static const String profile = '/profile';
   static const String search = '/search';
+  static const String autourDeVous = '/autour-de-vous';
   static const String personalInfo = '/personalInfo';
   static const String editPersonalInfo = '/editPersonalInfo';
   static const String terms = '/terms';
@@ -113,6 +115,7 @@ abstract final class RouteNames {
   static const String terms = 'terms';
   static const String notifications = 'notifications';
   static const String category = 'category';
+  static const String autourDeVous = 'autourDeVous';
 }
 
 /// GoRouter provider for Riverpod.
@@ -277,6 +280,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: RoutePaths.search,
         name: RouteNames.search,
         builder: (context, state) => const SearchScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.autourDeVous,
+        name: RouteNames.autourDeVous,
+        builder: (context, state) => const AutourDeVousScreen(),
       ),
     ],
 

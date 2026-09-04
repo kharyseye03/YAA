@@ -53,7 +53,12 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     super.initState();
     // Pré-remplir le téléphone depuis le profil
     final profile = ref.read(userProvider).profile;
-    _phoneController.text = formatPhone(profile?.telephone ?? '');
+    // telephoneLocal indispensable ici : formatPhone seul garde les
+    // neuf PREMIERS chiffres, donc « +221771234567 » devenait
+    // « 221 77 12 34 ». Neuf chiffres, validation satisfaite, et une
+    // commande partie vers un numéro qui n'existe pas.
+    _phoneController.text =
+        formatPhone(telephoneLocal(profile?.telephone ?? ''));
 
     // Pré-remplir l'adresse : celle choisie pour cette commande,
     // sinon l'adresse par défaut du profil

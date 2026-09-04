@@ -251,19 +251,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           SizedBox(height: AppDimens.xxl),
 
 // ── Section : Restaurants proches ──────────────────────
-          _buildSectionHeader('Autour de vous', onSeeAll: () {
-            final cats = ref.read(categoriesProvider).value;
-            if (cats != null && cats.isNotEmpty) {
-              final restaurant = cats.first;
-              context.pushNamed(
-                RouteNames.category,
-                extra: CategoryScreenArgs(
-                  categoryName: restaurant.name,
-                  categoryId: restaurant.id,
-                ),
-              );
-            }
-          }),
+          // « Tous » ouvrait l'écran Catégorie sur cats.first, donc
+          // les restaurants — par le seul hasard de l'ordre renvoyé
+          // par le serveur. Une section qui promet la proximité doit
+          // montrer ce qui est proche, toutes catégories confondues.
+          _buildSectionHeader(
+            'Autour de vous',
+            onSeeAll: () => context.pushNamed(RouteNames.autourDeVous),
+          ),
           SizedBox(height: AppDimens.md),
           SizedBox(
             height: 200.h,

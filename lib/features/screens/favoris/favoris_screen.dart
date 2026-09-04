@@ -10,6 +10,9 @@ import '../../../core/constants/app_text_styles.dart';
 import '../../../features/favoris/providers/favori_notifier.dart';
 import '../../../model/favori/produit_favori_model.dart';
 import '../../../model/favori/structure_favori_model.dart';
+import '../category/product_bottom_sheet.dart';
+import '../category/restaurant_bottom_sheet.dart';
+import '../home/restaurant_card.dart';
 
 class FavorisScreen extends ConsumerStatefulWidget {
   const FavorisScreen({super.key});
@@ -126,6 +129,20 @@ class _FavorisScreenState extends ConsumerState<FavorisScreen> {
           onToggle  : () => ref
               .read(favoriProvider.notifier)
               .toggleFavori(f.structureId),
+          // Même feuille que depuis l'accueil ou une catégorie : on
+          // n'ouvre pas une variante « vue depuis les favoris ».
+          onTap: () => showRestaurantBottomSheet(
+            context,
+            RestaurantData(
+              name         : f.nom,
+              cuisine      : f.categorie ?? '',
+              rating       : f.nombreEtoile.toDouble(),
+              deliveryTime : f.tempsLivraison,
+              imageUrl     : f.logoUrl ?? '',
+            ),
+            structureId  : f.structureId,
+            categoryType : f.categorie ?? 'restaurant',
+          ),
         );
       },
     );
@@ -153,6 +170,10 @@ class _FavorisScreenState extends ConsumerState<FavorisScreen> {
           onToggle  : () => ref
               .read(favoriProvider.notifier)
               .toggleProduitFavori(p.produitId),
+          // La feuille produit recharge le détail depuis l'API à
+          // partir de l'id : le prix et la disponibilité affichés
+          // sont ceux du moment, pas ceux du jour de l'ajout.
+          onTap: () => showProductBottomSheet(context, p.produitId),
         );
       },
     );
@@ -253,14 +274,24 @@ class _StructureCard extends StatelessWidget {
     required this.favori,
     required this.isToggling,
     required this.onToggle,
+    required this.onTap,
   });
   final StructureFavoriModel favori;
   final bool                 isToggling;
   final VoidCallback         onToggle;
 
+  /// Ouvre l'établissement. Sans lui, la carte n'était qu'un pense-bête
+  /// : on voyait ce qu'on avait aimé sans pouvoir y retourner.
+  final VoidCallback onTap;
+
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return GestureDetector(
+      onTap    : onTap,
+      // La carte a des zones vides entre le logo et le cœur ; sans
+      // ceci, un appui à côté du texte ne déclencherait rien.
+      behavior : HitTestBehavior.opaque,
+      child: Container(
       decoration: BoxDecoration(
         color        : Colors.white,
         borderRadius : BorderRadius.circular(16.r),
@@ -340,6 +371,7 @@ class _StructureCard extends StatelessWidget {
           _HeartButton(isToggling: isToggling, onToggle: onToggle),
         ],
       ),
+      ),
     );
   }
 
@@ -354,14 +386,21 @@ class _ProduitCard extends StatelessWidget {
     required this.favori,
     required this.isToggling,
     required this.onToggle,
+    required this.onTap,
   });
   final ProduitFavoriModel favori;
   final bool               isToggling;
   final VoidCallback       onToggle;
 
+  /// Ouvre la fiche du produit.
+  final VoidCallback onTap;
+
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return GestureDetector(
+      onTap    : onTap,
+      behavior : HitTestBehavior.opaque,
+      child: Container(
       decoration: BoxDecoration(
         color        : Colors.white,
         borderRadius : BorderRadius.circular(16.r),
@@ -433,6 +472,7 @@ class _ProduitCard extends StatelessWidget {
           // Bouton cœur
           _HeartButton(isToggling: isToggling, onToggle: onToggle),
         ],
+      ),
       ),
     );
   }

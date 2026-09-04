@@ -32,7 +32,13 @@ class RestaurantCard extends StatelessWidget {
     this.onFavoriteTap,
     this.isFavori = false,
     this.isToggling = false,
+    this.width,
   });
+
+  /// Largeur imposée. Null suit le parent — ce qu'il faut dans une
+  /// liste verticale. La valeur par défaut de 270 cadre le défilé
+  /// horizontal de l'accueil, où plusieurs cartes se côtoient.
+  final double? width;
 
   final RestaurantData restaurant;
   final VoidCallback? onTap;
@@ -53,7 +59,7 @@ class RestaurantCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: SizedBox(
-        width: 270.w,
+        width: width ?? 270.w,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -65,11 +71,11 @@ class RestaurantCard extends StatelessWidget {
                   child: ImageReseau(
                     url     : restaurant.imageUrl,
                     height  : 130.h,
-                    width   : 270.w,
+                    width   : double.infinity,
                     radius  : AppDimens.radiusLg,
                     fallback: Container(
                       height: 130.h,
-                      width: 270.w,
+                      width: double.infinity,
                       decoration: BoxDecoration(
                         color: AppColors.grey200,
                         borderRadius:

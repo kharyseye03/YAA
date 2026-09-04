@@ -38,7 +38,11 @@ class _EditPersonalInfoScreenState
     _firstNameController = TextEditingController(text: profile?.firstName ?? '');
     _lastNameController  = TextEditingController(text: profile?.lastName  ?? '');
     _emailController     = TextEditingController(text: profile?.email     ?? '');
-    _phoneController     = TextEditingController(text: profile?.telephone ?? '');
+    // telephoneLocal avant formatPhone : le serveur peut renvoyer un
+    // indicatif, et le champ n'accepte que les 9 chiffres locaux.
+    _phoneController = TextEditingController(
+      text: formatPhone(telephoneLocal(profile?.telephone ?? '')),
+    );
   }
 
   @override
@@ -143,7 +147,10 @@ class _EditPersonalInfoScreenState
       firstName : _firstNameController.text.trim(),
       lastName  : _lastNameController.text.trim(),
       email     : _emailController.text.trim(),
-      telephone : _phoneController.text.trim(),
+      // Sans unformatPhone, l'API recevait « 622 12 34 56 », espaces
+      // compris — la mise en forme est faite pour l'œil, pas pour le
+      // serveur.
+      telephone : unformatPhone(_phoneController.text),
       imagePath : _pickedImage?.path,
     );
 

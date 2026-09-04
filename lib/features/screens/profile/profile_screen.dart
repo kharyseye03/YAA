@@ -212,14 +212,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               if (context.mounted) context.goNamed(RouteNames.login);
             },
           ),
-          const _Divider(),
-          _Row(
-            icon: Icons.delete_outline_rounded,
-            label: 'Supprimer mon compte',
-            labelColor: AppColors.error,
-            iconColor: AppColors.error,
-            onTap: () {},
-          ),
 
           SizedBox(height: 80.h),
         ],
