@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 /// Useful extensions on [BuildContext].
 extension ContextExtensions on BuildContext {
@@ -28,8 +29,8 @@ extension ContextExtensions on BuildContext {
         content: Text(message),
         behavior: SnackBarBehavior.floating,
         backgroundColor: isError ? colorScheme.error : null,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        margin: const EdgeInsets.all(16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r)),
+        margin: EdgeInsets.all(16.r),
       ),
     );
   }

@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import '../../config/api/api_config.dart';
+import '../../core/errors/messages_erreur.dart';
 import '../../model/auth/login_response.dart';
 import '../../model/auth/register_response.dart';
 import '../../model/cart/cart_model.dart';
@@ -28,6 +29,18 @@ class ApiService {
   static final ApiService _instance = ApiService._internal();
   factory ApiService() => _instance;
   ApiService._internal();
+
+  /// Client HTTP unique, conservé pour toute la vie de l'application.
+  ///
+  /// Les fonctions de premier niveau de `package:http` — `http.get`,
+  /// `http.post`… — créent un client, l'utilisent une fois et le
+  /// ferment. Chaque appel refaisait donc la résolution DNS, la
+  /// connexion TCP **et la poignée de main TLS** : mesurée entre 300 ms
+  /// et 2 s, pour un serveur qui répond en 150 ms.
+  ///
+  /// Un client partagé garde la connexion ouverte (keep-alive) : seule
+  /// la première requête paie ce prix.
+  final http.Client _client = http.Client();
 
   // ════════════════════════════════════════════════════
   // AUTHENTIFICATION — Renouvellement automatique du token
@@ -105,7 +118,7 @@ class ApiService {
         request(headers).timeout(
           const Duration(seconds: ApiConfig.connectionTimeout),
           onTimeout: () => throw TimeoutException(
-              'Le serveur ne répond pas. Vérifiez votre connexion.'),
+              MessagesErreur.delaiDepasse),
         );
 
     if (!auth) return run(ApiConfig.headers);
@@ -132,7 +145,7 @@ class ApiService {
 
       final response = await _send(
         auth    : auth,
-        request : (headers) => http.post(
+        request : (headers) => _client.post(
           url,
           headers : headers,
           body    : json.encode(body),
@@ -149,15 +162,16 @@ class ApiService {
       }
 
       if (response.body.isEmpty) {
-        throw Exception('Erreur ${response.statusCode}');
+        throw Exception(MessagesErreur.pourStatut(response.statusCode));
       }
 
       final data = json.decode(response.body) as Map<String, dynamic>;
-      final errorMessage = data['message'] as String? ?? 'Erreur ${response.statusCode}';
+      final errorMessage = MessagesErreur.depuisReponse(
+          response.statusCode, data['message'] as String?);
       throw Exception(errorMessage);
 
     } on SocketException {
-      throw Exception('Pas de connexion internet.');
+      throw Exception(MessagesErreur.horsLigne);
     } on TimeoutException catch (e) {
       throw Exception(e.message);
     } on FormatException {
@@ -180,7 +194,7 @@ class ApiService {
 
       final response = await _send(
         auth    : auth,
-        request : (headers) => http.put(
+        request : (headers) => _client.put(
           url,
           headers : headers,
           body    : json.encode(body),
@@ -197,15 +211,16 @@ class ApiService {
       }
 
       if (response.body.isEmpty) {
-        throw Exception('Erreur ${response.statusCode}');
+        throw Exception(MessagesErreur.pourStatut(response.statusCode));
       }
 
       final data = json.decode(response.body) as Map<String, dynamic>;
-      final errorMessage = data['message'] as String? ?? 'Erreur ${response.statusCode}';
+      final errorMessage = MessagesErreur.depuisReponse(
+          response.statusCode, data['message'] as String?);
       throw Exception(errorMessage);
 
     } on SocketException {
-      throw Exception('Pas de connexion internet.');
+      throw Exception(MessagesErreur.horsLigne);
     } on TimeoutException catch (e) {
       throw Exception(e.message);
     } on FormatException {
@@ -231,7 +246,7 @@ class ApiService {
 
       final response = await _send(
         auth    : auth,
-        request : (headers) => http.delete(uri, headers: headers),
+        request : (headers) => _client.delete(uri, headers: headers),
       );
 
       ApiLogger.reponse(
@@ -244,14 +259,15 @@ class ApiService {
       }
 
       if (response.body.isEmpty) {
-        throw Exception('Erreur ${response.statusCode}');
+        throw Exception(MessagesErreur.pourStatut(response.statusCode));
       }
 
       final data = json.decode(response.body) as Map<String, dynamic>;
-      throw Exception(data['message'] as String? ?? 'Erreur ${response.statusCode}');
+      throw Exception(MessagesErreur.depuisReponse(
+          response.statusCode, data['message'] as String?));
 
     } on SocketException {
-      throw Exception('Pas de connexion internet.');
+      throw Exception(MessagesErreur.horsLigne);
     } on TimeoutException catch (e) {
       throw Exception(e.message);
     } on FormatException {
@@ -277,7 +293,7 @@ class ApiService {
 
       final response = await _send(
         auth    : auth,
-        request : (headers) => http.get(uri, headers: headers),
+        request : (headers) => _client.get(uri, headers: headers),
       );
 
       ApiLogger.reponse(
@@ -290,15 +306,16 @@ class ApiService {
       }
 
       if (response.body.isEmpty) {
-        throw Exception('Erreur ${response.statusCode}');
+        throw Exception(MessagesErreur.pourStatut(response.statusCode));
       }
 
       final data = json.decode(response.body) as Map<String, dynamic>;
-      final errorMessage = data['message'] as String? ?? 'Erreur ${response.statusCode}';
+      final errorMessage = MessagesErreur.depuisReponse(
+          response.statusCode, data['message'] as String?);
       throw Exception(errorMessage);
 
     } on SocketException {
-      throw Exception('Pas de connexion internet.');
+      throw Exception(MessagesErreur.horsLigne);
     } on TimeoutException catch (e) {
       throw Exception(e.message);
     } on FormatException {
@@ -323,21 +340,21 @@ class ApiService {
 
       final response = await _send(
         auth    : auth,
-        request : (headers) => http.get(uri, headers: headers),
+        request : (headers) => _client.get(uri, headers: headers),
       );
 
       ApiLogger.reponse(
           'GET', uri, response.statusCode, response.body, chrono.elapsed);
 
       if (response.body.isEmpty) {
-        throw Exception('Erreur ${response.statusCode} — réponse vide du serveur.');
+        throw Exception(MessagesErreur.reponseIllisible);
       }
       if (response.statusCode == 200 || response.statusCode == 201) {
         return json.decode(response.body) as List<dynamic>;
       }
-      throw Exception('Erreur ${response.statusCode}');
+      throw Exception(MessagesErreur.pourStatut(response.statusCode));
     } on SocketException {
-      throw Exception('Pas de connexion internet.');
+      throw Exception(MessagesErreur.horsLigne);
     } on TimeoutException catch (e) {
       throw Exception(e.message);
     } catch (e) {
@@ -361,7 +378,7 @@ class ApiService {
           .post(uri, headers: ApiConfig.formHeaders, body: fields)
           .timeout(
             const Duration(seconds: ApiConfig.connectionTimeout),
-            onTimeout: () => throw TimeoutException('Le serveur ne répond pas.'),
+            onTimeout: () => throw TimeoutException(MessagesErreur.delaiDepasse),
           );
 
       ApiLogger.reponse(
@@ -373,13 +390,14 @@ class ApiService {
         return data;
       }
 
-      final errorMessage = data['error_description'] as String?
-          ?? data['error'] as String?
-          ?? 'Erreur ${response.statusCode}';
-      throw Exception(errorMessage);
+      throw Exception(MessagesErreur.pourAuthentification(
+        response.statusCode,
+        data['error'] as String?,
+        data['error_description'] as String?,
+      ));
 
     } on SocketException {
-      throw Exception('Pas de connexion internet.');
+      throw Exception(MessagesErreur.horsLigne);
     } on TimeoutException catch (e) {
       throw Exception(e.message);
     } on FormatException {
@@ -756,9 +774,12 @@ class ApiService {
       ApiLogger.requete('PUT multipart', uri);
       final chrono = Stopwatch()..start();
 
-      final streamed = await request.send().timeout(
+      // request.send() ouvrirait son propre client : on passe par le
+      // client partagé pour réutiliser la connexion, comme partout
+      // ailleurs.
+      final streamed = await _client.send(request).timeout(
         const Duration(seconds: ApiConfig.connectionTimeout),
-        onTimeout: () => throw TimeoutException('Le serveur ne répond pas.'),
+        onTimeout: () => throw TimeoutException(MessagesErreur.delaiDepasse),
       );
       final response = await http.Response.fromStream(streamed);
 
@@ -785,11 +806,12 @@ class ApiService {
       if (response.body.isNotEmpty) {
         try { data = json.decode(response.body) as Map<String, dynamic>; } catch (_) {}
       }
-      final errorMessage = data['message'] as String? ?? 'Erreur ${response.statusCode}';
+      final errorMessage = MessagesErreur.depuisReponse(
+          response.statusCode, data['message'] as String?);
       throw Exception('${response.statusCode} $errorMessage');
 
     } on SocketException {
-      throw Exception('Pas de connexion internet.');
+      throw Exception(MessagesErreur.horsLigne);
     } on TimeoutException catch (e) {
       throw Exception(e.message);
     } catch (e) {
@@ -940,7 +962,7 @@ class ApiService {
       final response = await http
           .get(uri, headers: ApiConfig.headers)
           .timeout(const Duration(seconds: ApiConfig.connectionTimeout),
-              onTimeout: () => throw TimeoutException('Le serveur ne répond pas.'));
+              onTimeout: () => throw TimeoutException(MessagesErreur.delaiDepasse));
 
       if (response.body.isEmpty) throw Exception('Réponse vide du serveur.');
       if (response.statusCode == 200 || response.statusCode == 201) {
@@ -948,9 +970,10 @@ class ApiService {
             json.decode(response.body) as Map<String, dynamic>);
       }
       final data = json.decode(response.body) as Map<String, dynamic>;
-      throw Exception(data['message'] as String? ?? 'Erreur ${response.statusCode}');
+      throw Exception(MessagesErreur.depuisReponse(
+          response.statusCode, data['message'] as String?));
     } on SocketException {
-      throw Exception('Pas de connexion internet.');
+      throw Exception(MessagesErreur.horsLigne);
     } on TimeoutException catch (e) {
       throw Exception(e.message);
     } on FormatException {
@@ -1038,7 +1061,7 @@ class ApiService {
 
       final response = await _send(
         auth    : true,
-        request : (headers) => http.get(uri, headers: headers),
+        request : (headers) => _client.get(uri, headers: headers),
       );
 
       ApiLogger.reponse(
@@ -1053,9 +1076,10 @@ class ApiService {
       final data = response.body.isNotEmpty
           ? json.decode(response.body) as Map<String, dynamic>
           : <String, dynamic>{};
-      throw Exception(data['message'] as String? ?? 'Erreur ${response.statusCode}');
+      throw Exception(MessagesErreur.depuisReponse(
+          response.statusCode, data['message'] as String?));
     } on SocketException {
-      throw Exception('Pas de connexion internet.');
+      throw Exception(MessagesErreur.horsLigne);
     } on TimeoutException catch (e) {
       throw Exception(e.message);
     } catch (e) {
@@ -1090,7 +1114,7 @@ class ApiService {
 
       final response = await _send(
         auth    : true,
-        request : (headers) => http.get(uri, headers: headers),
+        request : (headers) => _client.get(uri, headers: headers),
       );
 
       ApiLogger.reponse(
@@ -1105,9 +1129,10 @@ class ApiService {
       final data = response.body.isNotEmpty
           ? json.decode(response.body) as Map<String, dynamic>
           : <String, dynamic>{};
-      throw Exception(data['message'] as String? ?? 'Erreur ${response.statusCode}');
+      throw Exception(MessagesErreur.depuisReponse(
+          response.statusCode, data['message'] as String?));
     } on SocketException {
-      throw Exception('Pas de connexion internet.');
+      throw Exception(MessagesErreur.horsLigne);
     } on TimeoutException catch (e) {
       throw Exception(e.message);
     } catch (e) {

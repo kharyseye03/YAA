@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimens.dart';
@@ -14,7 +15,7 @@ class SearchBarWidget extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        height: 50,
+        height: 50.h,
         decoration: BoxDecoration(
           color: AppColors.primarySurface,
           borderRadius: BorderRadius.circular(AppDimens.radiusFull),
@@ -25,9 +26,9 @@ class SearchBarWidget extends StatelessWidget {
             PhosphorIcon(
               PhosphorIcons.magnifyingGlass(),
               color: AppColors.dark,
-              size: 20,
+              size: 20.r,
             ),
-            const SizedBox(width: 8),
+            SizedBox(width: 8.w),
             Text(
               'Rechercher',
               style: AppTextStyles.bodyMedium.copyWith(

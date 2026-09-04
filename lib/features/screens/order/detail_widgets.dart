@@ -1,5 +1,8 @@
+import '../../../shared/widgets/image_reseau.dart';
+import '../../../model/order/livraison_course_model.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimens.dart';
@@ -34,7 +37,7 @@ class SectionTitre extends StatelessWidget {
         titre,
         style: AppTextStyles.labelMedium.copyWith(
           fontWeight : FontWeight.w700,
-          fontSize   : 15,
+          fontSize   : 15.sp,
           color      : AppColors.dark,
         ),
       );
@@ -49,12 +52,16 @@ class CarteCoursier extends StatelessWidget {
     this.telephone,
     this.photoUrl,
     this.note,
+    this.vehicule,
   });
 
   final String  nom;
   final String? telephone;
   final String? photoUrl;
   final double? note;
+
+  /// Affiché sous le nom quand le coursier l'a renseigné
+  final VehiculeCoursier? vehicule;
 
   String get _initiales => nom
       .trim()
@@ -73,15 +80,15 @@ class CarteCoursier extends StatelessWidget {
       child: Column(
         children: [
           Container(
-            width  : 76,
-            height : 76,
+            width  : 76.r,
+            height : 76.r,
             decoration: BoxDecoration(
               color : AppColors.primary,
               shape : BoxShape.circle,
               boxShadow: [
                 BoxShadow(
                   color      : AppColors.primary.withValues(alpha: 0.22),
-                  blurRadius : 16,
+                  blurRadius : 16.r,
                   offset     : const Offset(0, 6),
                 ),
               ],
@@ -89,12 +96,12 @@ class CarteCoursier extends StatelessWidget {
             child: ClipOval(
               child: photoUrl == null
                   ? _avatarInitiales()
-                  : Image.network(
-                      photoUrl!,
-                      width  : 76,
-                      height : 76,
+                  : ImageReseau(
+                      url: photoUrl!,
+                      width  : 76.r,
+                      height : 76.r,
                       fit    : BoxFit.cover,
-                      errorBuilder: (_, __, ___) => _avatarInitiales(),
+                      fallback: _avatarInitiales(),
                     ),
             ),
           ),
@@ -106,10 +113,56 @@ class CarteCoursier extends StatelessWidget {
             textAlign: TextAlign.center,
             style: AppTextStyles.labelMedium.copyWith(
               fontWeight : FontWeight.w800,
-              fontSize   : 16,
+              fontSize   : 16.sp,
               color      : AppColors.dark,
             ),
           ),
+
+          // ── Le véhicule ────────────────────────────────────
+          // L'immatriculation est mise en avant comme une plaque :
+          // c'est le seul élément qui permet de reconnaître l'engin
+          // qui se gare devant chez soi.
+          if (vehicule != null && !vehicule!.estVide) ...[
+            // Le modèle et la couleur d'abord : c'est ce qu'on repère
+            // de loin. La plaque ensuite, pour confirmer de près.
+            if (vehicule!.description.isNotEmpty) ...[
+              SizedBox(height: AppDimens.xs),
+              Text(
+                vehicule!.description.toUpperCase(),
+                textAlign: TextAlign.center,
+                style: AppTextStyles.labelSmall.copyWith(
+                  fontSize      : 13.sp,
+                  fontWeight    : FontWeight.w700,
+                  letterSpacing : 0.3,
+                  color         : AppColors.textSoft,
+                ),
+                maxLines : 1,
+                overflow : TextOverflow.ellipsis,
+              ),
+            ],
+            if (vehicule!.immatriculation?.isNotEmpty ?? false) ...[
+              SizedBox(height: AppDimens.sm),
+              Container(
+                padding: EdgeInsets.symmetric(
+                    horizontal: AppDimens.md, vertical: 6.h),
+                decoration: BoxDecoration(
+                  color        : AppColors.white,
+                  borderRadius : BorderRadius.circular(AppDimens.radiusSm),
+                  border       : Border.all(
+                      color: AppColors.dark, width: 1.6),
+                ),
+                child: Text(
+                  vehicule!.immatriculation!.toUpperCase(),
+                  style: AppTextStyles.labelMedium.copyWith(
+                    fontSize      : 19.sp,
+                    fontWeight    : FontWeight.w800,
+                    letterSpacing : 1.4,
+                    color         : AppColors.dark,
+                  ),
+                ),
+              ),
+            ],
+          ],
 
           if (note != null || aTelephone) ...[
             SizedBox(height: AppDimens.md),
@@ -124,12 +177,12 @@ class CarteCoursier extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(Icons.star_rounded,
-                          size: 19, color: Colors.amber.shade600),
-                      const SizedBox(width: 4),
+                          size: 19.r, color: Colors.amber.shade600),
+                      SizedBox(width: 4.w),
                       Text(
                         note!.toStringAsFixed(1),
                         style: AppTextStyles.labelSmall.copyWith(
-                          fontSize   : 15,
+                          fontSize   : 15.sp,
                           fontWeight : FontWeight.w800,
                           color      : AppColors.dark,
                         ),
@@ -142,8 +195,8 @@ class CarteCoursier extends StatelessWidget {
                   GestureDetector(
                     onTap: () => appelerNumero(telephone),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 14, vertical: 7),
+                      padding: EdgeInsets.symmetric(
+                          horizontal: 14.w, vertical: 7.h),
                       decoration: BoxDecoration(
                         color        : AppColors.success,
                         borderRadius :
@@ -152,13 +205,13 @@ class CarteCoursier extends StatelessWidget {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.phone_rounded,
-                              color: Colors.white, size: 16),
-                          const SizedBox(width: 7),
+                          Icon(Icons.phone_rounded,
+                              color: Colors.white, size: 16.r),
+                          SizedBox(width: 7.w),
                           Text(
                             'Appeler',
                             style: AppTextStyles.labelSmall.copyWith(
-                              fontSize   : 13,
+                              fontSize   : 13.sp,
                               fontWeight : FontWeight.w700,
                               color      : Colors.white,
                             ),
@@ -178,9 +231,9 @@ class CarteCoursier extends StatelessWidget {
   Widget _avatarInitiales() => Center(
         child: Text(
           _initiales.isEmpty ? '?' : _initiales,
-          style: const TextStyle(
+          style: TextStyle(
             fontFamily : 'PlusJakartaSans',
-            fontSize   : 22,
+            fontSize   : 22.sp,
             fontWeight : FontWeight.w800,
             color      : Colors.white,
           ),
@@ -217,10 +270,10 @@ class TrajetAB extends StatelessWidget {
           valeur  : LocationService.cleanAddress(depart),
         ),
         Padding(
-          padding: const EdgeInsets.only(left: 7),
+          padding: EdgeInsets.only(left: 7.w),
           child: Row(
             children: [
-              Container(width: 2, height: 26, color: AppColors.grey200),
+              Container(width: 2, height: 26.h, color: AppColors.grey200),
               SizedBox(width: AppDimens.lg),
               if (meta.isNotEmpty)
                 Text(
@@ -260,9 +313,9 @@ class _Point extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
-          width  : 16,
-          height : 16,
-          margin : const EdgeInsets.only(top: 2),
+          width  : 16.r,
+          height : 16.r,
+          margin : EdgeInsets.only(top: 2.h),
           decoration: BoxDecoration(
             shape  : BoxShape.circle,
             color  : couleur.withValues(alpha: 0.15),
@@ -327,31 +380,31 @@ class LigneProduit extends StatelessWidget {
                 borderRadius: BorderRadius.circular(AppDimens.radiusMd),
                 child: imageUrl == null
                     ? const _VignetteVide()
-                    : Image.network(
-                        imageUrl!,
-                        width  : 48,
-                        height : 48,
+                    : ImageReseau(
+                        url: imageUrl!,
+                        width  : 48.r,
+                        height : 48.r,
                         fit    : BoxFit.cover,
-                        errorBuilder: (_, __, ___) => const _VignetteVide(),
+                        fallback: const _VignetteVide(),
                       ),
               ),
               Positioned(
-                right : 0,
-                bottom: 0,
+                right : 0.w,
+                bottom: 0.h,
                 child : Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 5, vertical: 1),
-                  decoration: const BoxDecoration(
+                  padding: EdgeInsets.symmetric(
+                      horizontal: 5.w, vertical: 1.h),
+                  decoration: BoxDecoration(
                     color: AppColors.dark,
                     borderRadius: BorderRadius.only(
-                      topLeft     : Radius.circular(6),
-                      bottomRight : Radius.circular(6),
+                      topLeft     : Radius.circular(6.r),
+                      bottomRight : Radius.circular(6.r),
                     ),
                   ),
                   child: Text(
                     '×$quantite',
                     style: AppTextStyles.caption.copyWith(
-                      fontSize   : 10,
+                      fontSize   : 10.sp,
                       fontWeight : FontWeight.w800,
                       color      : Colors.white,
                     ),
@@ -402,11 +455,11 @@ class _VignetteVide extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        width  : 48,
-        height : 48,
+        width  : 48.r,
+        height : 48.r,
         color  : AppColors.grey100,
-        child  : const Icon(Icons.shopping_bag_outlined,
-            size: 20, color: AppColors.grey400),
+        child  : Icon(Icons.shopping_bag_outlined,
+            size: 20.r, color: AppColors.grey400),
       );
 }
 
@@ -484,7 +537,7 @@ class LigneContact extends StatelessWidget {
       behavior : HitTestBehavior.opaque,
       child: Row(
         children: [
-          const Icon(Icons.phone_outlined, size: 17, color: AppColors.textSoft),
+          Icon(Icons.phone_outlined, size: 17.r, color: AppColors.textSoft),
           SizedBox(width: AppDimens.md),
           Expanded(
             child: Text(
@@ -528,9 +581,9 @@ class SheetDetail extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width  : 40,
-            height : 4,
-            margin : const EdgeInsets.symmetric(vertical: 12),
+            width  : 40.w,
+            height : 4.h,
+            margin : EdgeInsets.symmetric(vertical: 12.h),
             decoration: BoxDecoration(
               color        : AppColors.grey300,
               borderRadius : BorderRadius.circular(AppDimens.radiusFull),
@@ -573,13 +626,13 @@ class EnTeteDetail extends StatelessWidget {
     return Row(
       children: [
         Container(
-          width  : 44,
-          height : 44,
+          width  : 44.r,
+          height : 44.r,
           decoration: BoxDecoration(
             color        : AppColors.primarySurface,
             borderRadius : BorderRadius.circular(AppDimens.radiusMd),
           ),
-          child: Icon(icone, size: 20, color: AppColors.primary),
+          child: Icon(icone, size: 20.r, color: AppColors.primary),
         ),
         SizedBox(width: AppDimens.md),
         Expanded(
@@ -590,7 +643,7 @@ class EnTeteDetail extends StatelessWidget {
                 titre,
                 style: AppTextStyles.labelMedium.copyWith(
                   fontWeight : FontWeight.w800,
-                  fontSize   : 16,
+                  fontSize   : 16.sp,
                   color      : AppColors.dark,
                 ),
               ),
@@ -608,7 +661,7 @@ class EnTeteDetail extends StatelessWidget {
         ),
         SizedBox(width: AppDimens.sm),
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
           decoration: BoxDecoration(
             color        : statut.bgColor,
             borderRadius : BorderRadius.circular(AppDimens.radiusFull),
@@ -618,7 +671,7 @@ class EnTeteDetail extends StatelessWidget {
             style: AppTextStyles.labelSmall.copyWith(
               color      : statut.color,
               fontWeight : FontWeight.w700,
-              fontSize   : 11,
+              fontSize   : 11.sp,
             ),
           ),
         ),

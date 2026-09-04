@@ -1,8 +1,10 @@
+import '../../../shared/widgets/image_reseau.dart';
 import '../../../core/utils/devise.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../config/api/api_config.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimens.dart';
 import '../../../core/constants/app_text_styles.dart';
@@ -37,7 +39,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape   : RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape   : RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
         title   : const Text('Vider le panier'),
         content : const Text('Êtes-vous sûr de vouloir supprimer tous les articles ?'),
         actions : [
@@ -98,7 +100,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
             top    : MediaQuery.of(context).padding.top + 12,
             left   : AppDimens.screenPadding,
             right  : AppDimens.screenPadding,
-            bottom : 16,
+            bottom : 16.h,
           ),
           child: Row(
             children: [
@@ -111,7 +113,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
               ),
               const Spacer(),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 5.h),
                 decoration: BoxDecoration(
                   color        : AppColors.grey100,
                   borderRadius : BorderRadius.circular(AppDimens.radiusFull),
@@ -123,25 +125,25 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                   style: AppTextStyles.labelSmall.copyWith(
                     color      : AppColors.grey600,
                     fontWeight : FontWeight.w600,
-                    fontSize   : 12,
+                    fontSize   : 12.sp,
                   ),
                 ),
               ),
               if (!isEmpty) ...[
-                const SizedBox(width: 8),
+                SizedBox(width: 8.w),
                 GestureDetector(
                   onTap: () => _confirmClearCart(context),
                   child: Container(
-                    width  : 34,
-                    height : 34,
+                    width  : 34.r,
+                    height : 34.r,
                     decoration: BoxDecoration(
                       color        : AppColors.errorLight,
-                      borderRadius : BorderRadius.circular(10),
+                      borderRadius : BorderRadius.circular(10.r),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.delete_outline_rounded,
                       color : AppColors.error,
-                      size  : 18,
+                      size  : 18.r,
                     ),
                   ),
                 ),
@@ -157,13 +159,13 @@ class _CartScreenState extends ConsumerState<CartScreen> {
           Container(
             width   : double.infinity,
             padding : EdgeInsets.symmetric(
-                horizontal: AppDimens.screenPadding, vertical: 10),
+                horizontal: AppDimens.screenPadding, vertical: 10.h),
             color   : AppColors.errorLight,
             child   : Row(
               children: [
-                const Icon(Icons.error_outline_rounded,
-                    color: AppColors.error, size: 16),
-                const SizedBox(width: 8),
+                Icon(Icons.error_outline_rounded,
+                    color: AppColors.error, size: 16.r),
+                SizedBox(width: 8.w),
                 Expanded(
                   child: Text(
                     cartState.error!,
@@ -193,23 +195,23 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                         'Total à payer',
                         style: AppTextStyles.bodySmall.copyWith(
                           color    : AppColors.grey500,
-                          fontSize : 12,
+                          fontSize : 12.sp,
                         ),
                       ),
                       const SizedBox(height: 2),
                       Text(
                         montantLabel(total),
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontFamily : 'PlusJakartaSans',
-                          fontSize   : 30,
+                          fontSize   : 30.sp,
                           fontWeight : FontWeight.w800,
                           color      : AppColors.dark,
                         ),
                       ),
 
-                      const SizedBox(height: 20),
+                      SizedBox(height: 20.h),
                       const Divider(height: 1, color: AppColors.grey200),
-                      const SizedBox(height: 20),
+                      SizedBox(height: 20.h),
 
                       // ── Adresse de livraison ─────────────────
                       // Adresse de la commande en cours, sinon
@@ -220,16 +222,16 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                         child: Row(
                           children: [
                             Container(
-                              width  : 36,
-                              height : 36,
+                              width  : 36.r,
+                              height : 36.r,
                               decoration: BoxDecoration(
                                 color        : AppColors.primarySurface,
-                                borderRadius : BorderRadius.circular(10),
+                                borderRadius : BorderRadius.circular(10.r),
                               ),
-                              child: const Icon(Icons.location_on_outlined,
-                                  color: AppColors.primary, size: 18),
+                              child: Icon(Icons.location_on_outlined,
+                                  color: AppColors.primary, size: 18.r),
                             ),
-                            const SizedBox(width: 12),
+                            SizedBox(width: 12.w),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -238,7 +240,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                                     'Adresse de livraison',
                                     style: AppTextStyles.bodySmall.copyWith(
                                       color    : AppColors.grey500,
-                                      fontSize : 11,
+                                      fontSize : 11.sp,
                                     ),
                                   ),
                                   Text(
@@ -251,7 +253,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                                     }(),
                                     style: AppTextStyles.labelMedium.copyWith(
                                       fontWeight : FontWeight.w600,
-                                      fontSize   : 13,
+                                      fontSize   : 13.sp,
                                       color      : AppColors.dark,
                                     ),
                                     maxLines: 1,
@@ -260,15 +262,15 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                                 ],
                               ),
                             ),
-                            const Icon(Icons.chevron_right,
-                                size: 18, color: AppColors.grey400),
+                            Icon(Icons.chevron_right,
+                                size: 18.r, color: AppColors.grey400),
                           ],
                         ),
                       ),
 
-                      const SizedBox(height: 20),
+                      SizedBox(height: 20.h),
                       const Divider(height: 1, color: AppColors.grey200),
-                      const SizedBox(height: 20),
+                      SizedBox(height: 20.h),
 
                       // ── Label Articles + hint swipe ───────────
                       Row(
@@ -277,20 +279,20 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                             'Articles',
                             style: AppTextStyles.labelMedium.copyWith(
                               fontWeight   : FontWeight.w700,
-                              fontSize     : 13,
+                              fontSize     : 13.sp,
                               color        : AppColors.grey500,
                               letterSpacing: 0.4,
                             ),
                           ),
                           if (!isEmpty) ...[
                             const Spacer(),
-                            const Icon(Icons.swipe_left_outlined,
-                                size: 12, color: AppColors.grey400),
-                            const SizedBox(width: 4),
+                            Icon(Icons.swipe_left_outlined,
+                                size: 12.r, color: AppColors.grey400),
+                            SizedBox(width: 4.w),
                             Text(
                               'Glisser pour supprimer',
                               style: AppTextStyles.bodySmall.copyWith(
-                                fontSize : 11,
+                                fontSize : 11.sp,
                                 color    : AppColors.grey400,
                               ),
                             ),
@@ -298,13 +300,13 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                         ],
                       ),
 
-                      const SizedBox(height: 16),
+                      SizedBox(height: 16.h),
 
                       // ── Panier vide ───────────────────────────
                       if (isEmpty)
                         Center(
                           child: Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 24),
+                            padding: EdgeInsets.symmetric(vertical: 24.h),
                             child: Text(
                               'Votre panier est vide',
                               style: AppTextStyles.bodyMedium.copyWith(
@@ -322,7 +324,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                             children: [
                               // En-tête structure
                               _StructureHeader(group: group),
-                              const SizedBox(height: 12),
+                              SizedBox(height: 12.h),
 
                               // Produits de cette structure
                               ...List.generate(group.produits.length, (pi) {
@@ -334,15 +336,15 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                                       direction : DismissDirection.endToStart,
                                       background: Container(
                                         alignment : Alignment.centerRight,
-                                        padding   : const EdgeInsets.only(right: 16),
+                                        padding   : EdgeInsets.only(right: 16.w),
                                         decoration: BoxDecoration(
                                           color        : AppColors.error,
-                                          borderRadius : BorderRadius.circular(12),
+                                          borderRadius : BorderRadius.circular(12.r),
                                         ),
-                                        child: const Icon(
+                                        child: Icon(
                                           Icons.delete_outline_rounded,
                                           color : Colors.white,
-                                          size  : 24,
+                                          size  : 24.r,
                                         ),
                                       ),
                                       onDismissed: (_) {
@@ -353,8 +355,8 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                                       child: _CartItem(item: item),
                                     ),
                                     if (pi < group.produits.length - 1)
-                                      const Divider(
-                                          height: 24,
+                                      Divider(
+                                          height: 24.h,
                                           color: AppColors.grey200),
                                   ],
                                 );
@@ -362,16 +364,16 @@ class _CartScreenState extends ConsumerState<CartScreen> {
 
                               // Séparateur entre structures
                               if (gi < lignes.length - 1) ...[
-                                const SizedBox(height: 16),
+                                SizedBox(height: 16.h),
                                 const Divider(
                                     height: 1, color: AppColors.grey200),
-                                const SizedBox(height: 16),
+                                SizedBox(height: 16.h),
                               ],
                             ],
                           );
                         }),
 
-                      const SizedBox(height: 24),
+                      SizedBox(height: 24.h),
                       const Divider(height: 1, color: AppColors.grey200),
 
                     ],
@@ -384,7 +386,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
           padding: EdgeInsets.only(
             left   : AppDimens.screenPadding,
             right  : AppDimens.screenPadding,
-            top    : 12,
+            top    : 12.h,
             bottom : MediaQuery.of(context).padding.bottom + 12,
           ),
           decoration: const BoxDecoration(
@@ -415,16 +417,16 @@ class _StructureHeader extends StatelessWidget {
     return Row(
       children: [
         Container(
-          width  : 32,
-          height : 32,
+          width  : 32.r,
+          height : 32.r,
           decoration: BoxDecoration(
             color        : AppColors.primarySurface,
-            borderRadius : BorderRadius.circular(8),
+            borderRadius : BorderRadius.circular(8.r),
           ),
-          child: const Icon(Icons.storefront_outlined,
-              size: 16, color: AppColors.primary),
+          child: Icon(Icons.storefront_outlined,
+              size: 16.r, color: AppColors.primary),
         ),
-        const SizedBox(width: 10),
+        SizedBox(width: 10.w),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -433,7 +435,7 @@ class _StructureHeader extends StatelessWidget {
                 group.nomStructure,
                 style: AppTextStyles.labelMedium.copyWith(
                   fontWeight : FontWeight.w700,
-                  fontSize   : 13,
+                  fontSize   : 13.sp,
                   color      : AppColors.dark,
                 ),
               ),
@@ -441,7 +443,7 @@ class _StructureHeader extends StatelessWidget {
                 Text(
                   group.adresseStructure,
                   style: AppTextStyles.bodySmall.copyWith(
-                    fontSize : 11,
+                    fontSize : 11.sp,
                     color    : AppColors.grey500,
                   ),
                 ),
@@ -453,7 +455,7 @@ class _StructureHeader extends StatelessWidget {
           style: AppTextStyles.labelSmall.copyWith(
             fontWeight : FontWeight.w700,
             color      : AppColors.dark,
-            fontSize   : 13,
+            fontSize   : 13.sp,
           ),
         ),
       ],
@@ -484,18 +486,18 @@ class _CartItemState extends State<_CartItem> {
     return Row(
       children: [
         ClipRRect(
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(10.r),
           child: widget.item.image != null
-              ? Image.network(
-                  ApiConfig.getImageUrl(widget.item.image!),
-                  width  : 56,
-                  height : 56,
+              ? ImageReseau(
+                  url: ApiConfig.getImageUrl(widget.item.image!),
+                  width  : 56.r,
+                  height : 56.r,
                   fit    : BoxFit.cover,
-                  errorBuilder: (_, __, ___) => _placeholder(),
+                  fallback: _placeholder(),
                 )
               : _placeholder(),
         ),
-        const SizedBox(width: 14),
+        SizedBox(width: 14.w),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -506,25 +508,25 @@ class _CartItemState extends State<_CartItem> {
                     : 'Produit #${widget.item.produitId}',
                 style: AppTextStyles.labelMedium.copyWith(
                   fontWeight : FontWeight.w700,
-                  fontSize   : 14,
+                  fontSize   : 14.sp,
                   color      : AppColors.dark,
                 ),
                 maxLines : 1,
                 overflow : TextOverflow.ellipsis,
               ),
-              const SizedBox(height: 4),
+              SizedBox(height: 4.h),
               Text(
                 montantLabel(widget.item.prixUnitaire),
                 style: AppTextStyles.labelMedium.copyWith(
                   fontWeight : FontWeight.w700,
-                  fontSize   : 13,
+                  fontSize   : 13.sp,
                   color      : AppColors.dark,
                 ),
               ),
             ],
           ),
         ),
-        const SizedBox(width: 12),
+        SizedBox(width: 12.w),
         // Sélecteur quantité
         Row(
           children: [
@@ -535,12 +537,12 @@ class _CartItemState extends State<_CartItem> {
               onTap : () { if (_qty > 1) setState(() => _qty--); },
             ),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 10),
+              padding: EdgeInsets.symmetric(horizontal: 10.w),
               child: Text(
                 '$_qty',
                 style: AppTextStyles.labelMedium.copyWith(
                   fontWeight : FontWeight.w700,
-                  fontSize   : 14,
+                  fontSize   : 14.sp,
                 ),
               ),
             ),
@@ -557,11 +559,11 @@ class _CartItemState extends State<_CartItem> {
   }
 
   Widget _placeholder() => Container(
-        width  : 56,
-        height : 56,
+        width  : 56.r,
+        height : 56.r,
         color  : AppColors.grey100,
-        child  : const Icon(Icons.fastfood_outlined,
-            color: AppColors.grey400, size: 24),
+        child  : Icon(Icons.fastfood_outlined,
+            color: AppColors.grey400, size: 24.r),
       );
 }
 
@@ -583,10 +585,10 @@ class _QtyButton extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width  : 28,
-        height : 28,
+        width  : 28.r,
+        height : 28.r,
         decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-        child  : Icon(icon, size: 14, color: iconColor),
+        child  : Icon(icon, size: 14.r, color: iconColor),
       ),
     );
   }

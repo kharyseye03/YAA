@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../../core/errors/messages_erreur.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimens.dart';
 import '../../../core/constants/app_text_styles.dart';
@@ -136,7 +138,7 @@ class _ReceptionModeSheetState extends State<_ReceptionModeSheet> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _erreur     = e.toString().replaceAll('Exception: ', '');
+        _erreur     = MessagesErreur.depuisException(e);
         _chargement = false;
       });
     }
@@ -169,22 +171,22 @@ class _ReceptionModeSheetState extends State<_ReceptionModeSheet> {
       constraints: BoxConstraints(
         maxHeight: MediaQuery.of(context).size.height * 0.85,
       ),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color        : Colors.white,
-        borderRadius : BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius : BorderRadius.vertical(top: Radius.circular(24.r)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const SizedBox(height: 12),
+          SizedBox(height: 12.h),
           Container(
-            width: 40, height: 4,
+            width: 40.w, height: 4.h,
             decoration: BoxDecoration(
               color        : AppColors.grey300,
-              borderRadius : BorderRadius.circular(2),
+              borderRadius : BorderRadius.circular(2.r),
             ),
           ),
-          const SizedBox(height: 20),
+          SizedBox(height: 20.h),
 
           Flexible(
             child: SingleChildScrollView(
@@ -200,7 +202,7 @@ class _ReceptionModeSheetState extends State<_ReceptionModeSheet> {
                       color      : AppColors.dark,
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  SizedBox(height: 20.h),
 
                   // Le mode retenu s'affiche en grand, l'autre se
                   // réduit à un lien — on libère la place pour les
@@ -214,7 +216,7 @@ class _ReceptionModeSheetState extends State<_ReceptionModeSheet> {
                         : _blocRetrait(multi),
                   ),
 
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16.h),
                 ],
               ),
             ),
@@ -253,10 +255,10 @@ class _ReceptionModeSheetState extends State<_ReceptionModeSheet> {
         // Rien à proposer tant que la tournée multi-points n'est pas
         // tarifée : mieux vaut ne rien afficher qu'un prix faux.
         if (!multi) ...[
-          const SizedBox(height: 16),
+          SizedBox(height: 16.h),
           _blocTarifs(),
         ],
-        const SizedBox(height: 16),
+        SizedBox(height: 16.h),
         _lienBascule(
           libelle : 'Ou retirer sur place',
           icone   : Icons.storefront_outlined,
@@ -284,7 +286,7 @@ class _ReceptionModeSheetState extends State<_ReceptionModeSheet> {
           badge       : multi ? '${widget.lignes.length} points' : null,
           onTap       : () {},
         ),
-        const SizedBox(height: 16),
+        SizedBox(height: 16.h),
         _lienBascule(
           libelle : 'Ou me faire livrer',
           icone   : Icons.local_shipping_outlined,
@@ -303,11 +305,11 @@ class _ReceptionModeSheetState extends State<_ReceptionModeSheet> {
       onTap    : onTap,
       behavior : HitTestBehavior.opaque,
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 6),
+        padding: EdgeInsets.symmetric(vertical: 6.h),
         child: Row(
           children: [
-            Icon(icone, size: 18, color: AppColors.grey500),
-            const SizedBox(width: 10),
+            Icon(icone, size: 18.r, color: AppColors.grey500),
+            SizedBox(width: 10.w),
             Text(
               libelle,
               style: AppTextStyles.bodySmall.copyWith(
@@ -315,9 +317,9 @@ class _ReceptionModeSheetState extends State<_ReceptionModeSheet> {
                 color      : AppColors.grey600,
               ),
             ),
-            const SizedBox(width: 4),
-            const Icon(Icons.chevron_right_rounded,
-                size: 18, color: AppColors.grey400),
+            SizedBox(width: 4.w),
+            Icon(Icons.chevron_right_rounded,
+                size: 18.r, color: AppColors.grey400),
           ],
         ),
       ),
@@ -352,9 +354,9 @@ class _ReceptionModeSheetState extends State<_ReceptionModeSheet> {
       children: [
         Row(
           children: [
-            const Icon(Icons.route_outlined,
-                size: 15, color: AppColors.grey500),
-            const SizedBox(width: 6),
+            Icon(Icons.route_outlined,
+                size: 15.r, color: AppColors.grey500),
+            SizedBox(width: 6.w),
             Text(
               reference.metaLabel,
               style: AppTextStyles.bodySmall.copyWith(
@@ -364,7 +366,7 @@ class _ReceptionModeSheetState extends State<_ReceptionModeSheet> {
             ),
           ],
         ),
-        const SizedBox(height: 10),
+        SizedBox(height: 10.h),
         _grilleVehicules(),
       ],
     );
@@ -384,7 +386,7 @@ class _ReceptionModeSheetState extends State<_ReceptionModeSheet> {
       return Row(
         children: [
           for (var i = 0; i < _options.length; i++) ...[
-            if (i > 0) const SizedBox(width: 10),
+            if (i > 0) SizedBox(width: 10.w),
             Expanded(child: carte(_options[i])),
           ],
         ],
@@ -392,14 +394,14 @@ class _ReceptionModeSheetState extends State<_ReceptionModeSheet> {
     }
 
     return SizedBox(
-      height: 124,
+      height: 124.h,
       child: ListView.separated(
         scrollDirection : Axis.horizontal,
         padding         : EdgeInsets.zero,
         itemCount       : _options.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 10),
+        separatorBuilder: (_, __) => SizedBox(width: 10.w),
         itemBuilder     : (_, i) => SizedBox(
-          width : 132,
+          width : 132.w,
           child : carte(_options[i]),
         ),
       ),
@@ -439,12 +441,12 @@ class _VehiculeCard extends StatelessWidget {
       behavior : HitTestBehavior.opaque,
       child: AnimatedContainer(
         duration  : const Duration(milliseconds: 200),
-        padding   : const EdgeInsets.all(12),
+        padding   : EdgeInsets.all(12.r),
         decoration: BoxDecoration(
           color        : selected
               ? AppColors.secondary.withValues(alpha: 0.06)
               : Colors.white,
-          borderRadius : BorderRadius.circular(14),
+          borderRadius : BorderRadius.circular(14.r),
           border       : Border.all(
             color : selected ? AppColors.secondary : AppColors.grey200,
             width : selected ? 2 : 1,
@@ -457,19 +459,19 @@ class _VehiculeCard extends StatelessWidget {
               children: [
                 Icon(
                   info.icone,
-                  size  : 22,
+                  size  : 22.r,
                   color : selected ? AppColors.secondary : AppColors.grey600,
                 ),
                 const Spacer(),
                 AnimatedOpacity(
                   duration: const Duration(milliseconds: 200),
                   opacity : selected ? 1 : 0,
-                  child   : const Icon(Icons.check_circle_rounded,
-                      size: 18, color: AppColors.secondary),
+                  child   : Icon(Icons.check_circle_rounded,
+                      size: 18.r, color: AppColors.secondary),
                 ),
               ],
             ),
-            const SizedBox(height: 10),
+            SizedBox(height: 10.h),
             Text(
               info.libelle,
               style: AppTextStyles.bodySmall.copyWith(
@@ -482,7 +484,7 @@ class _VehiculeCard extends StatelessWidget {
               estimation.prixDevise,
               style: AppTextStyles.labelMedium.copyWith(
                 fontWeight : FontWeight.w800,
-                fontSize   : 15,
+                fontSize   : 15.sp,
                 color      : AppColors.dark,
               ),
             ),
@@ -509,7 +511,7 @@ class _TarifsSquelette extends StatelessWidget {
           width  : largeur,
           decoration: BoxDecoration(
             color        : AppColors.grey100,
-            borderRadius : BorderRadius.circular(6),
+            borderRadius : BorderRadius.circular(6.r),
           ),
         );
 
@@ -517,11 +519,11 @@ class _TarifsSquelette extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         bloc(hauteur: 12, largeur: 120),
-        const SizedBox(height: 12),
+        SizedBox(height: 12.h),
         Row(
           children: [
             Expanded(child: bloc(hauteur: 104)),
-            const SizedBox(width: 10),
+            SizedBox(width: 10.w),
             Expanded(child: bloc(hauteur: 104)),
           ],
         ),
@@ -547,15 +549,15 @@ class _EncartDiscret extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: EdgeInsets.all(12.r),
       decoration: BoxDecoration(
         color        : couleur.withValues(alpha: 0.06),
-        borderRadius : BorderRadius.circular(12),
+        borderRadius : BorderRadius.circular(12.r),
       ),
       child: Row(
         children: [
-          Icon(icone, size: 18, color: couleur),
-          const SizedBox(width: 10),
+          Icon(icone, size: 18.r, color: couleur),
+          SizedBox(width: 10.w),
           Expanded(
             child: Text(
               texte,
@@ -569,7 +571,7 @@ class _EncartDiscret extends StatelessWidget {
             TextButton(
               onPressed: action!.$2,
               style: TextButton.styleFrom(
-                padding        : const EdgeInsets.symmetric(horizontal: 8),
+                padding        : EdgeInsets.symmetric(horizontal: 8.w),
                 minimumSize    : Size.zero,
                 tapTargetSize  : MaterialTapTargetSize.shrinkWrap,
               ),
@@ -612,12 +614,12 @@ class _ModeCard extends StatelessWidget {
       behavior : HitTestBehavior.opaque,
       child: AnimatedContainer(
         duration  : const Duration(milliseconds: 200),
-        padding   : const EdgeInsets.all(14),
+        padding   : EdgeInsets.all(14.r),
         decoration: BoxDecoration(
           color        : selected
               ? AppColors.secondary.withValues(alpha: 0.06)
               : Colors.white,
-          borderRadius : BorderRadius.circular(14),
+          borderRadius : BorderRadius.circular(14.r),
           border       : Border.all(
             color : selected ? AppColors.secondary : AppColors.grey200,
             width : selected ? 2 : 1,
@@ -627,21 +629,21 @@ class _ModeCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
-              width  : 42,
-              height : 42,
+              width  : 42.r,
+              height : 42.r,
               decoration: BoxDecoration(
                 color        : selected
                     ? AppColors.secondary.withValues(alpha: 0.12)
                     : AppColors.grey100,
-                borderRadius : BorderRadius.circular(12),
+                borderRadius : BorderRadius.circular(12.r),
               ),
               child: Icon(
                 icon,
-                size  : 20,
+                size  : 20.r,
                 color : selected ? AppColors.secondary : AppColors.grey600,
               ),
             ),
-            const SizedBox(width: 12),
+            SizedBox(width: 12.w),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -653,17 +655,17 @@ class _ModeCard extends StatelessWidget {
                         style: AppTextStyles.labelMedium.copyWith(
                           fontWeight : FontWeight.w700,
                           color      : AppColors.dark,
-                          fontSize   : 14,
+                          fontSize   : 14.sp,
                         ),
                       ),
                       if (badge != null) ...[
-                        const SizedBox(width: 8),
+                        SizedBox(width: 8.w),
                         Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 2),
+                          padding: EdgeInsets.symmetric(
+                              horizontal: 8.w, vertical: 2.h),
                           decoration: BoxDecoration(
                             color        : AppColors.grey100,
-                            borderRadius : BorderRadius.circular(20),
+                            borderRadius : BorderRadius.circular(20.r),
                           ),
                           child: Text(
                             badge!,
@@ -676,7 +678,7 @@ class _ModeCard extends StatelessWidget {
                       ],
                     ],
                   ),
-                  const SizedBox(height: 3),
+                  SizedBox(height: 3.h),
                   Text(
                     description,
                     style: AppTextStyles.bodySmall.copyWith(

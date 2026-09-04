@@ -1,7 +1,9 @@
+import '../../../shared/widgets/image_reseau.dart';
 import '../../../core/utils/devise.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimens.dart';
 import '../../../core/constants/app_text_styles.dart';
@@ -60,7 +62,7 @@ class _FavorisScreenState extends ConsumerState<FavorisScreen> {
           ),
         ),
 
-        const SizedBox(height: 10),
+        SizedBox(height: 10.h),
 
         // ── Tabs ─────────────────────────────────────────────
         _Tabs(current: _tab, onTap: (i) => setState(() => _tab = i),
@@ -71,13 +73,13 @@ class _FavorisScreenState extends ConsumerState<FavorisScreen> {
           Container(
             width  : double.infinity,
             padding: EdgeInsets.symmetric(
-                horizontal: AppDimens.screenPadding, vertical: 10),
+                horizontal: AppDimens.screenPadding, vertical: 10.h),
             color  : AppColors.errorLight,
             child  : Row(
               children: [
-                const Icon(Icons.error_outline_rounded,
-                    color: AppColors.error, size: 16),
-                const SizedBox(width: 8),
+                Icon(Icons.error_outline_rounded,
+                    color: AppColors.error, size: 16.r),
+                SizedBox(width: 8.w),
                 Expanded(
                   child: Text(state.error!,
                       style: AppTextStyles.bodySmall
@@ -115,7 +117,7 @@ class _FavorisScreenState extends ConsumerState<FavorisScreen> {
           AppDimens.screenPadding, 16,
           AppDimens.screenPadding, 90),
       itemCount: state.favoris.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 14),
+      separatorBuilder: (_, __) => SizedBox(height: 14.h),
       itemBuilder: (_, i) {
         final f = state.favoris[i];
         return _StructureCard(
@@ -142,7 +144,7 @@ class _FavorisScreenState extends ConsumerState<FavorisScreen> {
           AppDimens.screenPadding, 16,
           AppDimens.screenPadding, 90),
       itemCount: state.produitsFavoris.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 14),
+      separatorBuilder: (_, __) => SizedBox(height: 14.h),
       itemBuilder: (_, i) {
         final p = state.produitsFavoris[i];
         return _ProduitCard(
@@ -182,33 +184,33 @@ class _Tabs extends StatelessWidget {
                 onTap    : () => onTap(i),
                 behavior : HitTestBehavior.opaque,
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  padding: EdgeInsets.symmetric(vertical: 14.h),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
                         labels[i],
                         style: AppTextStyles.labelMedium.copyWith(
-                          fontSize   : 14,
+                          fontSize   : 14.sp,
                           fontWeight : active ? FontWeight.w700 : FontWeight.w500,
                           color      : active ? AppColors.dark : AppColors.grey400,
                         ),
                       ),
                       if (counts[i] > 0) ...[
-                        const SizedBox(width: 6),
+                        SizedBox(width: 6.w),
                         Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 7, vertical: 2),
+                          padding: EdgeInsets.symmetric(
+                              horizontal: 7.w, vertical: 2.h),
                           decoration: BoxDecoration(
                             color        : active
                                 ? AppColors.primary
                                 : AppColors.grey200,
-                            borderRadius : BorderRadius.circular(20),
+                            borderRadius : BorderRadius.circular(20.r),
                           ),
                           child: Text(
                             '${counts[i]}',
                             style: AppTextStyles.labelSmall.copyWith(
-                              fontSize   : 11,
+                              fontSize   : 11.sp,
                               fontWeight : FontWeight.w700,
                               color      : active
                                   ? Colors.white
@@ -261,11 +263,11 @@ class _StructureCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color        : Colors.white,
-        borderRadius : BorderRadius.circular(16),
+        borderRadius : BorderRadius.circular(16.r),
         boxShadow    : [
           BoxShadow(
             color      : Colors.black.withValues(alpha: 0.06),
-            blurRadius : 16,
+            blurRadius : 16.r,
             offset     : const Offset(0, 4),
           ),
         ],
@@ -274,35 +276,35 @@ class _StructureCard extends StatelessWidget {
         children: [
           // Logo
           ClipRRect(
-            borderRadius: const BorderRadius.only(
-              topLeft    : Radius.circular(16),
-              bottomLeft : Radius.circular(16),
+            borderRadius: BorderRadius.only(
+              topLeft    : Radius.circular(16.r),
+              bottomLeft : Radius.circular(16.r),
             ),
             child: favori.logoUrl != null
-                ? Image.network(favori.logoUrl!,
-                    width: 90, height: 90, fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => _fallback(Icons.storefront_outlined))
+                ? ImageReseau(url: favori.logoUrl!,
+                    width: 90.r, height: 90.r, fit: BoxFit.cover,
+                    fallback: _fallback(Icons.storefront_outlined))
                 : _fallback(Icons.storefront_outlined),
           ),
 
           // Infos
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(12, 12, 8, 12),
+              padding: EdgeInsets.fromLTRB(12.w, 12.h, 8.w, 12.h),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(favori.nom,
                       style: AppTextStyles.labelMedium.copyWith(
-                        fontWeight: FontWeight.w700, fontSize: 15,
+                        fontWeight: FontWeight.w700, fontSize: 15.sp,
                         color: AppColors.dark),
                       maxLines: 1, overflow: TextOverflow.ellipsis),
                   if (favori.adresse.isNotEmpty) ...[
-                    const SizedBox(height: 4),
+                    SizedBox(height: 4.h),
                     Row(children: [
-                      const Icon(Icons.location_on_outlined,
-                          size: 13, color: AppColors.grey400),
-                      const SizedBox(width: 3),
+                      Icon(Icons.location_on_outlined,
+                          size: 13.r, color: AppColors.grey400),
+                      SizedBox(width: 3.w),
                       Expanded(
                         child: Text(favori.adresse,
                             style: AppTextStyles.caption
@@ -310,21 +312,21 @@ class _StructureCard extends StatelessWidget {
                             maxLines: 1, overflow: TextOverflow.ellipsis),
                       ),
                     ]),
-                    const SizedBox(height: 4),
+                    SizedBox(height: 4.h),
                   ],
                   Row(children: [
                     Icon(Icons.star_rounded,
-                        size: 14, color: Colors.amber.shade600),
-                    const SizedBox(width: 3),
+                        size: 14.r, color: Colors.amber.shade600),
+                    SizedBox(width: 3.w),
                     Text('${favori.nombreEtoile}',
                         style: AppTextStyles.caption.copyWith(
                           fontWeight: FontWeight.w600, color: AppColors.dark)),
-                    const SizedBox(width: 10),
+                    SizedBox(width: 10.w),
                     SvgPicture.asset('assets/icones/motorcycle-fill.svg',
-                        width: 13, height: 13,
+                        width: 13.r, height: 13.r,
                         colorFilter: const ColorFilter.mode(
                             AppColors.grey400, BlendMode.srcIn)),
-                    const SizedBox(width: 4),
+                    SizedBox(width: 4.w),
                     Text(favori.tempsLivraison,
                         style: AppTextStyles.caption
                             .copyWith(color: AppColors.grey500)),
@@ -342,8 +344,8 @@ class _StructureCard extends StatelessWidget {
   }
 
   Widget _fallback(IconData icon) => Container(
-      width: 90, height: 90, color: AppColors.grey100,
-      child: Icon(icon, color: AppColors.grey400, size: 32));
+      width: 90.r, height: 90.r, color: AppColors.grey100,
+      child: Icon(icon, color: AppColors.grey400, size: 32.r));
 }
 
 // ── Carte produit ─────────────────────────────────────────────
@@ -362,11 +364,11 @@ class _ProduitCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color        : Colors.white,
-        borderRadius : BorderRadius.circular(16),
+        borderRadius : BorderRadius.circular(16.r),
         boxShadow    : [
           BoxShadow(
             color      : Colors.black.withValues(alpha: 0.06),
-            blurRadius : 16,
+            blurRadius : 16.r,
             offset     : const Offset(0, 4),
           ),
         ],
@@ -375,46 +377,46 @@ class _ProduitCard extends StatelessWidget {
         children: [
           // Image produit
           ClipRRect(
-            borderRadius: const BorderRadius.only(
-              topLeft    : Radius.circular(16),
-              bottomLeft : Radius.circular(16),
+            borderRadius: BorderRadius.only(
+              topLeft    : Radius.circular(16.r),
+              bottomLeft : Radius.circular(16.r),
             ),
             child: favori.imageUrl != null
-                ? Image.network(favori.imageUrl!,
-                    width: 90, height: 90, fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => _fallback())
+                ? ImageReseau(url: favori.imageUrl!,
+                    width: 90.r, height: 90.r, fit: BoxFit.cover,
+                    fallback: _fallback())
                 : _fallback(),
           ),
 
           // Infos
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(12, 12, 8, 12),
+              padding: EdgeInsets.fromLTRB(12.w, 12.h, 8.w, 12.h),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(favori.nom,
                       style: AppTextStyles.labelMedium.copyWith(
-                        fontWeight: FontWeight.w700, fontSize: 15,
+                        fontWeight: FontWeight.w700, fontSize: 15.sp,
                         color: AppColors.dark),
                       maxLines: 1, overflow: TextOverflow.ellipsis),
-                  const SizedBox(height: 4),
+                  SizedBox(height: 4.h),
                   // Prix
                   Text(
                     montantLabel(favori.prix),
                     style: AppTextStyles.labelMedium.copyWith(
                       fontWeight : FontWeight.w800,
-                      fontSize   : 14,
+                      fontSize   : 14.sp,
                       color      : AppColors.primary,
                     ),
                   ),
                   if (favori.structureName != null &&
                       favori.structureName!.isNotEmpty) ...[
-                    const SizedBox(height: 4),
+                    SizedBox(height: 4.h),
                     Row(children: [
-                      const Icon(Icons.storefront_outlined,
-                          size: 13, color: AppColors.grey400),
-                      const SizedBox(width: 3),
+                      Icon(Icons.storefront_outlined,
+                          size: 13.r, color: AppColors.grey400),
+                      SizedBox(width: 3.w),
                       Expanded(
                         child: Text(favori.structureName!,
                             style: AppTextStyles.caption
@@ -436,9 +438,9 @@ class _ProduitCard extends StatelessWidget {
   }
 
   Widget _fallback() => Container(
-      width: 90, height: 90, color: AppColors.grey100,
-      child: const Icon(Icons.fastfood_outlined,
-          color: AppColors.grey400, size: 32));
+      width: 90.r, height: 90.r, color: AppColors.grey100,
+      child: Icon(Icons.fastfood_outlined,
+          color: AppColors.grey400, size: 32.r));
 }
 
 // ── Bouton cœur partagé ───────────────────────────────────────
@@ -450,25 +452,25 @@ class _HeartButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(right: 12),
+      padding: EdgeInsets.only(right: 12.w),
       child: GestureDetector(
         onTap    : isToggling ? null : onToggle,
         behavior : HitTestBehavior.opaque,
         child: Container(
-          width  : 36,
-          height : 36,
+          width  : 36.r,
+          height : 36.r,
           decoration: const BoxDecoration(
             color : AppColors.errorLight,
             shape : BoxShape.circle,
           ),
           child: isToggling
-              ? const Padding(
-                  padding: EdgeInsets.all(8),
+              ? Padding(
+                  padding: EdgeInsets.all(8.r),
                   child: CircularProgressIndicator(
-                    strokeWidth: 2, color: AppColors.error),
+                    strokeWidth: 2.r, color: AppColors.error),
                 )
-              : const Icon(Icons.favorite_rounded,
-                  color: AppColors.error, size: 18),
+              : Icon(Icons.favorite_rounded,
+                  color: AppColors.error, size: 18.r),
         ),
       ),
     );
@@ -496,16 +498,16 @@ class _Empty extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
-                width: 80, height: 80,
+                width: 80.r, height: 80.r,
                 decoration: const BoxDecoration(
                   color: AppColors.errorLight, shape: BoxShape.circle),
-                child: Icon(icon, size: 36, color: AppColors.error),
+                child: Icon(icon, size: 36.r, color: AppColors.error),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16.h),
               Text(message,
                   style: AppTextStyles.labelMedium.copyWith(
                     fontWeight: FontWeight.w700, color: AppColors.dark)),
-              const SizedBox(height: 6),
+              SizedBox(height: 6.h),
               Text(hint,
                   textAlign: TextAlign.center,
                   style: AppTextStyles.bodySmall.copyWith(

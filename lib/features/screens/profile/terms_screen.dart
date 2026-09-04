@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimens.dart';
 import '../../../core/constants/app_text_styles.dart';
@@ -26,12 +27,12 @@ class TermsScreen extends StatelessWidget {
                   AppDimens.screenPadding, 40),
               children: [
                 const _Chapeau(),
-                const SizedBox(height: 24),
+                SizedBox(height: 24.h),
                 const _Resume(),
-                const SizedBox(height: 28),
+                SizedBox(height: 28.h),
                 for (final section in kSections) ...[
                   _Section(section: section),
-                  const SizedBox(height: 26),
+                  SizedBox(height: 26.h),
                 ],
                 const _PiedDePage(),
               ],
@@ -53,7 +54,7 @@ class _Header extends StatelessWidget {
         top    : MediaQuery.of(context).padding.top + 12,
         left   : AppDimens.screenPadding,
         right  : AppDimens.screenPadding,
-        bottom : 14,
+        bottom : 14.h,
       ),
       child: Row(
         children: [
@@ -61,17 +62,17 @@ class _Header extends StatelessWidget {
             onTap    : () => Navigator.of(context).pop(),
             behavior : HitTestBehavior.opaque,
             child: Container(
-              width  : 38,
-              height : 38,
+              width  : 38.r,
+              height : 38.r,
               decoration: BoxDecoration(
                 color        : AppColors.grey100,
-                borderRadius : BorderRadius.circular(10),
+                borderRadius : BorderRadius.circular(10.r),
               ),
-              child: const Icon(Icons.chevron_left_rounded,
-                  color: AppColors.dark, size: 22),
+              child: Icon(Icons.chevron_left_rounded,
+                  color: AppColors.dark, size: 22.r),
             ),
           ),
-          const SizedBox(width: 12),
+          SizedBox(width: 12.w),
           Text(
             'Conditions d\'utilisation',
             style: AppTextStyles.h3.copyWith(
@@ -97,17 +98,17 @@ class _Chapeau extends StatelessWidget {
         Text(
           'Conditions Générales\nd\'Utilisation',
           style: AppTextStyles.h1.copyWith(
-            fontSize   : 26,
+            fontSize   : 26.sp,
             fontWeight : FontWeight.w800,
             color      : AppColors.dark,
             height     : 1.2,
           ),
         ),
-        const SizedBox(height: 12),
+        SizedBox(height: 12.h),
         Row(
           children: [
             _Etiquette(texte: 'Version $kVersionCgu'),
-            const SizedBox(width: 8),
+            SizedBox(width: 8.w),
             _Etiquette(texte: 'Mise à jour : $kDerniereMaj'),
           ],
         ),
@@ -123,7 +124,7 @@ class _Etiquette extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
       decoration: BoxDecoration(
         color        : AppColors.grey100,
         borderRadius : BorderRadius.circular(AppDimens.radiusFull),
@@ -146,19 +147,19 @@ class _Resume extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: EdgeInsets.all(18.r),
       decoration: BoxDecoration(
         color        : AppColors.primarySurface,
-        borderRadius : BorderRadius.circular(18),
+        borderRadius : BorderRadius.circular(18.r),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(Icons.lightbulb_outline_rounded,
-                  color: AppColors.primary, size: 18),
-              const SizedBox(width: 8),
+              Icon(Icons.lightbulb_outline_rounded,
+                  color: AppColors.primary, size: 18.r),
+              SizedBox(width: 8.w),
               Text(
                 'L\'essentiel',
                 style: AppTextStyles.labelMedium.copyWith(
@@ -168,15 +169,15 @@ class _Resume extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12.h),
           for (final point in kResume) ...[
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
-                  margin : const EdgeInsets.only(top: 7, right: 10),
-                  width  : 5,
-                  height : 5,
+                  margin : EdgeInsets.only(top: 7.h, right: 10.w),
+                  width  : 5.r,
+                  height : 5.r,
                   decoration: const BoxDecoration(
                     color : AppColors.primary,
                     shape : BoxShape.circle,
@@ -193,7 +194,7 @@ class _Resume extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: 8.h),
           ],
         ],
       ),
@@ -216,12 +217,12 @@ class _Section extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
-              width  : 28,
-              height : 28,
+              width  : 28.r,
+              height : 28.r,
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 color        : AppColors.primary,
-                borderRadius : BorderRadius.circular(8),
+                borderRadius : BorderRadius.circular(8.r),
               ),
               child: Text(
                 section.numero,
@@ -231,14 +232,14 @@ class _Section extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(width: 10),
+            SizedBox(width: 10.w),
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.only(top: 3),
+                padding: EdgeInsets.only(top: 3.h),
                 child: Text(
                   section.titre,
                   style: AppTextStyles.labelMedium.copyWith(
-                    fontSize   : 16,
+                    fontSize   : 16.sp,
                     fontWeight : FontWeight.w800,
                     color      : AppColors.dark,
                     height     : 1.3,
@@ -248,10 +249,10 @@ class _Section extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 12),
+        SizedBox(height: 12.h),
         for (final bloc in section.blocs) ...[
           _Bloc(bloc: bloc),
-          const SizedBox(height: 10),
+          SizedBox(height: 10.h),
         ],
       ],
     );
@@ -279,17 +280,17 @@ class _Bloc extends StatelessWidget {
           children: [
             for (final item in items)
               Padding(
-                padding: const EdgeInsets.only(bottom: 8),
+                padding: EdgeInsets.only(bottom: 8.h),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Container(
-                      margin : const EdgeInsets.only(top: 8, right: 10),
-                      width  : 5,
-                      height : 5,
+                      margin : EdgeInsets.only(top: 8.h, right: 10.w),
+                      width  : 5.r,
+                      height : 5.r,
                       decoration: BoxDecoration(
                         color        : AppColors.grey400,
-                        borderRadius : BorderRadius.circular(1),
+                        borderRadius : BorderRadius.circular(1.r),
                       ),
                     ),
                     Expanded(
@@ -311,20 +312,20 @@ class _Bloc extends StatelessWidget {
       // pas dans le corps du texte
       Encadre(:final texte) => Container(
           width   : double.infinity,
-          padding : const EdgeInsets.all(14),
+          padding : EdgeInsets.all(14.r),
           decoration: BoxDecoration(
             color        : AppColors.warningLight,
-            borderRadius : BorderRadius.circular(12),
-            border: const Border(
-              left: BorderSide(color: AppColors.warning, width: 3),
+            borderRadius : BorderRadius.circular(12.r),
+            border: Border(
+              left: BorderSide(color: AppColors.warning, width: 3.w),
             ),
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(Icons.info_outline_rounded,
-                  color: AppColors.warning, size: 17),
-              const SizedBox(width: 10),
+              Icon(Icons.info_outline_rounded,
+                  color: AppColors.warning, size: 17.r),
+              SizedBox(width: 10.w),
               Expanded(
                 child: Text(
                   texte,
@@ -351,7 +352,7 @@ class _PiedDePage extends StatelessWidget {
     return Column(
       children: [
         const Divider(color: AppColors.grey200),
-        const SizedBox(height: 14),
+        SizedBox(height: 14.h),
         Text(
           'YAA — $kEditeur\n$kSiege',
           textAlign : TextAlign.center,

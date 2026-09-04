@@ -1,7 +1,10 @@
+import '../../../shared/widgets/image_reseau.dart';
+import '../../../core/errors/messages_erreur.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimens.dart';
 import '../../../core/constants/app_text_styles.dart';
@@ -72,7 +75,7 @@ class _CategoryScreenState extends ConsumerState<CategoryScreen> {
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (e, _) => Center(
                 child: Text(
-                  e.toString().replaceAll('Exception: ', ''),
+                  MessagesErreur.depuisException(e),
                   style: AppTextStyles.bodyMedium.copyWith(color: AppColors.error),
                   textAlign: TextAlign.center,
                 ),
@@ -124,7 +127,7 @@ class _CategoryScreenState extends ConsumerState<CategoryScreen> {
   // complet, puis les catégories de produits qui défilent.
 
   TextStyle get _styleChip => AppTextStyles.bodySmall.copyWith(
-        fontSize   : 12,
+        fontSize   : 12.sp,
         fontWeight : FontWeight.w600,
       );
 
@@ -132,7 +135,7 @@ class _CategoryScreenState extends ConsumerState<CategoryScreen> {
     return ref.watch(filtresCategorieProvider(widget.args.categoryId)).when(
       // Hauteur réservée pendant le chargement, plutôt qu'un espace
       // vide qui saute quand les puces arrivent
-      loading : () => const SizedBox(height: 40),
+      loading : () => SizedBox(height: 40.h),
       // Le bouton reste utile même sans catégories : il porte aussi
       // la note, le temps de livraison et le tri
       error   : (_, __) => _buildBarre(const []),
@@ -142,7 +145,7 @@ class _CategoryScreenState extends ConsumerState<CategoryScreen> {
 
   Widget _buildBarre(List<CategorieProduit> categories) {
     return SizedBox(
-      height: 40,
+      height: 40.h,
       child: Row(
         children: [
           SizedBox(width: AppDimens.screenPadding),
@@ -151,7 +154,7 @@ class _CategoryScreenState extends ConsumerState<CategoryScreen> {
             const Spacer()
           else ...[
             SizedBox(width: AppDimens.md),
-            Container(width: 1, height: 22, color: AppColors.grey300),
+            Container(width: 1, height: 22.h, color: AppColors.grey300),
             SizedBox(width: AppDimens.md),
             Expanded(child: _buildChipsCategories(categories)),
           ],
@@ -168,7 +171,7 @@ class _CategoryScreenState extends ConsumerState<CategoryScreen> {
       onTap: () => _ouvrirPanneau(categories),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
         decoration: BoxDecoration(
           color: actif ? AppColors.primary : Colors.white,
           borderRadius: BorderRadius.circular(AppDimens.radiusFull),
@@ -179,10 +182,10 @@ class _CategoryScreenState extends ConsumerState<CategoryScreen> {
           children: [
             Icon(
               Icons.tune_rounded,
-              size  : 15,
+              size  : 15.r,
               color : actif ? Colors.white : AppColors.dark,
             ),
-            const SizedBox(width: 6),
+            SizedBox(width: 6.w),
             Text(
               'Filtres',
               style: _styleChip.copyWith(
@@ -191,10 +194,10 @@ class _CategoryScreenState extends ConsumerState<CategoryScreen> {
             ),
             // Pastille : combien de critères sont posés dans le panneau
             if (actif) ...[
-              const SizedBox(width: 6),
+              SizedBox(width: 6.w),
               Container(
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                    EdgeInsets.symmetric(horizontal: 6.w, vertical: 1.h),
                 decoration: BoxDecoration(
                   color: AppColors.secondary,
                   borderRadius: BorderRadius.circular(AppDimens.radiusFull),
@@ -202,7 +205,7 @@ class _CategoryScreenState extends ConsumerState<CategoryScreen> {
                 child: Text(
                   '$nb',
                   style: AppTextStyles.bodySmall.copyWith(
-                    fontSize   : 11,
+                    fontSize   : 11.sp,
                     fontWeight : FontWeight.w700,
                     color      : Colors.white,
                   ),
@@ -239,7 +242,7 @@ class _CategoryScreenState extends ConsumerState<CategoryScreen> {
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 200),
             padding:
-                const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
             decoration: BoxDecoration(
               color: isActive ? AppColors.primary : Colors.white,
               borderRadius: BorderRadius.circular(AppDimens.radiusFull),
@@ -334,7 +337,7 @@ class _CategoryScreenState extends ConsumerState<CategoryScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(Icons.storefront_outlined,
-                size: 44, color: AppColors.grey400),
+                size: 44.r, color: AppColors.grey400),
             SizedBox(height: AppDimens.md),
             Text(
               message,
@@ -377,15 +380,15 @@ class _CategoryScreenState extends ConsumerState<CategoryScreen> {
           GestureDetector(
             onTap: () => Navigator.of(context).pop(),
             child: Container(
-              width: 40,
-              height: 40,
+              width: 40.r,
+              height: 40.r,
               decoration: BoxDecoration(
                 color: AppColors.grey100,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.arrow_back_ios_new_rounded,
-                size: 18,
+                size: 18.r,
                 color: AppColors.dark,
               ),
             ),
@@ -436,24 +439,24 @@ class _FullWidthRestaurantCard extends ConsumerWidget {
             children: [
               ClipRRect(
                 borderRadius: BorderRadius.circular(AppDimens.radiusLg),
-                child: Image.network(
-                  restaurant.imageUrl,
-                  height: 160,
+                child: ImageReseau(
+                  url: restaurant.imageUrl,
+                  height: 160.h,
                   width: double.infinity,
                   fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => Container(
-                    height: 160,
+                  fallback: Container(
+                    height: 160.h,
                     width: double.infinity,
                     color: AppColors.grey200,
-                    child: const Icon(Icons.storefront_outlined,
-                        color: AppColors.grey400, size: 48),
+                    child: Icon(Icons.storefront_outlined,
+                        color: AppColors.grey400, size: 48.r),
                   ),
                 ),
               ),
               // ── Bouton cœur ─────────────────────────────────
               Positioned(
-                top  : 10,
-                right: 10,
+                top  : 10.h,
+                right: 10.w,
                 child: GestureDetector(
                   onTap: isToggling
                       ? null
@@ -461,22 +464,22 @@ class _FullWidthRestaurantCard extends ConsumerWidget {
                             .read(favoriProvider.notifier)
                             .toggleFavori(structureId),
                   child: isToggling
-                      ? const SizedBox(
-                          width : 22,
-                          height: 22,
+                      ? SizedBox(
+                          width : 22.r,
+                          height: 22.r,
                           child : CircularProgressIndicator(
-                            strokeWidth : 2,
+                            strokeWidth : 2.r,
                             color       : Colors.white,
                           ),
                         )
                       : isFavori
-                          ? const Icon(Icons.favorite_rounded,
-                              color: Colors.red, size: 26,
-                              shadows: [Shadow(color: Colors.black26, blurRadius: 6)])
+                          ? Icon(Icons.favorite_rounded,
+                              color: Colors.red, size: 26.r,
+                              shadows: [Shadow(color: Colors.black26, blurRadius: 6.r)])
                           : SvgPicture.asset(
                               'assets/icones/heart.svg',
-                              width : 24,
-                              height: 24,
+                              width : 24.r,
+                              height: 24.r,
                               colorFilter: const ColorFilter.mode(
                                 Colors.white,
                                 BlendMode.srcIn,
@@ -487,7 +490,7 @@ class _FullWidthRestaurantCard extends ConsumerWidget {
             ],
           ),
 
-          const SizedBox(height: 10),
+          SizedBox(height: 10.h),
 
           // ── Nom + Rating ────────────────────────────────────
           Row(
@@ -497,17 +500,17 @@ class _FullWidthRestaurantCard extends ConsumerWidget {
                   restaurant.name,
                   style: AppTextStyles.labelMedium.copyWith(
                     fontWeight: FontWeight.w700,
-                    fontSize: 16,
+                    fontSize: 16.sp,
                     color: AppColors.dark,
                   ),
                 ),
               ),
-              Icon(Icons.star, size: 15, color: Colors.amber.shade600),
-              const SizedBox(width: 4),
+              Icon(Icons.star, size: 15.r, color: Colors.amber.shade600),
+              SizedBox(width: 4.w),
               Text(
                 restaurant.rating.toStringAsFixed(1),
                 style: AppTextStyles.bodySmall.copyWith(
-                  fontSize: 14,
+                  fontSize: 14.sp,
                   fontWeight: FontWeight.w600,
                   color: AppColors.dark,
                 ),
@@ -515,36 +518,36 @@ class _FullWidthRestaurantCard extends ConsumerWidget {
             ],
           ),
 
-          const SizedBox(height: 5),
+          SizedBox(height: 5.h),
 
           // ── Temps + Cuisine ─────────────────────────────────
           Row(
             children: [
               SvgPicture.asset(
                 'assets/icones/motorcycle-fill.svg',
-                width: 15,
-                height: 15,
+                width: 15.r,
+                height: 15.r,
                 colorFilter: const ColorFilter.mode(
                   AppColors.grey500,
                   BlendMode.srcIn,
                 ),
               ),
-              const SizedBox(width: 6),
+              SizedBox(width: 6.w),
               Text(
                 restaurant.deliveryTime,
                 style: AppTextStyles.bodySmall.copyWith(
-                  fontSize: 13,
+                  fontSize: 13.sp,
                   color: AppColors.grey500,
                 ),
               ),
-              const SizedBox(width: 16),
+              SizedBox(width: 16.w),
               // L'adresse est de longueur imprévisible : elle doit
               // céder la place plutôt que déborder
               Expanded(
                 child: Text(
                   restaurant.cuisine,
                   style: AppTextStyles.bodySmall.copyWith(
-                    fontSize: 13,
+                    fontSize: 13.sp,
                     color: AppColors.grey500,
                   ),
                   maxLines: 1,

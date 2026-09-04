@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -139,7 +140,7 @@ class _ForgotVerificationScreenState extends ConsumerState<ForgotVerificationScr
                     Text(
                       'Code de vérification',
                       style: AppTextStyles.h1.copyWith(
-                        fontSize: 28,
+                        fontSize: 28.sp,
                         fontWeight: FontWeight.w800,
                         color: AppColors.primary,
                       ),
@@ -257,7 +258,7 @@ class _ForgotVerificationScreenState extends ConsumerState<ForgotVerificationScr
         return Container(
           width  : boxSize,
           height : boxSize,
-          margin : const EdgeInsets.symmetric(horizontal: 5),
+          margin : EdgeInsets.symmetric(horizontal: 5.w),
           decoration: BoxDecoration(
             color        : isActive ? AppColors.primarySurface : AppColors.grey100,
             borderRadius : BorderRadius.circular(AppDimens.radiusMd),
@@ -271,9 +272,9 @@ class _ForgotVerificationScreenState extends ConsumerState<ForgotVerificationScr
           child: Center(
             child: Text(
               _code[index],
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily : 'PlusJakartaSans',
-                fontSize   : 20,
+                fontSize   : 20.sp,
                 fontWeight : FontWeight.w700,
                 color      : AppColors.dark,
               ),
@@ -302,7 +303,7 @@ class _ForgotVerificationScreenState extends ConsumerState<ForgotVerificationScr
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: keys.map((key) {
-        if (key.isEmpty) return const SizedBox(width: 90, height: 56);
+        if (key.isEmpty) return SizedBox(width: 90.w, height: 56.h);
         return _buildKey(key);
       }).toList(),
     );
@@ -313,22 +314,22 @@ class _ForgotVerificationScreenState extends ConsumerState<ForgotVerificationScr
     return GestureDetector(
       onTap: () => isBackspace ? _onBackspace() : _onKeyTap(value),
       child: Container(
-        width: 90,
-        height: 56,
-        margin: const EdgeInsets.symmetric(horizontal: 6),
+        width: 90.w,
+        height: 56.h,
+        margin: EdgeInsets.symmetric(horizontal: 6.w),
         decoration: BoxDecoration(
           color: AppColors.grey100,
           borderRadius: BorderRadius.circular(AppDimens.radiusMd),
         ),
         child: Center(
           child: isBackspace
-              ? const Icon(Icons.backspace_outlined,
-              color: AppColors.grey700, size: 22)
+              ? Icon(Icons.backspace_outlined,
+              color: AppColors.grey700, size: 22.r)
               : Text(
             value,
-            style: const TextStyle(
+            style: TextStyle(
               fontFamily: 'PlusJakartaSans',
-              fontSize: 22,
+              fontSize: 22.sp,
               fontWeight: FontWeight.w600,
               color: AppColors.dark,
             ),

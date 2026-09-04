@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
@@ -99,13 +100,13 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
           Container(
             width   : double.infinity,
             padding : EdgeInsets.symmetric(
-                horizontal: AppDimens.screenPadding, vertical: 10),
+                horizontal: AppDimens.screenPadding, vertical: 10.h),
             color   : AppColors.errorLight,
             child   : Row(
               children: [
-                const Icon(Icons.error_outline_rounded,
-                    color: AppColors.error, size: 16),
-                const SizedBox(width: 8),
+                Icon(Icons.error_outline_rounded,
+                    color: AppColors.error, size: 16.r),
+                SizedBox(width: 8.w),
                 Expanded(
                   child: Text(state.error!,
                       style: AppTextStyles.bodySmall
@@ -180,7 +181,7 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
       ),
       physics         : const AlwaysScrollableScrollPhysics(),
       itemCount       : count,
-      separatorBuilder: (_, __) => const SizedBox(height: 12),
+      separatorBuilder: (_, __) => SizedBox(height: 12.h),
       itemBuilder     : (_, i) => builder(i),
     );
   }
@@ -212,14 +213,14 @@ class _Tabs extends StatelessWidget {
                 onTap    : () => onTap(i),
                 behavior : HitTestBehavior.opaque,
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  padding: EdgeInsets.symmetric(vertical: 14.h),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
                         labels[i],
                         style: AppTextStyles.labelMedium.copyWith(
-                          fontSize   : 14,
+                          fontSize   : 14.sp,
                           fontWeight :
                               active ? FontWeight.w700 : FontWeight.w500,
                           color      :
@@ -227,20 +228,20 @@ class _Tabs extends StatelessWidget {
                         ),
                       ),
                       if (counts[i] > 0) ...[
-                        const SizedBox(width: 6),
+                        SizedBox(width: 6.w),
                         Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 7, vertical: 2),
+                          padding: EdgeInsets.symmetric(
+                              horizontal: 7.w, vertical: 2.h),
                           decoration: BoxDecoration(
                             color: active
                                 ? AppColors.primary
                                 : AppColors.grey200,
-                            borderRadius: BorderRadius.circular(20),
+                            borderRadius: BorderRadius.circular(20.r),
                           ),
                           child: Text(
                             '${counts[i]}',
                             style: AppTextStyles.labelSmall.copyWith(
-                              fontSize   : 11,
+                              fontSize   : 11.sp,
                               fontWeight : FontWeight.w700,
                               color      : active
                                   ? Colors.white
@@ -383,11 +384,11 @@ class CommandeCard extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           color        : Colors.white,
-          borderRadius : BorderRadius.circular(16),
+          borderRadius : BorderRadius.circular(16.r),
           boxShadow    : [
             BoxShadow(
               color      : Colors.black.withValues(alpha: 0.06),
-              blurRadius : 16,
+              blurRadius : 16.r,
               offset     : const Offset(0, 4),
             ),
           ],
@@ -396,20 +397,20 @@ class CommandeCard extends StatelessWidget {
           children: [
             // ── Top : type de service + statut ───────────────
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
+              padding: EdgeInsets.fromLTRB(16.w, 14.h, 16.w, 0.h),
               child: Row(
                 children: [
                   Container(
-                    width  : 38,
-                    height : 38,
+                    width  : 38.r,
+                    height : 38.r,
                     decoration: BoxDecoration(
                       color        : AppColors.primarySurface,
-                      borderRadius : BorderRadius.circular(10),
+                      borderRadius : BorderRadius.circular(10.r),
                     ),
                     child: Icon(type.icon,
-                        size: 18, color: AppColors.primary),
+                        size: 18.r, color: AppColors.primary),
                   ),
-                  const SizedBox(width: 10),
+                  SizedBox(width: 10.w),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -418,7 +419,7 @@ class CommandeCard extends StatelessWidget {
                           type.label,
                           style: AppTextStyles.labelMedium.copyWith(
                             fontWeight : FontWeight.w700,
-                            fontSize   : 14,
+                            fontSize   : 14.sp,
                             color      : AppColors.dark,
                           ),
                           maxLines : 1,
@@ -435,21 +436,21 @@ class CommandeCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  SizedBox(width: 8.w),
                   // Badge statut
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 4),
+                    padding: EdgeInsets.symmetric(
+                        horizontal: 10.w, vertical: 4.h),
                     decoration: BoxDecoration(
                       color        : status.bgColor,
-                      borderRadius : BorderRadius.circular(20),
+                      borderRadius : BorderRadius.circular(20.r),
                     ),
                     child: Text(
                       status.label,
                       style: AppTextStyles.labelSmall.copyWith(
                         color      : status.color,
                         fontWeight : FontWeight.w700,
-                        fontSize   : 11,
+                        fontSize   : 11.sp,
                       ),
                     ),
                   ),
@@ -457,13 +458,13 @@ class CommandeCard extends StatelessWidget {
               ),
             ),
 
-            const SizedBox(height: 12),
+            SizedBox(height: 12.h),
             const Divider(height: 1, color: AppColors.grey100),
-            const SizedBox(height: 12),
+            SizedBox(height: 12.h),
 
             // ── Itinéraire ───────────────────────────────────
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: EdgeInsets.symmetric(horizontal: 16.w),
               child: IntrinsicHeight(
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -471,13 +472,13 @@ class CommandeCard extends StatelessWidget {
                     // Icônes + ligne
                     Column(
                       children: [
-                        const SizedBox(height: 3),
+                        SizedBox(height: 3.h),
                         Stack(
                           alignment: Alignment.center,
                           children: [
                             Container(
-                              width  : 16,
-                              height : 16,
+                              width  : 16.r,
+                              height : 16.r,
                               decoration: BoxDecoration(
                                 shape : BoxShape.circle,
                                 border: Border.all(
@@ -488,8 +489,8 @@ class CommandeCard extends StatelessWidget {
                               ),
                             ),
                             Container(
-                              width  : 8,
-                              height : 8,
+                              width  : 8.r,
+                              height : 8.r,
                               decoration: const BoxDecoration(
                                 color : AppColors.primary,
                                 shape : BoxShape.circle,
@@ -503,12 +504,12 @@ class CommandeCard extends StatelessWidget {
                                 width: 1.5, color: AppColors.grey200),
                           ),
                         ),
-                        const Icon(Icons.location_on,
-                            color: AppColors.secondary, size: 16),
-                        const SizedBox(height: 3),
+                        Icon(Icons.location_on,
+                            color: AppColors.secondary, size: 16.r),
+                        SizedBox(height: 3.h),
                       ],
                     ),
-                    const SizedBox(width: 12),
+                    SizedBox(width: 12.w),
                     // Textes départ / arrivée
                     Expanded(
                       child: Column(
@@ -526,7 +527,7 @@ class CommandeCard extends StatelessWidget {
                             maxLines : 1,
                             overflow : TextOverflow.ellipsis,
                           ),
-                          const SizedBox(height: 10),
+                          SizedBox(height: 10.h),
                           Text('Arrivée',
                               style: AppTextStyles.caption
                                   .copyWith(color: AppColors.grey400)),
@@ -547,19 +548,19 @@ class CommandeCard extends StatelessWidget {
               ),
             ),
 
-            const SizedBox(height: 12),
+            SizedBox(height: 12.h),
             const Divider(height: 1, color: AppColors.grey100),
 
             // ── Bas : montant + distance/durée ───────────────
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
+              padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 14.h),
               child: Row(
                 children: [
                   Text(
                     mission.montantLabel,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontFamily : 'PlusJakartaSans',
-                      fontSize   : 18,
+                      fontSize   : 18.sp,
                       fontWeight : FontWeight.w800,
                       color      : AppColors.dark,
                     ),
@@ -567,18 +568,18 @@ class CommandeCard extends StatelessWidget {
                   const Spacer(),
                   if (mission.metaLabel.isNotEmpty)
                     Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 4),
+                      padding: EdgeInsets.symmetric(
+                          horizontal: 10.w, vertical: 4.h),
                       decoration: BoxDecoration(
                         color        : AppColors.grey100,
-                        borderRadius : BorderRadius.circular(20),
+                        borderRadius : BorderRadius.circular(20.r),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.route_rounded,
-                              size: 12, color: AppColors.grey500),
-                          const SizedBox(width: 4),
+                          Icon(Icons.route_rounded,
+                              size: 12.r, color: AppColors.grey500),
+                          SizedBox(width: 4.w),
                           Text(
                             mission.metaLabel,
                             style: AppTextStyles.caption.copyWith(
@@ -629,11 +630,11 @@ class CommandeStructureCard extends StatelessWidget {
       child: Container(
       decoration: BoxDecoration(
         color        : Colors.white,
-        borderRadius : BorderRadius.circular(16),
+        borderRadius : BorderRadius.circular(16.r),
         boxShadow    : [
           BoxShadow(
             color      : Colors.black.withValues(alpha: 0.06),
-            blurRadius : 16,
+            blurRadius : 16.r,
             offset     : const Offset(0, 4),
           ),
         ],
@@ -642,20 +643,20 @@ class CommandeStructureCard extends StatelessWidget {
         children: [
           // ── Top : type + statut ──────────────────────────
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
+            padding: EdgeInsets.fromLTRB(16.w, 14.h, 16.w, 0.h),
             child: Row(
               children: [
                 Container(
-                  width  : 38,
-                  height : 38,
+                  width  : 38.r,
+                  height : 38.r,
                   decoration: BoxDecoration(
                     color        : AppColors.primarySurface,
-                    borderRadius : BorderRadius.circular(10),
+                    borderRadius : BorderRadius.circular(10.r),
                   ),
-                  child: const Icon(Icons.shopping_bag_outlined,
-                      size: 18, color: AppColors.primary),
+                  child: Icon(Icons.shopping_bag_outlined,
+                      size: 18.r, color: AppColors.primary),
                 ),
-                const SizedBox(width: 10),
+                SizedBox(width: 10.w),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -664,7 +665,7 @@ class CommandeStructureCard extends StatelessWidget {
                         'Commande',
                         style: AppTextStyles.labelMedium.copyWith(
                           fontWeight : FontWeight.w700,
-                          fontSize   : 14,
+                          fontSize   : 14.sp,
                           color      : AppColors.dark,
                         ),
                         maxLines : 1,
@@ -680,20 +681,20 @@ class CommandeStructureCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                const SizedBox(width: 8),
+                SizedBox(width: 8.w),
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 10, vertical: 4),
+                  padding: EdgeInsets.symmetric(
+                      horizontal: 10.w, vertical: 4.h),
                   decoration: BoxDecoration(
                     color        : status.bgColor,
-                    borderRadius : BorderRadius.circular(20),
+                    borderRadius : BorderRadius.circular(20.r),
                   ),
                   child: Text(
                     status.label,
                     style: AppTextStyles.labelSmall.copyWith(
                       color      : status.color,
                       fontWeight : FontWeight.w700,
-                      fontSize   : 11,
+                      fontSize   : 11.sp,
                     ),
                   ),
                 ),
@@ -701,13 +702,13 @@ class CommandeStructureCard extends StatelessWidget {
             ),
           ),
 
-          const SizedBox(height: 12),
+          SizedBox(height: 12.h),
           const Divider(height: 1, color: AppColors.grey100),
-          const SizedBox(height: 12),
+          SizedBox(height: 12.h),
 
           // ── Établissement puis destination ───────────────
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: EdgeInsets.symmetric(horizontal: 16.w),
             child: Column(
               children: [
                 _ligne(
@@ -716,7 +717,7 @@ class CommandeStructureCard extends StatelessWidget {
                   label : 'Établissement',
                   valeur: commande.structureName,
                 ),
-                const SizedBox(height: 10),
+                SizedBox(height: 10.h),
                 _ligne(
                   icone : Icons.location_on,
                   teinte: AppColors.secondary,
@@ -728,30 +729,30 @@ class CommandeStructureCard extends StatelessWidget {
             ),
           ),
 
-          const SizedBox(height: 12),
+          SizedBox(height: 12.h),
           const Divider(height: 1, color: AppColors.grey100),
 
           // ── Bas : montant + mode de réception ────────────
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
+            padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 14.h),
             child: Row(
               children: [
                 Text(
                   montantLabel(commande.montantTotal),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily : 'PlusJakartaSans',
-                    fontSize   : 18,
+                    fontSize   : 18.sp,
                     fontWeight : FontWeight.w800,
                     color      : AppColors.dark,
                   ),
                 ),
                 const Spacer(),
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 10, vertical: 4),
+                  padding: EdgeInsets.symmetric(
+                      horizontal: 10.w, vertical: 4.h),
                   decoration: BoxDecoration(
                     color        : AppColors.grey100,
-                    borderRadius : BorderRadius.circular(20),
+                    borderRadius : BorderRadius.circular(20.r),
                   ),
                   child: Text(
                     commande.modeReceptionCommande == 'RETRAIT_CLIENT'
@@ -781,8 +782,8 @@ class CommandeStructureCard extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icone, size: 16, color: teinte),
-        const SizedBox(width: 12),
+        Icon(icone, size: 16.r, color: teinte),
+        SizedBox(width: 12.w),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -820,16 +821,16 @@ class _Empty extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width  : 72,
-            height : 72,
+            width  : 72.r,
+            height : 72.r,
             decoration: const BoxDecoration(
               color : AppColors.grey100,
               shape : BoxShape.circle,
             ),
-            child: const Icon(Icons.receipt_long_outlined,
-                size: 32, color: AppColors.grey400),
+            child: Icon(Icons.receipt_long_outlined,
+                size: 32.r, color: AppColors.grey400),
           ),
-          const SizedBox(height: 14),
+          SizedBox(height: 14.h),
           Text(
             message,
             style: AppTextStyles.labelMedium.copyWith(
@@ -837,7 +838,7 @@ class _Empty extends StatelessWidget {
               color      : AppColors.dark,
             ),
           ),
-          const SizedBox(height: 4),
+          SizedBox(height: 4.h),
           Text(
             detail,
             style: AppTextStyles.bodySmall.copyWith(color: AppColors.grey500),

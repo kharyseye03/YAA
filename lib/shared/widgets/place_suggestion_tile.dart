@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_text_styles.dart';
 import '../../service/location/location_service.dart';
@@ -72,24 +73,13 @@ class PlaceSuggestionTile extends StatelessWidget {
     return Icons.location_on_rounded;
   }
 
-  /// Couleur d'accent selon la famille du lieu.
+  /// Teinte unique de la liste.
   ///
-  /// Volontairement limitée à trois teintes de la palette : au-delà,
-  /// la liste vire à l'arc-en-ciel et la couleur cesse de porter du
-  /// sens. Tout ce qui n'est ni restauration ni santé reste en navy.
-  static Color colorForTypes(List<String> types) {
-    for (final type in types) {
-      switch (type) {
-        case 'restaurant' || 'food' || 'cafe' || 'bar' || 'bakery'
-            || 'meal_takeaway' || 'meal_delivery':
-          return AppColors.secondary;
-        case 'pharmacy' || 'drugstore' || 'hospital' || 'doctor'
-            || 'health' || 'dentist':
-          return AppColors.success;
-      }
-    }
-    return AppColors.primary;
-  }
+  /// Trois couleurs selon la famille du lieu donnaient une liste
+  /// bariolée où l'œil cherchait un sens qui n'existait pas : la
+  /// couleur ne disait rien que l'icône ne disait déjà. Le navy de
+  /// marque laisse le libellé porter l'information.
+  static const Color accent = AppColors.primary;
 
   @override
   Widget build(BuildContext context) {
@@ -99,12 +89,10 @@ class PlaceSuggestionTile extends StatelessWidget {
         ? suggestion.mainText
         : suggestion.description;
 
-    final accent = colorForTypes(suggestion.types);
-
     return InkWell(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
         decoration: showDivider
             ? const BoxDecoration(
                 border: Border(
@@ -117,15 +105,15 @@ class PlaceSuggestionTile extends StatelessWidget {
             // Pastille teintée : c'est elle qui donne du relief à la
             // liste, une icône nue se perd dans le texte.
             Container(
-              width  : 38,
-              height : 38,
+              width  : 38.r,
+              height : 38.r,
               decoration: BoxDecoration(
                 color        : accent.withValues(alpha: 0.10),
-                borderRadius : BorderRadius.circular(11),
+                borderRadius : BorderRadius.circular(11.r),
               ),
-              child: Icon(icon, size: 19, color: accent),
+              child: Icon(icon, size: 19.r, color: accent),
             ),
-            const SizedBox(width: 12),
+            SizedBox(width: 12.w),
 
             // Nom du lieu + adresse
             Expanded(
@@ -156,11 +144,24 @@ class PlaceSuggestionTile extends StatelessWidget {
               ),
             ),
 
+            // Distance à droite : elle sert à départager deux lieux
+            // au nom voisin, pas à estimer un trajet.
+            if (suggestion.distanceLabel.isNotEmpty) ...[
+              SizedBox(width: 8.w),
+              Text(
+                suggestion.distanceLabel,
+                style: AppTextStyles.caption.copyWith(
+                  color      : AppColors.textSoft,
+                  fontWeight : FontWeight.w700,
+                ),
+              ),
+            ],
+
             // Flèche de report : indique que le tap remplit le champ
             // plutôt que de naviguer ailleurs.
-            const SizedBox(width: 8),
-            const Icon(Icons.north_west_rounded,
-                size: 17, color: AppColors.grey400),
+            SizedBox(width: 8.w),
+            Icon(Icons.north_west_rounded,
+                size: 17.r, color: AppColors.grey400),
           ],
         ),
       ),

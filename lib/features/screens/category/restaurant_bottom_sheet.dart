@@ -1,3 +1,5 @@
+import '../../../shared/widgets/image_reseau.dart';
+import '../../../core/errors/messages_erreur.dart';
 import '../../../core/utils/devise.dart';
 import 'dart:async';
 
@@ -6,6 +8,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimens.dart';
 import '../../../core/constants/app_text_styles.dart';
@@ -147,19 +150,19 @@ class _RestaurantSheetState extends ConsumerState<_RestaurantSheet> {
       minChildSize: 0.5,
       maxChildSize: 0.97,
       builder: (_, scrollController) => Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
         ),
         child: Column(
           children: [
             Container(
-              margin: const EdgeInsets.only(top: 10, bottom: 4),
-              width: 40,
-              height: 4,
+              margin: EdgeInsets.only(top: 10.h, bottom: 4.h),
+              width: 40.w,
+              height: 4.h,
               decoration: BoxDecoration(
                 color: AppColors.grey300,
-                borderRadius: BorderRadius.circular(2),
+                borderRadius: BorderRadius.circular(2.r),
               ),
             ),
             Expanded(
@@ -170,7 +173,7 @@ class _RestaurantSheetState extends ConsumerState<_RestaurantSheet> {
                           const Center(child: CircularProgressIndicator()),
                       error: (e, _) => Center(
                         child: Text(
-                          e.toString().replaceAll('Exception: ', ''),
+                          MessagesErreur.depuisException(e),
                           style: AppTextStyles.bodyMedium
                               .copyWith(color: AppColors.error),
                         ),
@@ -192,13 +195,13 @@ class _RestaurantSheetState extends ConsumerState<_RestaurantSheet> {
                               SliverPersistentHeader(
                                 pinned: true,
                                 delegate: _TabsDelegate(
-                                  height: 43,
+                                  height: 43.h,
                                   child: _buildTabs(sections),
                                 ),
                               ),
                               ..._buildAllSections(sections),
-                              const SliverToBoxAdapter(
-                                  child: SizedBox(height: 100)),
+                              SliverToBoxAdapter(
+                                  child: SizedBox(height: 100.h)),
                             ],
                           ],
                         );
@@ -236,15 +239,15 @@ class _RestaurantSheetState extends ConsumerState<_RestaurantSheet> {
                 context.goNamed(RouteNames.cart);
               },
               child: Container(
-                height : 52,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+                height : 52.h,
+                padding: EdgeInsets.symmetric(horizontal: 16.w),
                 decoration: BoxDecoration(
                   color        : AppColors.primary,
                   borderRadius : BorderRadius.circular(AppDimens.radiusFull),
                   boxShadow    : [
                     BoxShadow(
                       color     : AppColors.primary.withValues(alpha: 0.30),
-                      blurRadius: 12,
+                      blurRadius: 12.r,
                       offset    : const Offset(0, 4),
                     ),
                   ],
@@ -253,22 +256,22 @@ class _RestaurantSheetState extends ConsumerState<_RestaurantSheet> {
                   children: [
                     // ── Badge articles ─────────────────
                     Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 9, vertical: 3),
+                      padding: EdgeInsets.symmetric(
+                          horizontal: 9.w, vertical: 3.h),
                       decoration: BoxDecoration(
                         color        : Colors.white.withValues(alpha: 0.20),
-                        borderRadius : BorderRadius.circular(20),
+                        borderRadius : BorderRadius.circular(20.r),
                       ),
                       child: Text(
                         '$count',
                         style: AppTextStyles.labelSmall.copyWith(
                           color      : Colors.white,
                           fontWeight : FontWeight.w800,
-                          fontSize   : 12,
+                          fontSize   : 12.sp,
                         ),
                       ),
                     ),
-                    const SizedBox(width: 10),
+                    SizedBox(width: 10.w),
                     // ── Label ──────────────────────────
                     Expanded(
                       child: Text(
@@ -276,7 +279,7 @@ class _RestaurantSheetState extends ConsumerState<_RestaurantSheet> {
                         style: AppTextStyles.labelMedium.copyWith(
                           color      : Colors.white,
                           fontWeight : FontWeight.w700,
-                          fontSize   : 14,
+                          fontSize   : 14.sp,
                         ),
                       ),
                     ),
@@ -286,12 +289,12 @@ class _RestaurantSheetState extends ConsumerState<_RestaurantSheet> {
                       style: AppTextStyles.labelMedium.copyWith(
                         color      : Colors.white,
                         fontWeight : FontWeight.w800,
-                        fontSize   : 14,
+                        fontSize   : 14.sp,
                       ),
                     ),
-                    const SizedBox(width: 6),
-                    const Icon(Icons.arrow_forward_ios_rounded,
-                        size: 14, color: Colors.white),
+                    SizedBox(width: 6.w),
+                    Icon(Icons.arrow_forward_ios_rounded,
+                        size: 14.r, color: Colors.white),
                   ],
                 ),
               ),
@@ -376,8 +379,8 @@ class _RestaurantSheetState extends ConsumerState<_RestaurantSheet> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.inventory_2_outlined,
-                size: 44, color: AppColors.grey300),
+            Icon(Icons.inventory_2_outlined,
+                size: 44.r, color: AppColors.grey300),
             SizedBox(height: AppDimens.md),
             Text(
               'Aucun produit disponible pour le moment',
@@ -421,17 +424,17 @@ class _RestaurantSheetState extends ConsumerState<_RestaurantSheet> {
               textInputAction: TextInputAction.search,
               onChanged: _onTermeChange,
               style: AppTextStyles.bodyMedium.copyWith(
-                fontSize   : 15,
+                fontSize   : 15.sp,
                 fontWeight : FontWeight.w500,
                 color      : AppColors.dark,
               ),
               decoration: InputDecoration(
                 isDense: true,
                 border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                contentPadding: EdgeInsets.symmetric(vertical: 10.h),
                 hintText: 'Rechercher dans ce catalogue',
                 hintStyle: AppTextStyles.bodyMedium.copyWith(
-                  fontSize: 15,
+                  fontSize: 15.sp,
                   color: AppColors.grey400,
                 ),
               ),
@@ -456,7 +459,7 @@ class _RestaurantSheetState extends ConsumerState<_RestaurantSheet> {
     // Hauteur calée sur celle des puces (texte + 8 px de padding
     // haut et bas + la bordure) : en dessous, elles sont rognées
     return SizedBox(
-      height: 38,
+      height: 38.h,
       child: ListView(
         scrollDirection: Axis.horizontal,
         padding: EdgeInsets.symmetric(
@@ -468,21 +471,21 @@ class _RestaurantSheetState extends ConsumerState<_RestaurantSheet> {
             icone : Icons.local_offer_outlined,
             onTap : () => setState(() => _enPromotion = !_enPromotion),
           ),
-          const SizedBox(width: 8),
+          SizedBox(width: 8.w),
           _chipFiltre(
             'Disponible',
             actif : _disponible,
             onTap : () => setState(() => _disponible = !_disponible),
           ),
           if (_estPharmacie) ...[
-            const SizedBox(width: 8),
+            SizedBox(width: 8.w),
             _chipFiltre(
               'Sur ordonnance',
               actif : _ordonnance,
               onTap : () => setState(() => _ordonnance = !_ordonnance),
             ),
           ],
-          const SizedBox(width: 8),
+          SizedBox(width: 8.w),
           _chipFiltre(
             _libellePrix,
             actif : _prixMin != null || _prixMax != null,
@@ -504,7 +507,7 @@ class _RestaurantSheetState extends ConsumerState<_RestaurantSheet> {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 7.h),
         decoration: BoxDecoration(
           color: actif ? AppColors.primary : Colors.white,
           borderRadius: BorderRadius.circular(AppDimens.radiusFull),
@@ -515,13 +518,13 @@ class _RestaurantSheetState extends ConsumerState<_RestaurantSheet> {
           children: [
             if (icone != null) ...[
               Icon(icone,
-                  size: 14, color: actif ? Colors.white : AppColors.dark),
-              const SizedBox(width: 5),
+                  size: 14.r, color: actif ? Colors.white : AppColors.dark),
+              SizedBox(width: 5.w),
             ],
             Text(
               libelle,
               style: AppTextStyles.bodySmall.copyWith(
-                fontSize   : 12,
+                fontSize   : 12.sp,
                 fontWeight : FontWeight.w600,
                 color      : actif ? Colors.white : AppColors.dark,
               ),
@@ -605,7 +608,7 @@ class _RestaurantSheetState extends ConsumerState<_RestaurantSheet> {
       keyboardType: TextInputType.number,
       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
       style: AppTextStyles.bodyMedium
-          .copyWith(fontSize: 14, color: AppColors.dark),
+          .copyWith(fontSize: 14.sp, color: AppColors.dark),
       decoration: InputDecoration(
         labelText: label,
         suffixText: kDevise,
@@ -640,7 +643,7 @@ class _RestaurantSheetState extends ConsumerState<_RestaurantSheet> {
         child: Padding(
           padding: EdgeInsets.all(AppDimens.xl),
           child: Text(
-            e.toString().replaceAll('Exception: ', ''),
+            MessagesErreur.depuisException(e),
             style: AppTextStyles.bodyMedium.copyWith(color: AppColors.error),
             textAlign: TextAlign.center,
           ),
@@ -677,7 +680,7 @@ class _RestaurantSheetState extends ConsumerState<_RestaurantSheet> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(LucideIcons.search, size: 40, color: AppColors.grey300),
+            Icon(LucideIcons.search, size: 40.r, color: AppColors.grey300),
             SizedBox(height: AppDimens.md),
             Text(
               'Cherchez un produit chez ${widget.restaurant.name}',
@@ -697,8 +700,8 @@ class _RestaurantSheetState extends ConsumerState<_RestaurantSheet> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.search_off_rounded,
-                size: 44, color: AppColors.grey400),
+            Icon(Icons.search_off_rounded,
+                size: 44.r, color: AppColors.grey400),
             SizedBox(height: AppDimens.md),
             Text(
               _terme.isEmpty
@@ -721,20 +724,20 @@ class _RestaurantSheetState extends ConsumerState<_RestaurantSheet> {
         children: [
           GestureDetector(
             onTap: () => Navigator.of(context).pop(),
-            child: const Icon(Icons.arrow_back_ios_new_rounded,
-                size: 20, color: AppColors.dark),
+            child: Icon(Icons.arrow_back_ios_new_rounded,
+                size: 20.r, color: AppColors.dark),
           ),
           const Spacer(),
           GestureDetector(
             onTap: _ouvrirRecherche,
             behavior: HitTestBehavior.opaque,
             child: Padding(
-              padding: const EdgeInsets.all(4),
-              child: Icon(LucideIcons.search, size: 22, color: AppColors.dark),
+              padding: EdgeInsets.all(4.r),
+              child: Icon(LucideIcons.search, size: 22.r, color: AppColors.dark),
             ),
           ),
           SizedBox(width: AppDimens.md),
-          Icon(LucideIcons.heart, size: 22, color: AppColors.dark),
+          Icon(LucideIcons.heart, size: 22.r, color: AppColors.dark),
         ],
       ),
     );
@@ -752,36 +755,36 @@ class _RestaurantSheetState extends ConsumerState<_RestaurantSheet> {
             widget.restaurant.name.toUpperCase(),
             style: AppTextStyles.h2.copyWith(
               fontWeight: FontWeight.w800,
-              fontSize: 22,
+              fontSize: 22.sp,
               color: AppColors.dark,
             ),
           ),
           SizedBox(height: AppDimens.md),
           Row(
             children: [
-              const Icon(Icons.star, size: 16, color: AppColors.dark),
-              const SizedBox(width: 4),
+              Icon(Icons.star, size: 16.r, color: AppColors.dark),
+              SizedBox(width: 4.w),
               Text(
                 '${widget.restaurant.rating.toStringAsFixed(1)} (124)',
                 style: AppTextStyles.bodySmall.copyWith(
                   fontWeight: FontWeight.w600,
                   color: AppColors.dark,
-                  fontSize: 13,
+                  fontSize: 13.sp,
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                child: Container(width: 1, height: 20, color: AppColors.grey300),
+                padding: EdgeInsets.symmetric(horizontal: 12.w),
+                child: Container(width: 1, height: 20.h, color: AppColors.grey300),
               ),
-              const Icon(Icons.directions_bike_outlined,
-                  size: 16, color: AppColors.dark),
-              const SizedBox(width: 4),
+              Icon(Icons.directions_bike_outlined,
+                  size: 16.r, color: AppColors.dark),
+              SizedBox(width: 4.w),
               Text(
                 widget.restaurant.deliveryTime,
                 style: AppTextStyles.bodySmall.copyWith(
                   fontWeight: FontWeight.w600,
                   color: AppColors.dark,
-                  fontSize: 13,
+                  fontSize: 13.sp,
                 ),
               ),
               const SizedBox(width: 2),
@@ -789,14 +792,14 @@ class _RestaurantSheetState extends ConsumerState<_RestaurantSheet> {
                 'Livraison',
                 style: AppTextStyles.bodySmall.copyWith(
                   color: AppColors.grey500,
-                  fontSize: 12,
+                  fontSize: 12.sp,
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                child: Container(width: 1, height: 20, color: AppColors.grey300),
+                padding: EdgeInsets.symmetric(horizontal: 12.w),
+                child: Container(width: 1, height: 20.h, color: AppColors.grey300),
               ),
-              const Icon(Icons.more_vert, size: 18, color: AppColors.dark),
+              Icon(Icons.more_vert, size: 18.r, color: AppColors.dark),
             ],
           ),
         ],
@@ -811,7 +814,7 @@ class _RestaurantSheetState extends ConsumerState<_RestaurantSheet> {
         mainAxisSize: MainAxisSize.min,
         children: [
           SizedBox(
-            height: 42,
+            height: 42.h,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               padding: EdgeInsets.symmetric(
@@ -828,21 +831,21 @@ class _RestaurantSheetState extends ConsumerState<_RestaurantSheet> {
                       Text(
                         tabs[i].titre.toUpperCase(),
                         style: AppTextStyles.bodySmall.copyWith(
-                          fontSize: 12,
+                          fontSize: 12.sp,
                           fontWeight:
                               isActive ? FontWeight.w800 : FontWeight.w500,
                           color: isActive ? AppColors.dark : AppColors.grey500,
                           letterSpacing: 0.5,
                         ),
                       ),
-                      const SizedBox(height: 6),
+                      SizedBox(height: 6.h),
                       AnimatedContainer(
                         duration: const Duration(milliseconds: 200),
                         height: 2.5,
                         width: isActive ? 24 : 0,
                         decoration: BoxDecoration(
                           color: AppColors.primary,
-                          borderRadius: BorderRadius.circular(2),
+                          borderRadius: BorderRadius.circular(2.r),
                         ),
                       ),
                     ],
@@ -905,46 +908,46 @@ class _ApiMenuItemCard extends StatelessWidget {
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  Image.network(
-                    produit.imageUrl,
+                  ImageReseau(
+                    url: produit.imageUrl,
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
+                    fallback: Container(
                       color: AppColors.grey200,
                       child: const Icon(Icons.image_outlined,
                           color: AppColors.grey400),
                     ),
                   ),
                   Positioned(
-                    bottom: 8,
-                    right : 8,
+                    bottom: 8.h,
+                    right : 8.w,
                     child : Container(
-                      width      : 32,
-                      height     : 32,
+                      width      : 32.r,
+                      height     : 32.r,
                       decoration : const BoxDecoration(
                         color : AppColors.secondary,
                         shape : BoxShape.circle,
                       ),
-                      child: const Icon(Icons.add,
-                          size: 18, color: Colors.white),
+                      child: Icon(Icons.add,
+                          size: 18.r, color: Colors.white),
                     ),
                   ),
                 ],
               ),
             ),
           ),
-          const SizedBox(height: 6),
+          SizedBox(height: 6.h),
           Text(
             '${produit.prix.toInt()} F',
             style: AppTextStyles.labelMedium.copyWith(
               fontWeight: FontWeight.w800,
-              fontSize  : 15,
+              fontSize  : 15.sp,
               color     : AppColors.dark,
             ),
           ),
           Text(
             produit.nom,
             style: AppTextStyles.bodySmall.copyWith(
-              fontSize: 13,
+              fontSize: 13.sp,
               color   : AppColors.dark,
             ),
             maxLines: 1,

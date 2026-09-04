@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimens.dart';
 import '../../core/constants/app_text_styles.dart';
@@ -63,7 +64,7 @@ class _RechercheAnimationState extends State<RechercheAnimation>
                 ),
                 SizedBox(height: AppDimens.xxl),
                 SizedBox(
-                  height: 56,
+                  height: 56.h,
                   child: LayoutBuilder(
                     builder: (context, constraints) {
                       final piste = constraints.maxWidth - 48;
@@ -71,17 +72,17 @@ class _RechercheAnimationState extends State<RechercheAnimation>
                         children: [
                           // Piste pointillée
                           Positioned(
-                            left  : 0,
-                            right : 0,
-                            top   : 27,
+                            left  : 0.w,
+                            right : 0.w,
+                            top   : 27.h,
                             child: Row(
                               children: List.generate(
                                 20,
                                 (_) => Expanded(
                                   child: Container(
                                     height : 2,
-                                    margin : const EdgeInsets.symmetric(
-                                        horizontal: 3),
+                                    margin : EdgeInsets.symmetric(
+                                        horizontal: 3.w),
                                     color  : AppColors.grey200,
                                   ),
                                 ),
@@ -91,10 +92,10 @@ class _RechercheAnimationState extends State<RechercheAnimation>
                           // Le véhicule qui avance
                           Positioned(
                             left : piste * _controller.value,
-                            top  : 4,
+                            top  : 4.h,
                             child: Container(
-                              width  : 48,
-                              height : 48,
+                              width  : 48.r,
+                              height : 48.r,
                               decoration: BoxDecoration(
                                 color : AppColors.primary,
                                 shape : BoxShape.circle,
@@ -102,13 +103,13 @@ class _RechercheAnimationState extends State<RechercheAnimation>
                                   BoxShadow(
                                     color: AppColors.primary
                                         .withValues(alpha: 0.3),
-                                    blurRadius : 12,
+                                    blurRadius : 12.r,
                                     offset     : const Offset(0, 4),
                                   ),
                                 ],
                               ),
                               child: Icon(widget.icone,
-                                  color: Colors.white, size: 24),
+                                  color: Colors.white, size: 24.r),
                             ),
                           ),
                         ],
@@ -124,7 +125,7 @@ class _RechercheAnimationState extends State<RechercheAnimation>
           SizedBox(height: AppDimens.xl),
           Container(
             width   : double.infinity,
-            padding : const EdgeInsets.all(14),
+            padding : EdgeInsets.all(14.r),
             decoration: BoxDecoration(
               color        : AppColors.grey100,
               borderRadius : BorderRadius.circular(AppDimens.radiusLg),

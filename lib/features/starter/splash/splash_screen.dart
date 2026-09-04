@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -107,15 +108,15 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
             top: -30,
             left: -30,
             child: Container(
-              width: 140,
-              height: 140,
+              width: 140.r,
+              height: 140.r,
               decoration: BoxDecoration(
                 border: Border(
-                  top: BorderSide(color: AppColors.primary, width: 6),
-                  left: BorderSide(color: AppColors.primary, width: 6),
+                  top: BorderSide(color: AppColors.primary, width: 6.w),
+                  left: BorderSide(color: AppColors.primary, width: 6.w),
                 ),
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(32),
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(32.r),
                 ),
               ),
             ),
@@ -126,15 +127,15 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
             bottom: -30,
             right: -30,
             child: Container(
-              width: 140,
-              height: 140,
+              width: 140.r,
+              height: 140.r,
               decoration: BoxDecoration(
                 border: Border(
-                  bottom: BorderSide(color: AppColors.secondary, width: 6),
-                  right: BorderSide(color: AppColors.secondary, width: 6),
+                  bottom: BorderSide(color: AppColors.secondary, width: 6.w),
+                  right: BorderSide(color: AppColors.secondary, width: 6.w),
                 ),
-                borderRadius: const BorderRadius.only(
-                  bottomRight: Radius.circular(32),
+                borderRadius: BorderRadius.only(
+                  bottomRight: Radius.circular(32.r),
                 ),
               ),
             ),
@@ -169,9 +170,9 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                   builder: (_, __) => Opacity(
                     opacity: _progressFade.value,
                     child: Padding(
-                      padding: const EdgeInsets.only(bottom: 52),
+                      padding: EdgeInsets.only(bottom: 52.h),
                       child: SizedBox(
-                        width: 48,
+                        width: 48.w,
                         child: LinearProgressIndicator(
                           minHeight: 2,
                           backgroundColor:

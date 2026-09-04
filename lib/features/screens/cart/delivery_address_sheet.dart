@@ -1,4 +1,6 @@
 import 'dart:async';
+import '../../../core/errors/messages_erreur.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -56,7 +58,7 @@ class _DeliveryAddressSheetState
     } catch (e) {
       if (!mounted) return;
       setState(() => _isLoadingGps = false);
-      _showError(e.toString().replaceAll('Exception: ', ''));
+      _showError(MessagesErreur.depuisException(e));
     }
   }
 
@@ -70,7 +72,7 @@ class _DeliveryAddressSheetState
     } catch (e) {
       if (!mounted) return;
       setState(() => _isLoadingPlace = false);
-      _showError(e.toString().replaceAll('Exception: ', ''));
+      _showError(MessagesErreur.depuisException(e));
     }
   }
 
@@ -116,9 +118,9 @@ class _DeliveryAddressSheetState
     return Padding(
       padding: EdgeInsets.only(bottom: bottomInset),
       child: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           color        : Colors.white,
-          borderRadius : BorderRadius.vertical(top: Radius.circular(24)),
+          borderRadius : BorderRadius.vertical(top: Radius.circular(24.r)),
         ),
         padding: EdgeInsets.fromLTRB(
           AppDimens.screenPadding, 12,
@@ -130,14 +132,14 @@ class _DeliveryAddressSheetState
           children: [
             // Poignée
             Container(
-              width: 40, height: 4,
+              width: 40.w, height: 4.h,
               decoration: BoxDecoration(
                 color        : AppColors.grey300,
-                borderRadius : BorderRadius.circular(2),
+                borderRadius : BorderRadius.circular(2.r),
               ),
             ),
 
-            const SizedBox(height: 20),
+            SizedBox(height: 20.h),
 
             Text(
               'Adresse de livraison',
@@ -146,13 +148,13 @@ class _DeliveryAddressSheetState
                 color      : AppColors.dark,
               ),
             ),
-            const SizedBox(height: 4),
+            SizedBox(height: 4.h),
             Text(
               'Valable uniquement pour cette commande',
               style: AppTextStyles.bodySmall.copyWith(color: AppColors.grey500),
             ),
 
-            const SizedBox(height: 20),
+            SizedBox(height: 20.h),
 
             // ── Bouton position actuelle ──────────────────────
             YaaButton(
@@ -163,7 +165,7 @@ class _DeliveryAddressSheetState
               icon       : Icons.my_location_rounded,
             ),
 
-            const SizedBox(height: 16),
+            SizedBox(height: 16.h),
 
             // ── Séparateur "ou" ───────────────────────────────
             Row(
@@ -171,7 +173,7 @@ class _DeliveryAddressSheetState
                 const Expanded(
                     child: Divider(height: 1, color: AppColors.grey200)),
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  padding: EdgeInsets.symmetric(horizontal: 12.w),
                   child: Text(
                     'ou',
                     style: AppTextStyles.bodySmall
@@ -183,7 +185,7 @@ class _DeliveryAddressSheetState
               ],
             ),
 
-            const SizedBox(height: 16),
+            SizedBox(height: 16.h),
 
             // ── Champ avec autocomplétion ─────────────────────
             YaaTextField(
@@ -195,11 +197,11 @@ class _DeliveryAddressSheetState
 
             // ── Suggestions ───────────────────────────────────
             if (_isLoadingPlace) ...[
-              const SizedBox(height: 16),
-              const Center(
+              SizedBox(height: 16.h),
+              Center(
                 child: SizedBox(
-                  width: 22, height: 22,
-                  child: CircularProgressIndicator(strokeWidth: 2.5),
+                  width: 22.r, height: 22.r,
+                  child: CircularProgressIndicator(strokeWidth: 2.5.r),
                 ),
               ),
             ] else if (_suggestions.isNotEmpty) ...[

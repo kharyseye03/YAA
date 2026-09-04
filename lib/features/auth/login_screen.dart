@@ -1,4 +1,5 @@
 import '../../core/utils/phone_formatter.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -16,7 +17,7 @@ class _Label extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
+      padding: EdgeInsets.only(bottom: 6.h),
       child: RichText(
         text: TextSpan(
           text: text,
@@ -124,7 +125,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 Center(
                   child: Image.asset(
                     'assets/images/logo_off.png',
-                    width: 150,
+                    width: 150.w,
                   ),
                 ),
                 SizedBox(height: AppDimens.xxxl),
@@ -189,7 +190,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             ? Icons.visibility_off_outlined
                             : Icons.visibility_outlined,
                         color: AppColors.grey500,
-                        size: 20,
+                        size: 20.r,
                       ),
                       onPressed: () =>
                           setState(() => _obscurePassword = !_obscurePassword),
@@ -230,8 +231,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.error_outline_rounded,
-                            color: AppColors.error, size: 18),
+                        Icon(Icons.error_outline_rounded,
+                            color: AppColors.error, size: 18.r),
                         SizedBox(width: AppDimens.sm),
                         Expanded(
                           child: Text(
@@ -254,11 +255,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   child: ElevatedButton(
                     onPressed: state.isLoading ? null : _onLogin,
                     child: state.isLoading
-                        ? const SizedBox(
-                            height: 22,
-                            width: 22,
+                        ? SizedBox(
+                            height: 22.h,
+                            width: 22.w,
                             child: CircularProgressIndicator(
-                                strokeWidth: 2.5,
+                                strokeWidth: 2.5.r,
                                 color: AppColors.white),
                           )
                         : const Text('Se connecter'),

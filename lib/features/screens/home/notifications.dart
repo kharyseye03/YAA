@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimens.dart';
@@ -77,7 +78,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               top    : MediaQuery.of(context).padding.top + 12,
               left   : AppDimens.screenPadding,
               right  : AppDimens.screenPadding,
-              bottom : 16,
+              bottom : 16.h,
             ),
             child: Row(
               children: [
@@ -85,20 +86,20 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   onTap: () => context.goNamed(RouteNames.home),
                   behavior: HitTestBehavior.opaque,
                   child: Container(
-                    width  : 38,
-                    height : 38,
+                    width  : 38.r,
+                    height : 38.r,
                     decoration: BoxDecoration(
                       color        : AppColors.grey100,
-                      borderRadius : BorderRadius.circular(10),
+                      borderRadius : BorderRadius.circular(10.r),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.chevron_left_rounded,
                       color : AppColors.dark,
-                      size  : 22,
+                      size  : 22.r,
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
+                SizedBox(width: 12.w),
                 Text(
                   'Notifications',
                   style: AppTextStyles.h3.copyWith(
@@ -109,7 +110,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 const Spacer(),
                 if (_unreadCount > 0)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                    padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 5.h),
                     decoration: BoxDecoration(
                       color        : AppColors.grey100,
                       borderRadius : BorderRadius.circular(AppDimens.radiusFull),
@@ -119,7 +120,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                       style: AppTextStyles.labelSmall.copyWith(
                         color      : AppColors.grey600,
                         fontWeight : FontWeight.w600,
-                        fontSize   : 12,
+                        fontSize   : 12.sp,
                       ),
                     ),
                   ),
@@ -152,19 +153,19 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width  : 72,
-            height : 72,
+            width  : 72.r,
+            height : 72.r,
             decoration: const BoxDecoration(
               color : AppColors.grey100,
               shape : BoxShape.circle,
             ),
-            child: const Icon(
+            child: Icon(
               Icons.notifications_none_rounded,
-              size  : 32,
+              size  : 32.r,
               color : AppColors.grey400,
             ),
           ),
-          const SizedBox(height: 14),
+          SizedBox(height: 14.h),
           Text(
             'Aucune notification',
             style: AppTextStyles.labelMedium.copyWith(
@@ -172,7 +173,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               color      : AppColors.dark,
             ),
           ),
-          const SizedBox(height: 4),
+          SizedBox(height: 4.h),
           Text(
             'Vous serez informé de vos commandes ici.',
             style: AppTextStyles.bodySmall.copyWith(color: AppColors.grey500),
@@ -197,27 +198,27 @@ class _NotifTile extends StatelessWidget {
       child: Padding(
         padding: EdgeInsets.symmetric(
           horizontal : AppDimens.screenPadding,
-          vertical   : 14,
+          vertical   : 14.h,
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Icône
             Container(
-              width  : 44,
-              height : 44,
+              width  : 44.r,
+              height : 44.r,
               decoration: BoxDecoration(
                 color        : item.iconBg ?? AppColors.primarySurface,
-                borderRadius : BorderRadius.circular(12),
+                borderRadius : BorderRadius.circular(12.r),
               ),
               child: Icon(
                 item.icon ?? Icons.notifications_outlined,
                 color : item.iconColor ?? AppColors.primary,
-                size  : 20,
+                size  : 20.r,
               ),
             ),
 
-            const SizedBox(width: 14),
+            SizedBox(width: 14.w),
 
             // Textes
             Expanded(
@@ -232,15 +233,15 @@ class _NotifTile extends StatelessWidget {
                           style: AppTextStyles.labelMedium.copyWith(
                             fontWeight : FontWeight.w700,
                             color      : AppColors.dark,
-                            fontSize   : 13,
+                            fontSize   : 13.sp,
                           ),
                         ),
                       ),
                       if (item.isUnread) ...[
-                        const SizedBox(width: 8),
+                        SizedBox(width: 8.w),
                         Container(
-                          width  : 8,
-                          height : 8,
+                          width  : 8.r,
+                          height : 8.r,
                           decoration: const BoxDecoration(
                             shape : BoxShape.circle,
                             color : AppColors.secondary,
@@ -249,7 +250,7 @@ class _NotifTile extends StatelessWidget {
                       ],
                     ],
                   ),
-                  const SizedBox(height: 3),
+                  SizedBox(height: 3.h),
                   Text(
                     item.subtitle,
                     style: AppTextStyles.bodySmall.copyWith(
@@ -257,7 +258,7 @@ class _NotifTile extends StatelessWidget {
                       height : 1.4,
                     ),
                   ),
-                  const SizedBox(height: 5),
+                  SizedBox(height: 5.h),
                   Text(
                     item.time,
                     style: AppTextStyles.caption.copyWith(

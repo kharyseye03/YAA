@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../../core/errors/messages_erreur.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
@@ -98,7 +100,7 @@ class _CourseDetailsSheetState extends ConsumerState<_CourseDetailsSheet> {
       if (!mounted) return;
       setState(() {
         _isSubmitting = false;
-        _error        = e.toString().replaceAll('Exception: ', '');
+        _error        = MessagesErreur.depuisException(e);
       });
     }
   }
@@ -116,9 +118,9 @@ class _CourseDetailsSheetState extends ConsumerState<_CourseDetailsSheet> {
         constraints: BoxConstraints(
           maxHeight: MediaQuery.of(context).size.height * 0.9,
         ),
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           color        : Colors.white,
-          borderRadius : BorderRadius.vertical(top: Radius.circular(24)),
+          borderRadius : BorderRadius.vertical(top: Radius.circular(24.r)),
         ),
         child: SafeArea(
           top: false,
@@ -132,13 +134,13 @@ class _CourseDetailsSheetState extends ConsumerState<_CourseDetailsSheet> {
                 children: [
                   // Poignée
                   Container(
-                    width: 40, height: 4,
+                    width: 40.w, height: 4.h,
                     decoration: BoxDecoration(
                       color        : AppColors.grey300,
-                      borderRadius : BorderRadius.circular(2),
+                      borderRadius : BorderRadius.circular(2.r),
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16.h),
 
                   // ── Prix bien visible en haut ─────────────────
                   Row(
@@ -150,9 +152,9 @@ class _CourseDetailsSheetState extends ConsumerState<_CourseDetailsSheet> {
                           children: [
                             Text(
                               estim?.prixLabel ?? '—',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontFamily : 'PlusJakartaSans',
-                                fontSize   : 30,
+                                fontSize   : 30.sp,
                                 fontWeight : FontWeight.w800,
                                 color      : AppColors.dark,
                               ),
@@ -168,26 +170,26 @@ class _CourseDetailsSheetState extends ConsumerState<_CourseDetailsSheet> {
                       ),
                       // Badge moto
                       Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 6),
+                        padding: EdgeInsets.symmetric(
+                            horizontal: 10.w, vertical: 6.h),
                         decoration: BoxDecoration(
                           color        : AppColors.primarySurface,
-                          borderRadius : BorderRadius.circular(20),
+                          borderRadius : BorderRadius.circular(20.r),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             SizedBox(
-                              width: 22, height: 22,
+                              width: 22.r, height: 22.r,
                               child: Image.asset(
                                 'assets/images/moto.png',
                                 fit: BoxFit.contain,
-                                errorBuilder: (_, __, ___) => const Icon(
+                                errorBuilder: (_, __, ___) => Icon(
                                     Icons.sports_motorsports,
-                                    color: AppColors.primary, size: 14),
+                                    color: AppColors.primary, size: 14.r),
                               ),
                             ),
-                            const SizedBox(width: 6),
+                            SizedBox(width: 6.w),
                             Text(
                               'Moto',
                               style: AppTextStyles.bodySmall.copyWith(
@@ -201,22 +203,22 @@ class _CourseDetailsSheetState extends ConsumerState<_CourseDetailsSheet> {
                     ],
                   ),
 
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16.h),
 
                   // ── Erreur ────────────────────────────────────
                   if (_error != null) ...[
                     Container(
                       width   : double.infinity,
-                      padding : const EdgeInsets.all(10),
+                      padding : EdgeInsets.all(10.r),
                       decoration: BoxDecoration(
                         color        : AppColors.errorLight,
-                        borderRadius : BorderRadius.circular(10),
+                        borderRadius : BorderRadius.circular(10.r),
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.error_outline_rounded,
-                              color: AppColors.error, size: 16),
-                          const SizedBox(width: 8),
+                          Icon(Icons.error_outline_rounded,
+                              color: AppColors.error, size: 16.r),
+                          SizedBox(width: 8.w),
                           Expanded(
                             child: Text(_error!,
                                 style: AppTextStyles.bodySmall
@@ -225,7 +227,7 @@ class _CourseDetailsSheetState extends ConsumerState<_CourseDetailsSheet> {
                         ],
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    SizedBox(height: 12.h),
                   ],
 
                   // ── Expéditeur / Destinataire ─────────────────
@@ -253,7 +255,7 @@ class _CourseDetailsSheetState extends ConsumerState<_CourseDetailsSheet> {
                             ),
                           ),
 
-                          const SizedBox(height: 12),
+                          SizedBox(height: 12.h),
 
                           _SectionCard(
                             icon    : Icons.location_on_rounded,
@@ -275,7 +277,7 @@ class _CourseDetailsSheetState extends ConsumerState<_CourseDetailsSheet> {
                             ),
                           ),
 
-                          const SizedBox(height: 12),
+                          SizedBox(height: 12.h),
 
                           // ── Instructions (champ unique) ─────────
                           YaaTextField(
@@ -289,7 +291,7 @@ class _CourseDetailsSheetState extends ConsumerState<_CourseDetailsSheet> {
                     ),
                   ),
 
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16.h),
 
                   YaaButton(
                     label     : 'Commander',
@@ -329,10 +331,10 @@ class _SectionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: EdgeInsets.all(14.r),
       decoration: BoxDecoration(
         color        : Colors.white,
-        borderRadius : BorderRadius.circular(16),
+        borderRadius : BorderRadius.circular(16.r),
         border       : Border.all(color: AppColors.grey200),
       ),
       child: Column(
@@ -345,15 +347,15 @@ class _SectionCard extends StatelessWidget {
             child: Row(
               children: [
                 Container(
-                  width  : 30,
-                  height : 30,
+                  width  : 30.r,
+                  height : 30.r,
                   decoration: BoxDecoration(
                     color        : iconBg,
-                    borderRadius : BorderRadius.circular(9),
+                    borderRadius : BorderRadius.circular(9.r),
                   ),
-                  child: Icon(icon, color: iconClr, size: 16),
+                  child: Icon(icon, color: iconClr, size: 16.r),
                 ),
-                const SizedBox(width: 10),
+                SizedBox(width: 10.w),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -375,14 +377,14 @@ class _SectionCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                const SizedBox(width: 8),
-                const Icon(Icons.edit_outlined,
-                    size: 15, color: AppColors.grey500),
+                SizedBox(width: 8.w),
+                Icon(Icons.edit_outlined,
+                    size: 15.r, color: AppColors.grey500),
               ],
             ),
           ),
 
-          const SizedBox(height: 12),
+          SizedBox(height: 12.h),
           child,
         ],
       ),

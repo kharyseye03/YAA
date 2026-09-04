@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:remixicon/remixicon.dart';
 import '../../../core/constants/app_colors.dart';
@@ -21,16 +22,16 @@ class HomeBottomNav extends ConsumerWidget {
     final cartCount = ref.watch(cartProvider).cart?.totalArticles ?? 0;
     return Container(
       color: Colors.transparent,
-      padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+      padding: EdgeInsets.fromLTRB(20.w, 0.h, 20.w, 16.h),
       child: Container(
-        height: 68,
+        height: 68.h,
         decoration: BoxDecoration(
           color: AppColors.primary,
-          borderRadius: BorderRadius.circular(40),
+          borderRadius: BorderRadius.circular(40.r),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.18),
-              blurRadius: 24,
+              blurRadius: 24.r,
               offset: const Offset(0, 8),
             ),
           ],
@@ -61,8 +62,8 @@ class HomeBottomNav extends ConsumerWidget {
                     children: [
                       AnimatedContainer(
                         duration: const Duration(milliseconds: 200),
-                        width: 46,
-                        height: 46,
+                        width: 46.r,
+                        height: 46.r,
                         decoration: BoxDecoration(
                           color: currentIndex == 4
                               ? Colors.white
@@ -71,7 +72,7 @@ class HomeBottomNav extends ConsumerWidget {
                           boxShadow: [
                             BoxShadow(
                               color: AppColors.primary.withValues(alpha: 0.4),
-                              blurRadius: 12,
+                              blurRadius: 12.r,
                               offset: const Offset(0, 4),
                             ),
                           ],
@@ -81,7 +82,7 @@ class HomeBottomNav extends ConsumerWidget {
                           color: currentIndex == 4
                               ? AppColors.primary
                               : Colors.white,
-                          size: 22,
+                          size: 22.r,
                         ),
                       ),
                       // ── Badge rouge ────────────────────────
@@ -90,7 +91,7 @@ class HomeBottomNav extends ConsumerWidget {
                           top  : -4,
                           right: -4,
                           child: Container(
-                            padding: const EdgeInsets.all(4),
+                            padding: EdgeInsets.all(4.r),
                             decoration: const BoxDecoration(
                               color : Colors.red,
                               shape : BoxShape.circle,
@@ -101,9 +102,9 @@ class HomeBottomNav extends ConsumerWidget {
                             ),
                             child: Text(
                               cartCount > 9 ? '9+' : '$cartCount',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 color     : Colors.white,
-                                fontSize  : 10,
+                                fontSize  : 10.sp,
                                 fontWeight: FontWeight.w700,
                               ),
                               textAlign: TextAlign.center,
@@ -157,11 +158,11 @@ class _NavItem extends StatelessWidget {
         child: Center(
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 200),
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
             decoration: const BoxDecoration(),
             child: Icon(
               isActive ? icon : inactiveIcon,
-              size: 22,
+              size: 22.r,
               color: isActive ? Colors.white : Colors.white.withValues(alpha: 0.4),
             ),
           ),

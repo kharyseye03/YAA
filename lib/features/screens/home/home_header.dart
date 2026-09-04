@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../../core/constants/app_colors.dart';
@@ -45,9 +46,9 @@ class HomeHeader extends ConsumerWidget {
                 Icon(
                   LucideIcons.mapPin,
                   color: AppColors.primary,
-                  size: 20,
+                  size: 20.r,
                 ),
-                const SizedBox(width: 8),
+                SizedBox(width: 8.w),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -57,7 +58,7 @@ class HomeHeader extends ConsumerWidget {
                         'Votre position',
                         style: AppTextStyles.bodySmall.copyWith(
                           color: AppColors.grey500,
-                          fontSize: 11,
+                          fontSize: 11.sp,
                         ),
                       ),
                       const SizedBox(height: 1),
@@ -69,16 +70,16 @@ class HomeHeader extends ConsumerWidget {
                               style: AppTextStyles.labelLarge.copyWith(
                                 color: AppColors.dark,
                                 fontWeight: FontWeight.w700,
-                                fontSize: 14,
+                                fontSize: 14.sp,
                               ),
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                          const SizedBox(width: 3),
+                          SizedBox(width: 3.w),
                           Icon(
                             LucideIcons.chevronDown,
                             color: AppColors.primary,
-                            size: 14,
+                            size: 14.r,
                           ),
                         ],
                       ),
@@ -94,12 +95,12 @@ class HomeHeader extends ConsumerWidget {
             onTap: onNotificationTap,
             behavior: HitTestBehavior.opaque,
             child: SizedBox(
-              width: 42,
-              height: 42,
+              width: 42.r,
+              height: 42.r,
               child: Icon(
                 LucideIcons.bell,
                 color: AppColors.dark,
-                size: 20,
+                size: 20.r,
               ),
             ),
           ),

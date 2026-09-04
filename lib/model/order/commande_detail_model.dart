@@ -1,3 +1,4 @@
+import 'livraison_course_model.dart';
 import '../../config/api/api_config.dart';
 
 class CommandeProduit {
@@ -49,6 +50,13 @@ class CommandeDetailModel {
   final String? livreurLastName;
   final String? livreurTelephone;
   final String? livreurImage;
+
+  /// Note moyenne du livreur, sur 5. Null tant qu'il n'a reçu aucun avis.
+  final double? livreurNote;
+
+  /// Marque, immatriculation et couleur de l'engin. Même objet que
+  /// dans la liste des missions, d'où le modèle partagé.
+  final VehiculeCoursier? vehiculeCoursier;
   final String statut;
   final String adresseLivraison;
   final double latitudeLivraison;
@@ -72,6 +80,8 @@ class CommandeDetailModel {
     this.livreurLastName,
     this.livreurTelephone,
     this.livreurImage,
+    this.livreurNote,
+    this.vehiculeCoursier,
     required this.statut,
     this.adresseLivraison   = '',
     this.latitudeLivraison  = 0,
@@ -115,6 +125,11 @@ class CommandeDetailModel {
       livreurLastName   : json['livreurLastName']    as String?,
       livreurTelephone  : json['livreurTelephone']   as String?,
       livreurImage      : json['livreurImage']       as String?,
+      livreurNote       : (json['livreurNote'] as num?)?.toDouble(),
+      vehiculeCoursier  : json['vehiculeCoursier'] == null
+          ? null
+          : VehiculeCoursier.fromJson(
+              json['vehiculeCoursier'] as Map<String, dynamic>),
       statut            : json['statut']             as String? ?? '',
       adresseLivraison  : json['adresseLivraison']   as String? ?? '',
       latitudeLivraison : (json['latitudeLivraison']  as num?)?.toDouble() ?? 0,

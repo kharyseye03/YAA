@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import '../../../core/errors/messages_erreur.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../features/auth/providers/auth_notifier.dart';
@@ -78,7 +79,7 @@ class UserNotifier extends StateNotifier<UserState> {
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
-        error: e.toString().replaceAll('Exception: ', ''),
+        error: MessagesErreur.depuisException(e),
       );
       return false;
     }

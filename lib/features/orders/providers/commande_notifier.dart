@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import '../../../core/errors/messages_erreur.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../model/order/commande_detail_model.dart';
 import '../../../model/order/commande_model.dart';
@@ -160,29 +161,62 @@ class CommandeNotifier extends StateNotifier<CommandeState> {
     if (!silencieux) {
       state = state.copyWith(isLoading: true, clearError: true);
     }
-    try {
-      // Les deux appels sont indépendants : les lancer en parallèle
-      // évite de cumuler les deux temps de réponse. Le tri est fait
-      // à la lecture, par CommandeState.elements.
-      final (missions, commandes) = await (
-        ApiService().getMissions(),
-        ApiService().getCommandes(),
-      ).wait;
-      state = state.copyWith(
-        isLoading : false,
-        missions  : missions,
-        commandes : commandes,
-      );
-    } catch (e) {
-      debugPrint('❌ loadCommandes: $e');
+    // Les deux appels sont indépendants : les lancer en parallèle
+    // évite de cumuler les deux temps de réponse. Le tri est fait
+    // à la lecture, par CommandeState.elements.
+    //
+    // Chacun est enveloppé pour ne jamais lever : un `.wait` sur des
+    // futures qui échouent produit un ParallelWaitError, dont le texte
+    // (« ParallelWaitError(2 errors) ») remontait tel quel à l'écran.
+    // Surtout, il rendait les deux onglets solidaires — un serveur en
+    // panne sur les missions vidait aussi les commandes, alors que
+    // celles-ci étaient arrivées.
+    final (resMissions, resCommandes) = await (
+      _tenter(ApiService().getMissions()),
+      _tenter(ApiService().getCommandes()),
+    ).wait;
+
+    final (missions, erreurMissions)   = resMissions;
+    final (commandes, erreurCommandes) = resCommandes;
+
+    if (erreurMissions != null) {
+      debugPrint('❌ loadCommandes/missions: $erreurMissions');
+    }
+    if (erreurCommandes != null) {
+      debugPrint('❌ loadCommandes/commandes: $erreurCommandes');
+    }
+
+    // Rien n'est arrivé : c'est le seul cas qui mérite un bandeau.
+    // Si une seule des deux listes a répondu, on l'affiche — mieux
+    // vaut un onglet rempli et l'autre vide qu'un écran d'erreur.
+    if (missions == null && commandes == null) {
       // En silencieux, un échec réseau ne doit pas faire surgir un
       // bandeau rouge sur une liste qui s'affiche correctement : on
       // garde les données précédentes et on retentera au prochain tour.
       if (silencieux) return;
       state = state.copyWith(
         isLoading : false,
-        error     : e.toString().replaceAll('Exception: ', ''),
+        error     : MessagesErreur.depuisException(
+            erreurMissions ?? erreurCommandes!),
       );
+      return;
+    }
+
+    state = state.copyWith(
+      isLoading : false,
+      missions  : missions  ?? state.missions,
+      commandes : commandes ?? state.commandes,
+    );
+  }
+
+  /// Exécute [futur] sans jamais lever : renvoie soit la valeur, soit
+  /// l'erreur. C'est ce qui permet d'attendre plusieurs appels en
+  /// parallèle tout en traitant leurs échecs un par un.
+  static Future<(T?, Object?)> _tenter<T>(Future<T> futur) async {
+    try {
+      return (await futur, null);
+    } catch (e) {
+      return (null, e);
     }
   }
 
@@ -207,7 +241,7 @@ class CommandeNotifier extends StateNotifier<CommandeState> {
       debugPrint('❌ loadDetail: $e');
       state = state.copyWith(
         isLoadingDetail : false,
-        detailError     : e.toString().replaceAll('Exception: ', ''),
+        detailError     : MessagesErreur.depuisException(e),
       );
     }
   }

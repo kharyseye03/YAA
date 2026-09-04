@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:remixicon/remixicon.dart';
 import '../../../../core/constants/constants.dart';
 
@@ -28,10 +29,10 @@ class AuthHeader extends StatelessWidget {
             children: [
               Icon(
                 RemixIcons.global_fill,
-                size: 18,
+                size: 18.r,
                 color: AppColors.primary,
               ),
-              const SizedBox(width: 6),
+              SizedBox(width: 6.w),
               Text(
                 'Français',
                 style: AppTextStyles.labelMedium.copyWith(

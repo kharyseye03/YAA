@@ -14,13 +14,28 @@ class PlaceSuggestion {
   final String mainText;        // nom du lieu (ex: "Pharmacie Guigon")
   final String secondaryText;   // adresse (ex: "Avenue Cheikh Anta Diop, Dakar")
 
+  /// Distance à vol d'oiseau depuis la position de l'utilisateur.
+  /// Null si l'autocomplétion a été appelée sans origine.
+  final int? distanceMetres;
+
   const PlaceSuggestion({
     required this.placeId,
     required this.description,
     this.types         = const [],
     this.mainText      = '',
     this.secondaryText = '',
+    this.distanceMetres,
   });
+
+  /// « 480 m » ou « 1,2 km » — vide si la distance est inconnue.
+  /// C'est un vol d'oiseau, pas un trajet routier : ça sert à classer
+  /// les suggestions entre elles, pas à estimer un temps de route.
+  String get distanceLabel {
+    final d = distanceMetres;
+    if (d == null) return '';
+    if (d < 1000) return '$d m';
+    return '${(d / 1000).toStringAsFixed(1).replaceAll('.', ',')} km';
+  }
 }
 
 /// Résultat d'une localisation : adresse lisible + coordonnées GPS
@@ -109,11 +124,32 @@ class LocationService {
 
   // ── Autocomplétion (Google Places API) ──────────────────────
   /// Retourne des suggestions d'adresses pendant la saisie
-  Future<List<PlaceSuggestion>> autocomplete(String input) async {
+  /// [origine] : position de l'utilisateur. Fournie, Google calcule la
+  /// distance de chaque suggestion et la renvoie dans la même réponse.
+  Future<List<PlaceSuggestion>> autocomplete(
+    String input, {
+    LatLng? origine,
+  }) async {
     if (input.trim().length < 3) return [];
 
-    final response =
-        await http.get(Uri.parse(MapsConfig.autocompleteUrl(input)));
+    // Sans origine explicite, on prend la dernière position connue du
+    // système : elle est immédiate, ne réveille pas le GPS, et suffit
+    // largement pour une distance indicative. Si elle est absente, on
+    // s'en passe — la distance ne s'affichera simplement pas.
+    var depuis = origine;
+    if (depuis == null) {
+      try {
+        final derniere = await Geolocator.getLastKnownPosition();
+        if (derniere != null) {
+          depuis = (derniere.latitude, derniere.longitude);
+        }
+      } catch (_) {
+        // Permission absente ou service coupé : on continue sans
+      }
+    }
+
+    final response = await http.get(
+        Uri.parse(MapsConfig.autocompleteUrl(input, origine: depuis)));
 
     if (response.statusCode != 200) {
       throw Exception('Erreur Places API (${response.statusCode})');
@@ -138,6 +174,7 @@ class LocationService {
                             .toList() ??
                         const [],
         mainText      : formatting?['main_text'] as String? ?? '',
+        distanceMetres: (p['distance_meters'] as num?)?.toInt(),
         secondaryText : formatting?['secondary_text'] as String? ?? '',
       );
     }).toList();

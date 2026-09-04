@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
@@ -81,7 +82,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
                       Text(
                         'Réinitialisez  votre mot\nde passe',
                         style: AppTextStyles.h1.copyWith(
-                          fontSize: 28,
+                          fontSize: 28.sp,
                           fontWeight: FontWeight.w800,
                           color: AppColors.primary,
 
@@ -113,7 +114,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
                               ? Icons.visibility_off_outlined
                               : Icons.visibility_outlined,
                           color: AppColors.grey500,
-                          size: 22,
+                          size: 22.r,
                         ),
                         onSuffixTap: () {
                           setState(
@@ -144,7 +145,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
                               ? Icons.visibility_off_outlined
                               : Icons.visibility_outlined,
                           color: AppColors.grey500,
-                          size: 22,
+                          size: 22.r,
                         ),
                         onSuffixTap: () {
                           setState(

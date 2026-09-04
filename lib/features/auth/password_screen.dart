@@ -1,5 +1,6 @@
 
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/constants.dart';
@@ -76,7 +77,7 @@ class _PasswordScreenState extends ConsumerState<PasswordScreen> {
                       Text(
                         'Créez votre mot de\npasse',
                         style: AppTextStyles.h1.copyWith(
-                          fontSize   : 28,
+                          fontSize   : 28.sp,
                           fontWeight : FontWeight.w800,
                           color      : AppColors.primary,
                         ),
@@ -105,7 +106,7 @@ class _PasswordScreenState extends ConsumerState<PasswordScreen> {
                               ? Icons.visibility_off_outlined
                               : Icons.visibility_outlined,
                           color : AppColors.grey500,
-                          size  : 22,
+                          size  : 22.r,
                         ),
                         onSuffixTap: () =>
                             setState(() => _obscurePassword = !_obscurePassword),
@@ -134,7 +135,7 @@ class _PasswordScreenState extends ConsumerState<PasswordScreen> {
                               ? Icons.visibility_off_outlined
                               : Icons.visibility_outlined,
                           color : AppColors.grey500,
-                          size  : 22,
+                          size  : 22.r,
                         ),
                         onSuffixTap: () =>
                             setState(() => _obscureConfirm = !_obscureConfirm),

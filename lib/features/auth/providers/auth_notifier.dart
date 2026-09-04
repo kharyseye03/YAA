@@ -1,4 +1,5 @@
 import 'dart:convert';
+import '../../../core/errors/messages_erreur.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -40,6 +41,29 @@ class AuthNotifier extends StateNotifier<AuthState> {
   static String? _extractEmailFromJwt(String token) =>
       decodeJwtPayload(token)?['email'] as String?;
 
+  /// Rôle attendu dans `realm_access.roles` pour utiliser cette app.
+  ///
+  /// Keycloak est commun au client et à YAA PRO : le même serveur
+  /// délivre un jeton valide à un coursier, qui pouvait donc entrer
+  /// ici. Ce n'est pas une faille — le backend refusera ses appels
+  /// sur les routes client — mais l'app lui ouvrait une interface qui
+  /// ne le concerne pas, et échouait ensuite sans rien expliquer.
+  static const String _roleRequis = 'CLIENT';
+
+  /// Vrai si le jeton porte le rôle client.
+  ///
+  /// **Ce n'est pas une barrière de sécurité** : la vérification est
+  /// locale, un binaire modifié la contournerait. C'est un aiguillage,
+  /// pour que chacun atterrisse dans la bonne application. La règle
+  /// qui protège vraiment reste celle du serveur.
+  static bool estCompteClient(String token) {
+    final realm = decodeJwtPayload(token)?['realm_access'];
+    if (realm is! Map) return false;
+    final roles = realm['roles'];
+    if (roles is! List) return false;
+    return roles.contains(_roleRequis);
+  }
+
   Future<bool> login({
     required String username,
     required String password,
@@ -50,6 +74,19 @@ class AuthNotifier extends StateNotifier<AuthState> {
         username: username,
         password: password,
       );
+
+      // Contrôle avant d'enregistrer quoi que ce soit : un jeton de
+      // coursier stocké ici le reconnecterait automatiquement au
+      // prochain lancement, sans repasser par cet écran.
+      if (!estCompteClient(response.accessToken)) {
+        debugPrint('⛔ connexion refusée : jeton sans rôle $_roleRequis');
+        state = state.copyWith(
+          isLoading : false,
+          error     : MessagesErreur.compteNonClient,
+        );
+        return false;
+      }
+
       // Enregistre les deux tokens + la date d'expiration calculée
       await TokenStorage.instance.saveTokens(response);
 
@@ -67,7 +104,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
-        error: e.toString().replaceAll('Exception: ', ''),
+        error: MessagesErreur.depuisException(e),
       );
       return false;
     }
@@ -95,7 +132,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
-        error: e.toString().replaceAll('Exception: ', ''),
+        error: MessagesErreur.depuisException(e),
       );
       return false;
     }
@@ -113,7 +150,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
-        error: e.toString().replaceAll('Exception: ', ''),
+        error: MessagesErreur.depuisException(e),
       );
       return false;
     }
@@ -132,7 +169,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
-        error: e.toString().replaceAll('Exception: ', ''),
+        error: MessagesErreur.depuisException(e),
       );
       return false;
     }
@@ -165,7 +202,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
-        error: e.toString().replaceAll('Exception: ', ''),
+        error: MessagesErreur.depuisException(e),
       );
       return false;
     }
@@ -180,7 +217,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
-        error: e.toString().replaceAll('Exception: ', ''),
+        error: MessagesErreur.depuisException(e),
       );
       return false;
     }
@@ -195,7 +232,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
-        error: e.toString().replaceAll('Exception: ', ''),
+        error: MessagesErreur.depuisException(e),
       );
       return false;
     }
@@ -208,6 +245,17 @@ class AuthNotifier extends StateNotifier<AuthState> {
   /// - Échec → on efface les tokens et on repart sur le login
   Future<bool> tryAutoLogin() async {
     if (await TokenStorage.instance.hasValidToken()) {
+      // Le rôle est revérifié ici, pas seulement à la connexion : un
+      // coursier entré avant que ce contrôle existe a son jeton en
+      // mémoire, et serait reconnecté sans jamais repasser par le
+      // formulaire. On le déconnecte proprement.
+      final token = await TokenStorage.instance.getAccessToken();
+      if (token != null && !estCompteClient(token)) {
+        debugPrint('⛔ session refusée : jeton sans rôle $_roleRequis');
+        await TokenStorage.instance.clear();
+        state = const AuthState();
+        return false;
+      }
       debugPrint('🔐 Session restaurée (token encore valide)');
       state = state.copyWith(isAuthenticated: true);
       return true;
@@ -219,6 +267,16 @@ class AuthNotifier extends StateNotifier<AuthState> {
     try {
       debugPrint('🔄 Renouvellement du token au démarrage…');
       final response = await ApiService().refreshToken(refreshToken: refresh);
+
+      // Même contrôle après renouvellement : le rôle pourrait avoir
+      // changé côté Keycloak depuis la dernière connexion.
+      if (!estCompteClient(response.accessToken)) {
+        debugPrint('⛔ session refusée après refresh : rôle $_roleRequis absent');
+        await TokenStorage.instance.clear();
+        state = const AuthState();
+        return false;
+      }
+
       await TokenStorage.instance.saveTokens(response);
 
       final emailFromToken = _extractEmailFromJwt(response.accessToken);

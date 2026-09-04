@@ -1,11 +1,16 @@
+import '../../../shared/utils/map_markers.dart';
+import '../../../core/errors/messages_erreur.dart';
 import 'dart:async';
-import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+// Préfixé : MapsConfig déclare son propre LatLng (un record), qui
+// entrerait en conflit avec la classe LatLng de google_maps_flutter.
+import '../../../config/maps/maps_config.dart' as config;
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimens.dart';
 import '../../../core/constants/app_text_styles.dart';
@@ -30,7 +35,13 @@ class CourseScreen extends ConsumerStatefulWidget {
 }
 
 class _CourseScreenState extends ConsumerState<CourseScreen> {
-  static const _dakar = LatLng(14.6928, -17.4467);
+  /// Centre de repli tant que le GPS n'a pas répondu. Vient de
+  /// MapsConfig pour rester cohérent avec le pays auquel
+  /// l'autocomplétion est restreinte.
+  static const _villeParDefaut = LatLng(
+    config.MapsConfig.villeLat,
+    config.MapsConfig.villeLng,
+  );
 
   final _locationService = LocationService();
   final _departCtrl      = TextEditingController();
@@ -44,7 +55,7 @@ class _CourseScreenState extends ConsumerState<CourseScreen> {
 
   CoursePoint?  _depart;
   CoursePoint?  _arrivee;
-  LatLng        _myPosition = _dakar;
+  LatLng        _myPosition = _villeParDefaut;
   TypeVehicule  _vehicule   = TypeVehicule.moto;
 
   // Tracé du trajet + marqueurs personnalisés
@@ -65,68 +76,35 @@ class _CourseScreenState extends ConsumerState<CourseScreen> {
   bool get _bothSet    => _depart != null && _arrivee != null;
   bool get _isSearching => _suggestions.isNotEmpty || _loadingPlace;
 
+  /// Les marqueurs dépendent de la densité de l'écran, qui se lit
+  /// dans MediaQuery — interdit depuis initState. D'où ce garde-fou :
+  /// didChangeDependencies peut être rappelé, le chargement non.
+  bool _iconesChargees = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_iconesChargees) return;
+    _iconesChargees = true;
+    _loadMarkerIcons(MediaQuery.devicePixelRatioOf(context));
+  }
+
   @override
   void initState() {
     super.initState();
-    _loadMarkerIcons();
     _initPosition();
   }
 
   // Génère les marqueurs (cercle coloré + anneau blanc + pointe +
   // icône pin) directement en Dart, aux couleurs de la marque.
-  Future<void> _loadMarkerIcons() async {
-    _departIcon = await _createMarker(
-        AppColors.primary, Icons.location_on_outlined); // bleu
-    _arriveeIcon = await _createMarker(
-        AppColors.secondary, Icons.location_on_outlined);       // orange
+  Future<void> _loadMarkerIcons(double densite) async {
+    _departIcon = await createPinMarker(
+        AppColors.primary, Icons.location_on_outlined,
+        densite: densite); // bleu
+    _arriveeIcon = await createPinMarker(
+        AppColors.secondary, Icons.location_on_outlined,
+        densite: densite); // orange
     if (mounted) setState(() {});
-  }
-
-  /// Dessine un marqueur type "pin arrondi" et le convertit en
-  /// BitmapDescriptor utilisable par Google Maps.
-  Future<BitmapDescriptor> _createMarker(Color color, IconData icon) async {
-    const double w = 78, circleR = 29, stemH = 14;
-    final center = Offset(w / 2, circleR + 5);
-    final recorder = ui.PictureRecorder();
-    final canvas   = Canvas(recorder);
-
-    // Ombre douce
-    canvas.drawCircle(
-      center.translate(0, 2),
-      circleR + 4,
-      Paint()..color = Colors.black.withValues(alpha: 0.15),
-    );
-    // Anneau blanc
-    canvas.drawCircle(center, circleR + 4, Paint()..color = Colors.white);
-    // Cercle coloré
-    final fill = Paint()..color = color;
-    canvas.drawCircle(center, circleR, fill);
-    // Pointe (triangle vers le bas)
-    final stem = Path()
-      ..moveTo(center.dx - 9, center.dy + circleR - 4)
-      ..lineTo(center.dx + 9, center.dy + circleR - 4)
-      ..lineTo(center.dx, center.dy + circleR + stemH)
-      ..close();
-    canvas.drawPath(stem, fill);
-    // Icône pin blanche au centre
-    final tp = TextPainter(textDirection: TextDirection.ltr)
-      ..text = TextSpan(
-        text: String.fromCharCode(icon.codePoint),
-        style: TextStyle(
-          fontSize    : 30,
-          fontFamily  : icon.fontFamily,
-          package     : icon.fontPackage,
-          color       : Colors.white,
-        ),
-      )
-      ..layout();
-    tp.paint(canvas, center - Offset(tp.width / 2, tp.height / 2));
-
-    final img = await recorder
-        .endRecording()
-        .toImage(w.toInt(), (circleR + 5 + circleR + stemH + 4).toInt());
-    final data = await img.toByteData(format: ui.ImageByteFormat.png);
-    return BitmapDescriptor.bytes(data!.buffer.asUint8List());
   }
 
   // Estimation automatique dès que le trajet est complet.
@@ -375,7 +353,7 @@ class _CourseScreenState extends ConsumerState<CourseScreen> {
             zoomControlsEnabled      : false,
             markers                  : _markers,
             polylines                : _polylines,
-            padding: const EdgeInsets.only(bottom: 280),
+            padding: EdgeInsets.only(bottom: 280.h),
           ),
 
           // ── Bouton retour ───────────────────────────────────
@@ -386,21 +364,21 @@ class _CourseScreenState extends ConsumerState<CourseScreen> {
               onTap    : () => Navigator.of(context).pop(),
               behavior : HitTestBehavior.opaque,
               child: Container(
-                width  : 42,
-                height : 42,
+                width  : 42.r,
+                height : 42.r,
                 decoration: BoxDecoration(
                   color : Colors.white,
                   shape : BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
                       color      : Colors.black.withValues(alpha: 0.12),
-                      blurRadius : 8,
+                      blurRadius : 8.r,
                       offset     : const Offset(0, 2),
                     ),
                   ],
                 ),
-                child: const Icon(Icons.arrow_back_rounded,
-                    color: AppColors.dark, size: 20),
+                child: Icon(Icons.arrow_back_rounded,
+                    color: AppColors.dark, size: 20.r),
               ),
             ),
           ),
@@ -419,19 +397,23 @@ class _CourseScreenState extends ConsumerState<CourseScreen> {
     // La feuille grandit pendant la recherche : à 62 % on ne voit que
     // deux suggestions, ce qui oblige à scroller dans un espace déjà
     // réduit par le clavier.
+    //
+    // Au repos, 70 % : les deux véhicules empilés ne tenaient pas dans
+    // 62 %. Le plafond reste une proportion de l'écran — il n'y a rien
+    // à mettre à l'échelle ici, la carte garde toujours sa part.
     return AnimatedContainer(
       duration : const Duration(milliseconds: 220),
       curve    : Curves.easeOutCubic,
       width    : double.infinity,
       constraints: BoxConstraints(
         maxHeight: MediaQuery.of(context).size.height *
-            (_isSearching ? 0.88 : 0.62),
+            (_isSearching ? 0.88 : 0.70),
       ),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color        : Colors.white,
-        borderRadius : BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius : BorderRadius.vertical(top: Radius.circular(24.r)),
         boxShadow    : [
-          BoxShadow(color: Colors.black26, blurRadius: 20),
+          BoxShadow(color: Colors.black26, blurRadius: 20.r),
         ],
       ),
       child: SafeArea(
@@ -444,13 +426,13 @@ class _CourseScreenState extends ConsumerState<CourseScreen> {
             children: [
               // Poignée
               Container(
-                width: 40, height: 4,
+                width: 40.w, height: 4.h,
                 decoration: BoxDecoration(
                   color        : AppColors.grey300,
-                  borderRadius : BorderRadius.circular(2),
+                  borderRadius : BorderRadius.circular(2.r),
                 ),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16.h),
 
               // ── Titre ───────────────────────────────────────
               Align(
@@ -474,16 +456,19 @@ class _CourseScreenState extends ConsumerState<CourseScreen> {
                       .copyWith(color: AppColors.grey500),
                 ),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16.h),
 
               // ── Champs A → B ────────────────────────────────
               _buildAddressFields(),
 
               // ── Contenu dynamique ───────────────────────────
+              // Les deux branches sont Flexible : sous une hauteur
+              // plafonnée, un enfant non flexible reçoit une contrainte
+              // infinie et déborde au lieu de s'adapter.
               if (_isSearching)
                 _buildSuggestions()
               else
-                _buildConfirm(),
+                Flexible(child: _buildConfirm()),
             ],
           ),
         ),
@@ -498,27 +483,27 @@ class _CourseScreenState extends ConsumerState<CourseScreen> {
         children: [
           Column(
             children: [
-              const SizedBox(height: 20),
+              SizedBox(height: 20.h),
               Container(
-                width: 12, height: 12,
+                width: 12.r, height: 12.r,
                 decoration: BoxDecoration(
                   shape  : BoxShape.circle,
-                  border : Border.all(color: AppColors.primary, width: 3.5),
+                  border : Border.all(color: AppColors.primary, width: 3.5.w),
                 ),
               ),
               Expanded(
                 child: Container(
                   width : 1.5,
                   color : AppColors.grey300,
-                  margin: const EdgeInsets.symmetric(vertical: 4),
+                  margin: EdgeInsets.symmetric(vertical: 4.h),
                 ),
               ),
-              const Icon(Icons.location_on,
-                  color: AppColors.secondary, size: 18),
-              const SizedBox(height: 20),
+              Icon(Icons.location_on,
+                  color: AppColors.secondary, size: 18.r),
+              SizedBox(height: 20.h),
             ],
           ),
-          const SizedBox(width: 12),
+          SizedBox(width: 12.w),
           Expanded(
             child: Column(
               children: [
@@ -528,7 +513,7 @@ class _CourseScreenState extends ConsumerState<CourseScreen> {
                   onChanged  : (v) => _onChanged(v, isDepart: true),
                   onTap      : () => _editingDepart = true,
                 ),
-                const SizedBox(height: 10),
+                SizedBox(height: 10.h),
                 YaaTextField(
                   controller : _arriveeCtrl,
                   hint       : 'Où allez-vous ?',
@@ -546,13 +531,13 @@ class _CourseScreenState extends ConsumerState<CourseScreen> {
   Widget _buildSuggestions() {
     return Flexible(
       child: _loadingPlace
-          ? const Padding(
-              padding: EdgeInsets.all(24),
+          ? Padding(
+              padding: EdgeInsets.all(24.r),
               child: CircularProgressIndicator(),
             )
           : ListView(
               shrinkWrap : true,
-              padding    : const EdgeInsets.only(top: 8),
+              padding    : EdgeInsets.only(top: 8.h),
               children   : [
                 for (var i = 0; i < _suggestions.length; i++)
                   PlaceSuggestionTile(
@@ -566,64 +551,94 @@ class _CourseScreenState extends ConsumerState<CourseScreen> {
   }
 
   Widget _buildConfirm() {
+    // Le bouton reste posé en bas, hors du défilement : c'est l'action
+    // de l'écran, elle ne doit jamais demander de scroller pour être
+    // atteinte. Seul le choix du véhicule glisse, et uniquement sur les
+    // écrans trop courts pour l'afficher entier.
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        const SizedBox(height: 16),
+        Flexible(
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                SizedBox(height: 16.h),
 
-        // Course → infos trajet + choix véhicule ; Livraison → carte moto
-        if (_isCourse) ...[
-          // Distance seule : la durée est désormais portée par chaque
-          // tuile véhicule, la répéter ici la ferait apparaître trois
-          // fois sur le même écran.
-          if (_estimation != null) ...[
-            Container(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 14, vertical: 10),
-              decoration: BoxDecoration(
-                color        : AppColors.grey100,
-                borderRadius : BorderRadius.circular(12),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.route_rounded,
-                      size: 15, color: AppColors.grey500),
-                  const SizedBox(width: 6),
-                  Text(
-                    _estimation!.distanceText,
-                    style: AppTextStyles.bodySmall.copyWith(
-                      fontWeight : FontWeight.w700,
-                      color      : AppColors.dark,
+                // Course → trajet + choix véhicule ; Livraison → moto
+                if (_isCourse) ...[
+                  // Distance seule : la durée est désormais portée par
+                  // chaque tuile véhicule, la répéter ici la ferait
+                  // apparaître trois fois sur le même écran.
+                  if (_estimation != null) ...[
+                    Container(
+                      padding: EdgeInsets.symmetric(
+                          horizontal: 14.w, vertical: 10.h),
+                      decoration: BoxDecoration(
+                        color        : AppColors.grey100,
+                        borderRadius : BorderRadius.circular(12.r),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.route_rounded,
+                              size: 15.r, color: AppColors.grey500),
+                          SizedBox(width: 6.w),
+                          Text(
+                            _estimation!.distanceText,
+                            style: AppTextStyles.bodySmall.copyWith(
+                              fontWeight : FontWeight.w700,
+                              color      : AppColors.dark,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(height: 12.h),
+                  ],
+                  // Aligné à gauche comme les champs d'adresse au-dessus :
+                  // un titre de section démarre là où le contenu démarre.
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'Choisir un moyen de transport',
+                      textAlign: TextAlign.left,
+                      style: AppTextStyles.labelMedium.copyWith(
+                        fontWeight : FontWeight.w700,
+                        fontSize   : 15.sp,
+                        color      : AppColors.dark,
+                      ),
                     ),
                   ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 12),
-          ],
-          Row(
-            children: [TypeVehicule.moto, TypeVehicule.vehicule]
-                .map((v) => Expanded(
-                      child: _VehiclePick(
-                        vehicule : v,
-                        selected : v == _vehicule,
-                        loading  : _loadingEstim,
-                        // Chaque véhicule affiche son propre prix
-                        estimation : _estimations[v],
-                        // Les 2 estimations sont déjà chargées :
-                        // changer de véhicule n'appelle plus l'API
-                        onTap    : () => setState(() => _vehicule = v),
-                      ),
-                    ))
-                .toList(),
-          ),
-        ] else ...[
-          _buildMotoCard(),
-          const SizedBox(height: 10),
-          _buildOptionsRow(),
-        ],
+                  SizedBox(height: AppDimens.md),
 
-        const SizedBox(height: 16),
+                  // Empilées plutôt que côte à côte : les prix s'alignent
+                  // dans une colonne, et c'est eux qu'on compare.
+                  for (final v in [TypeVehicule.moto, TypeVehicule.vehicule])
+                    ...[
+                    _VehiclePick(
+                      vehicule : v,
+                      selected : v == _vehicule,
+                      loading  : _loadingEstim,
+                      // Chaque véhicule affiche son propre prix
+                      estimation : _estimations[v],
+                      // Les 2 estimations sont déjà chargées :
+                      // changer de véhicule n'appelle plus l'API
+                      onTap    : () => setState(() => _vehicule = v),
+                    ),
+                    if (v != TypeVehicule.vehicule)
+                      SizedBox(height: AppDimens.sm),
+                  ],
+                ] else ...[
+                  _buildMotoCard(),
+                  SizedBox(height: 10.h),
+                  _buildOptionsRow(),
+                ],
+              ],
+            ),
+          ),
+        ),
+
+        SizedBox(height: 16.h),
 
         // Bouton toujours visible, grisé tant que A→B incomplet
         SizedBox(
@@ -673,7 +688,7 @@ class _CourseScreenState extends ConsumerState<CourseScreen> {
       setState(() => _isSubmitting = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content         : Text(e.toString().replaceAll('Exception: ', '')),
+          content         : Text(MessagesErreur.depuisException(e)),
           backgroundColor : AppColors.error,
           behavior        : SnackBarBehavior.floating,
         ),
@@ -704,20 +719,20 @@ class _CourseScreenState extends ConsumerState<CourseScreen> {
 
     return InkWell(
       onTap        : actif ? _onConfirm : null,
-      borderRadius : BorderRadius.circular(14),
+      borderRadius : BorderRadius.circular(14.r),
       child: Opacity(
         opacity: actif ? 1 : 0.45,
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+          padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 13.h),
           decoration: BoxDecoration(
-            borderRadius : BorderRadius.circular(14),
+            borderRadius : BorderRadius.circular(14.r),
             border       : Border.all(color: AppColors.border),
           ),
           child: Row(
             children: [
-              const Icon(Icons.inventory_2_outlined,
-                  size: 20, color: AppColors.primary),
-              const SizedBox(width: 10),
+              Icon(Icons.inventory_2_outlined,
+                  size: 20.r, color: AppColors.primary),
+              SizedBox(width: 10.w),
               Text(
                 'Options de livraison',
                 style: AppTextStyles.bodySmall.copyWith(
@@ -725,7 +740,7 @@ class _CourseScreenState extends ConsumerState<CourseScreen> {
                   color      : AppColors.dark,
                 ),
               ),
-              const SizedBox(width: 8),
+              SizedBox(width: 8.w),
               Expanded(
                 child: Text(
                   'Laisser un colis, notes…',
@@ -737,8 +752,8 @@ class _CourseScreenState extends ConsumerState<CourseScreen> {
                 ),
               ),
               const SizedBox(width: 2),
-              const Icon(Icons.chevron_right_rounded,
-                  size: 20, color: AppColors.grey400),
+              Icon(Icons.chevron_right_rounded,
+                  size: 20.r, color: AppColors.grey400),
             ],
           ),
         ),
@@ -761,7 +776,7 @@ class _CourseScreenState extends ConsumerState<CourseScreen> {
           height : h,
           decoration: BoxDecoration(
             color        : AppColors.grey200,
-            borderRadius : BorderRadius.circular(4),
+            borderRadius : BorderRadius.circular(4.r),
           ),
         ),
       );
@@ -771,15 +786,15 @@ class _CourseScreenState extends ConsumerState<CourseScreen> {
     final pret = _estimation != null;
 
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: EdgeInsets.all(14.r),
       decoration: BoxDecoration(
         color        : Colors.white,
-        borderRadius : BorderRadius.circular(16),
+        borderRadius : BorderRadius.circular(16.r),
         border       : Border.all(color: AppColors.primary, width: 1.5),
         boxShadow: [
           BoxShadow(
             color      : Colors.black.withValues(alpha: 0.05),
-            blurRadius : 12,
+            blurRadius : 12.r,
             offset     : const Offset(0, 4),
           ),
         ],
@@ -789,17 +804,17 @@ class _CourseScreenState extends ConsumerState<CourseScreen> {
           // Image moto (sans fond) — toujours visible, y compris
           // pendant l'attente de l'estimation.
           SizedBox(
-            width  : 68,
-            height : 68,
+            width  : 68.r,
+            height : 68.r,
             child: Image.asset(
               TypeVehicule.moto.asset!,
               fit: BoxFit.contain,
               errorBuilder: (_, __, ___) => Icon(
                   TypeVehicule.moto.icone,
-                  color: AppColors.primary, size: 32),
+                  color: AppColors.primary, size: 32.r),
             ),
           ),
-          const SizedBox(width: 12),
+          SizedBox(width: 12.w),
 
           // Titre + métadonnées (distance · durée)
           Expanded(
@@ -810,17 +825,17 @@ class _CourseScreenState extends ConsumerState<CourseScreen> {
                   'Livraison par moto',
                   style: AppTextStyles.labelMedium.copyWith(
                     fontWeight : FontWeight.w800,
-                    fontSize   : 15,
+                    fontSize   : 15.sp,
                     color      : AppColors.dark,
                   ),
                 ),
-                const SizedBox(height: 3),
+                SizedBox(height: 3.h),
                 if (pret)
                   Row(
                     children: [
-                      const Icon(Icons.route_rounded,
-                          size: 13, color: AppColors.grey400),
-                      const SizedBox(width: 3),
+                      Icon(Icons.route_rounded,
+                          size: 13.r, color: AppColors.grey400),
+                      SizedBox(width: 3.w),
                       // distance · durée (depuis l'estimation)
                       Text(
                         _estimation!.metaLabel,
@@ -831,14 +846,14 @@ class _CourseScreenState extends ConsumerState<CourseScreen> {
                   )
                 else
                   Padding(
-                    padding: const EdgeInsets.only(top: 3),
+                    padding: EdgeInsets.only(top: 3.h),
                     child: _shimmerBloc(104, 11),
                   ),
               ],
             ),
           ),
 
-          const SizedBox(width: 8),
+          SizedBox(width: 8.w),
 
           // Prix bien visible à droite
           if (!pret)
@@ -846,7 +861,7 @@ class _CourseScreenState extends ConsumerState<CourseScreen> {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 _shimmerBloc(58, 18),
-                const SizedBox(height: 6),
+                SizedBox(height: 6.h),
                 _shimmerBloc(32, 9),
               ],
             )
@@ -856,10 +871,10 @@ class _CourseScreenState extends ConsumerState<CourseScreen> {
               children: [
                 Text(
                   _estimation!.fraisLivraison.toStringAsFixed(0),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily : 'PlusJakartaSans',
                     fontWeight : FontWeight.w800,
-                    fontSize   : 20,
+                    fontSize   : 20.sp,
                     color      : AppColors.dark,
                   ),
                 ),
@@ -879,6 +894,12 @@ class _CourseScreenState extends ConsumerState<CourseScreen> {
 }
 
 // ── Choix véhicule compact (course) ──────────────────────────
+/// Une ligne du sélecteur de véhicule.
+///
+/// Disposition horizontale plutôt qu'en tuiles carrées : le visuel à
+/// gauche, le libellé au centre, le prix à droite. Chaque ligne se lit
+/// d'un balayage vertical, et les prix s'alignent dans une colonne —
+/// ce qui est précisément ce qu'on compare.
 class _VehiclePick extends StatelessWidget {
   const _VehiclePick({
     required this.vehicule,
@@ -899,7 +920,7 @@ class _VehiclePick extends StatelessWidget {
   Widget _visuel() {
     final icone = Icon(
       vehicule.icone,
-      size  : 32,
+      size  : 30.r,
       color : selected ? AppColors.primary : AppColors.grey500,
     );
     final asset = vehicule.asset;
@@ -907,7 +928,8 @@ class _VehiclePick extends StatelessWidget {
 
     return Image.asset(
       asset,
-      height       : 46,
+      height       : 44.h,
+      width        : 62.w,
       fit          : BoxFit.contain,
       errorBuilder : (_, __, ___) => icone,
     );
@@ -925,87 +947,70 @@ class _VehiclePick extends StatelessWidget {
       behavior : HitTestBehavior.opaque,
       child: AnimatedContainer(
         duration : const Duration(milliseconds: 180),
-        margin   : const EdgeInsets.symmetric(horizontal: 4),
-        padding  : const EdgeInsets.fromLTRB(10, 12, 10, 12),
+        padding  : EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
         decoration: BoxDecoration(
           color        : selected ? AppColors.primarySurface : Colors.white,
-          borderRadius : BorderRadius.circular(16),
+          borderRadius : BorderRadius.circular(14.r),
           border: Border.all(
             color : selected ? AppColors.primary : AppColors.grey200,
             width : selected ? 1.5 : 1,
           ),
         ),
-        child: Column(
+        child: Row(
           children: [
-            // Visuel + pastille de sélection
-            SizedBox(
-              height: 46,
-              child: Stack(
+            SizedBox(width: 62.w, child: Center(child: _visuel())),
+            SizedBox(width: 12.w),
+
+            // Libellé et argument, à gauche
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Center(child: _visuel()),
-                  if (selected)
-                    Positioned(
-                      top   : 0,
-                      right : 0,
-                      child: Container(
-                        width  : 18,
-                        height : 18,
-                        decoration: const BoxDecoration(
-                          color : AppColors.primary,
-                          shape : BoxShape.circle,
-                        ),
-                        child: const Icon(Icons.check_rounded,
-                            size: 12, color: Colors.white),
-                      ),
+                  Text(
+                    vehicule.libelle,
+                    style: AppTextStyles.labelMedium.copyWith(
+                      fontSize   : 15.sp,
+                      fontWeight : FontWeight.w700,
+                      color      : selected
+                          ? AppColors.primary
+                          : AppColors.dark,
                     ),
+                  ),
+                  const SizedBox(height: 1),
+                  Text(
+                    vehicule.description,
+                    maxLines : 1,
+                    overflow : TextOverflow.ellipsis,
+                    style: AppTextStyles.caption
+                        .copyWith(color: AppColors.textSoft),
+                  ),
                 ],
               ),
             ),
 
-            const SizedBox(height: 8),
+            SizedBox(width: 10.w),
 
-            Text(
-              vehicule.libelle,
-              style: AppTextStyles.bodySmall.copyWith(
-                fontWeight : FontWeight.w700,
-                color      : selected ? AppColors.primary : AppColors.dark,
-              ),
-            ),
-            const SizedBox(height: 1),
-            Text(
-              vehicule.description,
-              maxLines  : 1,
-              overflow  : TextOverflow.ellipsis,
-              textAlign : TextAlign.center,
-              style: AppTextStyles.caption.copyWith(color: AppColors.grey500),
-            ),
-
-            const SizedBox(height: 9),
-
+            // Prix et durée, à droite — alignés d'une ligne à l'autre
             if (pret)
               Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  // Les tuiles sont étroites : on met le prix à
-                  // l'échelle plutôt que de le tronquer.
-                  FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Text(
-                      '${estimation!.fraisLivraison.toStringAsFixed(0)}'
-                      ' ${estimation!.devise}',
-                      style: TextStyle(
-                        fontFamily : 'PlusJakartaSans',
-                        fontSize   : 17,
-                        fontWeight : FontWeight.w800,
-                        color      : selected
-                            ? AppColors.dark
-                            : AppColors.grey600,
-                      ),
+                  Text(
+                    '${estimation!.fraisLivraison.toStringAsFixed(0)}'
+                    ' ${estimation!.devise}',
+                    style: TextStyle(
+                      fontFamily : 'PlusJakartaSans',
+                      fontSize   : 17.sp,
+                      fontWeight : FontWeight.w800,
+                      color      : selected
+                          ? AppColors.dark
+                          : AppColors.grey600,
                     ),
                   ),
                   Text(
                     estimation!.dureeText,
                     style: AppTextStyles.caption
-                        .copyWith(color: AppColors.grey400),
+                        .copyWith(color: AppColors.textMuted),
                   ),
                 ],
               )
@@ -1014,13 +1019,31 @@ class _VehiclePick extends StatelessWidget {
                 baseColor      : AppColors.grey200,
                 highlightColor : AppColors.grey100,
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    _barre(64, 15),
-                    const SizedBox(height: 5),
-                    _barre(38, 9),
+                    _barre(72, 15),
+                    SizedBox(height: 5.h),
+                    _barre(42, 9),
                   ],
                 ),
               ),
+
+            // Pastille de sélection en bout de ligne
+            SizedBox(width: 10.w),
+            AnimatedOpacity(
+              duration: const Duration(milliseconds: 180),
+              opacity : selected ? 1 : 0,
+              child: Container(
+                width  : 20.r,
+                height : 20.r,
+                decoration: const BoxDecoration(
+                  color : AppColors.primary,
+                  shape : BoxShape.circle,
+                ),
+                child: Icon(Icons.check_rounded,
+                    size: 13.r, color: Colors.white),
+              ),
+            ),
           ],
         ),
       ),
@@ -1032,7 +1055,7 @@ class _VehiclePick extends StatelessWidget {
         height : h,
         decoration: BoxDecoration(
           color        : Colors.white,
-          borderRadius : BorderRadius.circular(4),
+          borderRadius : BorderRadius.circular(4.r),
         ),
       );
 }

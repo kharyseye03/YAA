@@ -1,4 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="ic_launcher_background">#FFFFFF</color>
+    <!-- Fond de la fenêtre pendant le démarrage du moteur Flutter.
+         Blanc en clair comme en sombre, pour rejoindre sans rupture le
+         splash Flutter qui est blanc. Ne jamais repasser sur
+         ?android:colorBackground : en mode sombre il vaut noir, et
+         l'écran noir de 1,8 s passait pour un plantage. -->
+    <color name="splash_background">#FFFFFF</color>
 </resources>
