@@ -29,8 +29,7 @@ abstract final class MessagesErreur {
 
   /// Tout le reste. Serveur en panne, ressource absente, requête
   /// rejetée, réponse illisible : de son point de vue c'est identique.
-  static const String generique =
-      'Une erreur est survenue. Réessayez dans un instant.';
+  static const String generique = 'Une erreur est survenue. Réessayez.';
 
   // Anciens noms, conservés pour ne pas éparpiller les appels.
   static const String delaiDepasse       = generique;
@@ -53,15 +52,13 @@ abstract final class MessagesErreur {
   static const String identifiantsInvalides =
       'Numéro ou mot de passe incorrect.';
 
-  /// Compte valide, mais qui n'a rien à faire ici.
+  /// Compte valide, mais qui n'a rien à faire ici : un coursier.
   ///
-  /// Le mot de passe est bon : dire « Numéro ou mot de passe
-  /// incorrect » enverrait un coursier chercher une faute de frappe
-  /// pendant des heures. Le message doit donc l'orienter vers la
-  /// bonne application, sans nommer les rôles ni le serveur.
-  static const String compteNonClient =
-      'Ce compte n\'est pas un compte client. Utilisez l\'application '
-      'YAA PRO.';
+  /// Volontairement la même phrase que des identifiants refusés.
+  /// Deux raisons : c'est court, et surtout ça ne confirme pas
+  /// l'existence du compte sous un autre rôle. Un message distinct
+  /// permettrait de deviner, numéro par numéro, qui est coursier.
+  static const String compteNonClient = identifiantsInvalides;
 
   /// Traduction d'une réponse d'erreur du serveur d'authentification.
   ///
@@ -124,8 +121,8 @@ abstract final class MessagesErreur {
   static const Set<String> _connus = {
     horsLigne,
     sessionExpiree,
+    // compteNonClient vaut la même phrase, il est donc déjà couvert
     identifiantsInvalides,
-    compteNonClient,
     generique,
   };
 }
