@@ -10,6 +10,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimens.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/utils/app_router.dart';
+import '../../favoris/providers/favori_notifier.dart';
 import '../../../shared/widgets/map_prewarm.dart';
 import '../cart/cart_screen.dart';
 import '../favoris/favoris_screen.dart';
@@ -35,7 +36,9 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   int _currentNavIndex = 0;
-  int _activeCategoryIndex = 0;
+  /// -1 tant que rien n'a été touché : à l'ouverture de l'accueil,
+  /// aucune catégorie n'est mise en avant.
+  int _activeCategoryIndex = -1;
 
   // ── Bannières du carrousel ───────────────────────────────
   // Slide 1 : Promo acquisition · Slide 2 : Pub sponsorisée
@@ -67,6 +70,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    // Les favoris étaient chargés seulement à l'ouverture de l'onglet
+    // Favoris : sur l'accueil, tous les cœurs paraissaient donc vides
+    // même pour une structure déjà enregistrée. On les demande ici,
+    // après la première frame pour ne pas modifier un provider
+    // pendant la construction.
+    Future.microtask(() {
+      if (mounted) ref.read(favoriProvider.notifier).loadFavoris();
+    });
     SystemChrome.setSystemUIOverlayStyle(
       const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
@@ -295,6 +306,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         imageUrl     : s.logoUrl,
                         distance     : s.distance > 0 ? s.distanceLabel : null,
                       ),
+                      // Le provider bascule l'état sur-le-champ puis
+                      // appelle /structures-favoris/toggle. En cas
+                      // d'échec il revient en arrière tout seul, donc
+                      // rien à gérer ici.
+                      isFavori      : ref.watch(favoriProvider).isFavori(s.id),
+                      isToggling    : ref.watch(favoriProvider).isToggling(s.id),
+                      onFavoriteTap : () => ref
+                          .read(favoriProvider.notifier)
+                          .toggleFavori(s.id),
                       onTap: () => showRestaurantBottomSheet(
                         context,
                         RestaurantData(

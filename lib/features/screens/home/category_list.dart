@@ -26,7 +26,11 @@ class CategoryList extends StatelessWidget {
   const CategoryList({
     super.key,
     required this.categories,
-    this.activeIndex = 0,
+    /// -1 : aucune catégorie mise en avant. C'est l'état d'arrivée
+    /// sur l'accueil — surligner la première laisserait croire à un
+    /// filtre déjà appliqué, alors que la liste en dessous les
+    /// contient toutes.
+    this.activeIndex = -1,
   });
 
   final List<CategoryData> categories;

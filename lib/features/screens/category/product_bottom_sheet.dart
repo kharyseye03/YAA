@@ -190,7 +190,7 @@ class _ProductSheetState extends ConsumerState<_ProductSheet> {
                 ? Icons.favorite_rounded
                 : Icons.favorite_border_rounded,
             iconColor: ref.watch(favoriProvider).isProduitFavori(widget.produitId)
-                ? const Color(0xFFFF4D6D)
+                ? AppColors.favori
                 : Colors.white,
             onTap: () {
               HapticFeedback.lightImpact();
