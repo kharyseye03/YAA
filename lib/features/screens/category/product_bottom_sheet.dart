@@ -30,19 +30,22 @@ class _ProductSheet extends ConsumerStatefulWidget {
 }
 
 class _ProductSheetState extends ConsumerState<_ProductSheet> {
-  int  _quantity     = 1;
-  int  _selectedSize = 1;
-  bool _added        = false; // état succès du bouton
-
-  static const _sizes = ['Petite', 'Normale', 'Grande'];
-  static const _sizeMultipliers = [0.8, 1.0, 1.3];
+  int  _quantity = 1;
+  bool _added    = false; // état succès du bouton
 
   @override
   Widget build(BuildContext context) {
     final detail = ref.watch(produitDetailProvider(widget.produitId));
 
     return Container(
-      height: MediaQuery.of(context).size.height * 0.93,
+      // Plafond, non plus hauteur imposée : la feuille s'arrête là où
+      // le contenu s'arrête. Avec une hauteur fixe, un produit à
+      // description courte laissait une grande bande blanche sous le
+      // texte — c'est ce qui se voyait depuis le retrait des sections
+      // taille et extras.
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.93,
+      ),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.vertical(top: Radius.circular(28.r)),
@@ -60,13 +63,21 @@ class _ProductSheetState extends ConsumerState<_ProductSheet> {
           ),
         ),
         data: (produit) {
-          final total =
-              (produit.prix * _sizeMultipliers[_selectedSize] * _quantity)
-                  .round();
+          // Le prix du backend, multiplié par la seule quantité. Le
+          // sélecteur de taille appliquait ici un coefficient inventé
+          // (0,8 / 1 / 1,3) : le bouton annonçait « Ajouter · 800 F »
+          // pendant qu'addToCart n'envoyait que l'id et la quantité,
+          // donc le panier facturait 1000. Le client lisait un prix
+          // qui n'existait nulle part.
+          final total = (produit.prix * _quantity).round();
           return Column(
+            // La feuille épouse son contenu : sans cela, la contrainte
+            // de hauteur maximale deviendrait une hauteur imposée.
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Expanded(
+              Flexible(
                 child: CustomScrollView(
+                  shrinkWrap: true,
                   slivers: [
                     SliverToBoxAdapter(child: _buildHero(produit)),
                     SliverToBoxAdapter(child: _buildContent(produit)),
@@ -301,90 +312,12 @@ class _ProductSheetState extends ConsumerState<_ProductSheet> {
             ),
           ),
 
+          // Marge de fin, pour que la description ne colle pas à la
+          // barre d'ajout. Les sections « Choisir la taille » et
+          // « Ajouter des extras » qui suivaient ont été retirées :
+          // elles étaient écrites en dur, le backend ne renvoie ni
+          // tailles ni suppléments.
           SizedBox(height: AppDimens.xl),
-
-          // ── Séparateur ───────────────────────────────
-          Container(height: 1, color: AppColors.grey100),
-
-          SizedBox(height: AppDimens.xl),
-
-          // ── Section taille ───────────────────────────
-          _SectionLabel(
-            title: 'Choisir la taille',
-            subtitle: 'Requis · Choisissez 1',
-          ),
-
-          SizedBox(height: AppDimens.md),
-
-          Row(
-            children: List.generate(_sizes.length, (i) {
-              final selected = _selectedSize == i;
-              return Padding(
-                padding: EdgeInsets.only(
-                    right: i < _sizes.length - 1 ? AppDimens.sm : 0),
-                child: GestureDetector(
-                  onTap: () {
-                    HapticFeedback.selectionClick();
-                    setState(() => _selectedSize = i);
-                  },
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    curve: Curves.easeOut,
-                    padding: EdgeInsets.symmetric(
-                        horizontal: 22.w, vertical: 11.h),
-                    decoration: BoxDecoration(
-                      color: selected
-                          ? AppColors.primary
-                          : AppColors.grey100,
-                      borderRadius:
-                          BorderRadius.circular(AppDimens.radiusFull),
-                      boxShadow: selected
-                          ? [
-                              BoxShadow(
-                                color:
-                                    AppColors.primary.withValues(alpha: 0.3),
-                                blurRadius: 8.r,
-                                offset: const Offset(0, 3),
-                              )
-                            ]
-                          : null,
-                    ),
-                    child: Text(
-                      _sizes[i],
-                      style: AppTextStyles.labelMedium.copyWith(
-                        color:
-                            selected ? Colors.white : AppColors.grey700,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ),
-              );
-            }),
-          ),
-
-          SizedBox(height: AppDimens.xl),
-
-          // ── Section extras ───────────────────────────
-          _SectionLabel(
-            title: 'Ajouter des extras',
-            subtitle: 'Optionnel',
-          ),
-
-          SizedBox(height: AppDimens.md),
-
-          Wrap(
-            spacing: AppDimens.sm,
-            runSpacing: AppDimens.sm,
-            children: const [
-              _ExtraChip(label: 'Sauce piquante', price: '+200 F'),
-              _ExtraChip(label: 'Fromage', price: '+300 F'),
-              _ExtraChip(label: 'Sauce fromagère', price: '+250 F'),
-              _ExtraChip(label: 'Extra viande', price: '+500 F'),
-            ],
-          ),
-
-          SizedBox(height: AppDimens.xxl),
         ],
       ),
     );
@@ -623,95 +556,6 @@ class _InfoChip extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _SectionLabel extends StatelessWidget {
-  const _SectionLabel({required this.title, required this.subtitle});
-  final String title;
-  final String subtitle;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        Text(
-          title,
-          style: AppTextStyles.h4.copyWith(fontWeight: FontWeight.w700),
-        ),
-        Text(
-          subtitle,
-          style: AppTextStyles.caption.copyWith(color: AppColors.grey500),
-        ),
-      ],
-    );
-  }
-}
-
-class _ExtraChip extends StatefulWidget {
-  const _ExtraChip({required this.label, required this.price});
-  final String label;
-  final String price;
-
-  @override
-  State<_ExtraChip> createState() => _ExtraChipState();
-}
-
-class _ExtraChipState extends State<_ExtraChip> {
-  bool _selected = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.selectionClick();
-        setState(() => _selected = !_selected);
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        curve: Curves.easeOut,
-        padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 9.h),
-        decoration: BoxDecoration(
-          color: _selected ? AppColors.primarySurface : AppColors.grey100,
-          borderRadius: BorderRadius.circular(AppDimens.radiusFull),
-          border: Border.all(
-            color: _selected ? AppColors.primary : Colors.transparent,
-            width: 1.5,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            AnimatedSwitcher(
-              duration: const Duration(milliseconds: 200),
-              child: _selected
-                  ? Padding(
-                      padding: EdgeInsets.only(right: 5.w),
-                      child: Icon(Icons.check_circle_rounded,
-                          size: 14.r, color: AppColors.primary),
-                    )
-                  : const SizedBox.shrink(),
-            ),
-            Text(
-              widget.label,
-              style: AppTextStyles.caption.copyWith(
-                color: _selected ? AppColors.primary : AppColors.dark,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            SizedBox(width: 4.w),
-            Text(
-              widget.price,
-              style: AppTextStyles.caption.copyWith(
-                color: _selected ? AppColors.primaryLight : AppColors.grey500,
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }

@@ -84,6 +84,32 @@ class CartNotifier extends StateNotifier<CartState> {
     }
   }
 
+  /// Fixe la quantité d'une ligne du panier.
+  ///
+  /// `POST /paniers` **remplace** la quantité au lieu de s'y ajouter :
+  /// on envoie donc la valeur voulue, jamais l'écart. C'est aussi ce
+  /// qui rend l'appel rejouable — envoyer deux fois « 3 » laisse 3.
+  ///
+  /// À la différence d'[addToCart], `isAdding` n'est pas levé : ce
+  /// drapeau déclenche l'état occupé du bouton d'ajout, et faire
+  /// clignoter tout l'écran à chaque appui sur `+` serait pénible.
+  /// Le total se met à jour parce qu'on relit le panier ensuite.
+  Future<bool> changerQuantite({
+    required int produitId,
+    required int quantite,
+  }) async {
+    try {
+      await ApiService().addToCart(produitId: produitId, quantite: quantite);
+      final cart = await ApiService().getCart();
+      state = state.copyWith(cart: cart, clearError: true);
+      return true;
+    } catch (e) {
+      debugPrint('❌ changerQuantite: $e');
+      state = state.copyWith(error: MessagesErreur.depuisException(e));
+      return false;
+    }
+  }
+
   /// Supprime une ligne du panier via son id (idLigne)
   Future<void> removeItem(int idLigne) async {
     try {

@@ -1,3 +1,4 @@
+import 'dart:async';
 import '../../../shared/widgets/image_reseau.dart';
 import '../../../core/utils/devise.dart';
 import 'package:flutter/material.dart';
@@ -464,21 +465,67 @@ class _StructureHeader extends StatelessWidget {
 }
 
 // ── Article panier ────────────────────────────────────────────
-class _CartItem extends StatefulWidget {
+class _CartItem extends ConsumerStatefulWidget {
   const _CartItem({required this.item});
   final CartItemModel item;
 
   @override
-  State<_CartItem> createState() => _CartItemState();
+  ConsumerState<_CartItem> createState() => _CartItemState();
 }
 
-class _CartItemState extends State<_CartItem> {
+class _CartItemState extends ConsumerState<_CartItem> {
   late int _qty;
+
+  /// L'envoi est différé : passer de 1 à 5 se fait en quatre appuis
+  /// rapides, et déclencher un appel par appui saturerait le réseau
+  /// pour trois quantités qui n'existeront jamais. Seule la dernière
+  /// valeur part — ce que la sémantique de remplacement autorise.
+  Timer? _envoiDiffere;
 
   @override
   void initState() {
     super.initState();
     _qty = widget.item.quantite;
+  }
+
+  @override
+  void didUpdateWidget(_CartItem old) {
+    super.didUpdateWidget(old);
+    // Le panier relu depuis le serveur fait autorité, sauf pendant
+    // qu'une saisie est en attente d'envoi : sinon le compteur
+    // reviendrait en arrière sous le doigt de l'utilisateur.
+    if (_envoiDiffere?.isActive != true &&
+        widget.item.quantite != old.item.quantite) {
+      _qty = widget.item.quantite;
+    }
+  }
+
+  @override
+  void dispose() {
+    _envoiDiffere?.cancel();
+    super.dispose();
+  }
+
+  /// Applique un écart à la quantité, affiché tout de suite et
+  /// enregistré peu après.
+  void _ajusterQuantite(int ecart) {
+    final nouvelle = _qty + ecart;
+    // Descendre à zéro reviendrait à supprimer la ligne : c'est le
+    // rôle du balayage, pas celui du bouton « moins ».
+    if (nouvelle < 1) return;
+
+    setState(() => _qty = nouvelle);
+
+    _envoiDiffere?.cancel();
+    _envoiDiffere = Timer(const Duration(milliseconds: 450), () async {
+      final ok = await ref.read(cartProvider.notifier).changerQuantite(
+            produitId : widget.item.produitId,
+            quantite  : nouvelle,
+          );
+      // Échec : on revient à la dernière quantité connue du serveur,
+      // pour ne pas laisser un chiffre qui ment à l'écran.
+      if (!ok && mounted) setState(() => _qty = widget.item.quantite);
+    });
   }
 
   @override
@@ -533,8 +580,8 @@ class _CartItemState extends State<_CartItem> {
             _QtyButton(
               icon  : Icons.remove,
               color : AppColors.grey100,
-              iconColor: AppColors.dark,
-              onTap : () { if (_qty > 1) setState(() => _qty--); },
+              iconColor: _qty > 1 ? AppColors.dark : AppColors.grey400,
+              onTap : () => _ajusterQuantite(-1),
             ),
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 10.w),
@@ -550,7 +597,7 @@ class _CartItemState extends State<_CartItem> {
               icon     : Icons.add,
               color    : AppColors.primary,
               iconColor: Colors.white,
-              onTap    : () => setState(() => _qty++),
+              onTap    : () => _ajusterQuantite(1),
             ),
           ],
         ),
