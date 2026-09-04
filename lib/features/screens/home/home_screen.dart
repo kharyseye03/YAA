@@ -22,6 +22,7 @@ import 'category_list.dart';
 import 'service_cards.dart';
 import 'home_bottom_nav.dart';
 import 'home_header.dart';
+import 'promo_sheet.dart';
 import 'providers/category_provider.dart';
 import '../../../config/api/api_config.dart';
 import '../category/category_screen.dart';
@@ -87,6 +88,31 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
+  /// Ouvre la page détaillée d'une bannière.
+  ///
+  /// Seule la première en a une pour l'instant. Les autres restent
+  /// muettes plutôt que d'ouvrir une page vide — une bannière qui ne
+  /// mène nulle part vaut mieux qu'une page qui n'a rien à dire.
+  void _ouvrirPromo(int index) {
+    if (index != 0) return;
+    showPromoSheet(
+      context,
+      // Portrait 768×1137, la seule des images d'essai assez grande
+      // pour un fond plein écran sans pixelliser.
+      image         : 'assets/images/test4.jpeg',
+      titre         : '-50 % sur votre\n1re commande',
+      sousTitre     : 'Profitez de la moitié du prix sur votre toute '
+                      'première commande, quel que soit l\'établissement.',
+      codePromo     : 'BIENVENUE',
+      mention       : 'Offre valable 7 jours · une seule utilisation par compte',
+      libelleAction : 'Découvrir les établissements',
+      // Ferme et laisse l'utilisateur sur l'accueil, où sont les
+      // catégories : il vient d'être convaincu, autant ne pas
+      // l'envoyer ailleurs.
+      onAction      : () => setState(() => _currentNavIndex = 0),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -149,7 +175,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             Padding(
               padding: EdgeInsets.symmetric(
                   horizontal: AppDimens.screenPadding),
-              child: PromoBannerCarousel(banners: _banners),
+              child: PromoBannerCarousel(
+                banners: _banners,
+                onBannerTap: _ouvrirPromo,
+              ),
             ),
             SizedBox(height: AppDimens.xxl),
           ],
