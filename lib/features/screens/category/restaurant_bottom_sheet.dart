@@ -236,7 +236,12 @@ class _RestaurantSheetState extends ConsumerState<_RestaurantSheet> {
           ? GestureDetector(
               onTap: () {
                 Navigator.of(context).pop();
-                context.goNamed(RouteNames.cart);
+                // pushNamed et non goNamed : goNamed remplace la pile,
+                // le panier devenait donc un cul-de-sac dont on ne
+                // pouvait sortir qu'en commandant. Empilé, le retour
+                // ramène là où l'on était — souvent pour ajouter un
+                // autre produit.
+                context.pushNamed(RouteNames.cart);
               },
               child: Container(
                 height : 52.h,

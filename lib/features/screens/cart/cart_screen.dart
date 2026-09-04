@@ -21,9 +21,17 @@ import 'delivery_address_sheet.dart';
 import 'reception_mode_sheet.dart';
 
 class CartScreen extends ConsumerStatefulWidget {
-  const CartScreen({super.key, this.onAddMore});
+  const CartScreen({super.key, this.onAddMore, this.afficherRetour = false});
 
   final VoidCallback? onAddMore;
+
+  /// Affiche une flèche de retour dans l'en-tête.
+  ///
+  /// Vrai quand l'écran est empilé — depuis la pastille « Voir mon
+  /// panier » d'un établissement. Faux quand il sert d'onglet de
+  /// l'accueil : il n'y a alors rien derrière, et une flèche
+  /// promettrait un retour qui n'existe pas.
+  final bool afficherRetour;
 
   @override
   ConsumerState<CartScreen> createState() => _CartScreenState();
@@ -105,6 +113,17 @@ class _CartScreenState extends ConsumerState<CartScreen> {
           ),
           child: Row(
             children: [
+              if (widget.afficherRetour) ...[
+                GestureDetector(
+                  onTap    : () => Navigator.of(context).maybePop(),
+                  behavior : HitTestBehavior.opaque,
+                  child: Padding(
+                    padding: EdgeInsets.only(right: AppDimens.sm),
+                    child: Icon(Icons.arrow_back_rounded,
+                        color: AppColors.dark, size: 22.r),
+                  ),
+                ),
+              ],
               Text(
                 'Mon panier',
                 style: AppTextStyles.h3.copyWith(

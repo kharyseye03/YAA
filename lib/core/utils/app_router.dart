@@ -210,9 +210,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: RoutePaths.cart,
         name: RouteNames.cart,
+        // Empilé, donc avec un retour : contrairement à l'onglet
+        // panier de l'accueil, cet écran a quelque chose derrière lui.
         builder: (context, state) => const Scaffold(
           backgroundColor: Colors.white,
-          body: CartScreen(),
+          body: CartScreen(afficherRetour: true),
         ),
       ),
       GoRoute(
