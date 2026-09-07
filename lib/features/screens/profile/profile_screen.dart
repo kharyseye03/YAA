@@ -41,6 +41,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   /// le manifeste ne déclare pas — le bouton semble alors cassé. Les
   /// schémas tel, mailto et https sont déclarés dans `<queries>` ; si
   /// l'appareil n'a malgré tout aucune application pour l'ouvrir, on
+  /// 
   /// le dit au lieu de ne rien faire.
   Future<void> _ouvrir(Uri uri, String siImpossible) async {
     if (await canLaunchUrl(uri)) {
@@ -132,22 +133,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             // ── Aide ──────────────────────────────────────
             _Carte(children: [
               _Ligne(
-                icon     : Icons.phone_outlined,
-                label    : 'Appeler le support',
-                subtitle : AppContacts.telephoneSupport,
-                onTap    : () => _ouvrir(
-                  Uri(scheme: 'tel', path: AppContacts.telephoneSupport),
-                  'Aucune application téléphone',
-                ),
-              ),
-              _Ligne(
-                icon     : Icons.mail_outline_rounded,
-                label    : 'Écrire au support',
-                subtitle : AppContacts.emailSupport,
-                onTap    : () => _ouvrir(
-                  Uri(scheme: 'mailto', path: AppContacts.emailSupport),
-                  'Aucune application e-mail',
-                ),
+                icon     : Icons.headset_mic_outlined,
+                label    : 'Support',
+                subtitle : 'Nous joindre par téléphone ou e-mail',
+                onTap    : _ouvrirSupport,
               ),
               _Ligne(
                 icon     : Icons.description_outlined,
@@ -156,14 +145,23 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               ),
             ]),
 
-            SizedBox(height: AppDimens.xl),
+            SizedBox(height: AppDimens.lg),
 
-            _boutonDeconnexion(),
+            // ── Déconnexion ───────────────────────────────
+            // Dans sa propre carte, isolée du reste : c'est la seule
+            // action de l'écran qui change l'état de la session.
+            _Carte(children: [
+              _Ligne(
+                icon      : Icons.logout_rounded,
+                label     : 'Se déconnecter',
+                onTap     : _confirmerDeconnexion,
+                couleur   : AppColors.error,
+                chevron   : false,
+              ),
+            ]),
 
-            SizedBox(height: AppDimens.md),
+            SizedBox(height: AppDimens.lg),
 
-            // La version aide au signalement de bug : le testeur peut
-            // dire sur quelle build il est tombé.
             Text(
               'YAA · version 1.0.0',
               style: AppTextStyles.caption.copyWith(color: AppColors.textMuted),
@@ -236,12 +234,31 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
-  Widget _boutonDeconnexion() {
-    // Texte seul, sans carte ni icône : la déconnexion est banale et
-    // quotidienne. Elle ne mérite pas le rouge d'alerte qu'elle
-    // partageait auparavant avec la suppression de compte.
-    return TextButton(
-      onPressed: () async {
+  /// Feuille de contact du support.
+  ///
+  /// Deux lignes du profil pour un seul besoin — « joindre YAA » —
+  /// c'était une ligne de trop. Le choix du canal est une décision
+  /// secondaire : elle appartient à la feuille, pas à l'écran.
+  void _ouvrirSupport() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _SupportSheet(
+        onAppeler: () => _ouvrir(
+          Uri(scheme: 'tel', path: AppContacts.telephoneSupport),
+          'Aucune application téléphone',
+        ),
+        onEcrire: () => _ouvrir(
+          Uri(scheme: 'mailto', path: AppContacts.emailSupport),
+          'Aucune application e-mail',
+        ),
+      ),
+    );
+  }
+
+  Future<void> _confirmerDeconnexion() async {
+    {
+      {
         final confirm = await showDialog<bool>(
           context: context,
           builder: (_) => AlertDialog(
@@ -284,12 +301,79 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         // ce widget qui doit être encore là pour naviguer.
         if (!mounted) return;
         context.goNamed(RouteNames.login);
-      },
-      child: Text(
-        'Se déconnecter',
-        style: AppTextStyles.labelMedium.copyWith(
-          fontWeight: FontWeight.w600,
-          color     : AppColors.textSoft,
+      }
+    }
+  }
+}
+
+// ── Feuille de contact du support ─────────────────────────────
+class _SupportSheet extends StatelessWidget {
+  const _SupportSheet({required this.onAppeler, required this.onEcrire});
+
+  final VoidCallback onAppeler;
+  final VoidCallback onEcrire;
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      top: false,
+      child: Container(
+        margin: EdgeInsets.all(AppDimens.md),
+        decoration: BoxDecoration(
+          color        : AppColors.surface,
+          borderRadius : BorderRadius.circular(AppDimens.radiusLg),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: EdgeInsets.fromLTRB(
+                  AppDimens.md, AppDimens.lg, AppDimens.md, AppDimens.sm),
+              child: Column(
+                children: [
+                  Text(
+                    'Contacter le support',
+                    style: AppTextStyles.labelLarge.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color     : AppColors.dark,
+                    ),
+                  ),
+                  SizedBox(height: AppDimens.xs),
+                  Text(
+                    'Nous répondons du lundi au samedi',
+                    style: AppTextStyles.caption
+                        .copyWith(color: AppColors.textMuted),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(height: 1, color: AppColors.grey100),
+            _Ligne(
+              icon     : Icons.phone_outlined,
+              label    : 'Appeler',
+              subtitle : AppContacts.telephoneSupport,
+              // La feuille se ferme avant d'ouvrir l'application
+              // externe : au retour, l'utilisateur retrouve le profil
+              // et non une feuille restée ouverte derrière.
+              onTap    : () {
+                Navigator.of(context).pop();
+                onAppeler();
+              },
+            ),
+            Padding(
+              padding: EdgeInsets.only(left: 52.w),
+              child: const Divider(height: 1, color: AppColors.grey100),
+            ),
+            _Ligne(
+              icon     : Icons.mail_outline_rounded,
+              label    : 'Écrire',
+              subtitle : AppContacts.emailSupport,
+              onTap    : () {
+                Navigator.of(context).pop();
+                onEcrire();
+              },
+            ),
+          ],
         ),
       ),
     );
@@ -334,12 +418,23 @@ class _Ligne extends StatelessWidget {
     required this.label,
     required this.onTap,
     this.subtitle,
+    this.couleur,
+    this.chevron = true,
   });
 
   final IconData     icon;
   final String       label;
   final String?      subtitle;
   final VoidCallback onTap;
+
+  /// Teinte l'icône et le libellé. Réservé à la déconnexion : c'est
+  /// la seule ligne qui ne mène pas à un écran mais agit sur la
+  /// session, et le rouge la distingue au premier coup d'œil.
+  final Color? couleur;
+
+  /// Le chevron annonce « ceci ouvre autre chose ». Une action qui
+  /// s'exécute sur place n'en a pas.
+  final bool chevron;
 
   @override
   Widget build(BuildContext context) {
@@ -354,7 +449,7 @@ class _Ligne extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Icon(icon, size: 20.r, color: AppColors.textSoft),
+            Icon(icon, size: 20.r, color: couleur ?? AppColors.textSoft),
             SizedBox(width: AppDimens.md),
             Expanded(
               child: Column(
@@ -364,8 +459,10 @@ class _Ligne extends StatelessWidget {
                     label,
                     style: AppTextStyles.labelMedium.copyWith(
                       fontSize  : 14.sp,
-                      fontWeight: FontWeight.w600,
-                      color     : AppColors.dark,
+                      fontWeight: couleur == null
+                          ? FontWeight.w600
+                          : FontWeight.w700,
+                      color     : couleur ?? AppColors.dark,
                     ),
                   ),
                   if (sousTitre != null && sousTitre.isNotEmpty) ...[
@@ -381,8 +478,9 @@ class _Ligne extends StatelessWidget {
                 ],
               ),
             ),
-            Icon(Icons.chevron_right,
-                size: 18.r, color: AppColors.grey400),
+            if (chevron)
+              Icon(Icons.chevron_right,
+                  size: 18.r, color: AppColors.grey400),
           ],
         ),
       ),
@@ -422,7 +520,10 @@ class _CarteCoursier extends StatelessWidget {
                 color : AppColors.secondary,
                 shape : BoxShape.circle,
               ),
-              child: Icon(Icons.two_wheeler_rounded,
+              // Le casque, comme sur la carte Livraison de l'accueil
+              // et le marqueur du coursier : c'est déjà le signe du
+              // métier dans l'application.
+              child: Icon(Icons.sports_motorsports,
                   color: Colors.white, size: 20.r),
             ),
             SizedBox(width: AppDimens.md),
