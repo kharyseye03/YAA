@@ -12,13 +12,11 @@ dependencies:
 
   # ── State Management ────────────────────────────────────
   flutter_riverpod: ^2.6.1
-  riverpod_annotation: ^2.6.1
 
   # ── Navigation ──────────────────────────────────────────
   go_router: ^14.8.1
 
   # ── Network ─────────────────────────────────────────────
-  dio: ^5.7.0
   http: ^1.2.2
   # MediaType, pour les envois multipart. Arrivait jusqu'ici via http ;
   # on la déclare pour ne pas dépendre d'un paquet transitif.
@@ -37,8 +35,6 @@ dependencies:
   google_maps_flutter_platform_interface: ^2.12.0
 
   # ── Data & Serialization ────────────────────────────────
-  freezed_annotation: ^2.4.4
-  json_annotation: ^4.9.0
 
   # ── Local Storage ───────────────────────────────────────
   shared_preferences: ^2.3.4
@@ -52,12 +48,11 @@ dependencies:
   phosphor_flutter: ^2.1.0
 
   # ── Utils ───────────────────────────────────────────────
-  intl: ^0.19.0
   url_launcher: ^6.3.1
 
   # ── Icons ───────────────────────────────────────────────
-  cupertino_icons: ^1.0.8
   remixicon: ^4.9.3
+  flutter_secure_storage: ^9.2.4
 
 dev_dependencies:
   flutter_test:
@@ -68,10 +63,6 @@ dev_dependencies:
   flutter_launcher_icons: ^0.14.3
 
   # ── Code Generation ─────────────────────────────────────
-  build_runner: ^2.4.14
-  freezed: ^2.5.8
-  json_serializable: ^6.9.4
-  riverpod_generator: ^2.6.3
 
 # ── Configuration de l'icône de l'app ─────────────────────
 flutter_launcher_icons:
@@ -108,18 +99,10 @@ flutter:
           weight: 700
         - asset: assets/fonts/PlusJakartaSans/PlusJakartaSans-ExtraBold.ttf
           weight: 800
-    - family: Archivo
-      fonts:
-        - asset: assets/fonts/Archivo/static/Archivo-Regular.ttf
-          weight: 400
-        - asset: assets/fonts/Archivo/static/Archivo-Medium.ttf
-          weight: 500
-        - asset: assets/fonts/Archivo/static/Archivo-SemiBold.ttf
-          weight: 600
-        - asset: assets/fonts/Archivo/static/Archivo-Bold.ttf
-          weight: 700
-        - asset: assets/fonts/Archivo/static/Archivo-ExtraBold.ttf
-          weight: 800
+    # Archivo a été retirée le 07/09/2026 : déclarée lors du travail
+    # sur la DA du site, puis abandonnée au profit de PlusJakartaSans.
+    # Aucun widget ne l'appelait, mais une police déclarée est
+    # embarquée qu'on s'en serve ou non — 15 Mo dans l'APK.
 
   # ── Assets ──────────────────────────────────────────────
   assets:
