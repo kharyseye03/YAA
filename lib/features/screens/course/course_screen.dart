@@ -1,4 +1,5 @@
 import '../../../shared/utils/map_markers.dart';
+import '../../../core/utils/journal.dart';
 import '../../../core/errors/messages_erreur.dart';
 import 'dart:async';
 
@@ -152,7 +153,7 @@ class _CourseScreenState extends ConsumerState<CourseScreen> {
         _loadingEstim = false;
       });
     } catch (e) {
-      debugPrint('❌ estimation: $e');
+      journal('❌ estimation: $e');
       if (mounted) setState(() => _loadingEstim = false);
     }
   }
@@ -173,7 +174,7 @@ class _CourseScreenState extends ConsumerState<CourseScreen> {
             points.map((p) => LatLng(p[0], p[1])).toList();
       });
     } catch (e) {
-      debugPrint('❌ route: $e');
+      journal('❌ route: $e');
     }
   }
 
@@ -229,7 +230,7 @@ class _CourseScreenState extends ConsumerState<CourseScreen> {
         final s = await _locationService.autocomplete(value);
         if (mounted) setState(() => _suggestions = s);
       } catch (e) {
-        debugPrint('❌ autocomplete: $e');
+        journal('❌ autocomplete: $e');
       }
     });
   }

@@ -3,11 +3,25 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
 
+    <!-- usesCleartextTraffic="false" : le HTTP en clair est refusé.
+         Il avait été ouvert pour le serveur de développement en
+         http://10.3.20.91:8081. Laissé actif en production, il permet
+         un rétrogradage — sur un wifi hostile, un attaquant force
+         l'app à parler en clair et lit jetons et commandes. Les URLs
+         sont en HTTPS ; ceci l'impose.
+
+         allowBackup="false" : les données de l'app ne partent plus
+         dans la sauvegarde Google Drive de l'utilisateur. Elle
+         emportait le contenu de SharedPreferences, jetons compris,
+         et le restaurait sur tout nouvel appareil. -->
     <application
         android:label="YAA"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
-        android:usesCleartextTraffic="true">
+        android:allowBackup="false"
+        android:fullBackupContent="false"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:usesCleartextTraffic="false">
         <!-- Clé API Google Maps (SDK Android).
              Injectée au build depuis android/secrets.properties — ne jamais
              écrire la valeur en dur ici, ce fichier est versionné. -->

@@ -1,4 +1,5 @@
 import '../../../core/utils/devise.dart';
+import '../../../core/utils/journal.dart';
 import '../../../core/errors/messages_erreur.dart';
 import '../../../core/utils/phone_formatter.dart';
 import 'dart:async';
@@ -53,15 +54,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     super.initState();
     // Pré-remplir le téléphone depuis le profil
     final profile = ref.read(userProvider).profile;
-    // telephoneLocal indispensable ici : formatPhone seul garde les
-    // neuf PREMIERS chiffres, donc « +221771234567 » devenait
-    // « 221 77 12 34 ». Neuf chiffres, validation satisfaite, et une
-    // commande partie vers un numéro qui n'existe pas.
-    _phoneController.text =
-        formatPhone(telephoneLocal(profile?.telephone ?? ''));
+    _phoneController.text = formatPhone(telephoneLocal(profile?.telephone ?? ''));
 
-    // Pré-remplir l'adresse : celle choisie pour cette commande,
-    // sinon l'adresse par défaut du profil
     final adr = ref.read(deliveryAddressProvider)?.adresse
         ?? profile?.address;
     _addressController.text =
@@ -85,15 +79,11 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       final cart  = ref.read(cartProvider).cart;
       if (cart == null) throw Exception('Panier introuvable');
 
-      // Coordonnées : adresse choisie pour cette commande,
-      // sinon celles de l'adresse par défaut du profil
       final delivery = ref.read(deliveryAddressProvider);
       final profile  = ref.read(userProvider).profile;
       final latitude  = delivery?.latitude  ?? profile?.latitude  ?? 0;
       final longitude = delivery?.longitude ?? profile?.longitude ?? 0;
 
-      // Le payload est identique dans les deux modes : le backend
-      // connaît déjà l'adresse du client et celle de la structure.
       final transaction = await ApiService().createTransaction(
         panierId              : cart.id,
         modeReceptionCommande : widget.choix.mode.code,
@@ -106,8 +96,6 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         description           : _noteController.text.trim(),
       );
 
-      // Infos trajet pour le sheet de recherche de livreur
-      // (capturées avant que le panier ne soit vidé)
       final departNom = cart.lignes.length > 1
           ? 'Plusieurs établissements'
           : cart.lignes.first.nomStructure;
@@ -194,7 +182,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
               showMissionDetailSheet(context, match.first.id);
             }
           } catch (e) {
-            debugPrint('⚠️ Suivi commande introuvable : $e');
+            journal('⚠️ Suivi commande introuvable : $e');
           }
         },
       ),
@@ -530,9 +518,6 @@ class _PaymentSheetState extends State<_PaymentSheet> {
   bool    _isPaying      = false;
   String? _error;
 
-  // Seul le paiement en espèces est opérationnel. Les opérateurs
-  // mobiles restent visibles mais désactivés : les masquer donnerait
-  // l'impression qu'ils n'arriveront jamais.
   static const _methods = [
     _PaymentMethod('Espèces', 'ESPECE', null,
         AppColors.successLight, AppColors.success, disponible: true),
@@ -861,7 +846,7 @@ class _LivreurSearchSheetState extends State<_LivreurSearchSheet>
             ? matches.first
             : commandes.reduce((a, b) => a.id > b.id ? a : b);
 
-        debugPrint('🔄 Suivi commande #${commande.id} '
+        journal('🔄 Suivi commande #${commande.id} '
             '→ ${commande.statut} (match réf: ${matches.isNotEmpty})');
 
         _commandeId = commande.id;
@@ -890,13 +875,13 @@ class _LivreurSearchSheetState extends State<_LivreurSearchSheet>
                 setState(() => _livreur = match.first.livreur);
               }
             } catch (e) {
-              debugPrint('⚠️ Infos livreur enrichies indisponibles : $e');
+              journal('⚠️ Infos livreur enrichies indisponibles : $e');
             }
           }
         }
       } catch (e) {
         // Erreur réseau → on réessaiera au prochain tick
-        debugPrint('⚠️ Polling commande: $e');
+        journal('⚠️ Polling commande: $e');
       }
     });
   }

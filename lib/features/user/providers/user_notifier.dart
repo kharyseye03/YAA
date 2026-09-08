@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import '../../../core/utils/journal.dart';
 import '../../../core/errors/messages_erreur.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -50,9 +50,9 @@ class UserNotifier extends StateNotifier<UserState> {
         await _prefs.setString(_imageUrlKey, profile.imageUrl!);
       }
       state = state.copyWith(isLoading: false, profile: profile);
-      debugPrint('✅ Profil API : ${profile.fullName} | image: ${profile.imageUrl}');
+      journal('✅ Profil API : ${profile.fullName} | image: ${profile.imageUrl}');
     } catch (e) {
-      debugPrint('❌ loadProfile échoué : $e');
+      journal('❌ loadProfile échoué : $e');
       state = state.copyWith(isLoading: false);
     }
   }

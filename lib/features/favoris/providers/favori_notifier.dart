@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import '../../../core/utils/journal.dart';
 import '../../../core/errors/messages_erreur.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../model/favori/produit_favori_model.dart';
@@ -70,7 +70,7 @@ class FavoriNotifier extends StateNotifier<FavoriState> {
         favorisIds : favoris.map((f) => f.structureId).toSet(),
       );
     } catch (e) {
-      debugPrint('❌ loadFavoris: $e');
+      journal('❌ loadFavoris: $e');
       state = state.copyWith(
         isLoading : false,
         error     : MessagesErreur.depuisException(e),
@@ -108,7 +108,7 @@ class FavoriNotifier extends StateNotifier<FavoriState> {
         togglingIds: state.togglingIds.difference({structureId}),
       );
     } catch (e) {
-      debugPrint('❌ toggleFavori: $e');
+      journal('❌ toggleFavori: $e');
       // Rollback : on remet l'état avant le clic
       state = state.copyWith(
         favoris     : snapshotFavoris,
@@ -128,7 +128,7 @@ class FavoriNotifier extends StateNotifier<FavoriState> {
         produitsFavorisIds : produits.map((p) => p.produitId).toSet(),
       );
     } catch (e) {
-      debugPrint('❌ loadProduitsFavoris: $e');
+      journal('❌ loadProduitsFavoris: $e');
     }
   }
 
@@ -159,7 +159,7 @@ class FavoriNotifier extends StateNotifier<FavoriState> {
         togglingIds: state.togglingIds.difference({produitId}),
       );
     } catch (e) {
-      debugPrint('❌ toggleProduitFavori: $e');
+      journal('❌ toggleProduitFavori: $e');
       // Rollback
       state = state.copyWith(
         produitsFavorisIds : snapshotIds,

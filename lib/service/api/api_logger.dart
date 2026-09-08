@@ -1,4 +1,5 @@
 import 'dart:convert';
+import '../../core/utils/journal.dart';
 
 import 'package:flutter/foundation.dart';
 
@@ -21,8 +22,8 @@ class ApiLogger {
 
   static void requete(String methode, Uri url, {Object? corps}) {
     if (!actif) return;
-    debugPrint('🌐 $methode ${_chemin(url)}');
-    if (corps != null) debugPrint('   ↑ ${_tronquer(_encoder(corps))}');
+    journal('🌐 $methode ${_chemin(url)}');
+    if (corps != null) journal('   ↑ ${_tronquer(_encoder(corps))}');
   }
 
   static void reponse(
@@ -38,28 +39,28 @@ class ApiLogger {
     final icone  = succes ? '📡' : '❌';
     final alerte = succes ? _alerteVide(corps) : '';
 
-    debugPrint('$icone $statut · ${duree.inMilliseconds} ms · '
+    journal('$icone $statut · ${duree.inMilliseconds} ms · '
         '$methode ${_chemin(url)}$alerte');
-    debugPrint('   ↓ ${_tronquer(corps)}');
+    journal('   ↓ ${_tronquer(corps)}');
   }
 
   static void erreur(String contexte, Object e) {
     if (!actif) return;
-    debugPrint('💥 $contexte → $e');
+    journal('💥 $contexte → $e');
   }
 
   /// Trace libre, pour ce qui n'est ni une requête ni une réponse :
   /// renouvellement de jeton, 401 rattrapé, etc.
   static void trace(String message) {
     if (!actif) return;
-    debugPrint('🔎 $message');
+    journal('🔎 $message');
   }
 
   /// Avertissement métier : le serveur répond correctement mais
   /// l'écran n'aura rien à afficher.
   static void vide(String contexte, String explication) {
     if (!actif) return;
-    debugPrint('⚠️  $contexte — $explication');
+    journal('⚠️  $contexte — $explication');
   }
 
   static String _alerteVide(String corps) {

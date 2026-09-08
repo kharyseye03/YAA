@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import '../../../core/utils/journal.dart';
 import '../../../core/errors/messages_erreur.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../features/auth/providers/auth_notifier.dart';
@@ -54,7 +54,7 @@ class CartNotifier extends StateNotifier<CartState> {
         clearError: true,
       );
     } catch (e) {
-      debugPrint('❌ loadCart: $e');
+      journal('❌ loadCart: $e');
       state = state.copyWith(
         isLoading: false,
         error: MessagesErreur.depuisException(e),
@@ -75,7 +75,7 @@ class CartNotifier extends StateNotifier<CartState> {
       state = state.copyWith(isAdding: false, cart: cart);
       return true;
     } catch (e) {
-      debugPrint('❌ addToCart: $e');
+      journal('❌ addToCart: $e');
       state = state.copyWith(
         isAdding: false,
         error: MessagesErreur.depuisException(e),
@@ -104,7 +104,7 @@ class CartNotifier extends StateNotifier<CartState> {
       state = state.copyWith(cart: cart, clearError: true);
       return true;
     } catch (e) {
-      debugPrint('❌ changerQuantite: $e');
+      journal('❌ changerQuantite: $e');
       state = state.copyWith(error: MessagesErreur.depuisException(e));
       return false;
     }
@@ -117,7 +117,7 @@ class CartNotifier extends StateNotifier<CartState> {
       final cart = await ApiService().getCart();
       state = state.copyWith(cart: cart, clearError: true);
     } catch (e) {
-      debugPrint('❌ removeItem: $e');
+      journal('❌ removeItem: $e');
       state = state.copyWith(
         error: MessagesErreur.depuisException(e),
       );
@@ -133,7 +133,7 @@ class CartNotifier extends StateNotifier<CartState> {
       // Recharge depuis le serveur → loadCart gère le corps vide (panier vidé)
       await loadCart();
     } catch (e) {
-      debugPrint('❌ clearCartFromServer: $e');
+      journal('❌ clearCartFromServer: $e');
       state = state.copyWith(
         error: MessagesErreur.depuisException(e),
       );

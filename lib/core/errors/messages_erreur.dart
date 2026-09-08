@@ -1,6 +1,6 @@
 import 'dart:async';
+import '../utils/journal.dart';
 
-import 'package:flutter/foundation.dart';
 
 /// Ce que l'application dit à l'utilisateur quand quelque chose échoue.
 ///
@@ -72,7 +72,7 @@ abstract final class MessagesErreur {
     String? description,
   ) {
     if (code != null || description != null) {
-      debugPrint('↩︎ auth ($statut) : $code — $description');
+      journal('↩︎ auth ($statut) : $code — $description');
     }
     return code == 'invalid_grant'
         ? identifiantsInvalides
@@ -95,7 +95,7 @@ abstract final class MessagesErreur {
   static String depuisReponse(int statut, String? messageServeur) {
     final m = messageServeur?.trim();
     if (m != null && m.isNotEmpty) {
-      debugPrint('↩︎ serveur ($statut) : $m');
+      journal('↩︎ serveur ($statut) : $m');
     }
     return pourStatut(statut);
   }
@@ -112,7 +112,7 @@ abstract final class MessagesErreur {
   static String depuisException(Object e) {
     final texte = e.toString().replaceAll('Exception: ', '').trim();
     if (e is ParallelWaitError || !_connus.contains(texte)) {
-      debugPrint('↩︎ exception non présentable : $e');
+      journal('↩︎ exception non présentable : $e');
       return generique;
     }
     return texte;

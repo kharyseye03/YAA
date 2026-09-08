@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import '../../../core/utils/journal.dart';
 import '../../../core/errors/messages_erreur.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../model/order/commande_detail_model.dart';
@@ -180,10 +180,10 @@ class CommandeNotifier extends StateNotifier<CommandeState> {
     final (commandes, erreurCommandes) = resCommandes;
 
     if (erreurMissions != null) {
-      debugPrint('❌ loadCommandes/missions: $erreurMissions');
+      journal('❌ loadCommandes/missions: $erreurMissions');
     }
     if (erreurCommandes != null) {
-      debugPrint('❌ loadCommandes/commandes: $erreurCommandes');
+      journal('❌ loadCommandes/commandes: $erreurCommandes');
     }
 
     // Rien n'est arrivé : c'est le seul cas qui mérite un bandeau.
@@ -238,7 +238,7 @@ class CommandeNotifier extends StateNotifier<CommandeState> {
           .getCommandeDetail(id: mission.commandeStructureId!);
       state = state.copyWith(isLoadingDetail: false, detail: detail);
     } catch (e) {
-      debugPrint('❌ loadDetail: $e');
+      journal('❌ loadDetail: $e');
       state = state.copyWith(
         isLoadingDetail : false,
         detailError     : MessagesErreur.depuisException(e),
@@ -255,7 +255,7 @@ class CommandeNotifier extends StateNotifier<CommandeState> {
       final detail = await ApiService().getCommandeDetail(id: commandeId);
       state = state.copyWith(detail: detail);
     } catch (e) {
-      debugPrint('⚠️ refreshDetail (silencieux): $e');
+      journal('⚠️ refreshDetail (silencieux): $e');
     }
   }
 }

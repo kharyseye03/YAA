@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android 12+ remplace allowBackup par ces règles, plus fines.
+     Rien n'est exclu ici parce que rien n'est autorisé : aucune
+     donnée de l'app ne part en sauvegarde cloud ni ne se transfère
+     vers un nouvel appareil. Les jetons de session n'ont pas à
+     survivre à un changement de téléphone — une reconnexion coûte
+     dix secondes, un jeton copié ailleurs vaut dix jours d'accès. -->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="root" />
+        <exclude domain="file" />
+        <exclude domain="database" />
+        <exclude domain="sharedpref" />
+        <exclude domain="external" />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="root" />
+        <exclude domain="file" />
+        <exclude domain="database" />
+        <exclude domain="sharedpref" />
+        <exclude domain="external" />
+    </device-transfer>
+</data-extraction-rules>

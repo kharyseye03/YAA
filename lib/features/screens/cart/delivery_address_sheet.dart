@@ -1,4 +1,5 @@
 import 'dart:async';
+import '../../../core/utils/journal.dart';
 import '../../../core/errors/messages_erreur.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
@@ -98,7 +99,7 @@ class _DeliveryAddressSheetState
         final suggestions = await _locationService.autocomplete(value);
         if (mounted) setState(() => _suggestions = suggestions);
       } catch (e) {
-        debugPrint('❌ autocomplete: $e');
+        journal('❌ autocomplete: $e');
       }
     });
   }

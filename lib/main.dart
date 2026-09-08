@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'core/theme/app_theme.dart';
 import 'core/constants/constants.dart';
 import 'core/utils/app_router.dart';
+import 'service/auth/token_storage.dart';
 import 'features/auth/providers/auth_notifier.dart';
 
 void main() async {
@@ -20,6 +21,12 @@ void main() async {
   rendererCarte = _choisirRendererCarte();
 
   final prefs = await SharedPreferences.getInstance();
+
+  // Les jetons sont désormais dans le coffre chiffré du système. Ceux
+  // qu'une version précédente a laissés en clair sont effacés ici :
+  // les laisser reviendrait à garder la fuite ouverte pour tous ceux
+  // qui ont déjà installé l'app.
+  await TokenStorage.purgerAncienStockage(prefs);
 
   runApp(
     ProviderScope(

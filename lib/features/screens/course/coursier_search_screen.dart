@@ -1,4 +1,5 @@
 import 'dart:async';
+import '../../../core/utils/journal.dart';
 
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
@@ -120,7 +121,7 @@ class _CoursierSearchScreenState extends State<CoursierSearchScreen>
         densite: densite,
       );
     } catch (e) {
-      debugPrint('⚠️ marqueur moto indisponible : $e');
+      journal('⚠️ marqueur moto indisponible : $e');
       _pinLivreur = await createPinMarker(
           AppColors.dark, Icons.sports_motorsports,
           scale: 0.8, densite: densite);
@@ -138,7 +139,7 @@ class _CoursierSearchScreenState extends State<CoursierSearchScreen>
         if (match.isEmpty || !mounted) return;
 
         final updated  = match.first;
-        debugPrint('🔄 mission #${updated.id} → ${updated.statut} '
+        journal('🔄 mission #${updated.id} → ${updated.statut} '
             '(enCours: ${updated.isEnCours})');
         final aChange  = updated.statut != _mission.statut ||
             updated.livreurFullName  != _mission.livreurFullName ||
@@ -161,7 +162,7 @@ class _CoursierSearchScreenState extends State<CoursierSearchScreen>
         }
       } catch (e) {
         // Réseau instable → on réessaiera au prochain tick
-        debugPrint('⚠️ Suivi mission: $e');
+        journal('⚠️ Suivi mission: $e');
       }
     });
   }
@@ -172,12 +173,12 @@ class _CoursierSearchScreenState extends State<CoursierSearchScreen>
   /// Affichée une seule fois, quand la mission s'achève normalement.
   /// Une mission annulée n'a rien à noter.
   Future<void> _proposerNotation() async {
-    debugPrint('⭐ notation ? statut=${_mission.statut} '
+    journal('⭐ notation ? statut=${_mission.statut} '
         'déjàProposée=$_notationProposee monté=$mounted');
     if (_notationProposee || !mounted) return;
     if (_mission.statut != 'COURSE_TERMINEE') return;
     _notationProposee = true;
-    debugPrint('⭐ ouverture du sheet de notation');
+    journal('⭐ ouverture du sheet de notation');
 
     await showRatingSheet(context, _mission);
     if (mounted) _retourAccueil();
@@ -222,7 +223,7 @@ class _CoursierSearchScreenState extends State<CoursierSearchScreen>
         _phaseDernierTrace = m.versDestination;
       });
     } catch (e) {
-      debugPrint('❌ trajet coursier: $e');
+      journal('❌ trajet coursier: $e');
     }
     _fitCamera();
   }
