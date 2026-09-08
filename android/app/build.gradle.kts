@@ -15,6 +15,20 @@ val secrets = Properties().apply {
 }
 val mapsApiKey: String = secrets.getProperty("MAPS_API_KEY") ?: ""
 
+// Clé de signature de publication, lue depuis android/key.properties
+// (non versionné, voir key.properties.example).
+//
+// Absente, le build retombe sur la clé de debug : `flutter run
+// --release` continue de fonctionner sur un poste qui n'a pas la clé.
+// Play refuse en revanche un binaire signé ainsi — d'où le garde-fou
+// plus bas, qui arrête le build de publication plutôt que de livrer
+// un AAB impubliable après plusieurs minutes d'attente.
+val keyProps = Properties().apply {
+    val file = rootProject.file("key.properties")
+    if (file.exists()) file.inputStream().use { load(it) }
+}
+val aUneCleDePublication = keyProps.getProperty("storeFile") != null
+
 android {
     namespace = "gn.yaa.client"
     compileSdk = flutter.compileSdkVersion
@@ -47,11 +61,35 @@ android {
         manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey
     }
 
+    signingConfigs {
+        if (aUneCleDePublication) {
+            create("release") {
+                storeFile     = rootProject.file(keyProps.getProperty("storeFile"))
+                storePassword = keyProps.getProperty("storePassword")
+                keyAlias      = keyProps.getProperty("keyAlias")
+                keyPassword   = keyProps.getProperty("keyPassword")
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = if (aUneCleDePublication) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("debug")
+            }
+
+            // Réduction et obscurcissement du code Java/Kotlin. Sans
+            // effet sur le Dart, déjà compilé en natif, mais allège le
+            // binaire et complique la lecture des bibliothèques
+            // natives par quelqu'un qui décompresserait l'APK.
+            isMinifyEnabled   = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro",
+            )
         }
     }
 }

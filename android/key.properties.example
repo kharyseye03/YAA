@@ -1,0 +1,10 @@
+# Gabarit — copier en android/key.properties et renseigner.
+# key.properties et le fichier .jks sont exclus par .gitignore : la
+# clé de publication ne doit jamais entrer dans le dépôt.
+storePassword=votre_mot_de_passe
+keyPassword=votre_mot_de_passe
+keyAlias=yaa
+# Chemin du keystore, avec des barres obliques et non des antislashs :
+# dans un fichier .properties le backslash échappe le caractère qui
+# suit, et un chemin Windows classique se retrouve amputé.
+storeFile=C:/Users/vous/cles/yaa-release.jks
