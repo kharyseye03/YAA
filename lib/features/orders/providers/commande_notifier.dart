@@ -1,6 +1,7 @@
 import '../../../core/utils/journal.dart';
 import '../../../core/errors/messages_erreur.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../auth/providers/auth_notifier.dart';
 import '../../../model/order/commande_detail_model.dart';
 import '../../../model/order/commande_model.dart';
 import '../../../model/order/livraison_course_model.dart';
@@ -149,6 +150,11 @@ class CommandeState {
 class CommandeNotifier extends StateNotifier<CommandeState> {
   CommandeNotifier() : super(const CommandeState());
 
+  /// Repart de zéro. Appelé à la déconnexion et à la suppression de
+  /// compte : l'historique de commandes est une donnée personnelle,
+  /// il ne doit pas survivre au départ de son propriétaire.
+  void vider() => state = const CommandeState();
+
   // ── Liste ──────────────────────────────────────────────────
   /// Charge les deux listes.
   ///
@@ -262,5 +268,14 @@ class CommandeNotifier extends StateNotifier<CommandeState> {
 
 final commandeProvider =
     StateNotifierProvider<CommandeNotifier, CommandeState>((ref) {
-  return CommandeNotifier();
+  final notifier = CommandeNotifier();
+
+  // Même règle que le panier et le profil : l'historique de commandes
+  // suit le compte, pas l'appareil. Il n'était pas vidé — la personne
+  // suivante à se connecter aurait hérité des courses de la précédente.
+  ref.listen(authProvider, (previous, next) {
+    if (!next.isAuthenticated) notifier.vider();
+  });
+
+  return notifier;
 });

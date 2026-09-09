@@ -1,6 +1,7 @@
 import '../../../core/utils/journal.dart';
 import '../../../core/errors/messages_erreur.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../auth/providers/auth_notifier.dart';
 import '../../../model/favori/produit_favori_model.dart';
 import '../../../model/favori/structure_favori_model.dart';
 import '../../../service/api/api_service.dart';
@@ -55,6 +56,10 @@ class FavoriState {
 // ── Notifier ───────────────────────────────────────────────────
 class FavoriNotifier extends StateNotifier<FavoriState> {
   FavoriNotifier() : super(const FavoriState());
+
+  /// Repart de zéro. Appelé à la déconnexion et à la suppression de
+  /// compte : ces données sont celles d'une personne, pas du téléphone.
+  void vider() => state = const FavoriState();
 
 
 
@@ -173,5 +178,16 @@ class FavoriNotifier extends StateNotifier<FavoriState> {
 // ── Provider ───────────────────────────────────────────────────
 final favoriProvider =
     StateNotifierProvider<FavoriNotifier, FavoriState>((ref) {
-  return FavoriNotifier();
+  final notifier = FavoriNotifier();
+
+  // Les favoris appartiennent à un compte, pas à l'appareil. Sans ce
+  // vidage, ils survivaient à la déconnexion : la personne suivante à
+  // se connecter sur ce téléphone voyait les établissements aimés par
+  // la précédente. Le panier et le profil le faisaient déjà, ceux-ci
+  // avaient été oubliés.
+  ref.listen(authProvider, (previous, next) {
+    if (!next.isAuthenticated) notifier.vider();
+  });
+
+  return notifier;
 });
