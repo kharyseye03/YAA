@@ -15,6 +15,7 @@ import '../../auth/providers/auth_notifier.dart';
 import '../../cart/providers/delivery_address_provider.dart';
 import '../../user/providers/user_notifier.dart';
 import '../cart/delivery_address_sheet.dart';
+import 'suppression_compte_sheet.dart';
 
 /// Profil du client.
 ///
@@ -147,9 +148,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
             SizedBox(height: AppDimens.lg),
 
-            // ── Déconnexion ───────────────────────────────
-            // Dans sa propre carte, isolée du reste : c'est la seule
-            // action de l'écran qui change l'état de la session.
+            // ── Fin de session ────────────────────────────
+            // Les deux seules actions de l'écran qui ne mènent nulle
+            // part mais agissent sur le compte, isolées du reste.
             _Carte(children: [
               _Ligne(
                 icon      : Icons.logout_rounded,
@@ -157,6 +158,24 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 onTap     : _confirmerDeconnexion,
                 couleur   : AppColors.error,
                 chevron   : false,
+              ),
+            ]),
+
+            SizedBox(height: AppDimens.lg),
+
+            // Séparée de la déconnexion, et non voisine dans la même
+            // carte : l'une est quotidienne, l'autre irréversible.
+            // Côte à côte, un doigt pressé confond les deux.
+            //
+            // Sa présence est une exigence de Google Play, qui impose
+            // depuis avril 2024 un chemin de suppression dans l'app.
+            _Carte(children: [
+              _Ligne(
+                icon      : Icons.delete_outline_rounded,
+                label     : 'Supprimer mon compte',
+                subtitle  : 'Action définitive',
+                onTap     : _supprimerCompte,
+                couleur   : AppColors.error,
               ),
             ]),
 
@@ -254,6 +273,25 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         ),
       ),
     );
+  }
+
+  /// Ouvre la feuille de suppression, et nettoie la session si le
+  /// compte a réellement été supprimé.
+  ///
+  /// Le `logout` est indispensable : sans lui, les jetons resteraient
+  /// dans le coffre et l'application tenterait de restaurer une
+  /// session dont le compte n'existe plus.
+  Future<void> _supprimerCompte() async {
+    final supprime = await showSuppressionCompteSheet(context);
+    if (!supprime || !mounted) return;
+
+    await ref.read(authProvider.notifier).logout();
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Votre compte a été supprimé.')),
+    );
+    context.goNamed(RouteNames.login);
   }
 
   Future<void> _confirmerDeconnexion() async {

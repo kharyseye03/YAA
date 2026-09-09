@@ -166,9 +166,8 @@ class ApiService {
       }
 
       final data = json.decode(response.body) as Map<String, dynamic>;
-      final errorMessage = MessagesErreur.depuisReponse(
+      throw MessagesErreur.depuisReponse(
           response.statusCode, data['message'] as String?);
-      throw Exception(errorMessage);
 
     } on SocketException {
       throw Exception(MessagesErreur.horsLigne);
@@ -215,9 +214,8 @@ class ApiService {
       }
 
       final data = json.decode(response.body) as Map<String, dynamic>;
-      final errorMessage = MessagesErreur.depuisReponse(
+      throw MessagesErreur.depuisReponse(
           response.statusCode, data['message'] as String?);
-      throw Exception(errorMessage);
 
     } on SocketException {
       throw Exception(MessagesErreur.horsLigne);
@@ -263,8 +261,8 @@ class ApiService {
       }
 
       final data = json.decode(response.body) as Map<String, dynamic>;
-      throw Exception(MessagesErreur.depuisReponse(
-          response.statusCode, data['message'] as String?));
+      throw MessagesErreur.depuisReponse(
+          response.statusCode, data['message'] as String?);
 
     } on SocketException {
       throw Exception(MessagesErreur.horsLigne);
@@ -310,9 +308,8 @@ class ApiService {
       }
 
       final data = json.decode(response.body) as Map<String, dynamic>;
-      final errorMessage = MessagesErreur.depuisReponse(
+      throw MessagesErreur.depuisReponse(
           response.statusCode, data['message'] as String?);
-      throw Exception(errorMessage);
 
     } on SocketException {
       throw Exception(MessagesErreur.horsLigne);
@@ -806,9 +803,11 @@ class ApiService {
       if (response.body.isNotEmpty) {
         try { data = json.decode(response.body) as Map<String, dynamic>; } catch (_) {}
       }
-      final errorMessage = MessagesErreur.depuisReponse(
+      // Le code HTTP n'est plus collé devant le message : il partait
+      // à l'écran, alors que MessagesErreur existe justement pour
+      // qu'aucun code n'y arrive. Il reste dans les journaux.
+      throw MessagesErreur.depuisReponse(
           response.statusCode, data['message'] as String?);
-      throw Exception('${response.statusCode} $errorMessage');
 
     } on SocketException {
       throw Exception(MessagesErreur.horsLigne);
@@ -970,8 +969,8 @@ class ApiService {
             json.decode(response.body) as Map<String, dynamic>);
       }
       final data = json.decode(response.body) as Map<String, dynamic>;
-      throw Exception(MessagesErreur.depuisReponse(
-          response.statusCode, data['message'] as String?));
+      throw MessagesErreur.depuisReponse(
+          response.statusCode, data['message'] as String?);
     } on SocketException {
       throw Exception(MessagesErreur.horsLigne);
     } on TimeoutException catch (e) {
@@ -1030,6 +1029,47 @@ class ApiService {
     }
   }
 
+  /// Supprime définitivement le compte du client authentifié.
+  ///
+  /// Aucun paramètre : c'est le porteur du jeton qui se supprime
+  /// lui-même. Le serveur doit aussi supprimer ou désactiver le compte
+  /// Keycloak — sans quoi l'utilisateur peut encore se connecter, et
+  /// l'application lui rouvre un compte vide.
+  ///
+  /// Lève si une commande est en cours ; le message du serveur n'est
+  /// pas affiché, l'écran dit lui-même quoi faire.
+  Future<void> supprimerCompte({required int id}) async {
+    try {
+      final uri = Uri.parse(ApiConfig.deleteAccountUrl(id));
+      ApiLogger.requete('DELETE', uri);
+      final chrono = Stopwatch()..start();
+
+      final response = await _send(
+        auth    : true,
+        request : (headers) => _client.delete(uri, headers: headers),
+      );
+
+      ApiLogger.reponse(
+          'DELETE', uri, response.statusCode, response.body, chrono.elapsed);
+
+      // 204 attendu, 200 toléré : certains backends renvoient un corps
+      // de confirmation là où la norme n'en demande pas.
+      if (response.statusCode == 200 || response.statusCode == 204) return;
+
+      if (response.body.isEmpty) {
+        throw Exception(MessagesErreur.pourStatut(response.statusCode));
+      }
+      final data = json.decode(response.body) as Map<String, dynamic>;
+      throw MessagesErreur.depuisReponse(
+          response.statusCode, data['message'] as String?);
+    } on SocketException {
+      throw Exception(MessagesErreur.horsLigne);
+    } catch (e) {
+      ApiLogger.erreur('supprimerCompte', e);
+      rethrow;
+    }
+  }
+
   // ════════════════════════════════════════════════════
   // MÉTHODES PUBLIQUES — Favoris structures
   // ════════════════════════════════════════════════════
@@ -1076,8 +1116,8 @@ class ApiService {
       final data = response.body.isNotEmpty
           ? json.decode(response.body) as Map<String, dynamic>
           : <String, dynamic>{};
-      throw Exception(MessagesErreur.depuisReponse(
-          response.statusCode, data['message'] as String?));
+      throw MessagesErreur.depuisReponse(
+          response.statusCode, data['message'] as String?);
     } on SocketException {
       throw Exception(MessagesErreur.horsLigne);
     } on TimeoutException catch (e) {
@@ -1129,8 +1169,8 @@ class ApiService {
       final data = response.body.isNotEmpty
           ? json.decode(response.body) as Map<String, dynamic>
           : <String, dynamic>{};
-      throw Exception(MessagesErreur.depuisReponse(
-          response.statusCode, data['message'] as String?));
+      throw MessagesErreur.depuisReponse(
+          response.statusCode, data['message'] as String?);
     } on SocketException {
       throw Exception(MessagesErreur.horsLigne);
     } on TimeoutException catch (e) {
