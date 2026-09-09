@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../config/maps/maps_config.dart';
 import '../../../../model/category/categorie_produit.dart';
 import '../../../../model/category/categorie_structure.dart';
 import '../../../../model/category/produit_detail.dart';
@@ -7,9 +8,12 @@ import '../../../../model/category/structure_detail.dart'; // contient aussi Pro
 import '../../../../service/api/api_service.dart';
 import '../../../location/providers/position_provider.dart';
 
-// Position par défaut si le GPS est indisponible (centre de Dakar)
-const _dakarLat = 14.6928;
-const _dakarLng = -17.4467;
+// Position par défaut si le GPS est indisponible.
+//
+// Rattachée à MapsConfig plutôt que recopiée : cette valeur existait
+// ici en double, et le jour de la bascule vers Conakry on aurait pu
+// n'en changer qu'une — laissant « Autour de vous » chercher des
+// commerces à Dakar pendant que la carte affichait la Guinée.
 
 // Rayon de la section "Autour de vous" (en mètres)
 const _nearbyRayon = 3000.0;
@@ -85,8 +89,8 @@ final structuresProvider =
 /// distance par le backend. Fallback : centre de Dakar si le GPS
 /// est indisponible (permission refusée, etc.)
 final nearbyStructuresProvider = FutureProvider<List<Structure>>((ref) async {
-  double lat = _dakarLat;
-  double lng = _dakarLng;
+  double lat = MapsConfig.villeLat;
+  double lng = MapsConfig.villeLng;
   try {
     final position = await ref.watch(currentPositionProvider.future);
     lat = position.latitude;
