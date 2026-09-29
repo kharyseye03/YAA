@@ -86,7 +86,7 @@ final structuresProvider =
 });
 
 /// Structures autour de l'utilisateur (rayon 3 km), triées par
-/// distance par le backend. Fallback : centre de Dakar si le GPS
+/// distance par le backend. Fallback : centre par défaut (Conakry) si le GPS
 /// est indisponible (permission refusée, etc.)
 final nearbyStructuresProvider = FutureProvider<List<Structure>>((ref) async {
   double lat = MapsConfig.villeLat;

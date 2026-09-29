@@ -205,7 +205,7 @@ class _CourseScreenState extends ConsumerState<CourseScreen> {
         CameraUpdate.newLatLngZoom(_myPosition, 15),
       );
     } catch (_) {
-      // GPS indisponible → on reste sur Dakar
+      // GPS indisponible → on reste sur le centre par défaut (Conakry)
     }
   }
 
