@@ -1,6 +1,9 @@
 name: yaa
 description: "YAA - Application mobile de vente en ligne"
 publish_to: 'none'
+# Le nombre après le + est le versionCode lu par Google Play : il doit
+# être supérieur à celui de tout bundle déjà téléversé, test fermé
+# compris. Les trous dans la suite sont sans conséquence.
 version: 1.0.0+1
 
 environment:
@@ -49,6 +52,9 @@ dependencies:
 
   # ── Utils ───────────────────────────────────────────────
   url_launcher: ^6.3.1
+  # Sélecteur de contacts du système : l'utilisateur choisit un numéro,
+  # l'app ne reçoit que lui. Aucune permission READ_CONTACTS.
+  flutter_native_contact_picker: ^0.0.12
 
   # ── Icons ───────────────────────────────────────────────
   remixicon: ^4.9.3

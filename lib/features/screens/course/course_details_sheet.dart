@@ -3,12 +3,14 @@ import '../../../core/errors/messages_erreur.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimens.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/utils/app_router.dart';
 import '../../../core/utils/phone_formatter.dart';
 import '../../../features/user/providers/user_notifier.dart';
+import '../../../model/user/user_profile.dart';
 import '../../../model/course/estimation_model.dart';
 import '../../../service/api/api_service.dart';
 import '../../../service/location/location_service.dart';
@@ -47,14 +49,30 @@ class _CourseDetailsSheetState extends ConsumerState<_CourseDetailsSheet> {
   final _instructionsCtrl = TextEditingController();
 
   bool    _isSubmitting = false;
+  bool    _aTenteCommande = false;
   String? _error;
 
   @override
   void initState() {
     super.initState();
-    // Téléphone du profil, remis au format guinéen
-    _expedTelCtrl.text =
-        formatPhone(ref.read(userProvider).profile?.telephone ?? '');
+    _preremplirExpediteur(ref.read(userProvider).profile);
+  }
+
+  /// Le numéro de l'expéditeur, c'est presque toujours celui du
+  /// compte : on le pose d'avance plutôt que de le faire retaper.
+  ///
+  /// Deux précautions. [telephoneLocal] d'abord, parce qu'un compte
+  /// créé avec l'indicatif est stocké `221770008899` : [formatPhone]
+  /// seul en ferait `221 77 00 88`, un numéro plausible et faux.
+  /// Ensuite, ne jamais écraser ce qui est déjà dans le champ — le
+  /// profil peut arriver après l'ouverture de la feuille, et
+  /// l'utilisateur a pu commencer à taper, ou désigner quelqu'un
+  /// d'autre comme expéditeur.
+  void _preremplirExpediteur(UserProfile? profil) {
+    if (_expedTelCtrl.text.isNotEmpty) return;
+    final telephone = profil?.telephone ?? '';
+    if (telephone.isEmpty) return;
+    _expedTelCtrl.text = formatPhone(telephoneLocal(telephone));
   }
 
   @override
@@ -65,7 +83,28 @@ class _CourseDetailsSheetState extends ConsumerState<_CourseDetailsSheet> {
     super.dispose();
   }
 
+  Future<void> _remplirDepuisContacts(TextEditingController ctrl) async {
+    final choix = await choisirTelephoneDansContacts();
+    if (!mounted) return;
+
+    // Le bandeau d'erreur de la feuille sert aussi pour ça : sur un
+    // téléphone dont l'application Contacts ne répond pas, l'utilisateur
+    // doit savoir qu'il peut taper le numéro lui-même.
+    if (choix.erreur != null) {
+      setState(() => _error = choix.erreur);
+      return;
+    }
+    if (choix.numero == null) return; // annulation
+    ctrl.text = choix.numero!;
+    // Un choix réussi lève le bandeau d'un échec précédent
+    if (_error != null) setState(() => _error = null);
+    // Après un premier essai, efface l'erreur « Champ requis » du champ
+    // qu'on vient de remplir. Avant, on n'en affiche aucune.
+    if (_aTenteCommande) _formKey.currentState?.validate();
+  }
+
   Future<void> _commander() async {
+    _aTenteCommande = true;
     if (!(_formKey.currentState?.validate() ?? false)) return;
     final depart  = widget.args.depart;
     final arrivee = widget.args.arrivee;
@@ -107,6 +146,14 @@ class _CourseDetailsSheetState extends ConsumerState<_CourseDetailsSheet> {
 
   @override
   Widget build(BuildContext context) {
+    // Le profil est chargé à la connexion, mais l'appel est asynchrone :
+    // sur un réseau lent il peut arriver après l'ouverture de la feuille.
+    ref.listen(userProvider, (_, suivant) {
+      if (suivant.profile != null) {
+        setState(() => _preremplirExpediteur(suivant.profile));
+      }
+    });
+
     final depart  = widget.args.depart;
     final arrivee = widget.args.arrivee;
     final estim   = widget.estimation;
@@ -247,7 +294,9 @@ class _CourseDetailsSheetState extends ConsumerState<_CourseDetailsSheet> {
                             child: YaaTextField(
                               controller      : _expedTelCtrl,
                               hint            : kExempleTelephone,
-                              prefixIcon      : Icons.phone_outlined,
+                              suffixIcon      : _BoutonContacts(
+                                  onPressed: () =>
+                                      _remplirDepuisContacts(_expedTelCtrl)),
                               keyboardType    : TextInputType.phone,
                               textInputAction : TextInputAction.next,
                               inputFormatters : [PhoneInputFormatter()],
@@ -269,7 +318,9 @@ class _CourseDetailsSheetState extends ConsumerState<_CourseDetailsSheet> {
                             child: YaaTextField(
                               controller      : _destTelCtrl,
                               hint            : kExempleTelephone,
-                              prefixIcon      : Icons.phone_outlined,
+                              suffixIcon      : _BoutonContacts(
+                                  onPressed: () =>
+                                      _remplirDepuisContacts(_destTelCtrl)),
                               keyboardType    : TextInputType.phone,
                               textInputAction : TextInputAction.next,
                               inputFormatters : [PhoneInputFormatter()],
@@ -304,6 +355,27 @@ class _CourseDetailsSheetState extends ConsumerState<_CourseDetailsSheet> {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Icône en bout de champ téléphone : ouvre les contacts du téléphone.
+///
+/// Trait fin plutôt que pictogramme plein — même famille que la cloche
+/// de l'accueil, et le champ respire depuis qu'il n'a plus d'icône à
+/// gauche.
+class _BoutonContacts extends StatelessWidget {
+  const _BoutonContacts({required this.onPressed});
+
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      tooltip   : 'Choisir dans mes contacts',
+      onPressed : onPressed,
+      icon      : Icon(LucideIcons.userPlus,
+          size: 19.r, color: AppColors.secondary),
     );
   }
 }
