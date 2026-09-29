@@ -4,7 +4,7 @@ publish_to: 'none'
 # Le nombre après le + est le versionCode lu par Google Play : il doit
 # être supérieur à celui de tout bundle déjà téléversé, test fermé
 # compris. Les trous dans la suite sont sans conséquence.
-version: 1.0.0+1
+version: 1.0.0+10
 
 environment:
   sdk: ^3.7.0
