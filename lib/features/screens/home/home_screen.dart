@@ -10,6 +10,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimens.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/utils/app_router.dart';
+import '../../favoris/providers/favori_notifier.dart';
 import '../../../shared/widgets/map_prewarm.dart';
 import '../cart/cart_screen.dart';
 import '../favoris/favoris_screen.dart';
@@ -21,6 +22,7 @@ import 'category_list.dart';
 import 'service_cards.dart';
 import 'home_bottom_nav.dart';
 import 'home_header.dart';
+import 'promo_sheet.dart';
 import 'providers/category_provider.dart';
 import '../../../config/api/api_config.dart';
 import '../category/category_screen.dart';
@@ -35,7 +37,9 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   int _currentNavIndex = 0;
-  int _activeCategoryIndex = 0;
+  /// -1 tant que rien n'a été touché : à l'ouverture de l'accueil,
+  /// aucune catégorie n'est mise en avant.
+  int _activeCategoryIndex = -1;
 
   // ── Bannières du carrousel ───────────────────────────────
   // Slide 1 : Promo acquisition · Slide 2 : Pub sponsorisée
@@ -67,12 +71,45 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    // Les favoris étaient chargés seulement à l'ouverture de l'onglet
+    // Favoris : sur l'accueil, tous les cœurs paraissaient donc vides
+    // même pour une structure déjà enregistrée. On les demande ici,
+    // après la première frame pour ne pas modifier un provider
+    // pendant la construction.
+    Future.microtask(() {
+      if (mounted) ref.read(favoriProvider.notifier).loadFavoris();
+    });
     SystemChrome.setSystemUIOverlayStyle(
       const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
         statusBarIconBrightness: Brightness.light,
         statusBarBrightness: Brightness.dark,
       ),
+    );
+  }
+
+  /// Ouvre la page détaillée d'une bannière.
+  ///
+  /// Seule la première en a une pour l'instant. Les autres restent
+  /// muettes plutôt que d'ouvrir une page vide — une bannière qui ne
+  /// mène nulle part vaut mieux qu'une page qui n'a rien à dire.
+  void _ouvrirPromo(int index) {
+    if (index != 0) return;
+    showPromoSheet(
+      context,
+      // Portrait 768×1137, la seule des images d'essai assez grande
+      // pour un fond plein écran sans pixelliser.
+      image         : 'assets/images/test4.jpeg',
+      titre         : '-50 % sur votre\n1re commande',
+      sousTitre     : 'Profitez de la moitié du prix sur votre toute '
+                      'première commande, quel que soit l\'établissement.',
+      codePromo     : 'BIENVENUE',
+      mention       : 'Offre valable 7 jours · une seule utilisation par compte',
+      libelleAction : 'Découvrir les établissements',
+      // Ferme et laisse l'utilisateur sur l'accueil, où sont les
+      // catégories : il vient d'être convaincu, autant ne pas
+      // l'envoyer ailleurs.
+      onAction      : () => setState(() => _currentNavIndex = 0),
     );
   }
 
@@ -138,7 +175,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             Padding(
               padding: EdgeInsets.symmetric(
                   horizontal: AppDimens.screenPadding),
-              child: PromoBannerCarousel(banners: _banners),
+              child: PromoBannerCarousel(
+                banners: _banners,
+                onBannerTap: _ouvrirPromo,
+              ),
             ),
             SizedBox(height: AppDimens.xxl),
           ],
@@ -240,19 +280,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           SizedBox(height: AppDimens.xxl),
 
 // ── Section : Restaurants proches ──────────────────────
-          _buildSectionHeader('Autour de vous', onSeeAll: () {
-            final cats = ref.read(categoriesProvider).value;
-            if (cats != null && cats.isNotEmpty) {
-              final restaurant = cats.first;
-              context.pushNamed(
-                RouteNames.category,
-                extra: CategoryScreenArgs(
-                  categoryName: restaurant.name,
-                  categoryId: restaurant.id,
-                ),
-              );
-            }
-          }),
+          // « Tous » ouvrait l'écran Catégorie sur cats.first, donc
+          // les restaurants — par le seul hasard de l'ordre renvoyé
+          // par le serveur. Une section qui promet la proximité doit
+          // montrer ce qui est proche, toutes catégories confondues.
+          _buildSectionHeader(
+            'Autour de vous',
+            onSeeAll: () => context.pushNamed(RouteNames.autourDeVous),
+          ),
           SizedBox(height: AppDimens.md),
           SizedBox(
             height: 200.h,
@@ -295,6 +330,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         imageUrl     : s.logoUrl,
                         distance     : s.distance > 0 ? s.distanceLabel : null,
                       ),
+                      // Le provider bascule l'état sur-le-champ puis
+                      // appelle /structures-favoris/toggle. En cas
+                      // d'échec il revient en arrière tout seul, donc
+                      // rien à gérer ici.
+                      isFavori      : ref.watch(favoriProvider).isFavori(s.id),
+                      isToggling    : ref.watch(favoriProvider).isToggling(s.id),
+                      onFavoriteTap : () => ref
+                          .read(favoriProvider.notifier)
+                          .toggleFavori(s.id),
                       onTap: () => showRestaurantBottomSheet(
                         context,
                         RestaurantData(

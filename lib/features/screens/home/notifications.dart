@@ -15,54 +15,17 @@ class NotificationsScreen extends StatefulWidget {
 }
 
 class _NotificationsScreenState extends State<NotificationsScreen> {
-  // TODO: remplacer par un vrai provider
-  final List<NotifItem> _notifications = [
-    NotifItem(
-      icon      : Icons.shopping_bag_outlined,
-      iconBg    : AppColors.primarySurface,
-      iconColor : AppColors.primary,
-      title     : 'Commande confirmée',
-      subtitle  : 'Votre commande #1042 chez Chez Fatou a bien été confirmée.',
-      time      : 'Il y a 2 min',
-      isUnread  : true,
-    ),
-    NotifItem(
-      icon      : Icons.local_shipping_outlined,
-      iconBg    : AppColors.infoLight,
-      iconColor : AppColors.info,
-      title     : 'En cours de livraison',
-      subtitle  : 'Votre livreur est en route. Arrivée estimée dans 10 min.',
-      time      : 'Il y a 20 min',
-      isUnread  : true,
-    ),
-    NotifItem(
-      icon      : Icons.check_circle_outline_rounded,
-      iconBg    : AppColors.successLight,
-      iconColor : AppColors.success,
-      title     : 'Commande livrée',
-      subtitle  : 'Votre commande #1038 a bien été livrée. Bon appétit !',
-      time      : 'Hier, 19h30',
-      isUnread  : false,
-    ),
-    NotifItem(
-      icon      : Icons.local_offer_outlined,
-      iconBg    : Color(0xFFFFF0E6),
-      iconColor : AppColors.secondary,
-      title     : 'Offre spéciale ce week-end',
-      subtitle  : '-20% sur toutes vos commandes avec le code WEEKEND20.',
-      time      : 'Hier, 10h00',
-      isUnread  : false,
-    ),
-    NotifItem(
-      icon      : Icons.account_balance_wallet_outlined,
-      iconBg    : AppColors.successLight,
-      iconColor : AppColors.success,
-      title     : 'Remboursement effectué',
-      subtitle  : 'Un remboursement de 3 500 F a été crédité sur votre compte.',
-      time      : 'Il y a 3 jours',
-      isUnread  : false,
-    ),
-  ];
+  /// Vide tant que les notifications ne sont pas développées.
+  ///
+  /// Cinq notifications d'exemple vivaient ici — commande confirmée,
+  /// livreur en route, code promo. Elles donnaient le change en
+  /// maquette, mais en production elles annoncent des commandes qui
+  /// n'existent pas. L'écran affiche donc son état vide, qui était
+  /// déjà écrit ([_buildEmpty]).
+  ///
+  /// Le jour venu : brancher un provider ici, le reste de l'écran
+  /// (tuiles, pastille de non-lu, compteur) fonctionne déjà.
+  final List<NotifItem> _notifications = [];
 
   int get _unreadCount => _notifications.where((n) => n.isUnread).length;
 

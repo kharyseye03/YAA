@@ -243,22 +243,34 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen> {
 
   // ── OTP Boxes ────────────────────────────────────────────
   Widget _buildOtpBoxes() {
+    // Marge déclarée une seule fois, et réutilisée par le calcul.
+    //
+    // Elle valait 5.w à l'affichage mais 5 tout court dans le calcul de
+    // largeur : la place réservée aux marges était donc juste sur un
+    // écran de 375, et trop petite partout ailleurs. Sur un écran large
+    // où .w vaut 1,2, les douze marges prenaient 72 px au lieu des 60
+    // prévus — d'où un débordement de 12 px.
+    final margeH = 5.w;
 
-    final screenWidth = MediaQuery.of(context).size.width;
-    final totalMargin = 5 * 2 * 6;        // margin horizontale × 6 boîtes
-    final totalPadding = AppDimens.screenPadding * 2;
-    final boxSize = (screenWidth - totalPadding - totalMargin) / 6;
+    // LayoutBuilder plutôt que MediaQuery : on mesure la largeur
+    // réellement disponible au lieu de la déduire de celle de l'écran
+    // moins des marges supposées. Le calcul reste juste même si un
+    // parent change son padding.
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final boxSize =
+            ((constraints.maxWidth - margeH * 2 * 6) / 6).clamp(24.0, 72.0);
 
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: List.generate(6, (index) {
-        final isFilled = _code[index].isNotEmpty;
-        final isActive = index == _activeIndex;
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(6, (index) {
+            final isFilled = _code[index].isNotEmpty;
+            final isActive = index == _activeIndex;
 
-        return Container(
-          width: boxSize,
-          height: boxSize,
-          margin: EdgeInsets.symmetric(horizontal: 5.w),
+            return Container(
+              width: boxSize,
+              height: boxSize,
+              margin: EdgeInsets.symmetric(horizontal: margeH),
           decoration: BoxDecoration(
             color: isActive
                 ? AppColors.primarySurface
@@ -273,19 +285,21 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen> {
               width: isActive ? 1.5 : 1,
             ),
           ),
-          child: Center(
-            child: Text(
-              _code[index],
-              style: TextStyle(
-                fontFamily: 'PlusJakartaSans',
-                fontSize: 24.sp,
-                fontWeight: FontWeight.w700,
-                color: AppColors.dark,
+              child: Center(
+                child: Text(
+                  _code[index],
+                  style: TextStyle(
+                    fontFamily: 'PlusJakartaSans',
+                    fontSize: 24.sp,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.dark,
+                  ),
+                ),
               ),
-            ),
-          ),
+            );
+          }),
         );
-      }),
+      },
     );
   }
 

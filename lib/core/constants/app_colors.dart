@@ -79,6 +79,10 @@ abstract final class AppColors {
   static const Color info = primary;
   static const Color infoLight = primarySurface;
 
+  /// Cœur d'un favori actif. Volontairement distincte de [error] :
+  /// un favori est une marque d'attachement, pas un avertissement.
+  static const Color favori = Color(0xFFFF4D6D);
+
   // ── Couleurs de catégorie ────────────────────────────────
   // Alias, jamais de littéral : ces couleurs reprennent la palette de
   // marque. Dupliquer la valeur hexa ferait diverger les écrans dès

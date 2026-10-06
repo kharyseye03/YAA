@@ -104,17 +104,41 @@ class YaaButton extends StatelessWidget {
       );
     }
 
+    // Le libellé est contraint, et rétréci plutôt que tronqué.
+    //
+    // Un Text nu dans un Row prend sa largeur naturelle et déborde
+    // quand la phrase s'allonge — « Commander · 1 250 000 GNF » sur un
+    // petit écran. ScreenUtil n'y change rien : il met la police à
+    // l'échelle de l'écran, il ne raccourcit pas le texte.
+    //
+    // scaleDown plutôt qu'ellipsis, parce qu'un bouton d'action porte
+    // souvent un montant : « Commander · 1 250… » serait pire que des
+    // caractères un peu plus petits.
+    final texte = Flexible(
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Text(
+          label,
+          maxLines : 1,
+          style    : AppTextStyles.button.copyWith(color: color),
+        ),
+      ),
+    );
+
     if (icon != null) {
       return Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(label, style: AppTextStyles.button.copyWith(color: color)),
+          texte,
           SizedBox(width: AppDimens.sm),
           Icon(icon, size: AppDimens.iconMd),
         ],
       );
     }
 
-    return Text(label, style: AppTextStyles.button.copyWith(color: color));
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [texte],
+    );
   }
 }

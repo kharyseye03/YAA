@@ -7,19 +7,17 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'core/theme/app_theme.dart';
 import 'core/constants/constants.dart';
 import 'core/utils/app_router.dart';
+import 'service/auth/token_storage.dart';
 import 'features/auth/providers/auth_notifier.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Lancé sans être attendu : tant que ce Future n'est pas terminé,
-  // rien ne s'affiche, et l'utilisateur regarde une fenêtre vide. La
-  // première carte n'arrive qu'après le splash et l'authentification,
-  // largement le temps qu'il aboutisse — MapPrewarm l'attend
-  // explicitement avant de créer quoi que ce soit.
   rendererCarte = _choisirRendererCarte();
 
   final prefs = await SharedPreferences.getInstance();
+
+  await TokenStorage.purgerAncienStockage(prefs);
 
   runApp(
     ProviderScope(
@@ -53,8 +51,6 @@ Future<void> _choisirRendererCarte() async {
   try {
     await maps.initializeWithRenderer(AndroidMapRenderer.latest);
   } catch (_) {
-    // Renderer indisponible sur cet appareil : Android retombe seul
-    // sur l'ancien. Le démarrage ne doit pas échouer pour autant.
   }
 }
 
@@ -65,14 +61,8 @@ class YaaApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(routerProvider);
 
-    // Taille de référence de la maquette : tout ce qui passe par
-    // AppDimens et AppTextStyles est mis à l'échelle depuis cette
-    // base. 375 × 812 correspond à un téléphone courant ; sur un
-    // écran plus étroit ou plus large, les tailles suivent.
     return ScreenUtilInit(
       designSize    : const Size(375, 812),
-      // Évite que le texte devienne illisible sur les très petits
-      // écrans : la taille ne descend pas en dessous du raisonnable.
       minTextAdapt  : true,
       splitScreenMode: true,
       builder: (context, _) => MaterialApp.router(

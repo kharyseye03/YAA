@@ -236,7 +236,12 @@ class _RestaurantSheetState extends ConsumerState<_RestaurantSheet> {
           ? GestureDetector(
               onTap: () {
                 Navigator.of(context).pop();
-                context.goNamed(RouteNames.cart);
+                // pushNamed et non goNamed : goNamed remplace la pile,
+                // le panier devenait donc un cul-de-sac dont on ne
+                // pouvait sortir qu'en commandant. Empilé, le retour
+                // ramène là où l'on était — souvent pour ajouter un
+                // autre produit.
+                context.pushNamed(RouteNames.cart);
               },
               child: Container(
                 height : 52.h,
@@ -872,22 +877,36 @@ class _SectionCatalogue {
 
 // ── Delegate pour onglets sticky ──────────────────────────
 class _TabsDelegate extends SliverPersistentHeaderDelegate {
+  /// La hauteur est arrondie au pixel entier.
+  ///
+  /// Un sliver épinglé annonce son encombrement, et Flutter vérifie
+  /// ensuite que ce qui est peint correspond. Une valeur ScreenUtil
+  /// tombe presque toujours sur une fraction — 43.h vaut 52.8 sur un
+  /// grand écran — et l'enfant se peint sur 52.6. L'écart de deux
+  /// dixièmes suffit à violer l'invariant `layoutExtent <=
+  /// paintExtent` : l'assertion coupe le rendu, et toute la feuille
+  /// reste blanche.
+  _TabsDelegate({required this.child, required double height})
+      : height = height.roundToDouble();
+
   final Widget child;
   final double height;
-  const _TabsDelegate({required this.child, required this.height});
 
   @override
   double get minExtent => height;
   @override
   double get maxExtent => height;
 
+  /// L'enfant est enfermé dans exactement la hauteur annoncée, pour
+  /// qu'il ne puisse pas diverger de la déclaration ci-dessus.
   @override
   Widget build(
           BuildContext context, double shrinkOffset, bool overlapsContent) =>
-      child;
+      SizedBox(height: height, child: child);
 
   @override
-  bool shouldRebuild(_TabsDelegate old) => old.child != child;
+  bool shouldRebuild(_TabsDelegate old) =>
+      old.child != child || old.height != height;
 }
 
 // ── Carte produit (données API) ───────────────────────────

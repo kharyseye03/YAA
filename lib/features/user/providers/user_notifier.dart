@@ -1,10 +1,11 @@
-import 'package:flutter/foundation.dart';
+import '../../../core/utils/journal.dart';
 import '../../../core/errors/messages_erreur.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../features/auth/providers/auth_notifier.dart';
 import '../../../model/user/user_profile.dart';
 import '../../../service/api/api_service.dart';
+import '../../../service/auth/token_storage.dart';
 
 class UserState {
   final bool isLoading;
@@ -33,12 +34,23 @@ class UserNotifier extends StateNotifier<UserState> {
   final SharedPreferences _prefs;
   static const _imageUrlKey = 'user_image_url';
 
+  /// Charge le profil de l'utilisateur connecté.
+  ///
+  /// L'identité vient du **jeton**, jamais des préférences. Keycloak y
+  /// place déjà l'e-mail et le téléphone, et le renouvelle à chaque
+  /// connexion : c'est la seule source à jour. Une copie dans
+  /// SharedPreferences serait un second exemplaire qui diverge dès que
+  /// l'utilisateur change d'adresse dans son profil — et c'est
+  /// justement ce qui existait ici.
+  ///
+  /// Les préférences gardent encore l'e-mail, mais pour l'inscription
+  /// seule : à ce stade aucun jeton n'existe, et les quatre étapes du
+  /// parcours doivent se transmettre l'identifiant.
   Future<void> loadProfile() async {
-    final token = _prefs.getString('access_token');
+    final token = await TokenStorage.instance.getAccessToken();
     if (token == null) return;
 
-    // Email extrait du JWT uniquement pour savoir qui appeler
-    final email = _prefs.getString('user_email') ??
+    final email =
         AuthNotifier.decodeJwtPayload(token)?['email'] as String? ?? '';
     if (email.isEmpty) return;
 
@@ -50,9 +62,9 @@ class UserNotifier extends StateNotifier<UserState> {
         await _prefs.setString(_imageUrlKey, profile.imageUrl!);
       }
       state = state.copyWith(isLoading: false, profile: profile);
-      debugPrint('✅ Profil API : ${profile.fullName} | image: ${profile.imageUrl}');
+      journal('✅ Profil API : ${profile.fullName} | image: ${profile.imageUrl}');
     } catch (e) {
-      debugPrint('❌ loadProfile échoué : $e');
+      journal('❌ loadProfile échoué : $e');
       state = state.copyWith(isLoading: false);
     }
   }

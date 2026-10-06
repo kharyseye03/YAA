@@ -1,6 +1,7 @@
-import 'package:flutter/foundation.dart';
+import '../../../core/utils/journal.dart';
 import '../../../core/errors/messages_erreur.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../auth/providers/auth_notifier.dart';
 import '../../../model/favori/produit_favori_model.dart';
 import '../../../model/favori/structure_favori_model.dart';
 import '../../../service/api/api_service.dart';
@@ -56,6 +57,10 @@ class FavoriState {
 class FavoriNotifier extends StateNotifier<FavoriState> {
   FavoriNotifier() : super(const FavoriState());
 
+  /// Repart de zéro. Appelé à la déconnexion et à la suppression de
+  /// compte : ces données sont celles d'une personne, pas du téléphone.
+  void vider() => state = const FavoriState();
+
 
 
   // ── Charger la liste ─────────────────────────────────────────
@@ -70,7 +75,7 @@ class FavoriNotifier extends StateNotifier<FavoriState> {
         favorisIds : favoris.map((f) => f.structureId).toSet(),
       );
     } catch (e) {
-      debugPrint('❌ loadFavoris: $e');
+      journal('❌ loadFavoris: $e');
       state = state.copyWith(
         isLoading : false,
         error     : MessagesErreur.depuisException(e),
@@ -108,7 +113,7 @@ class FavoriNotifier extends StateNotifier<FavoriState> {
         togglingIds: state.togglingIds.difference({structureId}),
       );
     } catch (e) {
-      debugPrint('❌ toggleFavori: $e');
+      journal('❌ toggleFavori: $e');
       // Rollback : on remet l'état avant le clic
       state = state.copyWith(
         favoris     : snapshotFavoris,
@@ -128,7 +133,7 @@ class FavoriNotifier extends StateNotifier<FavoriState> {
         produitsFavorisIds : produits.map((p) => p.produitId).toSet(),
       );
     } catch (e) {
-      debugPrint('❌ loadProduitsFavoris: $e');
+      journal('❌ loadProduitsFavoris: $e');
     }
   }
 
@@ -159,7 +164,7 @@ class FavoriNotifier extends StateNotifier<FavoriState> {
         togglingIds: state.togglingIds.difference({produitId}),
       );
     } catch (e) {
-      debugPrint('❌ toggleProduitFavori: $e');
+      journal('❌ toggleProduitFavori: $e');
       // Rollback
       state = state.copyWith(
         produitsFavorisIds : snapshotIds,
@@ -173,5 +178,16 @@ class FavoriNotifier extends StateNotifier<FavoriState> {
 // ── Provider ───────────────────────────────────────────────────
 final favoriProvider =
     StateNotifierProvider<FavoriNotifier, FavoriState>((ref) {
-  return FavoriNotifier();
+  final notifier = FavoriNotifier();
+
+  // Les favoris appartiennent à un compte, pas à l'appareil. Sans ce
+  // vidage, ils survivaient à la déconnexion : la personne suivante à
+  // se connecter sur ce téléphone voyait les établissements aimés par
+  // la précédente. Le panier et le profil le faisaient déjà, ceux-ci
+  // avaient été oubliés.
+  ref.listen(authProvider, (previous, next) {
+    if (!next.isAuthenticated) notifier.vider();
+  });
+
+  return notifier;
 });

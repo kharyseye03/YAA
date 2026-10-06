@@ -1,21 +1,24 @@
 import 'dart:convert';
+import '../../../core/utils/journal.dart';
 import '../../../core/errors/messages_erreur.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../service/api/api_service.dart';
 import '../../../service/auth/token_storage.dart';
 import 'auth_state.dart';
 
-const _tokenKey = 'access_token';
 const _emailKey = 'user_email';
 const _telephoneKey = 'user_telephone';
 
 class AuthNotifier extends StateNotifier<AuthState> {
-  // L'état initial est optimiste (un token est présent) ; tryAutoLogin()
-  // au démarrage confirme ou infirme en tentant un renouvellement.
   AuthNotifier(this._prefs)
-      : super(AuthState(isAuthenticated: _prefs.containsKey(_tokenKey)));
+      // Non authentifié par défaut, et non plus « un jeton traîne-t-il
+      // dans SharedPreferences ». Les jetons vivent désormais dans le
+      // coffre chiffré, dont la lecture est asynchrone : impossible d'y
+      // répondre dans un constructeur. C'est tryAutoLogin, appelé par
+      // le splash, qui tranche — et lui vérifie en plus la validité et
+      // le rôle, ce que la présence d'une clé ne disait pas.
+      : super(const AuthState());
 
   final SharedPreferences _prefs;
 
@@ -33,13 +36,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
       final decoded = utf8.decode(base64.decode(payload));
       return json.decode(decoded) as Map<String, dynamic>;
     } catch (e) {
-      debugPrint('JWT decode error: $e');
+      journal('JWT decode error: $e');
       return null;
     }
   }
-
-  static String? _extractEmailFromJwt(String token) =>
-      decodeJwtPayload(token)?['email'] as String?;
 
   /// Rôle attendu dans `realm_access.roles` pour utiliser cette app.
   ///
@@ -79,7 +79,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       // coursier stocké ici le reconnecterait automatiquement au
       // prochain lancement, sans repasser par cet écran.
       if (!estCompteClient(response.accessToken)) {
-        debugPrint('⛔ connexion refusée : jeton sans rôle $_roleRequis');
+        journal('⛔ connexion refusée : jeton sans rôle $_roleRequis');
         state = state.copyWith(
           isLoading : false,
           error     : MessagesErreur.compteNonClient,
@@ -90,14 +90,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
       // Enregistre les deux tokens + la date d'expiration calculée
       await TokenStorage.instance.saveTokens(response);
 
-      // Extraire et sauvegarder l'email depuis le JWT Keycloak
-      final emailFromToken = _extractEmailFromJwt(response.accessToken);
-      if (emailFromToken != null) {
-        await _prefs.setString(_emailKey, emailFromToken);
-        debugPrint('✅ Email extrait du token: $emailFromToken');
-      } else {
-        debugPrint('⚠️ Email absent du token JWT');
-      }
+      // L'e-mail n'est plus recopié ici : il est dans le jeton, que
+      // UserNotifier décode au moment d'appeler l'API. Une copie dans
+      // les préférences ferait un second exemplaire, qui divergerait
+      // dès que l'utilisateur change d'adresse dans son profil.
 
       state = state.copyWith(isLoading: false, isAuthenticated: true);
       return true;
@@ -251,12 +247,12 @@ class AuthNotifier extends StateNotifier<AuthState> {
       // formulaire. On le déconnecte proprement.
       final token = await TokenStorage.instance.getAccessToken();
       if (token != null && !estCompteClient(token)) {
-        debugPrint('⛔ session refusée : jeton sans rôle $_roleRequis');
+        journal('⛔ session refusée : jeton sans rôle $_roleRequis');
         await TokenStorage.instance.clear();
         state = const AuthState();
         return false;
       }
-      debugPrint('🔐 Session restaurée (token encore valide)');
+      journal('🔐 Session restaurée (token encore valide)');
       state = state.copyWith(isAuthenticated: true);
       return true;
     }
@@ -265,28 +261,23 @@ class AuthNotifier extends StateNotifier<AuthState> {
     if (refresh == null) return false;
 
     try {
-      debugPrint('🔄 Renouvellement du token au démarrage…');
+      journal('🔄 Renouvellement du token au démarrage…');
       final response = await ApiService().refreshToken(refreshToken: refresh);
 
       // Même contrôle après renouvellement : le rôle pourrait avoir
       // changé côté Keycloak depuis la dernière connexion.
       if (!estCompteClient(response.accessToken)) {
-        debugPrint('⛔ session refusée après refresh : rôle $_roleRequis absent');
+        journal('⛔ session refusée après refresh : rôle $_roleRequis absent');
         await TokenStorage.instance.clear();
         state = const AuthState();
         return false;
       }
 
       await TokenStorage.instance.saveTokens(response);
-
-      final emailFromToken = _extractEmailFromJwt(response.accessToken);
-      if (emailFromToken != null) {
-        await _prefs.setString(_emailKey, emailFromToken);
-      }
       state = state.copyWith(isAuthenticated: true);
       return true;
     } catch (e) {
-      debugPrint('❌ Refresh au démarrage échoué : $e → login');
+      journal('❌ Refresh au démarrage échoué : $e → login');
       await TokenStorage.instance.clear();
       state = const AuthState();
       return false;

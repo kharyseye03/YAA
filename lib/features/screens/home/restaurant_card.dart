@@ -30,18 +30,36 @@ class RestaurantCard extends StatelessWidget {
     required this.restaurant,
     this.onTap,
     this.onFavoriteTap,
+    this.isFavori = false,
+    this.isToggling = false,
+    this.width,
   });
+
+  /// Largeur imposée. Null suit le parent — ce qu'il faut dans une
+  /// liste verticale. La valeur par défaut de 270 cadre le défilé
+  /// horizontal de l'accueil, où plusieurs cartes se côtoient.
+  final double? width;
 
   final RestaurantData restaurant;
   final VoidCallback? onTap;
   final VoidCallback? onFavoriteTap;
+
+  /// Cœur plein rouge quand vrai. La carte ne décide de rien : elle
+  /// affiche l'état que l'appelant lui donne, et signale l'intention
+  /// par [onFavoriteTap]. C'est le provider qui tranche.
+  final bool isFavori;
+
+  /// Appel en cours pour cette structure : le cœur laisse place à un
+  /// indicateur et cesse de répondre, pour qu'un double appui
+  /// n'envoie pas deux bascules qui s'annulent.
+  final bool isToggling;
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
       child: SizedBox(
-        width: 270.w,
+        width: width ?? 270.w,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -53,11 +71,11 @@ class RestaurantCard extends StatelessWidget {
                   child: ImageReseau(
                     url     : restaurant.imageUrl,
                     height  : 130.h,
-                    width   : 270.w,
+                    width   : double.infinity,
                     radius  : AppDimens.radiusLg,
                     fallback: Container(
                       height: 130.h,
-                      width: 270.w,
+                      width: double.infinity,
                       decoration: BoxDecoration(
                         color: AppColors.grey200,
                         borderRadius:
@@ -76,16 +94,48 @@ class RestaurantCard extends StatelessWidget {
                 Positioned(
                   top: 10.h,
                   right: 10.w,
+                  // Même rendu que la liste de l'écran Catégorie :
+                  // cœur plein rouge une fois aimé, contour blanc
+                  // sinon, indicateur pendant l'appel. Deux écrans
+                  // qui montrent les mêmes structures ne doivent pas
+                  // avoir deux façons de dire « favori ».
                   child: GestureDetector(
-                    onTap: onFavoriteTap,
-                    child: SvgPicture.asset(
-                      'assets/icones/heart.svg',
-                      width: 22.r,
-                      height: 22.r,
-                      colorFilter: const ColorFilter.mode(
-                        Colors.white,
-                        BlendMode.srcIn,
-                      ),
+                    onTap: isToggling ? null : onFavoriteTap,
+                    // 22 px, c'est petit pour un pouce : le padding
+                    // élargit la zone tactile sans déplacer l'icône.
+                    behavior: HitTestBehavior.opaque,
+                    child: Padding(
+                      padding: EdgeInsets.all(AppDimens.xs),
+                      child: isToggling
+                          ? SizedBox(
+                              width : 22.r,
+                              height: 22.r,
+                              child : CircularProgressIndicator(
+                                strokeWidth : 2.r,
+                                color       : Colors.white,
+                              ),
+                            )
+                          : isFavori
+                              ? Icon(
+                                  Icons.favorite_rounded,
+                                  color : Colors.red,
+                                  size  : 26.r,
+                                  shadows: [
+                                    Shadow(
+                                      color      : Colors.black26,
+                                      blurRadius : 6.r,
+                                    ),
+                                  ],
+                                )
+                              : SvgPicture.asset(
+                                  'assets/icones/heart.svg',
+                                  width : 24.r,
+                                  height: 24.r,
+                                  colorFilter: const ColorFilter.mode(
+                                    Colors.white,
+                                    BlendMode.srcIn,
+                                  ),
+                                ),
                     ),
                   ),
                 ),

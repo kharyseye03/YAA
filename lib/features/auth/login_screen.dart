@@ -9,7 +9,6 @@ import '../../core/constants/app_text_styles.dart';
 import '../../core/utils/app_router.dart';
 import 'providers/auth_notifier.dart';
 
-// ── Label avec astérisque (style YAA_PRO) ───────────────────────
 class _Label extends StatelessWidget {
   final String text;
   const _Label(this.text);
@@ -118,31 +117,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ── Logo ────────────────────────────────────────
-                // Logo large (ratio ~2.9:1) : on ne contraint que la
-                // largeur, la hauteur suit le ratio naturel.
                 SizedBox(height: AppDimens.huge),
-                Center(
-                  child: Image.asset(
-                    'assets/images/logo_off.png',
-                    width: 150.w,
-                  ),
-                ),
-                SizedBox(height: AppDimens.xxxl),
 
                 // ── Titre ────────────────────────────────────────
-                RichText(
-                  text: TextSpan(
-                    text: 'Bon retour ',
-                    style: AppTextStyles.h2,
-                    children: [
-                      TextSpan(
-                        text: 'chez vous ',
-                        style: AppTextStyles.h2
-                            .copyWith(color: AppColors.secondary),
-                      ),
-                    ],
-                  ),
+                Text(
+                  'Se connecter',
+                  style:
+                      AppTextStyles.h2.copyWith(color: AppColors.secondary),
                 ),
                 SizedBox(height: AppDimens.xs),
                 Text(

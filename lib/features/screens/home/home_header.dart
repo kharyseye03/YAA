@@ -23,7 +23,7 @@ class HomeHeader extends ConsumerWidget {
     final location = position.when(
       data    : (p) => p.adresse,
       loading : ()  => 'Localisation…',
-      error   : (_, __) => 'Dakar, Sénégal',
+      error   : (_, __) => 'Conakry, Guinée',
     );
 
     return Container(

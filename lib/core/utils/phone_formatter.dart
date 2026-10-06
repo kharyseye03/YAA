@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_native_contact_picker/flutter_native_contact_picker.dart';
 
 import '../../shared/widgets/yaa_text_field.dart';
 
@@ -33,8 +34,76 @@ String formatPhone(String value) {
 }
 
 /// `622 12 34 56` → `622123456`, la forme attendue par l'API.
-/// Tolère aussi un indicatif collé par le backend (`+224…`).
 String unformatPhone(String value) => value.replaceAll(RegExp(r'\D'), '');
+
+/// Ramène un numéro **venant du serveur** à ses 9 chiffres locaux.
+///
+/// Le backend ne stocke pas toujours la même forme : `771234567`,
+/// mais aussi `+221771234567` ou `00224622123456` selon la façon dont
+/// le compte a été créé. Chargé tel quel dans le champ, un numéro à
+/// indicatif fait 12 chiffres — la validation le rejette avec « Le
+/// numéro doit contenir 9 chiffres », sur une valeur que
+/// l'utilisateur n'a pas saisie et qu'il ne comprend pas.
+///
+/// On garde les **neuf derniers** chiffres : un indicatif est
+/// toujours en tête, jamais en queue. [formatPhone] garde les neuf
+/// premiers, ce qui est juste pendant la frappe mais faux ici — il
+/// transformerait `+221 77 123 45 67` en `221 77 12 34`, un numéro
+/// plausible et pourtant inexistant.
+///
+/// À appliquer chaque fois qu'une valeur stockée entre dans un champ.
+String telephoneLocal(String value) {
+  final chiffres = unformatPhone(value);
+  return chiffres.length <= kLongueurTelephone
+      ? chiffres
+      : chiffres.substring(chiffres.length - kLongueurTelephone);
+}
+
+/// Ce que rapporte le sélecteur de contacts.
+///
+/// Trois issues, à ne pas confondre : un numéro choisi, une annulation
+/// (les deux champs nuls, rien à dire à l'utilisateur), ou un échec
+/// accompagné d'un message à afficher.
+typedef ChoixContact = ({String? numero, String? erreur});
+
+/// Ouvre le sélecteur de contacts du système et rapporte le numéro
+/// choisi, prêt pour un champ : `622 12 34 56`.
+///
+/// Passe par l'écran natif du téléphone : l'app ne reçoit que le
+/// numéro sélectionné, sans permission READ_CONTACTS ni accès au
+/// carnet d'adresses. Un numéro enregistré avec indicatif (`+224…`)
+/// est ramené à ses 9 chiffres locaux par [telephoneLocal].
+///
+/// **Pourquoi un message d'erreur plutôt qu'un simple null.** Le
+/// sélecteur dépend de l'application Contacts du constructeur, et
+/// celles des téléphones vendus en Guinée — Tecno, Infinix, itel — ne
+/// sont pas celle de Google. Si l'une d'elles ne répond pas à
+/// l'intention, un null silencieux donne un bouton qui ne fait rien :
+/// l'utilisateur appuie, rien ne bouge, il ne sait pas que la saisie
+/// à la main reste possible. Le message le lui dit.
+Future<ChoixContact> choisirTelephoneDansContacts() async {
+  try {
+    final contact = await FlutterNativeContactPicker().selectPhoneNumber();
+    // L'utilisateur a fermé l'écran sans choisir : rien à signaler.
+    if (contact == null) return (numero: null, erreur: null);
+
+    final numero =
+        contact.selectedPhoneNumber ?? contact.phoneNumbers?.firstOrNull;
+    if (numero == null || unformatPhone(numero).isEmpty) {
+      return (
+        numero : null,
+        erreur : "Ce contact n'a pas de numéro de téléphone.",
+      );
+    }
+    return (numero: formatPhone(telephoneLocal(numero)), erreur: null);
+  } on PlatformException {
+    return (
+      numero : null,
+      erreur : "Impossible d'ouvrir vos contacts. "
+               'Saisissez le numéro à la main.',
+    );
+  }
+}
 
 /// Valide un numéro saisi. Renvoie null si tout va bien.
 String? validatePhone(String? value) {

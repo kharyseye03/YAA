@@ -1,6 +1,14 @@
 import '../../config/api/api_config.dart';
 
 class UserProfile {
+  /// Identifiant du client côté backend.
+  ///
+  /// Nullable : la suppression de compte est le seul appel qui en a
+  /// besoin, et rien ne garantit que toutes les réponses le portent.
+  /// Absent, l'écran de suppression bascule sur la demande par e-mail
+  /// plutôt que d'appeler une URL incomplète.
+  final int? id;
+
   final String firstName;
   final String lastName;
   final String email;
@@ -11,6 +19,7 @@ class UserProfile {
   final double? longitude;
 
   const UserProfile({
+    this.id,
     required this.firstName,
     required this.lastName,
     required this.email,
@@ -34,6 +43,7 @@ class UserProfile {
     }
 
     return UserProfile(
+      id        : (json['id'] as num?)?.toInt(),
       firstName : json['firstName'] as String? ?? '',
       lastName  : json['lastName']  as String? ?? '',
       email     : json['email']     as String? ?? '',

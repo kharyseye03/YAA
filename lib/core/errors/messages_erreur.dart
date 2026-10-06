@@ -1,6 +1,6 @@
 import 'dart:async';
+import '../utils/journal.dart';
 
-import 'package:flutter/foundation.dart';
 
 /// Ce que l'application dit à l'utilisateur quand quelque chose échoue.
 ///
@@ -18,6 +18,22 @@ import 'package:flutter/foundation.dart';
 /// Distinguer un 500 d'un 404 à l'écran n'aiderait personne : dans les
 /// deux cas l'utilisateur n'a aucune prise. Le détail part dans les
 /// logs, où il nous sert vraiment.
+/// Refus de saisie expliqué par le serveur, destiné à l'utilisateur.
+///
+/// Un type à part, et non une `Exception` ordinaire portant du texte :
+/// c'est ce qui permet à [MessagesErreur.depuisException] de laisser
+/// passer cette phrase-là sans ouvrir la porte à tout le reste. Sans
+/// lui il faudrait deviner, au vu d'une chaîne, si elle vient d'une
+/// validation ou d'une trace échappée — et deviner finit toujours par
+/// se tromper dans le mauvais sens.
+class ErreurValidation implements Exception {
+  const ErreurValidation(this.message);
+  final String message;
+
+  @override
+  String toString() => message;
+}
+
 abstract final class MessagesErreur {
   /// Réseau absent : le seul cas où l'utilisateur peut corriger.
   static const String horsLigne =
@@ -29,8 +45,7 @@ abstract final class MessagesErreur {
 
   /// Tout le reste. Serveur en panne, ressource absente, requête
   /// rejetée, réponse illisible : de son point de vue c'est identique.
-  static const String generique =
-      'Une erreur est survenue. Réessayez dans un instant.';
+  static const String generique = 'Une erreur est survenue. Réessayez.';
 
   // Anciens noms, conservés pour ne pas éparpiller les appels.
   static const String delaiDepasse       = generique;
@@ -53,15 +68,13 @@ abstract final class MessagesErreur {
   static const String identifiantsInvalides =
       'Numéro ou mot de passe incorrect.';
 
-  /// Compte valide, mais qui n'a rien à faire ici.
+  /// Compte valide, mais qui n'a rien à faire ici : un coursier.
   ///
-  /// Le mot de passe est bon : dire « Numéro ou mot de passe
-  /// incorrect » enverrait un coursier chercher une faute de frappe
-  /// pendant des heures. Le message doit donc l'orienter vers la
-  /// bonne application, sans nommer les rôles ni le serveur.
-  static const String compteNonClient =
-      'Ce compte n\'est pas un compte client. Utilisez l\'application '
-      'YAA PRO.';
+  /// Volontairement la même phrase que des identifiants refusés.
+  /// Deux raisons : c'est court, et surtout ça ne confirme pas
+  /// l'existence du compte sous un autre rôle. Un message distinct
+  /// permettrait de deviner, numéro par numéro, qui est coursier.
+  static const String compteNonClient = identifiantsInvalides;
 
   /// Traduction d'une réponse d'erreur du serveur d'authentification.
   ///
@@ -75,7 +88,7 @@ abstract final class MessagesErreur {
     String? description,
   ) {
     if (code != null || description != null) {
-      debugPrint('↩︎ auth ($statut) : $code — $description');
+      journal('↩︎ auth ($statut) : $code — $description');
     }
     return code == 'invalid_grant'
         ? identifiantsInvalides
@@ -91,17 +104,37 @@ abstract final class MessagesErreur {
 
   /// Message quand le serveur a répondu avec un corps.
   ///
-  /// Le texte du serveur est **journalisé, jamais affiché**. « Erreur
-  /// interne du serveur » ou une trace de validation Java n'ont rien à
-  /// faire sous les yeux d'un client, et le relayer revient à laisser
-  /// le backend écrire dans notre interface.
-  static String depuisReponse(int statut, String? messageServeur) {
+  /// **La ligne de partage est le code, pas le goût.**
+  ///
+  /// Un **400** ou un **422** dit ce que l'utilisateur a mal saisi :
+  /// « Service disponible uniquement en Guinée et au Sénégal »,
+  /// « Ce numéro est déjà utilisé ». Ces phrases sont écrites pour
+  /// lui, elles nomment une action qu'il peut corriger, et les cacher
+  /// le laisse réessayer la même chose indéfiniment.
+  ///
+  /// Tout le reste — 500 en tête — parle de nous, pas de lui.
+  /// « Erreur interne du serveur » n'apprend rien, n'oriente vers
+  /// aucune action, et donne l'impression que l'application est
+  /// cassée. Ces messages restent dans les journaux.
+  ///
+  /// Un garde-fou tout de même : au-delà de [_longueurMaxServeur], ce
+  /// n'est plus une phrase mais une trace technique échappée d'un
+  /// framework. On la journalise et on affiche le message générique.
+  static Exception depuisReponse(int statut, String? messageServeur) {
     final m = messageServeur?.trim();
-    if (m != null && m.isNotEmpty) {
-      debugPrint('↩︎ serveur ($statut) : $m');
+    if (m == null || m.isEmpty) return Exception(pourStatut(statut));
+
+    journal('↩︎ serveur ($statut) : $m');
+
+    final estValidation = statut == 400 || statut == 422;
+    if (estValidation && m.length <= _longueurMaxServeur) {
+      return ErreurValidation(m);
     }
-    return pourStatut(statut);
+    return Exception(pourStatut(statut));
   }
+
+  /// Au-delà, ce n'est plus un message mais une trace.
+  static const int _longueurMaxServeur = 160;
 
   /// Phrase présentable pour n'importe quelle exception attrapée.
   ///
@@ -113,9 +146,14 @@ abstract final class MessagesErreur {
   /// Seuls nos propres messages, définis ci-dessus, sont laissés
   /// passer. Tout le reste devient [generique] et part dans les logs.
   static String depuisException(Object e) {
+    // Refus de saisie : le serveur a expliqué à l'utilisateur ce qu'il
+    // doit corriger. Le type garantit l'origine du message, aucune
+    // heuristique n'est nécessaire.
+    if (e is ErreurValidation) return e.message;
+
     final texte = e.toString().replaceAll('Exception: ', '').trim();
     if (e is ParallelWaitError || !_connus.contains(texte)) {
-      debugPrint('↩︎ exception non présentable : $e');
+      journal('↩︎ exception non présentable : $e');
       return generique;
     }
     return texte;
@@ -124,8 +162,8 @@ abstract final class MessagesErreur {
   static const Set<String> _connus = {
     horsLigne,
     sessionExpiree,
+    // compteNonClient vaut la même phrase, il est donc déjà couvert
     identifiantsInvalides,
-    compteNonClient,
     generique,
   };
 }

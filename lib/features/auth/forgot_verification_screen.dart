@@ -244,44 +244,54 @@ class _ForgotVerificationScreenState extends ConsumerState<ForgotVerificationScr
   }
 
   Widget _buildOtpBoxes() {
-    final screenWidth  = MediaQuery.of(context).size.width;
-    final totalMargin  = 5 * 2 * 6;
-    final totalPadding = AppDimens.screenPadding * 2;
-    final boxSize      = (screenWidth - totalPadding - totalMargin) / 6;
+    // Même correctif que sur l'écran de vérification à l'inscription :
+    // la marge servait au calcul en valeur brute (5) et à l'affichage
+    // en valeur mise à l'échelle (5.w). Sur un écran large, les douze
+    // marges dépassaient la place réservée et la rangée débordait.
+    final margeH = 5.w;
 
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: List.generate(6, (index) { // ← 4 → 6
-        final isFilled = _code[index].isNotEmpty;
-        final isActive = index == _activeIndex;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final boxSize =
+            ((constraints.maxWidth - margeH * 2 * 6) / 6).clamp(24.0, 72.0);
 
-        return Container(
-          width  : boxSize,
-          height : boxSize,
-          margin : EdgeInsets.symmetric(horizontal: 5.w),
-          decoration: BoxDecoration(
-            color        : isActive ? AppColors.primarySurface : AppColors.grey100,
-            borderRadius : BorderRadius.circular(AppDimens.radiusMd),
-            border       : Border.all(
-              color : isActive
-                  ? AppColors.primary
-                  : isFilled ? AppColors.grey300 : Colors.transparent,
-              width : isActive ? 1.5 : 1,
-            ),
-          ),
-          child: Center(
-            child: Text(
-              _code[index],
-              style: TextStyle(
-                fontFamily : 'PlusJakartaSans',
-                fontSize   : 20.sp,
-                fontWeight : FontWeight.w700,
-                color      : AppColors.dark,
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(6, (index) {
+            final isFilled = _code[index].isNotEmpty;
+            final isActive = index == _activeIndex;
+
+            return Container(
+              width  : boxSize,
+              height : boxSize,
+              margin : EdgeInsets.symmetric(horizontal: margeH),
+              decoration: BoxDecoration(
+                color        : isActive
+                    ? AppColors.primarySurface
+                    : AppColors.grey100,
+                borderRadius : BorderRadius.circular(AppDimens.radiusMd),
+                border       : Border.all(
+                  color : isActive
+                      ? AppColors.primary
+                      : isFilled ? AppColors.grey300 : Colors.transparent,
+                  width : isActive ? 1.5 : 1,
+                ),
               ),
-            ),
-          ),
+              child: Center(
+                child: Text(
+                  _code[index],
+                  style: TextStyle(
+                    fontFamily : 'PlusJakartaSans',
+                    fontSize   : 20.sp,
+                    fontWeight : FontWeight.w700,
+                    color      : AppColors.dark,
+                  ),
+                ),
+              ),
+            );
+          }),
         );
-      }),
+      },
     );
   }
 
