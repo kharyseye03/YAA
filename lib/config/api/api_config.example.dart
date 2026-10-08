@@ -33,6 +33,17 @@ class ApiConfig {
   static const String userDetailEndpoint    = '/registrations/detail';
   static const String updateProfileEndpoint = '/registrations/update';
 
+  // ── Endpoints Notifications push ──────────────────
+  /// Jeton Firebase de cet appareil, rangé à côté du compte.
+  ///
+  /// POST pour l'enregistrer, DELETE /{token} à la déconnexion. Voir
+  /// `docs/specs_notifications_backend.md` pour le contrat complet.
+  static const String appareilsEndpoint = '/appareils';
+
+  /// À false tant que le backend n'expose pas ces deux routes : le
+  /// jeton n'est alors pas envoyé, et l'app ne tente rien.
+  static const bool notificationsPushDisponibles = false;
+
   // ── Endpoints Catégories ──────────────────────────
   static const String categoriesEndpoint          = '/categorie-structures';
   static const String structuresEndpoint          = '/structures';

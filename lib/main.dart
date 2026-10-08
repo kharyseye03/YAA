@@ -8,6 +8,7 @@ import 'core/theme/app_theme.dart';
 import 'core/constants/constants.dart';
 import 'core/utils/app_router.dart';
 import 'service/auth/token_storage.dart';
+import 'service/notifications/push_service.dart';
 import 'features/auth/providers/auth_notifier.dart';
 
 void main() async {
@@ -18,6 +19,11 @@ void main() async {
   final prefs = await SharedPreferences.getInstance();
 
   await TokenStorage.purgerAncienStockage(prefs);
+
+  // Avant runApp : c'est ici que se récupère le message ayant réveillé
+  // une app fermée. N'échoue jamais — sans Firebase configuré, le
+  // service se désactive et l'app démarre normalement.
+  await PushService.instance.initialiser();
 
   runApp(
     ProviderScope(
@@ -54,12 +60,32 @@ Future<void> _choisirRendererCarte() async {
   }
 }
 
-class YaaApp extends ConsumerWidget {
+class YaaApp extends ConsumerStatefulWidget {
   const YaaApp({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<YaaApp> createState() => _YaaAppState();
+}
+
+class _YaaAppState extends ConsumerState<YaaApp> {
+  @override
+  Widget build(BuildContext context) {
     final router = ref.watch(routerProvider);
+
+    // Le service reçoit les notifications, il ne sait pas naviguer :
+    // on lui donne ici de quoi le faire, une fois le routeur construit.
+    PushService.instance.onOuverture = (donnees) {
+      final type = donnees['type']?.toString() ?? '';
+      // Une notification de commande mène à la liste des commandes ;
+      // tout le reste à l'écran Notifications, qui sert de repli.
+      final destination = type.startsWith('COMMANDE') ||
+              type == 'COURSIER_ASSIGNE' ||
+              type == 'EN_LIVRAISON' ||
+              type == 'LIVREE'
+          ? RoutePaths.orders
+          : RoutePaths.notifications;
+      router.go(destination);
+    };
 
     return ScreenUtilInit(
       designSize    : const Size(375, 812),

@@ -717,6 +717,46 @@ class ApiService {
   }
 
   // ════════════════════════════════════════════════════
+  // MÉTHODES PUBLIQUES — Notifications push
+  // ════════════════════════════════════════════════════
+
+  /// Range le jeton Firebase de cet appareil à côté du compte.
+  ///
+  /// Le serveur doit traiter l'appel comme idempotent : l'app renvoie
+  /// le même jeton à chaque connexion, et à chaque renouvellement.
+  ///
+  /// Sans issue tant que [ApiConfig.notificationsPushDisponibles] est
+  /// à false : inutile d'empiler des erreurs réseau pour une route qui
+  /// n'existe pas encore.
+  Future<void> enregistrerAppareil({
+    required String token,
+    required String plateforme, // ANDROID | IOS
+  }) async {
+    if (!ApiConfig.notificationsPushDisponibles) return;
+    try {
+      await _post(
+        ApiConfig.appareilsEndpoint,
+        {'token': token, 'plateforme': plateforme},
+        auth: true,
+      );
+    } catch (e) {
+      ApiLogger.erreur('enregistrerAppareil', e);
+      rethrow;
+    }
+  }
+
+  /// Détache le jeton du compte, à la déconnexion.
+  Future<void> supprimerAppareil({required String token}) async {
+    if (!ApiConfig.notificationsPushDisponibles) return;
+    try {
+      await _delete('${ApiConfig.appareilsEndpoint}/$token', auth: true);
+    } catch (e) {
+      ApiLogger.erreur('supprimerAppareil', e);
+      rethrow;
+    }
+  }
+
+  // ════════════════════════════════════════════════════
   // MÉTHODES PUBLIQUES — User
   // ════════════════════════════════════════════════════
 
