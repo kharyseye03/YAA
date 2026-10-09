@@ -54,7 +54,12 @@ dependencies:
   url_launcher: ^6.3.1
   # Sélecteur de contacts du système : l'utilisateur choisit un numéro,
   # l'app ne reçoit que lui. Aucune permission READ_CONTACTS.
-  flutter_native_contact_picker: ^0.0.12
+  #
+  # Tenu en 0.0.11 : la 0.0.12 exige Dart ^3.11 (Flutter 3.41+) pour le
+  # support Swift Package Manager, que nous n'utilisons pas. Elle ne
+  # change rien à l'API. La 0.0.11 accepte Dart ^3.5.3, donc les deux
+  # postes de dev. À relever quand tout le monde sera passé à Flutter 3.41+.
+  flutter_native_contact_picker: ^0.0.11
 
   # ── Icons ───────────────────────────────────────────────
   remixicon: ^4.9.3
