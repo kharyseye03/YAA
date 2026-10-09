@@ -195,7 +195,7 @@ class _RestaurantSheetState extends ConsumerState<_RestaurantSheet> {
                               SliverPersistentHeader(
                                 pinned: true,
                                 delegate: _TabsDelegate(
-                                  height: 43.h,
+                                  height: _hauteurBarreOnglets,
                                   child: _buildTabs(sections),
                                 ),
                               ),
@@ -812,6 +812,24 @@ class _RestaurantSheetState extends ConsumerState<_RestaurantSheet> {
     );
   }
 
+  /// Épaisseur du filet sous les onglets. Non mise à l'échelle : un
+  /// trait de séparation fait un pixel, quel que soit l'écran.
+  static const double _filetOnglets = 1;
+
+  /// Hauteur totale de la barre d'onglets, filet compris.
+  ///
+  /// Arrondie ici, **une seule fois**, parce que [_TabsDelegate]
+  /// arrondit elle aussi ce qu'elle reçoit : partir d'un nombre déjà
+  /// entier garantit que les deux parlent de la même hauteur.
+  ///
+  /// C'est tout le sujet du « RenderFlex overflowed by 0.414 pixels ».
+  /// Le conteneur annonçait `43.h` et le contenu mesurait `42.h` plus
+  /// un filet d'un pixel non mis à l'échelle : deux calculs
+  /// indépendants qui ne tombaient juste que sur certains écrans. La
+  /// rangée se déduit maintenant du total, l'addition est exacte par
+  /// construction.
+  double get _hauteurBarreOnglets => (42.h + _filetOnglets).roundToDouble();
+
   Widget _buildTabs(List<_SectionCatalogue> tabs) {
     return Container(
       color: Colors.white,
@@ -819,7 +837,7 @@ class _RestaurantSheetState extends ConsumerState<_RestaurantSheet> {
         mainAxisSize: MainAxisSize.min,
         children: [
           SizedBox(
-            height: 42.h,
+            height: _hauteurBarreOnglets - _filetOnglets,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               padding: EdgeInsets.symmetric(

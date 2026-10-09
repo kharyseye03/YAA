@@ -100,7 +100,15 @@ class ApiService {
     if (token == null) throw _sessionExpired();
 
     response = await send(token);
-    if (response.statusCode == 401) throw _sessionExpired();
+    if (response.statusCode == 401) {
+      // Second refus, avec un jeton qui vient d'être émis : ce n'est
+      // donc pas une expiration. La cause est ailleurs — émetteur
+      // attendu différent, audience, horloges désynchronisées — et
+      // sans cette trace on conclut à tort à une session expirée.
+      final cause = response.headers['www-authenticate'];
+      ApiLogger.trace('401 malgré un jeton neuf → ${cause ?? "sans motif"}');
+      throw _sessionExpired();
+    }
     return response;
   }
 
@@ -730,13 +738,17 @@ class ApiService {
   /// n'existe pas encore.
   Future<void> enregistrerAppareil({
     required String token,
-    required String plateforme, // ANDROID | IOS
+    required String plateforme, // android | ios
   }) async {
     if (!ApiConfig.notificationsPushDisponibles) return;
     try {
       await _post(
-        ApiConfig.appareilsEndpoint,
-        {'token': token, 'plateforme': plateforme},
+        ApiConfig.deviceRegisterEndpoint,
+        {
+          'token'    : token,
+          'appType'  : ApiConfig.appType,
+          'platform' : plateforme,
+        },
         auth: true,
       );
     } catch (e) {
@@ -746,12 +758,35 @@ class ApiService {
   }
 
   /// Détache le jeton du compte, à la déconnexion.
+  ///
+  /// Le jeton passe en paramètre d'URL et non dans le chemin : c'est
+  /// la forme retenue par le backend.
   Future<void> supprimerAppareil({required String token}) async {
     if (!ApiConfig.notificationsPushDisponibles) return;
     try {
-      await _delete('${ApiConfig.appareilsEndpoint}/$token', auth: true);
+      await _delete(
+        ApiConfig.deviceUnregisterEndpoint,
+        queryParams : {'token': token},
+        auth        : true,
+      );
     } catch (e) {
       ApiLogger.erreur('supprimerAppareil', e);
+      rethrow;
+    }
+  }
+
+  /// Demande au backend de s'envoyer une notification de test, au
+  /// compte connecté. Sert à vérifier la chaîne complète — jeton
+  /// enregistré, Firebase, affichage — sans passer une vraie commande.
+  Future<void> envoyerNotificationDeTest() async {
+    try {
+      await _post(
+        '${ApiConfig.deviceTestEndpoint}?appType=${ApiConfig.appType}',
+        null,
+        auth: true,
+      );
+    } catch (e) {
+      ApiLogger.erreur('envoyerNotificationDeTest', e);
       rethrow;
     }
   }

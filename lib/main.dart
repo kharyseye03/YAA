@@ -78,12 +78,17 @@ class _YaaAppState extends ConsumerState<YaaApp> {
       final type = donnees['type']?.toString() ?? '';
       // Une notification de commande mène à la liste des commandes ;
       // tout le reste à l'écran Notifications, qui sert de repli.
-      final destination = type.startsWith('COMMANDE') ||
-              type == 'COURSIER_ASSIGNE' ||
-              type == 'EN_LIVRAISON' ||
-              type == 'LIVREE'
-          ? RoutePaths.orders
-          : RoutePaths.notifications;
+      // Les commandes vivent dans l'onglet 1 de l'accueil, elles n'ont
+      // pas d'écran à elles : d'où `?onglet=1` plutôt qu'une route
+      // dédiée. L'écran Notifications, lui, en a une vraie.
+      //
+      // Repli volontairement large : le backend ajoute des types au fil
+      // de l'eau — « En préparation » est arrivé après coup —, et mieux
+      // vaut ouvrir les commandes sur un type inconnu que l'écran
+      // Notifications, aujourd'hui vide.
+      final destination = type == 'PROMOTION' || type == 'INFO'
+          ? RoutePaths.notifications
+          : '${RoutePaths.home}?onglet=1';
       router.go(destination);
     };
 

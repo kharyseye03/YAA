@@ -36,13 +36,20 @@ class ApiConfig {
   // ── Endpoints Notifications push ──────────────────
   /// Jeton Firebase de cet appareil, rangé à côté du compte.
   ///
-  /// POST pour l'enregistrer, DELETE /{token} à la déconnexion. Voir
-  /// `docs/specs_notifications_backend.md` pour le contrat complet.
-  static const String appareilsEndpoint = '/appareils';
+  /// Les chemins partent de [baseUrl], qui contient déjà `/api/v1`.
+  static const String deviceRegisterEndpoint   = '/devices/register';
+  static const String deviceUnregisterEndpoint = '/devices/unregister';
 
-  /// À false tant que le backend n'expose pas ces deux routes : le
-  /// jeton n'est alors pas envoyé, et l'app ne tente rien.
-  static const bool notificationsPushDisponibles = false;
+  /// Envoie une notification de test au compte connecté.
+  static const String deviceTestEndpoint = '/devices/test';
+
+  /// Distingue les deux applications côté backend : `CLIENT` ici,
+  /// `PRO` dans l'app livreur.
+  static const String appType = 'CLIENT';
+
+  /// À false tant que le backend n'expose pas ces routes : le jeton
+  /// n'est alors pas envoyé, et l'app ne tente rien.
+  static const bool notificationsPushDisponibles = true;
 
   // ── Endpoints Catégories ──────────────────────────
   static const String categoriesEndpoint          = '/categorie-structures';

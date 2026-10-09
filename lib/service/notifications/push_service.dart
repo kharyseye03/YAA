@@ -61,7 +61,23 @@ class PushService {
   /// Appelé quand l'utilisateur touche une notification. Renseigné par
   /// l'application une fois le routeur construit — le service ne sait
   /// pas naviguer, il se contente de transmettre les données.
-  void Function(Map<String, dynamic> donnees)? onOuverture;
+  ///
+  /// L'affectation rejoue ce qui est arrivé trop tôt : [initialiser]
+  /// tourne avant `runApp`, donc le message qui a réveillé une app
+  /// fermée est connu avant qu'il y ait un routeur pour l'ouvrir.
+  /// Sans ce rattrapage, toucher une notification sur une app fermée
+  /// ouvrait l'accueil et rien d'autre.
+  set onOuverture(void Function(Map<String, dynamic> donnees)? callback) {
+    _onOuverture = callback;
+    final enAttente = _messageEnAttente;
+    if (callback != null && enAttente != null) {
+      _messageEnAttente = null;
+      callback(enAttente);
+    }
+  }
+
+  void Function(Map<String, dynamic> donnees)? _onOuverture;
+  Map<String, dynamic>? _messageEnAttente;
 
   // ── Démarrage ────────────────────────────────────────────────
 
@@ -119,7 +135,7 @@ class PushService {
       onDidReceiveNotificationResponse: (reponse) {
         final charge = reponse.payload;
         if (charge == null || charge.isEmpty) return;
-        onOuverture?.call(_decoder(charge));
+        _onOuverture?.call(_decoder(charge));
       },
     );
 
@@ -165,7 +181,8 @@ class PushService {
     try {
       await ApiService().enregistrerAppareil(
         token: jeton,
-        plateforme: Platform.isIOS ? 'IOS' : 'ANDROID',
+        // En minuscules : c'est la forme attendue par le backend.
+        plateforme: Platform.isIOS ? 'ios' : 'android',
       );
       journal('✅ Jeton de notification enregistré');
     } catch (e) {
@@ -220,7 +237,16 @@ class PushService {
     );
   }
 
-  void _ouvrir(RemoteMessage message) => onOuverture?.call(message.data);
+  void _ouvrir(RemoteMessage message) {
+    final rappel = _onOuverture;
+    if (rappel == null) {
+      // Trop tôt : le routeur n'existe pas encore. On garde le message
+      // et le setter le rejouera.
+      _messageEnAttente = message.data;
+      return;
+    }
+    rappel(message.data);
+  }
 
   // Le payload de flutter_local_notifications est une simple chaîne :
   // on y range les données sous forme `cle=valeur;cle=valeur`. Les

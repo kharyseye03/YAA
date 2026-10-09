@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,6 +10,7 @@ import '../../../core/constants/app_dimens.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/utils/app_router.dart';
 import '../../../core/utils/phone_formatter.dart';
+import '../../../service/api/api_service.dart';
 import '../../../service/location/location_service.dart';
 import '../../../shared/widgets/user_avatar.dart';
 import '../../auth/providers/auth_notifier.dart';
@@ -53,6 +55,28 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(siImpossible)),
     );
+  }
+
+  /// Demande au backend de nous envoyer une notification de test.
+  ///
+  /// Vérifie la chaîne entière : jeton bien enregistré côté serveur,
+  /// Firebase joignable, et affichage correct sur l'appareil. Un
+  /// succès ici ne garantit pas que les vraies notifications de
+  /// commande partent — ça, c'est la logique métier du backend.
+  Future<void> _testerNotification() async {
+    try {
+      await ApiService().envoyerNotificationDeTest();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Demande envoyée. La notification '
+            'devrait arriver dans quelques secondes.')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Échec : $e')),
+      );
+    }
   }
 
   @override
@@ -144,6 +168,21 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 label    : 'Conditions d\'utilisation',
                 onTap    : () => context.pushNamed(RouteNames.terms),
               ),
+              // Outil de développement : demande au backend de nous
+              // envoyer une notification, pour vérifier toute la
+              // chaîne sans passer une vraie commande.
+              //
+              // kDebugMode est une constante du compilateur : en
+              // release, cette branche est supprimée du binaire. La
+              // ligne n'est donc pas « cachée » aux utilisateurs, elle
+              // n'existe pas chez eux.
+              if (kDebugMode)
+                _Ligne(
+                  icon     : Icons.notifications_active_outlined,
+                  label    : 'Tester une notification',
+                  subtitle : 'Développement uniquement',
+                  onTap    : _testerNotification,
+                ),
             ]),
 
             SizedBox(height: AppDimens.lg),

@@ -29,14 +29,38 @@ import '../category/category_screen.dart';
 
 /// Main home dashboard screen.
 class HomeScreen extends ConsumerStatefulWidget {
-  const HomeScreen({super.key});
+  const HomeScreen({super.key, this.ongletInitial = 0});
+
+  /// Onglet ouvert à l'arrivée : 0 accueil, 1 commandes, 2 favoris,
+  /// 3 profil, 4 panier.
+  ///
+  /// Sert aux entrées qui ne passent pas par la barre de navigation —
+  /// aujourd'hui le clic sur une notification de commande. Ces écrans
+  /// n'ont pas de route à eux : ils vivent dans l'accueil, qui porte
+  /// le Scaffold et la barre du bas. Les afficher par une route
+  /// séparée les rendrait nus — fond noir et textes soulignés de
+  /// jaune, faute de Material au-dessus d'eux.
+  final int ongletInitial;
 
   @override
   ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
-  int _currentNavIndex = 0;
+  late int _currentNavIndex = widget.ongletInitial;
+
+  /// L'accueil n'est pas reconstruit quand on y revient : Flutter
+  /// réutilise l'état existant et se contente de remplacer le widget.
+  /// Sans ceci, arriver sur `/home?onglet=1` depuis l'accueil ne
+  /// changeait rien à l'écran — le clic sur une notification semblait
+  /// sans effet.
+  @override
+  void didUpdateWidget(HomeScreen ancien) {
+    super.didUpdateWidget(ancien);
+    if (widget.ongletInitial != ancien.ongletInitial) {
+      setState(() => _currentNavIndex = widget.ongletInitial);
+    }
+  }
   /// -1 tant que rien n'a été touché : à l'ouverture de l'accueil,
   /// aucune catégorie n'est mise en avant.
   int _activeCategoryIndex = -1;
