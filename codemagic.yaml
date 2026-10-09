@@ -39,9 +39,9 @@ workflows:
         bundle_identifier: gn.yaa.client
 
       vars:
-        # Identifiant numérique de l'app dans App Store Connect.
-        # À remplacer avant la première build.
-        APP_STORE_APPLE_ID: 0000000000
+        # Identifiant numérique de l'app dans App Store Connect,
+        # visible dans l'URL : /apps/6821167884/...
+        APP_STORE_APPLE_ID: 6821167884
 
     scripts:
       # Doit rester en tête : sans ces fichiers, l'analyse, les tests et
