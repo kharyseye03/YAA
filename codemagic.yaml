@@ -34,14 +34,16 @@ workflows:
       groups:
         - yaa-config
 
-      ios_signing:
-        distribution_type: app_store
-        bundle_identifier: gn.yaa.client
+      # Pas de bloc « ios_signing » ici : il récupère des fichiers de
+      # signature existants, sans jamais les créer. Sur un compte Apple
+      # neuf il n'y a ni certificat ni profil, et la build échoue avant
+      # le premier script. La création est faite plus bas, en explicite.
 
       vars:
         # Identifiant numérique de l'app dans App Store Connect,
         # visible dans l'URL : /apps/6821167884/...
         APP_STORE_APPLE_ID: 6821167884
+        BUNDLE_ID: gn.yaa.client
 
     scripts:
       # Doit rester en tête : sans ces fichiers, l'analyse, les tests et
@@ -59,7 +61,22 @@ workflows:
             exit 1
           fi
 
-      - name: Configurer la signature du projet Xcode
+      - name: Préparer le trousseau de la machine de build
+        script: keychain initialize
+
+      # --create est le drapeau décisif : il fabrique le certificat de
+      # distribution et le profil s'ils n'existent pas encore chez
+      # Apple, au lieu d'échouer en ne les trouvant pas.
+      - name: Créer ou récupérer certificat et profil
+        script: |
+          app-store-connect fetch-signing-files "$BUNDLE_ID" \
+            --type IOS_APP_STORE \
+            --create
+
+      - name: Installer le certificat dans le trousseau
+        script: keychain add-certificates
+
+      - name: Appliquer la signature au projet Xcode
         script: xcode-project use-profiles
 
       - name: Récupérer les dépendances Flutter
