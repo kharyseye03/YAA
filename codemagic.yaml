@@ -1,0 +1,107 @@
+# Chaîne de publication iOS — Codemagic
+#
+# Pourquoi ce fichier existe : le Mac de développement est un MacBook
+# Pro 2017, bloqué sur macOS Ventura. Apple exige Xcode 26 depuis le
+# 28 avril 2026, et Xcode 26 réclame macOS Sequoia 15.6. Aucune archive
+# produite localement ne peut donc être acceptée. Codemagic compile sur
+# des machines récentes et téléverse à notre place.
+#
+# Prérequis à configurer dans l'interface Codemagic, une seule fois :
+#   1. Une intégration App Store Connect nommée « yaa-app-store-connect »
+#      (Teams > Integrations > App Store Connect, avec une clé d'API).
+#   2. Un groupe de variables nommé « yaa-config » contenant les trois
+#      fichiers gitignorés, encodés en base64 et marqués « Secure ».
+#   3. La valeur de APP_STORE_APPLE_ID ci-dessous, relevée dans
+#      App Store Connect (App Information > General > Apple ID).
+
+workflows:
+  ios-app-store:
+    name: iOS — TestFlight et App Store
+    # Machine du palier gratuit (500 min/mois).
+    instance_type: mac_mini_m2
+    max_build_duration: 60
+
+    integrations:
+      app_store_connect: yaa-app-store-connect
+
+    environment:
+      flutter: stable
+      # « latest » garantit Xcode 26 ou plus, exigé par Apple pour tout
+      # téléversement. Ne pas figer une version ancienne ici.
+      xcode: latest
+      cocoapods: default
+
+      groups:
+        - yaa-config
+
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: gn.yaa.client
+
+      vars:
+        # Identifiant numérique de l'app dans App Store Connect.
+        # À remplacer avant la première build.
+        APP_STORE_APPLE_ID: 0000000000
+
+    scripts:
+      # Doit rester en tête : sans ces fichiers, l'analyse, les tests et
+      # la compilation échouent tous sur ApiConfig et MapsConfig.
+      - name: Restaurer les fichiers de configuration non versionnés
+        script: |
+          set -euo pipefail
+          printf '%s' "$API_CONFIG_DART"      | base64 --decode > lib/config/api/api_config.dart
+          printf '%s' "$MAPS_CONFIG_DART"     | base64 --decode > lib/config/maps/maps_config.dart
+          printf '%s' "$IOS_SECRETS_XCCONFIG" | base64 --decode > ios/Flutter/Secrets.xcconfig
+          # Garde-fou : un placeholder oublié produirait une carte grise
+          # en production sans la moindre erreur de compilation.
+          if grep -q 'VOTRE_CLE' ios/Flutter/Secrets.xcconfig; then
+            echo "La clé Google Maps iOS est encore un placeholder." >&2
+            exit 1
+          fi
+
+      - name: Configurer la signature du projet Xcode
+        script: xcode-project use-profiles
+
+      - name: Récupérer les dépendances Flutter
+        script: flutter pub get
+
+      - name: Installer les pods
+        script: find . -name "Podfile" -execdir pod install \;
+
+      - name: Analyse statique
+        script: flutter analyze
+
+      # Bloquant volontairement : 47 tests couvrent le parsing des API,
+      # les messages d'erreur et la construction de l'app. Mieux vaut
+      # arrêter ici que brûler un numéro de build sur une régression.
+      - name: Tests
+        script: flutter test
+
+      - name: Construire l'IPA
+        script: |
+          set -euo pipefail
+          # La première build n'a aucun antécédent dans TestFlight : la
+          # commande échoue alors, d'où le repli sur 0.
+          PRECEDENT=$(app-store-connect get-latest-testflight-build-number "$APP_STORE_APPLE_ID" 2>/dev/null || echo 0)
+          flutter build ipa --release \
+            --build-number=$((PRECEDENT + 1)) \
+            --export-options-plist=/Users/builder/export_options.plist
+
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+
+    publishing:
+      email:
+        recipients:
+          - mamekharyseye03@gmail.com
+        notify:
+          success: true
+          failure: true
+
+      app_store_connect:
+        auth: integration
+        # On s'arrête à TestFlight. Passer submit_to_app_store à true
+        # seulement quand la fiche App Store est complète et relue.
+        submit_to_testflight: true
+        submit_to_app_store: false
