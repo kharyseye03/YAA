@@ -76,6 +76,15 @@ workflows:
           set -euo pipefail
           printf '%s' "$CERTIFICATE_PRIVATE_KEY_B64" \
             | base64 --decode > /tmp/cle_certificat.pem
+          # Le corps d'un PEM est déjà du base64 : si la variable
+          # contient la clé brute, le décodage « réussit » et produit
+          # du binaire. On le détecte ici plutôt que de laisser Apple
+          # renvoyer une erreur illisible.
+          if ! head -1 /tmp/cle_certificat.pem | grep -q 'BEGIN RSA PRIVATE KEY'; then
+            echo "CERTIFICATE_PRIVATE_KEY_B64 ne contient pas la clé encodée." >&2
+            echo "Refaire : base64 < ~/ios_distribution_private_key | tr -d '\\n' | pbcopy" >&2
+            exit 1
+          fi
           app-store-connect fetch-signing-files "$BUNDLE_ID" \
             --type IOS_APP_STORE \
             --certificate-key=@file:/tmp/cle_certificat.pem \
