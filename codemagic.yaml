@@ -53,24 +53,32 @@ workflows:
           set -euo pipefail
           echo "Répertoire courant : $(pwd)"
 
-          ecrire() {
-            local variable="$1" destination="$2"
-            if [ -z "${!variable:-}" ]; then
-              echo "ÉCHEC : la variable $variable est vide ou absente." >&2
-              exit 1
-            fi
-            mkdir -p "$(dirname "$destination")"
-            printf '%s' "${!variable}" | base64 --decode > "$destination"
-            if [ ! -s "$destination" ]; then
-              echo "ÉCHEC : $destination est vide après décodage." >&2
-              exit 1
-            fi
-            echo "  écrit $destination ($(wc -c < "$destination" | tr -d ' ') octets)"
-          }
+          # Références directes, sans expansion indirecte ${!var} :
+          # celle-ci renvoie le nom au lieu de la valeur dans le shell
+          # de Codemagic, ce qui écrivait des fichiers de 9 à 15 octets
+          # sans que rien n'échoue.
+          echo "Longueurs reçues : API=${#API_CONFIG_DART} MAPS=${#MAPS_CONFIG_DART} IOS=${#IOS_SECRETS_XCCONFIG}"
 
-          ecrire API_CONFIG_DART      lib/config/api/api_config.dart
-          ecrire MAPS_CONFIG_DART     lib/config/maps/maps_config.dart
-          ecrire IOS_SECRETS_XCCONFIG ios/Flutter/Secrets.xcconfig
+          mkdir -p lib/config/api lib/config/maps ios/Flutter
+          printf '%s' "$API_CONFIG_DART"      | base64 --decode > lib/config/api/api_config.dart
+          printf '%s' "$MAPS_CONFIG_DART"     | base64 --decode > lib/config/maps/maps_config.dart
+          printf '%s' "$IOS_SECRETS_XCCONFIG" | base64 --decode > ios/Flutter/Secrets.xcconfig
+
+          for f in lib/config/api/api_config.dart \
+                   lib/config/maps/maps_config.dart \
+                   ios/Flutter/Secrets.xcconfig; do
+            taille=$(wc -c < "$f" | tr -d ' ')
+            echo "  $f : $taille octets"
+            if [ "$taille" -lt 100 ]; then
+              echo "ÉCHEC : $f ne fait que $taille octets." >&2
+              echo "La variable d'environnement correspondante ne contient pas le fichier encodé." >&2
+              exit 1
+            fi
+          done
+
+          # Contrôle de contenu, pas seulement de taille.
+          grep -q 'class ApiConfig'  lib/config/api/api_config.dart
+          grep -q 'class MapsConfig' lib/config/maps/maps_config.dart
 
           # Garde-fou : un placeholder oublié produirait une carte grise
           # en production sans la moindre erreur de compilation.
@@ -78,9 +86,6 @@ workflows:
             echo "La clé Google Maps iOS est encore un placeholder." >&2
             exit 1
           fi
-
-          echo "Contenu de lib/config/api :"
-          ls -l lib/config/api
 
       - name: Préparer le trousseau de la machine de build
         script: keychain initialize
@@ -129,31 +134,6 @@ workflows:
 
       - name: Installer les pods
         script: find . -name "Podfile" -execdir pod install \;
-
-      # Les fichiers restaurés à l'étape 1 ont disparu avant l'analyse
-      # lors de la build #6, sans qu'aucune étape n'échoue. Ce contrôle
-      # dit si le problème vient de l'écriture ou d'une suppression en
-      # cours de route, et les réécrit pour ne pas bloquer la chaîne.
-      - name: Vérifier que les fichiers de configuration sont toujours là
-        script: |
-          set -uo pipefail
-          echo "Répertoire courant : $(pwd)"
-          for f in lib/config/api/api_config.dart \
-                   lib/config/maps/maps_config.dart \
-                   ios/Flutter/Secrets.xcconfig; do
-            if [ -s "$f" ]; then
-              echo "  présent  $f ($(wc -c < "$f" | tr -d ' ') octets)"
-            else
-              echo "  ABSENT   $f — réécriture"
-              case "$f" in
-                *api_config.dart)   v="$API_CONFIG_DART" ;;
-                *maps_config.dart)  v="$MAPS_CONFIG_DART" ;;
-                *Secrets.xcconfig)  v="$IOS_SECRETS_XCCONFIG" ;;
-              esac
-              mkdir -p "$(dirname "$f")"
-              printf '%s' "$v" | base64 --decode > "$f"
-            fi
-          done
 
       - name: Analyse statique
         script: flutter analyze
