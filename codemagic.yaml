@@ -67,10 +67,18 @@ workflows:
       # --create est le drapeau décisif : il fabrique le certificat de
       # distribution et le profil s'ils n'existent pas encore chez
       # Apple, au lieu d'échouer en ne les trouvant pas.
+      #
+      # La clé privée transite en base64 puis est reconstruite en
+      # fichier : collée telle quelle dans une variable, sa forme PEM
+      # multiligne est aplatie par le formulaire et l'outil la rejette.
       - name: Créer ou récupérer certificat et profil
         script: |
+          set -euo pipefail
+          printf '%s' "$CERTIFICATE_PRIVATE_KEY_B64" \
+            | base64 --decode > /tmp/cle_certificat.pem
           app-store-connect fetch-signing-files "$BUNDLE_ID" \
             --type IOS_APP_STORE \
+            --certificate-key=@file:/tmp/cle_certificat.pem \
             --create
 
       - name: Installer le certificat dans le trousseau
