@@ -93,8 +93,15 @@ workflows:
       - name: Installer le certificat dans le trousseau
         script: keychain add-certificates
 
+      # --project cible le projet de l'app et ignore tout autre
+      # .xcodeproj du dépôt. --warn-only évite l'échec sur la cible
+      # RunnerTests, dont l'identifiant gn.yaa.client.RunnerTests n'a
+      # pas de profil — une cible de tests ne part pas sur l'App Store.
       - name: Appliquer la signature au projet Xcode
-        script: xcode-project use-profiles
+        script: |
+          xcode-project use-profiles \
+            --project ios/Runner.xcodeproj \
+            --warn-only
 
       - name: Récupérer les dépendances Flutter
         script: flutter pub get
