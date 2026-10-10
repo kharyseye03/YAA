@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lucide_icons/lucide_icons.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimens.dart';
 import '../../../core/constants/app_text_styles.dart';
@@ -44,7 +43,7 @@ class HomeHeader extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Icon(
-                  LucideIcons.mapPin,
+                  Icons.location_on_outlined,
                   color: AppColors.primary,
                   size: 20.r,
                 ),
@@ -77,7 +76,7 @@ class HomeHeader extends ConsumerWidget {
                           ),
                           SizedBox(width: 3.w),
                           Icon(
-                            LucideIcons.chevronDown,
+                            Icons.keyboard_arrow_down_rounded,
                             color: AppColors.primary,
                             size: 14.r,
                           ),
@@ -98,7 +97,7 @@ class HomeHeader extends ConsumerWidget {
               width: 42.r,
               height: 42.r,
               child: Icon(
-                LucideIcons.bell,
+                Icons.notifications_none_rounded,
                 color: AppColors.dark,
                 size: 20.r,
               ),

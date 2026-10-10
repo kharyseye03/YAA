@@ -47,8 +47,10 @@ dependencies:
   cached_network_image: ^3.4.1
   shimmer: ^3.0.0
   flutter_screenutil: ^5.9.3
-  lucide_icons: ^0.257.0
-  phosphor_flutter: ^2.1.0
+  # lucide_icons et phosphor_flutter retirés : ils étendaient IconData,
+  # devenue une classe finale dans les Flutter récents, ce qui cassait
+  # la compilation. Leurs neuf icônes sont remplacées par des icônes
+  # Material, livrées avec Flutter et donc jamais désynchronisées.
 
   # ── Utils ───────────────────────────────────────────────
   url_launcher: ^6.3.1

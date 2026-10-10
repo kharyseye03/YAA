@@ -3,7 +3,6 @@ import '../../../core/errors/messages_erreur.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lucide_icons/lucide_icons.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimens.dart';
 import '../../../core/constants/app_text_styles.dart';
@@ -374,7 +373,7 @@ class _BoutonContacts extends StatelessWidget {
     return IconButton(
       tooltip   : 'Choisir dans mes contacts',
       onPressed : onPressed,
-      icon      : Icon(LucideIcons.userPlus,
+      icon      : Icon(Icons.person_add_alt_rounded,
           size: 19.r, color: AppColors.secondary),
     );
   }

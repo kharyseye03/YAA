@@ -7,7 +7,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lucide_icons/lucide_icons.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimens.dart';
@@ -685,7 +684,7 @@ class _RestaurantSheetState extends ConsumerState<_RestaurantSheet> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(LucideIcons.search, size: 40.r, color: AppColors.grey300),
+            Icon(Icons.search_rounded, size: 40.r, color: AppColors.grey300),
             SizedBox(height: AppDimens.md),
             Text(
               'Cherchez un produit chez ${widget.restaurant.name}',
@@ -738,11 +737,11 @@ class _RestaurantSheetState extends ConsumerState<_RestaurantSheet> {
             behavior: HitTestBehavior.opaque,
             child: Padding(
               padding: EdgeInsets.all(4.r),
-              child: Icon(LucideIcons.search, size: 22.r, color: AppColors.dark),
+              child: Icon(Icons.search_rounded, size: 22.r, color: AppColors.dark),
             ),
           ),
           SizedBox(width: AppDimens.md),
-          Icon(LucideIcons.heart, size: 22.r, color: AppColors.dark),
+          Icon(Icons.favorite_border_rounded, size: 22.r, color: AppColors.dark),
         ],
       ),
     );

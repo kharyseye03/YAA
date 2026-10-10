@@ -4,7 +4,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimens.dart';
@@ -69,8 +68,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               color: AppColors.grey400,
             ),
             border: InputBorder.none,
-            prefixIcon: PhosphorIcon(
-              PhosphorIcons.magnifyingGlass(),
+            prefixIcon: Icon(
+              Icons.search_rounded,
               color: AppColors.grey400,
               size: 20.r,
             ),
