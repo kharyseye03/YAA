@@ -50,9 +50,8 @@ const kFormeSociale = '[FORME JURIDIQUE — SARL, SA…]';
 const kSiege        = '[ADRESSE DU SIÈGE], Conakry, République de Guinée';
 const kRccm         = '[NUMÉRO RCCM]';
 const kNif          = '[NUMÉRO NIF]';
-const kEmail        = '[EMAIL DE CONTACT]';
-const kTelephone    = '[TÉLÉPHONE]';
-
+const kEmail        = 'yaa.support@gmail.com';
+const kTelephone    = '+224 610 78 17 99';
 const kDerniereMaj  = '14 août 2026';
 const kVersionCgu   = '1.0';
 
