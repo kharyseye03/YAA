@@ -24,6 +24,22 @@ class FavorisScreen extends ConsumerStatefulWidget {
 class _FavorisScreenState extends ConsumerState<FavorisScreen> {
   int _tab = 0;
 
+  /// Fait glisser les deux onglets l'un vers l'autre. [_tab] suit la
+  /// page et garde le soulignement en phase avec le doigt.
+  final _pages = PageController();
+
+  @override
+  void dispose() {
+    _pages.dispose();
+    super.dispose();
+  }
+
+  void _allerAOnglet(int i) => _pages.animateToPage(
+        i,
+        duration : const Duration(milliseconds: 260),
+        curve    : Curves.easeOutCubic,
+      );
+
   @override
   void initState() {
     super.initState();
@@ -68,7 +84,7 @@ class _FavorisScreenState extends ConsumerState<FavorisScreen> {
         SizedBox(height: 10.h),
 
         // ── Tabs ─────────────────────────────────────────────
-        _Tabs(current: _tab, onTap: (i) => setState(() => _tab = i),
+        _Tabs(current: _tab, onTap: _allerAOnglet,
               counts: [state.favoris.length, state.produitsFavoris.length]),
 
         // ── Erreur ────────────────────────────────────────────
@@ -98,9 +114,17 @@ class _FavorisScreenState extends ConsumerState<FavorisScreen> {
               ? const Center(child: CircularProgressIndicator())
               : RefreshIndicator(
                   onRefresh: _refresh,
-                  child: _tab == 0
-                      ? _buildStructures(state)
-                      : _buildProduits(state),
+                  // Même principe que « Mes commandes » : le doigt
+                  // change d'onglet, et toucher l'onglet anime le même
+                  // glissement.
+                  child: PageView(
+                    controller    : _pages,
+                    onPageChanged : (i) => setState(() => _tab = i),
+                    children: [
+                      _buildStructures(state),
+                      _buildProduits(state),
+                    ],
+                  ),
                 ),
         ),
       ],

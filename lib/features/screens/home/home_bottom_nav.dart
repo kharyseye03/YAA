@@ -20,11 +20,27 @@ class HomeBottomNav extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final cartCount = ref.watch(cartProvider).cart?.totalArticles ?? 0;
+
+    // Hauteur de la barre système, celle des trois boutons ou du trait
+    // de navigation gestuelle. Elle vaut zéro sur les téléphones en
+    // gestes, et une quarantaine de points sur ceux à trois boutons.
+    //
+    // Sans elle, la barre de YAA est posée à distance fixe du bord et
+    // passe dessous : sur un appareil à trois boutons, les icônes sont
+    // recouvertes et deviennent intouchables. Le défaut ne se voit pas
+    // sur un téléphone en navigation gestuelle, d'où sa discrétion.
+    final barreSysteme = MediaQuery.of(context).padding.bottom;
+
     return Container(
       color: Colors.transparent,
-      padding: EdgeInsets.fromLTRB(20.w, 0.h, 20.w, 16.h),
+      padding: EdgeInsets.fromLTRB(20.w, 0.h, 20.w, 12.h + barreSysteme),
       child: Container(
-        height: 68.h,
+        // 68 à l'origine : la barre pesait lourd en bas d'écran, et
+        // sur un grand téléphone elle grossit encore avec le facteur
+        // d'échelle. 56 laisse la même zone tactile confortable — les
+        // icônes font 22 et gardent leur marge — pour un bandeau
+        // nettement plus discret.
+        height: 56.h,
         decoration: BoxDecoration(
           color: AppColors.primary,
           borderRadius: BorderRadius.circular(40.r),
@@ -62,8 +78,8 @@ class HomeBottomNav extends ConsumerWidget {
                     children: [
                       AnimatedContainer(
                         duration: const Duration(milliseconds: 200),
-                        width: 46.r,
-                        height: 46.r,
+                        width: 42.r,
+                        height: 42.r,
                         decoration: BoxDecoration(
                           color: currentIndex == 4
                               ? Colors.white

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart' show ScrollDirection;
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -48,6 +49,10 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   late int _currentNavIndex = widget.ongletInitial;
+
+  /// Barre de navigation visible. Masquée pendant qu'on descend dans
+  /// une liste, ramenée au premier geste vers le haut.
+  bool _navVisible = true;
 
   /// L'accueil n'est pas reconstruit quand on y revient : Flutter
   /// réutilise l'état existant et se contente de remplacer le widget.
@@ -141,7 +146,36 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: Stack(
+      body: NotificationListener<UserScrollNotification>(
+        // Masque la barre quand on descend dans une liste, la ramène
+        // dès qu'on remonte — le geste de LinkedIn. On n'écoute que
+        // le défilement vertical : un carrousel horizontal, comme les
+        // bannières de l'accueil, ne doit pas la faire disparaître.
+        onNotification: (notification) {
+          if (notification.metrics.axis != Axis.vertical) return false;
+          // Pas sur l'accueil : c'est le point de départ, celui d'où
+          // l'on navigue le plus, et son contenu est court. Masquer la
+          // barre y retirerait l'outil principal pour un gain de place
+          // minime. Le geste n'a de sens que dans les listes longues —
+          // commandes, favoris — où chaque ligne gagnée compte.
+          if (_currentNavIndex == 0) return false;
+
+          // Rien à gagner sur une liste qui tient déjà dans l'écran :
+          // deux favoris, et pourtant le simple rebond du doigt faisait
+          // fuir la barre. `maxScrollExtent` vaut alors zéro — le
+          // contenu ne défile pas vraiment, il rebondit. On exige en
+          // plus une demi-hauteur de barre à gagner, sinon le jeu n'en
+          // vaut pas la chandelle.
+          if (notification.metrics.maxScrollExtent < 40) return false;
+          final direction = notification.direction;
+          if (direction == ScrollDirection.reverse && _navVisible) {
+            setState(() => _navVisible = false);
+          } else if (direction == ScrollDirection.forward && !_navVisible) {
+            setState(() => _navVisible = true);
+          }
+          return false;
+        },
+        child: Stack(
         children: [
           Column(
             children: [
@@ -173,22 +207,50 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           // s'ouvrent sur une carte déjà prête. Voir MapPrewarm.
           const MapPrewarm(),
         ],
+        ),
       ),
 
       extendBody: true,
 
       // ── Bottom navigation ───────────────────────────────
-      bottomNavigationBar: HomeBottomNav(
-        currentIndex: _currentNavIndex,
-        onTap: (index) => setState(() => _currentNavIndex = index),
-        onCartTap: () => setState(() => _currentNavIndex = 4),
+      // Glisse hors de l'écran plutôt que de disparaître d'un coup :
+      // `extendBody` étant actif, le contenu occupe déjà toute la
+      // hauteur et rien ne saute pendant l'animation.
+      bottomNavigationBar: AnimatedSlide(
+        offset   : _navVisible ? Offset.zero : const Offset(0, 1.4),
+        duration : const Duration(milliseconds: 220),
+        curve    : Curves.easeOut,
+        child: HomeBottomNav(
+          currentIndex: _currentNavIndex,
+          // Changer d'onglet la fait toujours réapparaître : sans ça,
+          // on arrive sur un écran dont la navigation est cachée.
+          onTap: (index) => setState(() {
+            _currentNavIndex = index;
+            _navVisible = true;
+          }),
+          onCartTap: () => setState(() {
+            _currentNavIndex = 4;
+            _navVisible = true;
+          }),
+        ),
       ),
     );
   }
 
   Widget _buildHomeContent() {
     return SingleChildScrollView(
-      padding: EdgeInsets.only(bottom: 90.h),
+      // Réserve exactement la place de la barre de navigation, qui
+      // flotte au-dessus du contenu (`extendBody`). La valeur était
+      // figée à 90 quand la barre en mesurait 68 ; elle en fait 56
+      // depuis, et l'écart se voyait en bas de l'accueil sous forme
+      // d'une bande blanche. Calculée plutôt que devinée : hauteur de
+      // la barre, sa marge basse, l'encoche du téléphone, et une
+      // respiration.
+      padding: EdgeInsets.only(
+        bottom: 56.h + 12.h + MediaQuery.of(context).padding.bottom + 16.h,
+      ),
+      // Note : le même calcul sert à la barre elle-même, dans
+      // home_bottom_nav.dart. Si l'un bouge, l'autre doit suivre.
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -381,8 +443,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               },
             ),
           ),
-
-          SizedBox(height: AppDimens.xxl),
+          // Plus de marge finale ici : elle s'ajoutait à celle du
+          // SingleChildScrollView ci-dessus et doublait le blanc.
         ],
       ),
     );
