@@ -68,12 +68,28 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             hintStyle: AppTextStyles.bodyMedium.copyWith(
               color: AppColors.grey400,
             ),
-            border: InputBorder.none,
+            // Les quatre bordures, pas seulement `border`.
+            //
+            // Le thème de l'app définit enabledBorder et focusedBorder,
+            // qui ont la priorité sur `border` dans leurs états
+            // respectifs : n'annuler que `border` laissait le contour
+            // se dessiner quand même. Dans la barre de titre, trop
+            // basse pour lui, il était rogné en haut et en bas et ne
+            // laissait voir que ses deux arcs latéraux — les
+            // « crochets » bleus visibles sur iPhone.
+            border         : InputBorder.none,
+            enabledBorder  : InputBorder.none,
+            focusedBorder  : InputBorder.none,
+            disabledBorder : InputBorder.none,
+            filled         : false,
+            isDense        : true,
+            contentPadding : EdgeInsets.symmetric(vertical: 8.h),
             prefixIcon: PhosphorIcon(
               PhosphorIcons.magnifyingGlass(),
               color: AppColors.grey400,
               size: 20.r,
             ),
+            prefixIconConstraints: BoxConstraints(minWidth: 34.w),
           ),
           onChanged: _onChanged,
         ),

@@ -435,7 +435,15 @@ class _RestaurantSheetState extends ConsumerState<_RestaurantSheet> {
               ),
               decoration: InputDecoration(
                 isDense: true,
-                border: InputBorder.none,
+                // Les quatre états, pas seulement `border` : le thème
+                // définit enabledBorder et focusedBorder, qui priment
+                // dans leur état. N'annuler que `border` laisse le
+                // contour apparaître dès que le champ prend le focus.
+                border         : InputBorder.none,
+                enabledBorder  : InputBorder.none,
+                focusedBorder  : InputBorder.none,
+                disabledBorder : InputBorder.none,
+                filled         : false,
                 contentPadding: EdgeInsets.symmetric(vertical: 10.h),
                 hintText: 'Rechercher dans ce catalogue',
                 hintStyle: AppTextStyles.bodyMedium.copyWith(

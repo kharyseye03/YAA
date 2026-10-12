@@ -116,9 +116,25 @@ class _DeliveryAddressSheetState
     // Remonte le sheet quand le clavier s'ouvre
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
 
-    return Padding(
-      padding: EdgeInsets.only(bottom: bottomInset),
-      child: Container(
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _corps(context),
+        // Blanc sous le clavier.
+        //
+        // Le clavier d'iOS a des coins supérieurs arrondis, et ce qui
+        // apparaît derrière eux, c'est le voile sombre de la feuille
+        // modale : deux encoches grises aux extrémités, juste sous le
+        // champ de saisie. Remplir cette hauteur de blanc les fait
+        // disparaître, et ne se voit pas quand le clavier est fermé —
+        // la hauteur vaut alors zéro.
+        Container(height: bottomInset, color: Colors.white),
+      ],
+    );
+  }
+
+  Widget _corps(BuildContext context) {
+    return Container(
         decoration: BoxDecoration(
           color        : Colors.white,
           borderRadius : BorderRadius.vertical(top: Radius.circular(24.r)),
@@ -233,7 +249,6 @@ class _DeliveryAddressSheetState
             ],
           ],
         ),
-      ),
     );
   }
 }
