@@ -3,13 +3,19 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimens.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../shared/widgets/image_reseau.dart';
 
 class PromoBannerData {
   final String title;
   final String subtitle;
   final String badge;
   final Color  badgeColor; // couleur de la pastille + du dot actif
-  final String? image;     // image de fond (asset)
+  final String? image;     // image de fond (asset local)
+
+  /// Image de fond servie par le backend. Prioritaire sur [image] :
+  /// les bannières viennent désormais de l'API, les assets locaux ne
+  /// servent plus qu'aux maquettes.
+  final String? imageUrl;
 
   const PromoBannerData({
     required this.title,
@@ -17,6 +23,7 @@ class PromoBannerData {
     required this.badge,
     this.badgeColor = AppColors.primary,
     this.image,
+    this.imageUrl,
   });
 }
 
@@ -114,7 +121,16 @@ class _BannerCard extends StatelessWidget {
           fit: StackFit.expand,
           children: [
             // ── Image de fond (ou couleur unie en fallback) ────
-            if (data.image != null)
+            if (data.imageUrl != null)
+              ImageReseau(
+                url      : data.imageUrl,
+                fit      : BoxFit.cover,
+                // Le temps du chargement et en cas d'échec, la couleur
+                // du type : la carte reste lisible, son texte étant
+                // posé sur un dégradé par-dessus.
+                fallback : Container(color: data.badgeColor),
+              )
+            else if (data.image != null)
               Image.asset(
                 data.image!,
                 fit: BoxFit.cover,

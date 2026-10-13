@@ -19,6 +19,7 @@ import '../../model/category/categorie_structure.dart';
 import '../../model/category/structure.dart';
 import '../../model/category/produit_detail.dart';
 import '../../model/category/structure_detail.dart';
+import '../../model/banniere/banniere_model.dart';
 import '../../model/course/estimation_model.dart';
 import '../auth/token_storage.dart';
 import '../../model/user/user_profile.dart';
@@ -720,6 +721,30 @@ class ApiService {
       return LoginResponse.fromJson(response);
     } catch (e) {
       ApiLogger.erreur('refreshToken', e);
+      rethrow;
+    }
+  }
+
+  // ════════════════════════════════════════════════════
+  // MÉTHODES PUBLIQUES — Bannières
+  // ════════════════════════════════════════════════════
+
+  /// Bannières du carrousel de l'accueil, aplaties en une liste.
+  ///
+  /// Le serveur les renvoie groupées par type ; l'ordre des groupes est
+  /// celui de l'affichage.
+  ///
+  /// Appel **authentifié** : la route répond 401 sans jeton, vérifié le
+  /// 13/10/2026 sur api.yaagn.com. Elle avait d'abord été branchée sans
+  /// authentification, et le carrousel restait vide sans rien dire.
+  Future<List<GroupeBannieres>> getBannieres() async {
+    try {
+      final response =
+          await _get(ApiConfig.bannieresEndpoint, auth: true);
+      final groupes = response['data'] as List<dynamic>? ?? const [];
+      return GroupeBannieres.depuisReponse(groupes);
+    } catch (e) {
+      ApiLogger.erreur('getBannieres', e);
       rethrow;
     }
   }

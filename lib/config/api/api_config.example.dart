@@ -33,6 +33,11 @@ class ApiConfig {
   static const String userDetailEndpoint    = '/registrations/detail';
   static const String updateProfileEndpoint = '/registrations/update';
 
+  // ── Endpoints Bannières ───────────────────────────
+  /// Bannières du carrousel de l'accueil, groupées par type
+  /// (FLASH_DEAL, SPONSOR, NOUVEAUTE…). Authentifiée : 401 sans jeton.
+  static const String bannieresEndpoint = '/bannieres/mobile/groupes';
+
   // ── Endpoints Notifications push ──────────────────
   /// Jeton Firebase de cet appareil, rangé à côté du compte.
   ///
