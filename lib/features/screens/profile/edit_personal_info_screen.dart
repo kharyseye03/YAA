@@ -12,6 +12,7 @@ import '../../../shared/widgets/user_avatar.dart';
 import '../../../shared/widgets/yaa_button.dart';
 import '../../../shared/widgets/yaa_text_field.dart';
 import '../../user/providers/user_notifier.dart';
+import '../../../shared/widgets/bouton_retour.dart';
 
 class EditPersonalInfoScreen extends ConsumerStatefulWidget {
   const EditPersonalInfoScreen({super.key});
@@ -291,23 +292,7 @@ class _EditPersonalInfoScreenState
           ),
           child: Row(
             children: [
-              GestureDetector(
-                onTap    : () => Navigator.of(context).pop(),
-                behavior : HitTestBehavior.opaque,
-                child: Container(
-                  width  : 38.r,
-                  height : 38.r,
-                  decoration: BoxDecoration(
-                    color        : AppColors.grey100,
-                    borderRadius : BorderRadius.circular(10.r),
-                  ),
-                  child: Icon(
-                    Icons.chevron_left_rounded,
-                    color : AppColors.dark,
-                    size  : 22.r,
-                  ),
-                ),
-              ),
+              const BoutonRetour(),
               SizedBox(width: 12.w),
               Text(
                 'Modifier mes informations',
@@ -319,7 +304,6 @@ class _EditPersonalInfoScreenState
             ],
           ),
         ),
-        const Divider(height: 1, color: AppColors.grey200),
       ],
     );
   }

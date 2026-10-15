@@ -178,7 +178,13 @@ abstract final class AppTheme {
             top: Radius.circular(AppDimens.radiusXl),
           ),
         ),
-        showDragHandle: true,
+        // Poignée de Flutter désactivée : chaque feuille dessine déjà
+        // la sienne, à l'intérieur de son bloc blanc. Les deux
+        // cohabitaient — un trait gris dans la feuille, un second plus
+        // sombre au-dessus d'elle, posé sur le voile. Nos feuilles
+        // s'ouvrent avec un fond transparent, d'où ce trait qui
+        // semblait flotter hors du cadre.
+        showDragHandle: false,
       ),
     );
   }

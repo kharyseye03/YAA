@@ -26,6 +26,7 @@ import 'delivery_address_sheet.dart';
 import '../order/detail_widgets.dart';
 import '../order/mission_detail_sheet.dart';
 import 'reception_mode_sheet.dart';
+import '../../../shared/widgets/bouton_retour.dart';
 
 class CheckoutScreen extends ConsumerStatefulWidget {
   const CheckoutScreen({super.key, required this.choix});
@@ -214,20 +215,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             ),
             child: Row(
               children: [
-                GestureDetector(
-                  onTap    : () => Navigator.of(context).pop(),
-                  behavior : HitTestBehavior.opaque,
-                  child: Container(
-                    width  : 38.r,
-                    height : 38.r,
-                    decoration: BoxDecoration(
-                      color        : AppColors.grey100,
-                      borderRadius : BorderRadius.circular(10.r),
-                    ),
-                    child: Icon(Icons.chevron_left_rounded,
-                        color: AppColors.dark, size: 22.r),
-                  ),
-                ),
+                const BoutonRetour(),
                 SizedBox(width: 12.w),
                 Text(
                   'Commander',
@@ -257,8 +245,6 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
               ],
             ),
           ),
-
-          const Divider(height: 1, color: AppColors.grey200),
 
           // ── Erreur ──────────────────────────────────────────
           if (_error != null)

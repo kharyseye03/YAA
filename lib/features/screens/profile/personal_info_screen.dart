@@ -9,6 +9,9 @@ import '../../../core/utils/app_router.dart';
 import '../../../shared/widgets/user_avatar.dart';
 import '../../../shared/widgets/yaa_button.dart';
 import '../../user/providers/user_notifier.dart';
+import '../../auth/providers/auth_notifier.dart';
+import '../../../shared/widgets/bouton_retour.dart';
+import 'suppression_compte_sheet.dart';
 
 class PersonalInfoScreen extends ConsumerWidget {
   const PersonalInfoScreen({super.key});
@@ -31,23 +34,7 @@ class PersonalInfoScreen extends ConsumerWidget {
             ),
             child: Row(
               children: [
-                GestureDetector(
-                  onTap     : () => Navigator.of(context).pop(),
-                  behavior  : HitTestBehavior.opaque,
-                  child: Container(
-                    width  : 38.r,
-                    height : 38.r,
-                    decoration: BoxDecoration(
-                      color        : AppColors.grey100,
-                      borderRadius : BorderRadius.circular(10.r),
-                    ),
-                    child: Icon(
-                      Icons.chevron_left_rounded,
-                      color : AppColors.dark,
-                      size  : 22.r,
-                    ),
-                  ),
-                ),
+                const BoutonRetour(),
                 SizedBox(width: 12.w),
                 Text(
                   'Informations personnelles',
@@ -59,8 +46,6 @@ class PersonalInfoScreen extends ConsumerWidget {
               ],
             ),
           ),
-
-          const Divider(height: 1, color: AppColors.grey200),
 
           // ── Contenu ─────────────────────────────────────────
           Expanded(
@@ -116,6 +101,47 @@ class PersonalInfoScreen extends ConsumerWidget {
                     value : profile?.email ?? '—',
                   ),
                   const Divider(height: 1, color: AppColors.grey200),
+
+                  SizedBox(height: 28.h),
+
+                  // ── Suppression du compte ─────────────────────
+                  // Sa place est ici, sur la page du compte : Google
+                  // Play exige depuis avril 2024 un chemin de
+                  // suppression **facilement trouvable** dans l'app.
+                  // Rangée sous « Contacter le support », elle aurait
+                  // été accessible mais introuvable pour qui la
+                  // cherche — et un examinateur la cherche.
+                  //
+                  // En bas de page et discrète, loin du bouton
+                  // « Modifier » : l'une est quotidienne, l'autre
+                  // irréversible.
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: GestureDetector(
+                      onTap    : () => _supprimerCompte(context, ref),
+                      behavior : HitTestBehavior.opaque,
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(vertical: 10.h),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.delete_outline_rounded,
+                                size: 18.r, color: AppColors.error),
+                            SizedBox(width: 8.w),
+                            Text(
+                              'Supprimer mon compte',
+                              style: AppTextStyles.bodySmall.copyWith(
+                                color      : AppColors.error,
+                                fontWeight : FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  SizedBox(height: 12.h),
                 ],
               ),
             ),
@@ -141,6 +167,25 @@ class PersonalInfoScreen extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  /// Ouvre la feuille de suppression, puis nettoie la session si le
+  /// compte a réellement été supprimé.
+  ///
+  /// Le `logout` est indispensable : sans lui, les jetons resteraient
+  /// dans le coffre et l'application tenterait de restaurer une
+  /// session dont le compte n'existe plus.
+  Future<void> _supprimerCompte(BuildContext context, WidgetRef ref) async {
+    final supprime = await showSuppressionCompteSheet(context);
+    if (!supprime || !context.mounted) return;
+
+    await ref.read(authProvider.notifier).logout();
+    if (!context.mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Votre compte a été supprimé.')),
+    );
+    context.goNamed(RouteNames.login);
   }
 }
 
