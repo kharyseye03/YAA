@@ -2,9 +2,12 @@ import 'dart:convert';
 import '../../../core/utils/journal.dart';
 import '../../../core/errors/messages_erreur.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'dart:async';
+
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../service/api/api_service.dart';
 import '../../../service/auth/token_storage.dart';
+import '../../../service/notifications/push_service.dart';
 import 'auth_state.dart';
 
 const _emailKey = 'user_email';
@@ -96,6 +99,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
       // dès que l'utilisateur change d'adresse dans son profil.
 
       state = state.copyWith(isLoading: false, isAuthenticated: true);
+      // Le jeton se range à côté d'un compte : il faut être connecté.
+      // Volontairement non attendu — une autorisation refusée ou un
+      // backend lent ne doit pas retarder l'entrée dans l'app.
+      unawaited(PushService.instance.enregistrerAppareil());
       return true;
     } catch (e) {
       state = state.copyWith(
@@ -254,6 +261,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
       }
       journal('🔐 Session restaurée (token encore valide)');
       state = state.copyWith(isAuthenticated: true);
+      // Session reprise au démarrage : le jeton a pu changer depuis la
+      // dernière fois, on le renvoie.
+      unawaited(PushService.instance.enregistrerAppareil());
       return true;
     }
 
@@ -285,6 +295,11 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   Future<void> logout() async {
+    // Avant d'effacer la session : le détachement du jeton est un
+    // appel authentifié. Après, le serveur le refuserait, et le
+    // téléphone continuerait de recevoir les notifications de cette
+    // personne alors qu'une autre s'y connecte.
+    await PushService.instance.oublierAppareil();
     await TokenStorage.instance.clear();
     await _prefs.remove(_emailKey);
     await _prefs.remove(_telephoneKey);

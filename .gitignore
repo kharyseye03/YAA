@@ -61,3 +61,6 @@ android/key.properties
 # machine, elles pointent vers des chemins qui nexistent nulle part
 # ailleurs. Suivies par erreur jusquau 08/09/2026.
 .claude/worktrees/
+
+# Fichiers de verrouillage Word, crees a l'ouverture d'un .docx
+~$*

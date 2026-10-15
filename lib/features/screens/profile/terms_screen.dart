@@ -4,6 +4,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimens.dart';
 import '../../../core/constants/app_text_styles.dart';
 import 'terms_content.dart';
+import '../../../shared/widgets/bouton_retour.dart';
 
 /// Conditions Générales d'Utilisation.
 ///
@@ -58,20 +59,7 @@ class _Header extends StatelessWidget {
       ),
       child: Row(
         children: [
-          GestureDetector(
-            onTap    : () => Navigator.of(context).pop(),
-            behavior : HitTestBehavior.opaque,
-            child: Container(
-              width  : 38.r,
-              height : 38.r,
-              decoration: BoxDecoration(
-                color        : AppColors.grey100,
-                borderRadius : BorderRadius.circular(10.r),
-              ),
-              child: Icon(Icons.chevron_left_rounded,
-                  color: AppColors.dark, size: 22.r),
-            ),
-          ),
+          const BoutonRetour(),
           SizedBox(width: 12.w),
           Text(
             'Conditions d\'utilisation',

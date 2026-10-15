@@ -6,6 +6,7 @@ import '../../../core/constants/app_dimens.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/utils/app_router.dart';
 import '../../../model/notification_item.dart';
+import '../../../shared/widgets/bouton_retour.dart';
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
@@ -45,23 +46,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             ),
             child: Row(
               children: [
-                GestureDetector(
-                  onTap: () => context.goNamed(RouteNames.home),
-                  behavior: HitTestBehavior.opaque,
-                  child: Container(
-                    width  : 38.r,
-                    height : 38.r,
-                    decoration: BoxDecoration(
-                      color        : AppColors.grey100,
-                      borderRadius : BorderRadius.circular(10.r),
-                    ),
-                    child: Icon(
-                      Icons.chevron_left_rounded,
-                      color : AppColors.dark,
-                      size  : 22.r,
-                    ),
-                  ),
-                ),
+                BoutonRetour(onTap: () => context.goNamed(RouteNames.home)),
                 SizedBox(width: 12.w),
                 Text(
                   'Notifications',
@@ -90,8 +75,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               ],
             ),
           ),
-
-          const Divider(height: 1, color: AppColors.grey200),
 
           // ── Liste ───────────────────────────────────────────
           Expanded(

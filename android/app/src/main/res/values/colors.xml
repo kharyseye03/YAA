@@ -7,4 +7,7 @@
          ?android:colorBackground : en mode sombre il vaut noir, et
          l'écran noir de 1,8 s passait pour un plantage. -->
     <color name="splash_background">#FFFFFF</color>
+    <!-- Teinte appliquée par Android à l'icône de notification, et
+         fond de la pastille sur l'icône de l'app. Orange YAA. -->
+    <color name="couleur_notification">#FF6608</color>
 </resources>

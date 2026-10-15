@@ -19,6 +19,7 @@ import '../../model/category/categorie_structure.dart';
 import '../../model/category/structure.dart';
 import '../../model/category/produit_detail.dart';
 import '../../model/category/structure_detail.dart';
+import '../../model/banniere/banniere_model.dart';
 import '../../model/course/estimation_model.dart';
 import '../auth/token_storage.dart';
 import '../../model/user/user_profile.dart';
@@ -100,7 +101,15 @@ class ApiService {
     if (token == null) throw _sessionExpired();
 
     response = await send(token);
-    if (response.statusCode == 401) throw _sessionExpired();
+    if (response.statusCode == 401) {
+      // Second refus, avec un jeton qui vient d'être émis : ce n'est
+      // donc pas une expiration. La cause est ailleurs — émetteur
+      // attendu différent, audience, horloges désynchronisées — et
+      // sans cette trace on conclut à tort à une session expirée.
+      final cause = response.headers['www-authenticate'];
+      ApiLogger.trace('401 malgré un jeton neuf → ${cause ?? "sans motif"}');
+      throw _sessionExpired();
+    }
     return response;
   }
 
@@ -712,6 +721,97 @@ class ApiService {
       return LoginResponse.fromJson(response);
     } catch (e) {
       ApiLogger.erreur('refreshToken', e);
+      rethrow;
+    }
+  }
+
+  // ════════════════════════════════════════════════════
+  // MÉTHODES PUBLIQUES — Bannières
+  // ════════════════════════════════════════════════════
+
+  /// Bannières du carrousel de l'accueil, aplaties en une liste.
+  ///
+  /// Le serveur les renvoie groupées par type ; l'ordre des groupes est
+  /// celui de l'affichage.
+  ///
+  /// Appel **authentifié** : la route répond 401 sans jeton, vérifié le
+  /// 13/10/2026 sur api.yaagn.com. Elle avait d'abord été branchée sans
+  /// authentification, et le carrousel restait vide sans rien dire.
+  Future<List<GroupeBannieres>> getBannieres() async {
+    try {
+      final response =
+          await _get(ApiConfig.bannieresEndpoint, auth: true);
+      final groupes = response['data'] as List<dynamic>? ?? const [];
+      return GroupeBannieres.depuisReponse(groupes);
+    } catch (e) {
+      ApiLogger.erreur('getBannieres', e);
+      rethrow;
+    }
+  }
+
+  // ════════════════════════════════════════════════════
+  // MÉTHODES PUBLIQUES — Notifications push
+  // ════════════════════════════════════════════════════
+
+  /// Range le jeton Firebase de cet appareil à côté du compte.
+  ///
+  /// Le serveur doit traiter l'appel comme idempotent : l'app renvoie
+  /// le même jeton à chaque connexion, et à chaque renouvellement.
+  ///
+  /// Sans issue tant que [ApiConfig.notificationsPushDisponibles] est
+  /// à false : inutile d'empiler des erreurs réseau pour une route qui
+  /// n'existe pas encore.
+  Future<void> enregistrerAppareil({
+    required String token,
+    required String plateforme, // android | ios
+  }) async {
+    if (!ApiConfig.notificationsPushDisponibles) return;
+    try {
+      await _post(
+        ApiConfig.deviceRegisterEndpoint,
+        {
+          'token'    : token,
+          'appType'  : ApiConfig.appType,
+          'platform' : plateforme,
+        },
+        auth: true,
+      );
+    } catch (e) {
+      ApiLogger.erreur('enregistrerAppareil', e);
+      rethrow;
+    }
+  }
+
+  /// Détache le jeton du compte, à la déconnexion.
+  ///
+  /// Le jeton passe en paramètre d'URL et non dans le chemin : c'est
+  /// la forme retenue par le backend.
+  Future<void> supprimerAppareil({required String token}) async {
+    if (!ApiConfig.notificationsPushDisponibles) return;
+    try {
+      await _delete(
+        ApiConfig.deviceUnregisterEndpoint,
+        queryParams : {'token': token},
+        auth        : true,
+      );
+    } catch (e) {
+      ApiLogger.erreur('supprimerAppareil', e);
+      rethrow;
+    }
+  }
+
+  /// Demande au backend de s'envoyer une notification de test, au
+  /// compte connecté. Sert à vérifier la chaîne complète — jeton
+  /// enregistré, Firebase, affichage — sans passer une vraie commande.
+  Future<void> envoyerNotificationDeTest() async {
+    try {
+      await _post(
+        '${ApiConfig.deviceTestEndpoint}?appType=${ApiConfig.appType}',
+        null,
+        auth: true,
+      );
+    } catch (e) {
+      ApiLogger.erreur('envoyerNotificationDeTest', e);
       rethrow;
     }
   }

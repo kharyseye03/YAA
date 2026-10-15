@@ -22,8 +22,20 @@ class HomeHeader extends ConsumerWidget {
     final location = position.when(
       data    : (p) => p.adresse,
       loading : ()  => 'Localisation…',
-      error   : (_, __) => 'Conakry, Guinée',
+      // Ni l'adresse réelle ni un mensonge : la ville par défaut
+      // suivie d'une invitation à réessayer. Sans ce mot, quelqu'un
+      // qui a refusé la permission ou qui ne capte pas voit une
+      // position fausse sans savoir qu'elle l'est.
+      error   : (_, __) => 'Conakry · toucher pour réessayer',
     );
+
+    // Refaire le point GPS à la demande. Utile quand le premier essai
+    // a échoué, mais aussi quand on change de quartier : la position
+    // est mise en cache une fois pour toute la session.
+    void rafraichir() {
+      if (position.isLoading) return;
+      ref.invalidate(currentPositionProvider);
+    }
 
     return Container(
       width: double.infinity,
@@ -39,7 +51,12 @@ class HomeHeader extends ConsumerWidget {
         children: [
           // ── Localisation (gauche) ────────────────────────────
           Expanded(
-            child: Row(
+            child: GestureDetector(
+              onTap    : rafraichir,
+              // Toute la zone réagit, pas seulement les lettres :
+              // viser un texte de 14 points avec le pouce est ingrat.
+              behavior : HitTestBehavior.opaque,
+              child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Icon(
@@ -75,17 +92,31 @@ class HomeHeader extends ConsumerWidget {
                             ),
                           ),
                           SizedBox(width: 3.w),
-                          Icon(
-                            Icons.keyboard_arrow_down_rounded,
-                            color: AppColors.primary,
-                            size: 14.r,
-                          ),
+                          // Pendant la recherche, le chevron cède la
+                          // place à un indicateur : le geste a été
+                          // pris en compte, quelque chose travaille.
+                          if (position.isLoading)
+                            SizedBox(
+                              width  : 11.r,
+                              height : 11.r,
+                              child: CircularProgressIndicator(
+                                strokeWidth : 1.6,
+                                color       : AppColors.primary,
+                              ),
+                            )
+                          else
+                            Icon(
+                              Icons.keyboard_arrow_down_rounded,
+                              color: AppColors.primary,
+                              size: 14.r,
+                            ),
                         ],
                       ),
                     ],
                   ),
                 ),
               ],
+              ),
             ),
           ),
 

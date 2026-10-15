@@ -15,6 +15,7 @@ import '../home/restaurant_card.dart';
 import 'category_filters.dart';
 import 'category_filters_sheet.dart';
 import 'restaurant_bottom_sheet.dart';
+import '../../../shared/widgets/bouton_retour.dart';
 
 class CategoryScreenArgs {
   final String categoryName;
@@ -377,21 +378,9 @@ class _CategoryScreenState extends ConsumerState<CategoryScreen> {
       color: Colors.white,
       child: Row(
         children: [
-          GestureDetector(
-            onTap: () => Navigator.of(context).pop(),
-            child: Container(
-              width: 40.r,
-              height: 40.r,
-              decoration: BoxDecoration(
-                color: AppColors.grey100,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.arrow_back_ios_new_rounded,
-                size: 18.r,
-                color: AppColors.dark,
-              ),
-            ),
+          const BoutonRetour(
+            icon   : Icons.arrow_back_ios_new_rounded,
+            taille : 18,
           ),
           SizedBox(width: AppDimens.md),
           Text(

@@ -91,11 +91,35 @@ class LocationService {
     }
 
     // 3. Récupérer la position GPS
-    final position = await Geolocator.getCurrentPosition(
-      locationSettings: const LocationSettings(
-        accuracy: LocationAccuracy.high,
-      ),
-    );
+    //
+    // `timeLimit` est indispensable. Sans lui, getCurrentPosition
+    // attend indéfiniment un point que le téléphone n'obtiendra
+    // peut-être jamais : à l'intérieur d'un bâtiment, sur un appareil
+    // d'entrée de gamme, sous un ciel couvert. L'appel ne remonte
+    // alors ni résultat ni erreur, et l'accueil reste sur
+    // « Localisation… » pour toujours.
+    //
+    // Au bout du délai, on se rabat sur la dernière position connue
+    // du système — souvent vieille de quelques minutes, largement
+    // assez juste pour afficher un quartier et classer les commerces
+    // par distance. Mieux vaut une position approximative qu'un écran
+    // qui ne se termine pas.
+    Position position;
+    try {
+      position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy  : LocationAccuracy.high,
+          timeLimit : Duration(seconds: 12),
+        ),
+      );
+    } catch (_) {
+      final derniere = await Geolocator.getLastKnownPosition();
+      if (derniere == null) {
+        throw Exception('Position indisponible. Vérifiez que le GPS '
+            'capte, puis réessayez.');
+      }
+      position = derniere;
+    }
 
     // 4. Convertir les coordonnées en adresse lisible
     String adresse = 'Position actuelle';

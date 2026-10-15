@@ -3,6 +3,12 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
 
+    <!-- Notifications. Obligatoire à partir d'Android 13 : sans cette
+         ligne, le système refuse d'afficher quoi que ce soit et ne
+         demande jamais l'autorisation à l'utilisateur. Sur les
+         versions antérieures elle est ignorée. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+
     <!-- usesCleartextTraffic="false" : le HTTP en clair est refusé.
          Il avait été ouvert pour le serveur de développement en
          http://10.3.20.91:8081. Laissé actif en production, il permet
@@ -28,6 +34,24 @@
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="${MAPS_API_KEY}"/>
+        <!-- Canal par défaut des notifications reçues quand l'app est
+             fermée : Android les affiche lui-même, sans passer par le
+             code Dart. Sans ces deux lignes elles atterrissent dans un
+             canal « Divers » que l'utilisateur peut couper sans le
+             savoir. La valeur doit être identique à celle déclarée
+             dans push_service.dart. -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="yaa_commandes"/>
+        <!-- Icône monochrome de la barre d'état. Sans elle, Android
+             affiche l'icône de l'app en blanc sur blanc, donc rien. -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@drawable/ic_notification"/>
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_color"
+            android:resource="@color/couleur_notification"/>
+
         <activity
             android:name=".MainActivity"
             android:exported="true"

@@ -25,6 +25,10 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
   /// et trajets). Chaque onglet a sa propre API.
   int _onglet = 0;
 
+  /// Pilote le glissement entre les deux onglets. L'état [_onglet]
+  /// reste la source de vérité pour le soulignement : il suit la page.
+  final _pages = PageController();
+
   Timer? _rafraichissement;
 
   /// Les statuts avancent côté serveur sans prévenir l'app. Sans ce
@@ -56,8 +60,15 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
   @override
   void dispose() {
     _rafraichissement?.cancel();
+    _pages.dispose();
     super.dispose();
   }
+
+  void _allerAOnglet(int i) => _pages.animateToPage(
+        i,
+        duration : const Duration(milliseconds: 260),
+        curve    : Curves.easeOutCubic,
+      );
 
   @override
   Widget build(BuildContext context) {
@@ -91,7 +102,7 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
         // ── Onglets ───────────────────────────────────────────
         _Tabs(
           current : _onglet,
-          onTap   : (i) => setState(() => _onglet = i),
+          onTap   : _allerAOnglet,
           counts  : [achats.length, courses.length],
         ),
 
@@ -126,29 +137,39 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
               : RefreshIndicator(
                   onRefresh: () =>
                       ref.read(commandeProvider.notifier).loadCommandes(),
-                  child: _onglet == 0
-                      ? _buildListe(
-                          vide     : achats.isEmpty,
-                          message  : 'Aucune commande en cours',
-                          detail   : 'Vos achats chez un commerçant '
-                              'apparaîtront ici.',
-                          count    : achats.length,
-                          builder  : (i) => CommandeStructureCard(
-                            commande : achats[i],
-                            onTap    : () => showCommandeDetailSheet(
-                                context, achats[i].id),
-                          ),
-                        )
-                      : _buildListe(
-                          vide     : courses.isEmpty,
-                          message  : 'Aucune course en cours',
-                          detail   : 'Vos colis et trajets apparaîtront ici.',
-                          count    : courses.length,
-                          builder  : (i) => CommandeCard(
-                            mission : courses[i],
-                            onTap   : () => showMissionDetailSheet(context, courses[i].id),
-                          ),
+                  // Les deux onglets vivent côte à côte dans un
+                  // PageView : le doigt les fait glisser l'un vers
+                  // l'autre, et toucher un onglet anime le même
+                  // mouvement. Les deux gestes mènent au même endroit.
+                  child: PageView(
+                    controller     : _pages,
+                    onPageChanged  : (i) => setState(() => _onglet = i),
+                    children: [
+                      _buildListe(
+                        vide     : achats.isEmpty,
+                        message  : 'Aucune commande en cours',
+                        detail   : 'Vos achats chez un commerçant '
+                            'apparaîtront ici.',
+                        count    : achats.length,
+                        builder  : (i) => CommandeStructureCard(
+                          commande : achats[i],
+                          onTap    : () => showCommandeDetailSheet(
+                              context, achats[i].id),
                         ),
+                      ),
+                      _buildListe(
+                        vide     : courses.isEmpty,
+                        message  : 'Aucune course en cours',
+                        detail   : 'Vos colis et trajets apparaîtront ici.',
+                        count    : courses.length,
+                        builder  : (i) => CommandeCard(
+                          mission : courses[i],
+                          onTap   : () =>
+                              showMissionDetailSheet(context, courses[i].id),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
         ),
       ],

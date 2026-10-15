@@ -15,7 +15,6 @@ import '../../auth/providers/auth_notifier.dart';
 import '../../cart/providers/delivery_address_provider.dart';
 import '../../user/providers/user_notifier.dart';
 import '../cart/delivery_address_sheet.dart';
-import 'suppression_compte_sheet.dart';
 
 /// Profil du client.
 ///
@@ -76,12 +75,41 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       child: SingleChildScrollView(
         child: Column(
           children: [
-            SizedBox(height: top + AppDimens.xl),
+            SizedBox(height: top + AppDimens.lg),
+
+            // ── Titre ─────────────────────────────────────
+            Padding(
+              padding: EdgeInsets.symmetric(
+                  horizontal: AppDimens.screenPadding),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(
+                    width: double.infinity,
+                    child: Text(
+                      'Mon espace',
+                      style: AppTextStyles.h2.copyWith(
+                        fontWeight : FontWeight.w800,
+                        color      : AppColors.dark,
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: AppDimens.xs),
+                  Text(
+                    'Gérez vos informations et vos préférences.',
+                    style: AppTextStyles.bodySmall
+                        .copyWith(color: AppColors.textMuted),
+                  ),
+                ],
+              ),
+            ),
+
+            SizedBox(height: AppDimens.lg),
 
             // ── Identité ──────────────────────────────────
             _enTete(user, profile),
 
-            SizedBox(height: AppDimens.xl),
+            SizedBox(height: AppDimens.lg),
 
             // ── Compte ────────────────────────────────────
             _Carte(children: [
@@ -106,11 +134,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 // choisit d'un seul endroit dans l'application.
                 onTap    : () => showDeliveryAddressSheet(context),
               ),
-            ]),
-
-            SizedBox(height: AppDimens.lg),
-
-            _Carte(children: [
               _Ligne(
                 icon     : Icons.receipt_long_outlined,
                 label    : 'Historique des commandes',
@@ -163,24 +186,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
             SizedBox(height: AppDimens.lg),
 
-            // Séparée de la déconnexion, et non voisine dans la même
-            // carte : l'une est quotidienne, l'autre irréversible.
-            // Côte à côte, un doigt pressé confond les deux.
-            //
-            // Sa présence est une exigence de Google Play, qui impose
-            // depuis avril 2024 un chemin de suppression dans l'app.
-            _Carte(children: [
-              _Ligne(
-                icon      : Icons.delete_outline_rounded,
-                label     : 'Supprimer mon compte',
-                subtitle  : 'Action définitive',
-                onTap     : _supprimerCompte,
-                couleur   : AppColors.error,
-              ),
-            ]),
-
-            SizedBox(height: AppDimens.lg),
-
             Text(
               'YAA · version 1.0.0',
               style: AppTextStyles.caption.copyWith(color: AppColors.textMuted),
@@ -193,63 +198,84 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
+  /// Identité en ligne : portrait à gauche, nom et e-mail au centre,
+  /// crayon à droite.
+  ///
+  /// Était centré sur trois niveaux — portrait, nom, e-mail — ce qui
+  /// coûtait beaucoup de hauteur pour peu d'information et poussait
+  /// le reste de l'écran sous la ligne de flottaison. En ligne, le
+  /// profil tient sans défilement.
   Widget _enTete(dynamic user, dynamic profile) {
-    return Column(
-      children: [
-        Stack(
-          children: [
-            user.isLoading
-                ? Container(
-                    width  : 88.r,
-                    height : 88.r,
-                    decoration: const BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: AppColors.grey200,
-                    ),
-                    child: Center(
-                      child: SizedBox(
-                        width : 20.r,
-                        height: 20.r,
-                        child : CircularProgressIndicator(
-                            strokeWidth: 2.r, color: AppColors.primary),
-                      ),
-                    ),
-                  )
-                : UserAvatar(imageUrl: profile?.imageUrl),
-            Positioned(
-              bottom: 0,
-              right : 0,
-              child: GestureDetector(
-                onTap: () => context.pushNamed(RouteNames.editPersonalInfo),
-                child: Container(
-                  width  : 28.r,
-                  height : 28.r,
-                  decoration: BoxDecoration(
-                    color : AppColors.primary,
-                    shape : BoxShape.circle,
-                    border: Border.all(color: AppColors.background, width: 2),
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: AppDimens.screenPadding),
+      child: Row(
+        children: [
+          user.isLoading
+              ? Container(
+                  width  : 64.r,
+                  height : 64.r,
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: AppColors.grey200,
                   ),
-                  child: Icon(Icons.edit_rounded,
-                      color: Colors.white, size: 13.r),
+                  child: Center(
+                    child: SizedBox(
+                      width : 18.r,
+                      height: 18.r,
+                      child : CircularProgressIndicator(
+                          strokeWidth: 2.r, color: AppColors.primary),
+                    ),
+                  ),
+                )
+              : UserAvatar(imageUrl: profile?.imageUrl, size: 64.r),
+
+          SizedBox(width: AppDimens.md),
+
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  profile?.fullName ?? '—',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextStyles.h3.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color     : AppColors.dark,
+                  ),
                 ),
-              ),
+                SizedBox(height: 2.h),
+                Text(
+                  profile?.email ?? '—',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextStyles.bodySmall
+                      .copyWith(color: AppColors.textMuted),
+                ),
+              ],
             ),
-          ],
-        ),
-        SizedBox(height: AppDimens.md),
-        Text(
-          profile?.fullName ?? '—',
-          style: AppTextStyles.h3.copyWith(
-            fontWeight: FontWeight.w800,
-            color     : AppColors.dark,
           ),
-        ),
-        SizedBox(height: AppDimens.xs),
-        Text(
-          profile?.email ?? '—',
-          style: AppTextStyles.bodySmall.copyWith(color: AppColors.textMuted),
-        ),
-      ],
+
+          // Le crayon quitte le portrait : collé à son bord, il se
+          // confondait avec lui. À droite, c'est un bouton à part
+          // entière, et la zone touchable ne dépend plus de l'image.
+          GestureDetector(
+            onTap    : () => context.pushNamed(RouteNames.editPersonalInfo),
+            behavior : HitTestBehavior.opaque,
+            child: Container(
+              width  : 42.r,
+              height : 42.r,
+              decoration: const BoxDecoration(
+                color : AppColors.primarySurface,
+                shape : BoxShape.circle,
+              ),
+              child: Icon(Icons.edit_outlined,
+                  color: AppColors.primary, size: 18.r),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -275,24 +301,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
-  /// Ouvre la feuille de suppression, et nettoie la session si le
-  /// compte a réellement été supprimé.
-  ///
-  /// Le `logout` est indispensable : sans lui, les jetons resteraient
-  /// dans le coffre et l'application tenterait de restaurer une
-  /// session dont le compte n'existe plus.
-  Future<void> _supprimerCompte() async {
-    final supprime = await showSuppressionCompteSheet(context);
-    if (!supprime || !mounted) return;
-
-    await ref.read(authProvider.notifier).logout();
-    if (!mounted) return;
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Votre compte a été supprimé.')),
-    );
-    context.goNamed(RouteNames.login);
-  }
+  // La suppression de compte a quitté cet écran pour « Informations
+  // personnelles », la page du compte : Google Play veut un chemin
+  // facilement trouvable, et c'est là qu'on le cherche.
 
   Future<void> _confirmerDeconnexion() async {
     {

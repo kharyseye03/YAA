@@ -20,7 +20,6 @@ import '../../features/screens/course/coursier_search_screen.dart';
 import '../../features/course/models/course_models.dart';
 import '../../model/order/livraison_course_model.dart';
 import '../../features/screens/order/order_history_screen.dart';
-import '../../features/screens/order/orders_screen.dart';
 import '../../features/screens/profile/edit_personal_info_screen.dart';
 import '../../features/screens/profile/personal_info_screen.dart';
 import '../../features/screens/category/category_screen.dart';
@@ -203,7 +202,13 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: RoutePaths.home,
         name: RouteNames.home,
-        builder: (context, state) => const HomeScreen(),
+        // `?onglet=1` ouvre directement les commandes : c'est par là
+        // qu'arrive le clic sur une notification. Valeur ignorée si
+        // elle n'est pas un nombre — l'accueil reste l'onglet 0.
+        builder: (context, state) => HomeScreen(
+          ongletInitial:
+              int.tryParse(state.uri.queryParameters['onglet'] ?? '') ?? 0,
+        ),
       ),
 
       // ── Cart & Checkout ────────────────────────────────────
@@ -226,10 +231,17 @@ final routerProvider = Provider<GoRouter>((ref) {
         ),
       ),
       // ── Orders ─────────────────────────────────────────────
+      // OrdersScreen n'a pas de Scaffold : il est conçu pour occuper
+      // l'onglet 1 de l'accueil, qui lui fournit le fond, la barre du
+      // bas et le Material dont dépend le rendu du texte. Affiché par
+      // cette route, il apparaissait sur fond noir avec des textes
+      // soulignés de jaune. La route est conservée — des liens
+      // extérieurs peuvent la viser — mais elle redirige désormais là
+      // où l'écran sait vivre.
       GoRoute(
         path: RoutePaths.orders,
         name: RouteNames.orders,
-        builder: (context, state) => const OrdersScreen(),
+        redirect: (context, state) => '${RoutePaths.home}?onglet=1',
       ),
       GoRoute(
         path: RoutePaths.orderHistory,

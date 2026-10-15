@@ -157,10 +157,17 @@ class _CourseDetailsSheetState extends ConsumerState<_CourseDetailsSheet> {
     final arrivee = widget.args.arrivee;
     final estim   = widget.estimation;
 
-    return Padding(
-      padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom),
-      child: Container(
+    // Blanc sous le clavier : ses coins supérieurs sont arrondis sur
+    // iOS, et sans ce fond on aperçoit le voile sombre de la feuille
+    // dans les deux encoches. Hauteur nulle quand le clavier est
+    // fermé, donc invisible le reste du temps.
+    final hauteurClavier = MediaQuery.of(context).viewInsets.bottom;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Flexible(
+          child: Container(
         constraints: BoxConstraints(
           maxHeight: MediaQuery.of(context).size.height * 0.9,
         ),
@@ -354,6 +361,9 @@ class _CourseDetailsSheetState extends ConsumerState<_CourseDetailsSheet> {
           ),
         ),
       ),
+        ),
+        Container(height: hauteurClavier, color: Colors.white),
+      ],
     );
   }
 }

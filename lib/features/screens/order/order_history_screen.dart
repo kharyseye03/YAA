@@ -8,6 +8,7 @@ import '../../../features/orders/providers/commande_notifier.dart';
 import 'commande_detail_sheet.dart';
 import 'mission_detail_sheet.dart';
 import 'orders_screen.dart';
+import '../../../shared/widgets/bouton_retour.dart';
 
 /// Historique des commandes terminées (LIVRE, ANNULE, REJETE).
 /// Accessible depuis le profil.
@@ -46,20 +47,7 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
             ),
             child: Row(
               children: [
-                GestureDetector(
-                  onTap    : () => Navigator.of(context).pop(),
-                  behavior : HitTestBehavior.opaque,
-                  child: Container(
-                    width  : 38.r,
-                    height : 38.r,
-                    decoration: BoxDecoration(
-                      color        : AppColors.grey100,
-                      borderRadius : BorderRadius.circular(10.r),
-                    ),
-                    child: Icon(Icons.chevron_left_rounded,
-                        color: AppColors.dark, size: 22.r),
-                  ),
-                ),
+                const BoutonRetour(),
                 SizedBox(width: 12.w),
                 Text(
                   'Historique',
@@ -89,8 +77,6 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
               ],
             ),
           ),
-
-          const Divider(height: 1, color: AppColors.grey200),
 
           // ── Erreur ──────────────────────────────────────────
           if (state.error != null)

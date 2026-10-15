@@ -33,6 +33,29 @@ class ApiConfig {
   static const String userDetailEndpoint    = '/registrations/detail';
   static const String updateProfileEndpoint = '/registrations/update';
 
+  // ── Endpoints Bannières ───────────────────────────
+  /// Bannières du carrousel de l'accueil, groupées par type
+  /// (FLASH_DEAL, SPONSOR, NOUVEAUTE…). Authentifiée : 401 sans jeton.
+  static const String bannieresEndpoint = '/bannieres/mobile/groupes';
+
+  // ── Endpoints Notifications push ──────────────────
+  /// Jeton Firebase de cet appareil, rangé à côté du compte.
+  ///
+  /// Les chemins partent de [baseUrl], qui contient déjà `/api/v1`.
+  static const String deviceRegisterEndpoint   = '/devices/register';
+  static const String deviceUnregisterEndpoint = '/devices/unregister';
+
+  /// Envoie une notification de test au compte connecté.
+  static const String deviceTestEndpoint = '/devices/test';
+
+  /// Distingue les deux applications côté backend : `CLIENT` ici,
+  /// `PRO` dans l'app livreur.
+  static const String appType = 'CLIENT';
+
+  /// À false tant que le backend n'expose pas ces routes : le jeton
+  /// n'est alors pas envoyé, et l'app ne tente rien.
+  static const bool notificationsPushDisponibles = true;
+
   // ── Endpoints Catégories ──────────────────────────
   static const String categoriesEndpoint          = '/categorie-structures';
   static const String structuresEndpoint          = '/structures';
