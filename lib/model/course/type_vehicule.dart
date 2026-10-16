@@ -9,9 +9,11 @@ import 'package:flutter/material.dart';
 /// n'est pas à l'enum d'en décider.
 enum TypeVehicule {
   moto('MOTO', 'Moto', Icons.two_wheeler_rounded,
-      'assets/images/moto.png', 'Rapide et abordable'),
+      'assets/images/moto.png', 'Rapide et abordable',
+      assetSuivi: 'assets/images/suivi_moto.png'),
   vehicule('VEHICULE', 'Voiture', Icons.local_taxi_rounded,
-      'assets/images/voiture.png', 'Confortable'),
+      'assets/images/voiture.png', 'Confortable',
+      assetSuivi: 'assets/images/suivi_voiture.png'),
   cargo('CARGO', 'Cargo', Icons.local_shipping_outlined,
       'assets/images/cargo.png', 'Gros volumes'),
   pickup('PICKUP', 'Pick-up', Icons.airport_shuttle_outlined,
@@ -22,7 +24,8 @@ enum TypeVehicule {
       null, 'Très gros volumes');
 
   const TypeVehicule(
-      this.code, this.libelle, this.icone, this.asset, this.description);
+      this.code, this.libelle, this.icone, this.asset, this.description,
+      {this.assetSuivi});
 
   /// Valeur envoyée et reçue par l'API
   final String code;
@@ -38,6 +41,15 @@ enum TypeVehicule {
 
   /// Argument court affiché sous le libellé dans le sélecteur.
   final String description;
+
+  /// Véhicule vu de dessus, posé sur la carte pendant le suivi.
+  ///
+  /// Rien à voir avec [asset], qui est une vue de trois quarts faite
+  /// pour le sélecteur : sur une carte, un véhicule se regarde d'en
+  /// haut. Null pour les types sans visuel dédié — à l'appelant de
+  /// retomber sur un pin portant [icone], plutôt que d'afficher une
+  /// moto à la place d'un camion.
+  final String? assetSuivi;
 
   /// Retrouve un type depuis son code. Renvoie null sur un code
   /// inconnu — à l'appelant de décider s'il l'affiche brut ou l'écarte.

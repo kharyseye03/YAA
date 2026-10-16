@@ -13,6 +13,7 @@ import '../../../core/utils/app_router.dart';
 import '../../../model/order/livraison_course_model.dart';
 import '../../../service/api/api_service.dart';
 import '../../../service/location/location_service.dart';
+import '../../../model/course/type_vehicule.dart';
 import '../../../shared/utils/map_markers.dart';
 import '../order/detail_widgets.dart';
 import 'rating_sheet.dart';
@@ -114,18 +115,28 @@ class _CoursierSearchScreenState extends State<CoursierSearchScreen>
     _pinArrivee = await createPinMarker(
         AppColors.secondary, Icons.location_on_outlined, densite: densite);
     // Le coursier est représenté par son véhicule vu de dessus, posé
-    // nu sur la carte. Repli sur un pin classique si l'image manque.
-    try {
-      _pinLivreur = await createImageMarker(
-        'assets/images/suivi_moto.png',
-        densite: densite,
-      );
-    } catch (e) {
-      journal('⚠️ marqueur moto indisponible : $e');
-      _pinLivreur = await createPinMarker(
-          AppColors.dark, Icons.sports_motorsports,
-          scale: 0.8, densite: densite);
+    // nu sur la carte.
+    //
+    // Le visuel suit le véhicule réellement utilisé, que le coursier
+    // renseigne, et retombe sur celui demandé à la commande. La moto
+    // était auparavant codée en dur : un client qui commandait une
+    // voiture voyait une moto approcher, et `suivi_voiture.png` ne
+    // servait à rien.
+    final type = TypeVehicule.depuisCode(_mission.livreur?.vehicule)
+        ?? TypeVehicule.depuisCode(_mission.typeVehicule);
+    final asset = type?.assetSuivi;
+
+    if (asset != null) {
+      try {
+        _pinLivreur = await createImageMarker(asset, densite: densite);
+      } catch (e) {
+        journal('⚠️ marqueur $asset indisponible : $e');
+      }
     }
+
+    _pinLivreur ??= await createPinMarker(
+        AppColors.dark, type?.icone ?? Icons.sports_motorsports,
+        scale: 0.8, densite: densite);
     if (mounted) setState(() {});
   }
 
