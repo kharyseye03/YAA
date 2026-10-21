@@ -2,16 +2,14 @@ import '../../../shared/widgets/image_reseau.dart';
 import '../../../core/utils/devise.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimens.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../features/favoris/providers/favori_notifier.dart';
 import '../../../model/favori/produit_favori_model.dart';
-import '../../../model/favori/structure_favori_model.dart';
+import '../category/carte_etablissement.dart';
 import '../category/product_bottom_sheet.dart';
-import '../category/restaurant_bottom_sheet.dart';
 import '../home/restaurant_card.dart';
 
 class FavorisScreen extends ConsumerStatefulWidget {
@@ -144,29 +142,24 @@ class _FavorisScreenState extends ConsumerState<FavorisScreen> {
           AppDimens.screenPadding, 16,
           AppDimens.screenPadding, 90),
       itemCount: state.favoris.length,
-      separatorBuilder: (_, __) => SizedBox(height: 14.h),
+      separatorBuilder: (_, __) => SizedBox(height: AppDimens.lg),
       itemBuilder: (_, i) {
         final f = state.favoris[i];
-        return _StructureCard(
-          favori    : f,
-          isToggling: state.isToggling(f.structureId),
-          onToggle  : () => ref
-              .read(favoriProvider.notifier)
-              .toggleFavori(f.structureId),
-          // Même feuille que depuis l'accueil ou une catégorie : on
-          // n'ouvre pas une variante « vue depuis les favoris ».
-          onTap: () => showRestaurantBottomSheet(
-            context,
-            RestaurantData(
-              name         : f.nom,
-              cuisine      : f.categorie ?? '',
-              rating       : f.nombreEtoile.toDouble(),
-              deliveryTime : f.tempsLivraison,
-              imageUrl     : f.logoUrl ?? '',
-            ),
-            structureId  : f.structureId,
-            categoryType : f.categorie ?? 'restaurant',
+        // La même carte que dans une catégorie : image en bandeau,
+        // puis nom, note, délai et catégorie. Un établissement doit se
+        // lire pareil partout — sinon on réapprend où regarder à
+        // chaque écran. Le cœur et l'ouverture de la fiche sont portés
+        // par la carte elle-même.
+        return CarteEtablissement(
+          restaurant: RestaurantData(
+            name         : f.nom,
+            cuisine      : f.categorie ?? '',
+            rating       : f.nombreEtoile.toDouble(),
+            deliveryTime : f.tempsLivraison,
+            imageUrl     : f.logoUrl ?? '',
           ),
+          structureId  : f.structureId,
+          categoryName : f.categorie ?? 'restaurant',
         );
       },
     );
@@ -290,118 +283,6 @@ class _Tabs extends StatelessWidget {
       ],
     );
   }
-}
-
-// ── Carte structure ───────────────────────────────────────────
-class _StructureCard extends StatelessWidget {
-  const _StructureCard({
-    required this.favori,
-    required this.isToggling,
-    required this.onToggle,
-    required this.onTap,
-  });
-  final StructureFavoriModel favori;
-  final bool                 isToggling;
-  final VoidCallback         onToggle;
-
-  /// Ouvre l'établissement. Sans lui, la carte n'était qu'un pense-bête
-  /// : on voyait ce qu'on avait aimé sans pouvoir y retourner.
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap    : onTap,
-      // La carte a des zones vides entre le logo et le cœur ; sans
-      // ceci, un appui à côté du texte ne déclencherait rien.
-      behavior : HitTestBehavior.opaque,
-      child: Container(
-      decoration: BoxDecoration(
-        color        : Colors.white,
-        borderRadius : BorderRadius.circular(16.r),
-        boxShadow    : [
-          BoxShadow(
-            color      : Colors.black.withValues(alpha: 0.06),
-            blurRadius : 16.r,
-            offset     : const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          // Logo
-          ClipRRect(
-            borderRadius: BorderRadius.only(
-              topLeft    : Radius.circular(16.r),
-              bottomLeft : Radius.circular(16.r),
-            ),
-            child: favori.logoUrl != null
-                ? ImageReseau(url: favori.logoUrl!,
-                    width: 90.r, height: 90.r, fit: BoxFit.cover,
-                    fallback: _fallback(Icons.storefront_outlined))
-                : _fallback(Icons.storefront_outlined),
-          ),
-
-          // Infos
-          Expanded(
-            child: Padding(
-              padding: EdgeInsets.fromLTRB(12.w, 12.h, 8.w, 12.h),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(favori.nom,
-                      style: AppTextStyles.labelMedium.copyWith(
-                        fontWeight: FontWeight.w700, fontSize: 15.sp,
-                        color: AppColors.dark),
-                      maxLines: 1, overflow: TextOverflow.ellipsis),
-                  if (favori.adresse.isNotEmpty) ...[
-                    SizedBox(height: 4.h),
-                    Row(children: [
-                      Icon(Icons.location_on_outlined,
-                          size: 13.r, color: AppColors.grey400),
-                      SizedBox(width: 3.w),
-                      Expanded(
-                        child: Text(favori.adresse,
-                            style: AppTextStyles.caption
-                                .copyWith(color: AppColors.grey500),
-                            maxLines: 1, overflow: TextOverflow.ellipsis),
-                      ),
-                    ]),
-                    SizedBox(height: 4.h),
-                  ],
-                  Row(children: [
-                    Icon(Icons.star_rounded,
-                        size: 14.r, color: Colors.amber.shade600),
-                    SizedBox(width: 3.w),
-                    Text('${favori.nombreEtoile}',
-                        style: AppTextStyles.caption.copyWith(
-                          fontWeight: FontWeight.w600, color: AppColors.dark)),
-                    SizedBox(width: 10.w),
-                    SvgPicture.asset('assets/icones/motorcycle-fill.svg',
-                        width: 13.r, height: 13.r,
-                        colorFilter: const ColorFilter.mode(
-                            AppColors.grey400, BlendMode.srcIn)),
-                    SizedBox(width: 4.w),
-                    Text(favori.tempsLivraison,
-                        style: AppTextStyles.caption
-                            .copyWith(color: AppColors.grey500)),
-                  ]),
-                ],
-              ),
-            ),
-          ),
-
-          // Bouton cœur
-          _HeartButton(isToggling: isToggling, onToggle: onToggle),
-        ],
-      ),
-      ),
-    );
-  }
-
-  Widget _fallback(IconData icon) => Container(
-      width: 90.r, height: 90.r, color: AppColors.grey100,
-      child: Icon(icon, color: AppColors.grey400, size: 32.r));
 }
 
 // ── Carte produit ─────────────────────────────────────────────
