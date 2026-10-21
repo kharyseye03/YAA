@@ -10,10 +10,10 @@ import 'package:flutter/material.dart';
 enum TypeVehicule {
   moto('MOTO', 'Moto', Icons.two_wheeler_rounded,
       'assets/images/moto.png', 'Rapide et abordable',
-      assetSuivi: 'assets/images/suivi_moto.png'),
+      assetSuivi: 'assets/images/suivi_moto.png', largeurSuivi: 42),
   vehicule('VEHICULE', 'Voiture', Icons.local_taxi_rounded,
       'assets/images/voiture.png', 'Confortable',
-      assetSuivi: 'assets/images/suivi_voiture.png'),
+      assetSuivi: 'assets/images/suivi_voiture.png', largeurSuivi: 34),
   cargo('CARGO', 'Cargo', Icons.local_shipping_outlined,
       'assets/images/cargo.png', 'Gros volumes'),
   pickup('PICKUP', 'Pick-up', Icons.airport_shuttle_outlined,
@@ -25,7 +25,7 @@ enum TypeVehicule {
 
   const TypeVehicule(
       this.code, this.libelle, this.icone, this.asset, this.description,
-      {this.assetSuivi});
+      {this.assetSuivi, this.largeurSuivi = 42});
 
   /// Valeur envoyée et reçue par l'API
   final String code;
@@ -50,6 +50,13 @@ enum TypeVehicule {
   /// retomber sur un pin portant [icone], plutôt que d'afficher une
   /// moto à la place d'un camion.
   final String? assetSuivi;
+
+  /// Largeur du marqueur sur la carte, en pixels logiques.
+  ///
+  /// Propre à chaque type, parce que les visuels n'ont pas les mêmes
+  /// proportions : à largeur égale, une voiture vue de dessus paraît
+  /// bien plus massive qu'une moto, qui est tout en longueur.
+  final double largeurSuivi;
 
   /// Retrouve un type depuis son code. Renvoie null sur un code
   /// inconnu — à l'appelant de décider s'il l'affiche brut ou l'écarte.

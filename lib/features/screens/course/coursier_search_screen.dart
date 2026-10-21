@@ -14,6 +14,7 @@ import '../../../service/api/api_service.dart';
 import '../../../service/location/location_service.dart';
 import '../../../model/course/type_vehicule.dart';
 import '../../../shared/utils/map_markers.dart';
+import '../../../shared/utils/suivi_coursier.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/constants/app_contacts.dart';
@@ -39,7 +40,7 @@ class CoursierSearchScreen extends StatefulWidget {
 }
 
 class _CoursierSearchScreenState extends State<CoursierSearchScreen>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   // Une seule boucle d'animation ; les ondes sont décalées entre elles
   late final AnimationController _pulse = AnimationController(
     vsync    : this,
@@ -70,6 +71,60 @@ class _CoursierSearchScreenState extends State<CoursierSearchScreen>
   /// tracé. Null tant qu'aucun itinéraire n'a été obtenu : on n'affiche
   /// alors aucune estimation, plutôt qu'un chiffre inventé.
   int? _dureeMinutes;
+
+  // ── Déplacement fluide du coursier ──────────────────────────
+  //
+  // Le serveur est interrogé toutes les dix secondes : sans
+  // interpolation, le véhicule saute d'un point à l'autre. On anime
+  // donc position et cap entre deux relevés, et c'est ce glissement
+  // continu qui donne son allure au suivi.
+
+  late final AnimationController _glissement = AnimationController(
+    vsync    : this,
+    duration : const Duration(milliseconds: 1200),
+  )..addListener(() {
+      if (mounted) setState(() {});
+    });
+
+  /// Position et cap d'où part l'animation en cours.
+  LatLng? _posDepartAnim;
+  double  _capDepartAnim = 0;
+
+  /// Position et cap visés, derniers connus du serveur.
+  LatLng? _posCibleAnim;
+  double  _capCibleAnim = 0;
+
+  /// Position affichée à l'instant t.
+  LatLng? get _posAffichee {
+    final cible = _posCibleAnim;
+    if (cible == null) return null;
+    final depart = _posDepartAnim;
+    if (depart == null) return cible;
+    return SuiviCoursier.positionInterpolee(
+        depart, cible, _glissement.value);
+  }
+
+  /// Cap affiché à l'instant t, par le chemin le plus court.
+  double get _capAffiche => SuiviCoursier.capInterpole(
+      _capDepartAnim, _capCibleAnim, _glissement.value);
+
+  /// Enregistre une nouvelle position et relance le glissement.
+  ///
+  /// Le cap est lu sur l'itinéraire quand on en a un ; sinon on garde
+  /// le dernier connu, plutôt que de remettre brutalement le véhicule
+  /// face au nord.
+  void _viserPosition(LatLng position) {
+    final capTrace = SuiviCoursier.capSurTrace(_routePoints, position);
+
+    _posDepartAnim = _posAffichee ?? position;
+    _capDepartAnim = _capAffiche;
+    _posCibleAnim  = position;
+    _capCibleAnim  = capTrace ?? _capCibleAnim;
+
+    _glissement
+      ..reset()
+      ..forward();
+  }
 
   GoogleMapController? _mapController;
   final _locationService = LocationService();
@@ -117,7 +172,16 @@ class _CoursierSearchScreenState extends State<CoursierSearchScreen>
   void initState() {
     super.initState();
     // Si un coursier est déjà là à l'ouverture (retour sur l'écran)
-    if (_coursierTrouve) _refreshMap();
+    if (_coursierTrouve) {
+      _refreshMap();
+      // Position de départ posée sans animation : au premier affichage
+      // le véhicule doit être là où il est, pas glisser depuis nulle
+      // part.
+      if (_mission.hasLivreurPosition) {
+        _posCibleAnim = LatLng(
+            _mission.latitudeLivreur!, _mission.longitudeLivreur!);
+      }
+    }
     if (_terminee) {
       // Mission déjà close : rien à suivre, on propose l'avis
       _pulse.stop();
@@ -149,6 +213,7 @@ class _CoursierSearchScreenState extends State<CoursierSearchScreen>
     _pollTimer?.cancel();
     _alerteTimer?.cancel();
     _mapController?.dispose();
+    _glissement.dispose();
     _pulse.dispose();
     super.dispose();
   }
@@ -172,7 +237,11 @@ class _CoursierSearchScreenState extends State<CoursierSearchScreen>
 
     if (asset != null) {
       try {
-        _pinLivreur = await createImageMarker(asset, densite: densite);
+        _pinLivreur = await createImageMarker(
+          asset,
+          largeur : type!.largeurSuivi,
+          densite : densite,
+        );
       } catch (e) {
         journal('⚠️ marqueur $asset indisponible : $e');
       }
@@ -203,7 +272,13 @@ class _CoursierSearchScreenState extends State<CoursierSearchScreen>
 
         if (aChange) {
           setState(() => _mission = updated);
-          if (_coursierTrouve) _refreshMap();
+          if (_coursierTrouve) {
+            _refreshMap();
+            if (updated.hasLivreurPosition) {
+              _viserPosition(LatLng(
+                  updated.latitudeLivreur!, updated.longitudeLivreur!));
+            }
+          }
         }
         // Mission close → plus rien à guetter. Tant qu'elle est en
         // cours on continue, même après l'assignation : la position
@@ -341,18 +416,35 @@ class _CoursierSearchScreenState extends State<CoursierSearchScreen>
       if (m.hasLivreurPosition && _pinLivreur != null)
         Marker(
           markerId : const MarkerId('livreur'),
-          position : LatLng(m.latitudeLivreur!, m.longitudeLivreur!),
+          position : _posAffichee
+              ?? LatLng(m.latitudeLivreur!, m.longitudeLivreur!),
           icon     : _pinLivreur!,
+          // Le véhicule regarde dans le sens de la marche.
+          rotation : _capAffiche,
+          // Pivote autour de son centre, et non de son coin.
+          anchor   : const Offset(0.5, 0.5),
+          // Posé à plat sur la carte, comme vu du ciel : il tourne
+          // avec elle au lieu de rester planté comme une épingle.
+          flat     : true,
         ),
     };
   }
 
   Set<Polyline> get _polylines {
     if (!_coursierTrouve || _routePoints.isEmpty) return {};
+
+    // Le tracé s'efface derrière le coursier : on ne dessine que ce
+    // qu'il lui reste à parcourir. Un trait qui reste tendu du départ
+    // à l'arrivée ne dit rien de l'avancement.
+    final position = _posAffichee;
+    final points   = position == null
+        ? _routePoints
+        : SuiviCoursier.traceRestant(_routePoints, position);
+
     return {
       Polyline(
         polylineId : const PolylineId('trajet'),
-        points     : _routePoints,
+        points     : points,
         color      : AppColors.secondary,
         width      : 5,
         startCap   : Cap.roundCap,
@@ -832,9 +924,6 @@ class _CoursierSearchScreenState extends State<CoursierSearchScreen>
           SizedBox(width: 10.w),
         ],
 
-        // Support, et non « Message » : l'app n'a pas de messagerie.
-        // Il joint le support de YAA par téléphone, ce qui est utile
-        // tout de suite ; la destination définitive reste à décider.
         Expanded(
           child: OutlinedButton.icon(
             onPressed : () => _appeler(AppContacts.telephoneSupport),
