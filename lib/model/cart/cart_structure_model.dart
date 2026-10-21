@@ -30,9 +30,28 @@ class CartStructureModel {
       nomStructure        : structure['nomStructure']  as String? ?? '',
       adresseStructure    : structure['adresseStructure'] as String? ?? '',
       telephoneStructure  : structure['telephoneStructure'] as String? ?? '',
-      produits            : produitsJson
-          .map((e) => CartItemModel.fromJson(e as Map<String, dynamic>))
-          .toList(),
+      produits            : _trierParLigne(produitsJson),
     );
+  }
+
+  /// Ordonne les lignes par leur identifiant, croissant.
+  ///
+  /// Le serveur renvoie le panier dans un ordre qui change après une
+  /// modification : la ligne qu'on vient de toucher repasse en
+  /// dernier. À l'écran, incrémenter une quantité faisait donc sauter
+  /// l'article en bas de la liste, et remonter le suivant — le doigt
+  /// de l'utilisateur se retrouvait sur un autre produit.
+  ///
+  /// L'identifiant de ligne est attribué au premier ajout : trier
+  /// dessus redonne l'ordre dans lequel les articles ont été mis au
+  /// panier, et surtout un ordre **stable** d'un rafraîchissement à
+  /// l'autre.
+  static List<CartItemModel> _trierParLigne(List<dynamic> json) {
+    final lignes = json
+        .whereType<Map<String, dynamic>>()
+        .map(CartItemModel.fromJson)
+        .toList();
+    lignes.sort((a, b) => a.id.compareTo(b.id));
+    return lignes;
   }
 }

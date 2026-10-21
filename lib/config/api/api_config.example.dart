@@ -65,6 +65,17 @@ class ApiConfig {
       '/categories-produit/categorie-structure/$categorieStructureId'
       '/categories-produit';
   static const String produitsByStructureEndpoint = '/produits/structure';
+
+  /// Changement de statut d'une commande, côté client. PATCH avec le
+  /// statut en paramètre d'URL ; l'annulation n'est acceptée que
+  /// depuis EN_ATTENTE ou CONFIRME.
+  static String statutCommandeUrl(int id) =>
+      '/commandes-clients/mobile/$id/statut';
+
+  /// Annulation d'une mission — course comme livraison. PATCH sans
+  /// corps ; refusée une fois le coursier arrivé au point de départ.
+  static String annulationMissionUrl(int id) =>
+      '/livraisons-courses/$id/annulation';
   static String produitDetailUrl(int id)   => '$baseUrl/produits/$id';
 
   // ── Endpoints Favoris ────────────────────────────

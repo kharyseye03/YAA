@@ -235,6 +235,34 @@ class LocationService {
   // ── Tracé du trajet (Directions API) ─────────────────────────
   /// Retourne les points du trajet routier A → B sous forme de
   /// paires [latitude, longitude]. Liste vide si aucun trajet.
+  /// Tracé **et** durée du trajet, en une seule requête.
+  ///
+  /// La durée était jetée alors qu'elle arrive dans la même réponse :
+  /// c'est elle qui permet d'annoncer « arrivée estimée dans 12 min »
+  /// sans inventer un chiffre, et sans appel supplémentaire — donc
+  /// sans coût Directions en plus.
+  ///
+  /// [dureeMinutes] est null si Google ne la fournit pas ; l'appelant
+  /// n'affiche alors aucune estimation plutôt qu'une valeur fausse.
+  Future<({List<List<double>> points, int? dureeMinutes})> getRoute({
+    required double departLat,
+    required double departLng,
+    required double arriveeLat,
+    required double arriveeLng,
+  }) async {
+    final points = await getRoutePolyline(
+      departLat   : departLat,
+      departLng   : departLng,
+      arriveeLat  : arriveeLat,
+      arriveeLng  : arriveeLng,
+    );
+    return (points: points, dureeMinutes: _derniereDureeMinutes);
+  }
+
+  /// Durée du dernier trajet calculé, en minutes. Remplie par
+  /// [getRoutePolyline], lue par [getRoute].
+  int? _derniereDureeMinutes;
+
   Future<List<List<double>>> getRoutePolyline({
     required double departLat,
     required double departLng,
@@ -259,7 +287,20 @@ class LocationService {
     }
 
     final routes = data['routes'] as List<dynamic>;
-    if (routes.isEmpty) return [];
+    if (routes.isEmpty) {
+      _derniereDureeMinutes = null;
+      return [];
+    }
+
+    // La durée vit dans la première étape du trajet. Absente sur
+    // certaines réponses — on la met à null plutôt que de supposer.
+    final legs = routes.first['legs'] as List<dynamic>?;
+    final secondes = legs == null || legs.isEmpty
+        ? null
+        : (legs.first['duration']?['value'] as num?)?.toInt();
+    _derniereDureeMinutes =
+        secondes == null ? null : (secondes / 60).round().clamp(1, 999);
+
     final encoded =
         routes.first['overview_polyline']['points'] as String;
     return _decodePolyline(encoded);

@@ -19,6 +19,7 @@ import '../home/providers/category_provider.dart' show
     ProduitQueryParams;
 import '../home/restaurant_card.dart';
 import 'product_bottom_sheet.dart';
+import '../../favoris/providers/favori_notifier.dart';
 
 // ── Entry point ───────────────────────────────────────────
 void showRestaurantBottomSheet(
@@ -82,7 +83,13 @@ class _RestaurantSheetState extends ConsumerState<_RestaurantSheet> {
   @override
   void initState() {
     super.initState();
-    Future.microtask(() => ref.read(cartProvider.notifier).loadCart());
+    Future.microtask(() {
+      ref.read(cartProvider.notifier).loadCart();
+      // Sans ça, le cœur de l'en-tête s'affiche vide pour un
+      // établissement déjà en favori quand la fiche est ouverte
+      // ailleurs que depuis l'accueil — une recherche, une bannière.
+      ref.read(favoriProvider.notifier).loadFavoris();
+    });
   }
 
   @override
@@ -235,11 +242,6 @@ class _RestaurantSheetState extends ConsumerState<_RestaurantSheet> {
           ? GestureDetector(
               onTap: () {
                 Navigator.of(context).pop();
-                // pushNamed et non goNamed : goNamed remplace la pile,
-                // le panier devenait donc un cul-de-sac dont on ne
-                // pouvait sortir qu'en commandant. Empilé, le retour
-                // ramène là où l'on était — souvent pour ajouter un
-                // autre produit.
                 context.pushNamed(RouteNames.cart);
               },
               child: Container(
@@ -434,10 +436,6 @@ class _RestaurantSheetState extends ConsumerState<_RestaurantSheet> {
               ),
               decoration: InputDecoration(
                 isDense: true,
-                // Les quatre états, pas seulement `border` : le thème
-                // définit enabledBorder et focusedBorder, qui priment
-                // dans leur état. N'annuler que `border` laisse le
-                // contour apparaître dès que le champ prend le focus.
                 border         : InputBorder.none,
                 enabledBorder  : InputBorder.none,
                 focusedBorder  : InputBorder.none,
@@ -468,8 +466,6 @@ class _RestaurantSheetState extends ConsumerState<_RestaurantSheet> {
   }
 
   Widget _buildFiltresRapides() {
-    // Hauteur calée sur celle des puces (texte + 8 px de padding
-    // haut et bas + la bordure) : en dessous, elles sont rognées
     return SizedBox(
       height: 38.h,
       child: ListView(
@@ -637,8 +633,7 @@ class _RestaurantSheetState extends ConsumerState<_RestaurantSheet> {
       return _buildInvite();
     }
 
-    // Un booléen à false filtrerait « les produits qui ne sont pas en
-    // promotion » — quand la puce est éteinte, on n'envoie rien
+
     final params = ProduitQueryParams(
       structureId         : widget.structureId,
       nom                 : _terme.isEmpty ? null : _terme,
@@ -749,7 +744,7 @@ class _RestaurantSheetState extends ConsumerState<_RestaurantSheet> {
             ),
           ),
           SizedBox(width: AppDimens.md),
-          Icon(Icons.favorite_border_rounded, size: 22.r, color: AppColors.dark),
+          _BoutonFavori(structureId: widget.structureId),
         ],
       ),
     );
@@ -777,7 +772,7 @@ class _RestaurantSheetState extends ConsumerState<_RestaurantSheet> {
               Icon(Icons.star, size: 16.r, color: AppColors.dark),
               SizedBox(width: 4.w),
               Text(
-                '${widget.restaurant.rating.toStringAsFixed(1)} (124)',
+                '${widget.restaurant.rating.toStringAsFixed(1)} ',
                 style: AppTextStyles.bodySmall.copyWith(
                   fontWeight: FontWeight.w600,
                   color: AppColors.dark,
@@ -935,12 +930,12 @@ class _TabsDelegate extends SliverPersistentHeaderDelegate {
 }
 
 // ── Carte produit (données API) ───────────────────────────
-class _ApiMenuItemCard extends StatelessWidget {
+class _ApiMenuItemCard extends ConsumerWidget {
   const _ApiMenuItemCard({required this.produit});
   final Produit produit;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return GestureDetector(
       onTap: () => showProductBottomSheet(context, produit.id),
       child: Column(
@@ -964,16 +959,7 @@ class _ApiMenuItemCard extends StatelessWidget {
                   Positioned(
                     bottom: 8.h,
                     right : 8.w,
-                    child : Container(
-                      width      : 32.r,
-                      height     : 32.r,
-                      decoration : const BoxDecoration(
-                        color : AppColors.secondary,
-                        shape : BoxShape.circle,
-                      ),
-                      child: Icon(Icons.add,
-                          size: 18.r, color: Colors.white),
-                    ),
+                    child : _BoutonAjout(produit: produit),
                   ),
                 ],
               ),
@@ -998,6 +984,149 @@ class _ApiMenuItemCard extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Le cœur de l'en-tête : met l'établissement en favori.
+///
+/// C'était une icône nue, sans geste attaché — elle ne faisait rien.
+/// Elle reflète maintenant l'état réel et le bascule au toucher.
+///
+/// Le provider applique le changement avant la réponse du serveur et
+/// revient en arrière tout seul en cas d'échec : le cœur réagit donc
+/// au doigt, sans attendre le réseau.
+class _BoutonFavori extends ConsumerWidget {
+  const _BoutonFavori({required this.structureId});
+
+  final int structureId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final etat      = ref.watch(favoriProvider);
+    final estFavori = etat.isFavori(structureId);
+    final enCours   = etat.isToggling(structureId);
+
+    return GestureDetector(
+      onTap: enCours
+          ? null
+          : () => ref.read(favoriProvider.notifier).toggleFavori(structureId),
+      behavior: HitTestBehavior.opaque,
+      child: Padding(
+        padding: EdgeInsets.all(4.r),
+        child: Icon(
+          estFavori
+              ? Icons.favorite_rounded
+              : Icons.favorite_border_rounded,
+          size  : 22.r,
+          color : estFavori ? AppColors.error : AppColors.dark,
+        ),
+      ),
+    );
+  }
+}
+
+/// Le rond orange au coin de la vignette : ajoute au panier.
+///
+/// Il ouvrait la fiche produit, comme le reste de la carte. Un « + »
+/// qui n'ajoute rien est une promesse trahie : le symbole annonce un
+/// ajout, pas une lecture. La fiche reste accessible par le reste de
+/// la vignette, pour qui veut la description.
+///
+/// Une fois l'article au panier, le bouton affiche sa quantité et
+/// l'incrémente. C'est la réponse à « est-ce que ça a marché ? », sans
+/// bandeau ni animation.
+class _BoutonAjout extends ConsumerStatefulWidget {
+  const _BoutonAjout({required this.produit});
+
+  final Produit produit;
+
+  @override
+  ConsumerState<_BoutonAjout> createState() => _BoutonAjoutState();
+}
+
+class _BoutonAjoutState extends ConsumerState<_BoutonAjout> {
+  bool _enCours = false;
+
+  /// Quantité déjà au panier pour ce produit, 0 s'il n'y est pas.
+  ///
+  /// Lue dans l'état du panier, qui est rechargé depuis le serveur
+  /// après chaque ajout : l'affichage reste la vérité du serveur,
+  /// jamais une supposition locale. Elle survit donc à la fermeture
+  /// de l'établissement — rouvrir le catalogue montre le vrai contenu
+  /// du panier, ce qui évite d'ajouter deux fois sans le savoir.
+  int _quantiteAuPanier() {
+    // Le panier est groupé par établissement ; `allProduits` aplatit
+    // l'ensemble, ce qui suffit ici — un identifiant de produit
+    // n'appartient qu'à une structure.
+    final lignes = ref.watch(cartProvider).cart?.allProduits ?? const [];
+    for (final l in lignes) {
+      if (l.produitId == widget.produit.id) return l.quantite;
+    }
+    return 0;
+  }
+
+  /// `POST /paniers` **remplace** la quantité au lieu de s'y ajouter :
+  /// on envoie donc la valeur voulue, jamais l'écart. Envoyer « 1 »
+  /// deux fois laisserait 1, et le bouton paraîtrait cassé.
+  Future<void> _ajouter(int quantiteActuelle) async {
+    if (_enCours) return;
+    setState(() => _enCours = true);
+
+    final ok = await ref.read(cartProvider.notifier).addToCart(
+          produitId : widget.produit.id,
+          quantite  : quantiteActuelle + 1,
+        );
+
+    if (!mounted) return;
+    setState(() => _enCours = false);
+    if (!ok) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(ref.read(cartProvider).error
+              ?? 'Impossible d\'ajouter au panier.'),
+        ),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final quantite = _quantiteAuPanier();
+
+    return GestureDetector(
+      // Absorbe le toucher : sans ça, il remonterait à la carte et
+      // ouvrirait la fiche produit par-dessus l'ajout.
+      onTap    : () => _ajouter(quantite),
+      behavior : HitTestBehavior.opaque,
+      child: AnimatedContainer(
+        duration : const Duration(milliseconds: 160),
+        width    : 32.r,
+        height   : 32.r,
+        decoration: const BoxDecoration(
+          color : AppColors.secondary,
+          shape : BoxShape.circle,
+        ),
+        child: Center(
+          child: _enCours
+              ? SizedBox(
+                  width  : 14.r,
+                  height : 14.r,
+                  child  : const CircularProgressIndicator(
+                      strokeWidth: 1.8, color: Colors.white),
+                )
+              : quantite == 0
+                  ? Icon(Icons.add, size: 18.r, color: Colors.white)
+                  : Text(
+                      '$quantite',
+                      style: AppTextStyles.labelMedium.copyWith(
+                        color      : Colors.white,
+                        fontWeight : FontWeight.w800,
+                        fontSize   : 14.sp,
+                      ),
+                    ),
+        ),
       ),
     );
   }

@@ -12,6 +12,9 @@ import '../../../model/order/livraison_course_model.dart';
 import '../../../service/storage/notation_storage.dart';
 import '../../../shared/widgets/recherche_animation.dart';
 import '../course/rating_sheet.dart';
+import '../../../core/errors/messages_erreur.dart';
+import '../../../service/api/api_service.dart';
+import 'confirmation_annulation.dart';
 import 'detail_widgets.dart';
 import 'orders_screen.dart' show CommandeCard;
 
@@ -41,6 +44,10 @@ class _MissionDetailSheet extends ConsumerStatefulWidget {
 }
 
 class _MissionDetailSheetState extends ConsumerState<_MissionDetailSheet> {
+  /// Vrai pendant l'appel d'annulation : le lien se verrouille, un
+  /// double toucher enverrait deux requêtes.
+  bool _enAnnulation = false;
+
   @override
   void initState() {
     super.initState();
@@ -263,8 +270,68 @@ class _MissionDetailSheetState extends ConsumerState<_MissionDetailSheet> {
 
         // ⑥ Les montants
         _montants(m, detail),
+
+        // ⑦ Annulation, tant que le coursier n'est pas arrivé au
+        // point de départ.
+        if (m.peutEtreAnnulee) ...[
+          SizedBox(height: AppDimens.xl),
+          LienAnnuler(
+            libelle : m.typeService == TypeServiceMission.livraison
+                ? 'Annuler la livraison'
+                : 'Annuler la course',
+            enCours : _enAnnulation,
+            onTap   : () => _annuler(m),
+          ),
+        ],
       ],
     );
+  }
+
+  /// Demande confirmation, annule, puis recharge la liste.
+  ///
+  /// Le lien n'apparaît que sur les trois statuts annulables, mais
+  /// c'est le serveur qui tranche : entre l'ouverture de la feuille
+  /// et le toucher, le coursier a pu arriver au point de départ. Son
+  /// refus est affiché tel quel, et la mission relue pour montrer où
+  /// elle en est vraiment.
+  Future<void> _annuler(LivraisonCourseModel m) async {
+    final livraison = m.typeService == TypeServiceMission.livraison;
+    final confirme = await confirmerAnnulation(
+      context,
+      titre   : livraison
+          ? 'Annuler cette livraison ?'
+          : 'Annuler cette course ?',
+      message : m.hasLivreur
+          // Un coursier a déjà été assigné : il s'est peut-être mis en
+          // route. Le dire change la décision.
+          ? 'Un coursier a déjà accepté et se dirige vers le point de '
+              'départ. Il en sera informé. Vous ne pourrez pas revenir '
+              'en arrière.'
+          : 'La recherche d\'un coursier s\'arrêtera. Vous ne pourrez '
+              'pas revenir en arrière.',
+      libelleGarder  : livraison
+          ? 'Garder ma livraison'
+          : 'Garder ma course',
+      libelleAnnuler : livraison
+          ? 'Annuler la livraison'
+          : 'Annuler la course',
+    );
+    if (confirme != true || !mounted) return;
+
+    setState(() => _enAnnulation = true);
+    try {
+      await ApiService().annulerMission(m.id);
+      if (!mounted) return;
+      Navigator.of(context).pop();
+      await ref.read(commandeProvider.notifier).loadCommandes();
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _enAnnulation = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(MessagesErreur.depuisException(e))),
+      );
+      ref.read(commandeProvider.notifier).loadCommandes(silencieux: true);
+    }
   }
 
   /// Sur une commande d'établissement, les produits et la livraison

@@ -66,4 +66,15 @@ class CommandeModel {
   /// Retourne true si la commande est encore active (pas terminée)
   bool get isEnCours =>
       statut != 'LIVRE' && statut != 'ANNULE' && statut != 'REJETE';
+
+  /// Annulation possible ou non, selon le statut.
+  ///
+  /// Même règle que le serveur, qui refuse au-delà : une fois la
+  /// préparation lancée, le commerçant a engagé des frais. Proposer
+  /// le bouton plus tard reviendrait à promettre ce que l'API
+  /// n'accorde pas.
+  static bool statutAnnulable(String statut) =>
+      statut == 'EN_ATTENTE' || statut == 'CONFIRME';
+
+  bool get peutEtreAnnulee => statutAnnulable(statut);
 }

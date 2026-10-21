@@ -60,9 +60,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final user    = ref.watch(userProvider);
     final profile = user.profile;
 
-    // L'adresse retenue pour la prochaine commande, sinon celle du
-    // profil. Même règle que dans le panier, pour que les deux écrans
-    // ne montrent jamais deux adresses différentes.
     final adresse = ref.watch(deliveryAddressProvider)?.adresse
         ?? profile?.address;
 
@@ -116,9 +113,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               _Ligne(
                 icon     : Icons.person_outline_rounded,
                 label    : 'Informations personnelles',
-                // Le nom et le numéro rendent la ligne utile sans
-                // avoir à l'ouvrir. C'est aussi ce qui remplace
-                // l'ancienne ligne « Téléphone », qui menait ici.
                 subtitle : [profile?.fullName, telephone]
                     .where((e) => e != null && e.isNotEmpty)
                     .join(' · '),
@@ -130,8 +124,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 subtitle : adresse == null
                     ? 'Non renseignée'
                     : LocationService.cleanAddress(adresse),
-                // Même feuille que depuis le panier : l'adresse se
-                // choisit d'un seul endroit dans l'application.
                 onTap    : () => showDeliveryAddressSheet(context),
               ),
               _Ligne(
@@ -171,9 +163,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
             SizedBox(height: AppDimens.lg),
 
-            // ── Fin de session ────────────────────────────
-            // Les deux seules actions de l'écran qui ne mènent nulle
-            // part mais agissent sur le compte, isolées du reste.
             _Carte(children: [
               _Ligne(
                 icon      : Icons.logout_rounded,
@@ -257,9 +246,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             ),
           ),
 
-          // Le crayon quitte le portrait : collé à son bord, il se
-          // confondait avec lui. À droite, c'est un bouton à part
-          // entière, et la zone touchable ne dépend plus de l'image.
           GestureDetector(
             onTap    : () => context.pushNamed(RouteNames.editPersonalInfo),
             behavior : HitTestBehavior.opaque,
@@ -301,9 +287,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
-  // La suppression de compte a quitté cet écran pour « Informations
-  // personnelles », la page du compte : Google Play veut un chemin
-  // facilement trouvable, et c'est là qu'on le cherche.
 
   Future<void> _confirmerDeconnexion() async {
     {
@@ -401,9 +384,6 @@ class _SupportSheet extends StatelessWidget {
               icon     : Icons.phone_outlined,
               label    : 'Appeler',
               subtitle : AppContacts.telephoneSupport,
-              // La feuille se ferme avant d'ouvrir l'application
-              // externe : au retour, l'utilisateur retrouve le profil
-              // et non une feuille restée ouverte derrière.
               onTap    : () {
                 Navigator.of(context).pop();
                 onAppeler();
@@ -569,9 +549,6 @@ class _CarteCoursier extends StatelessWidget {
                 color : AppColors.secondary,
                 shape : BoxShape.circle,
               ),
-              // Le casque, comme sur la carte Livraison de l'accueil
-              // et le marqueur du coursier : c'est déjà le signe du
-              // métier dans l'application.
               child: Icon(Icons.sports_motorsports,
                   color: Colors.white, size: 20.r),
             ),

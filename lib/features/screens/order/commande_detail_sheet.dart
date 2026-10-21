@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimens.dart';
+import '../../../core/errors/messages_erreur.dart';
+import '../../../service/api/api_service.dart';
+import 'confirmation_annulation.dart';
 import '../../../core/utils/devise.dart';
 import '../../../features/orders/providers/commande_notifier.dart';
 import '../../../model/order/commande_detail_model.dart';
@@ -36,6 +39,10 @@ class _CommandeDetailSheet extends ConsumerStatefulWidget {
 }
 
 class _CommandeDetailSheetState extends ConsumerState<_CommandeDetailSheet> {
+  /// Vrai pendant l'appel d'annulation : le bouton se verrouille, un
+  /// double toucher enverrait deux requêtes.
+  bool _enAnnulation = false;
+
   @override
   void initState() {
     super.initState();
@@ -174,7 +181,55 @@ class _CommandeDetailSheetState extends ConsumerState<_CommandeDetailSheet> {
           montantLabel(d?.montantTotal ?? resume?.montantTotal ?? 0),
           fort: true,
         ),
+
+        // ⑦ Annulation, tant que l'établissement n'a pas commencé.
+        if (CommandeModel.statutAnnulable(statut)) ...[
+          SizedBox(height: AppDimens.xl),
+          LienAnnuler(
+            libelle : 'Annuler la commande',
+            enCours : _enAnnulation,
+            onTap   : _annuler,
+          ),
+        ],
       ],
     );
   }
+
+  /// Demande confirmation, annule, puis rafraîchit la liste.
+  ///
+  /// Le bouton n'apparaît que sur les statuts annulables, mais c'est
+  /// le serveur qui tranche : entre l'affichage de la feuille et le
+  /// toucher, le commerçant a pu confirmer puis lancer la
+  /// préparation. Son refus est donc affiché tel quel, et la liste
+  /// rechargée pour montrer le statut réel.
+  Future<void> _annuler() async {
+    final confirme = await confirmerAnnulation(
+      context,
+      titre   : 'Annuler cette commande ?',
+      message : 'L\'établissement en sera informé et la préparation '
+          's\'arrêtera. Vous ne pourrez pas revenir en arrière.',
+      libelleGarder  : 'Garder ma commande',
+      libelleAnnuler : 'Annuler la commande',
+    );
+    if (confirme != true || !mounted) return;
+
+    setState(() => _enAnnulation = true);
+    try {
+      await ApiService().annulerCommande(widget.commandeId);
+      if (!mounted) return;
+      // La feuille se ferme : la commande annulée quitte l'onglet des
+      // commandes en cours, il n'y a plus rien à y regarder.
+      Navigator.of(context).pop();
+      await ref.read(commandeProvider.notifier).loadCommandes();
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _enAnnulation = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(MessagesErreur.depuisException(e))),
+      );
+      // Le statut a peut-être avancé depuis l'ouverture : on relit.
+      ref.read(commandeProvider.notifier).refreshDetail(widget.commandeId);
+    }
+  }
 }
+

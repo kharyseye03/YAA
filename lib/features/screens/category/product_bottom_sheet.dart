@@ -254,13 +254,13 @@ class _ProductSheetState extends ConsumerState<_ProductSheet> {
             children: [
               _InfoChip(
                 icon: Icons.star_rounded,
-                label: '4.8',
+                label: '0',
                 iconColor: const Color(0xFFFFC107),
               ),
               SizedBox(width: AppDimens.sm),
               _InfoChip(
                 icon: Icons.people_outline_rounded,
-                label: '124 avis',
+                label: '0 avis',
                 iconColor: AppColors.grey500,
               ),
               SizedBox(width: AppDimens.sm),
@@ -284,8 +284,8 @@ class _ProductSheetState extends ConsumerState<_ProductSheet> {
                   style: AppTextStyles.h2.copyWith(
                     fontWeight: FontWeight.w800,
                     color: AppColors.dark,
-                    fontSize: 22.sp,
-                    height: 1.2,
+                    fontSize: 14.sp,
+                    height: 1.25,
                   ),
                 ),
               ),
@@ -312,11 +312,6 @@ class _ProductSheetState extends ConsumerState<_ProductSheet> {
             ),
           ),
 
-          // Marge de fin, pour que la description ne colle pas à la
-          // barre d'ajout. Les sections « Choisir la taille » et
-          // « Ajouter des extras » qui suivaient ont été retirées :
-          // elles étaient écrites en dur, le backend ne renvoie ni
-          // tailles ni suppléments.
           SizedBox(height: AppDimens.xl),
         ],
       ),

@@ -189,6 +189,57 @@ class ApiService {
     }
   }
 
+  /// PATCH avec le tout en paramètres d'URL, sans corps.
+  ///
+  /// Les changements de statut se font ainsi côté backend : la valeur
+  /// voyage dans la requête, pas dans le corps.
+  Future<Map<String, dynamic>> _patch(
+    String endpoint, {
+    Map<String, String>? queryParams,
+    bool auth = false,
+  }) async {
+    try {
+      var url = Uri.parse(ApiConfig.getUrl(endpoint));
+      if (queryParams != null) {
+        url = url.replace(queryParameters: queryParams);
+      }
+
+      ApiLogger.requete('PATCH', url);
+      final chrono = Stopwatch()..start();
+
+      final response = await _send(
+        auth    : auth,
+        request : (headers) => _client.patch(url, headers: headers),
+      );
+
+      ApiLogger.reponse(
+          'PATCH', url, response.statusCode, response.body, chrono.elapsed);
+
+      if (response.statusCode == 200 || response.statusCode == 201 ||
+          response.statusCode == 204) {
+        if (response.body.isEmpty) return {};
+        return json.decode(response.body) as Map<String, dynamic>;
+      }
+
+      if (response.body.isEmpty) {
+        throw Exception(MessagesErreur.pourStatut(response.statusCode));
+      }
+
+      final data = json.decode(response.body) as Map<String, dynamic>;
+      throw MessagesErreur.depuisReponse(
+          response.statusCode, data['message'] as String?);
+
+    } on SocketException {
+      throw Exception(MessagesErreur.horsLigne);
+    } on TimeoutException catch (e) {
+      throw Exception(e.message);
+    } on FormatException {
+      throw Exception('Réponse invalide du serveur.');
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   Future<Map<String, dynamic>> _put(
     String endpoint,
     dynamic body, {
@@ -1283,6 +1334,43 @@ class ApiService {
   // ════════════════════════════════════════════════════
   // MÉTHODES PUBLIQUES — Commandes client
   // ════════════════════════════════════════════════════
+
+  /// Annule une mission — course ou livraison, même route.
+  ///
+  /// Acceptée tant que le coursier n'est pas arrivé au point de
+  /// départ : RECHERCHE_COURSIER, COURSIER_ASSIGNE ou
+  /// COURSIER_EN_ROUTE_VERS_DEPART. Au-delà, le serveur refuse, et
+  /// c'est lui qui tranche — le statut peut avoir changé depuis
+  /// l'affichage de l'écran.
+  Future<void> annulerMission(int id) async {
+    try {
+      await _patch(ApiConfig.annulationMissionUrl(id), auth: true);
+    } catch (e) {
+      ApiLogger.erreur('annulerMission($id)', e);
+      rethrow;
+    }
+  }
+
+  /// Annule une commande.
+  ///
+  /// Le serveur n'accepte l'annulation que depuis EN_ATTENTE ou
+  /// CONFIRME ; passé ces deux états, la préparation a commencé et il
+  /// refuse. L'app masque donc le bouton en dehors de ces statuts,
+  /// mais c'est le serveur qui décide : entre l'affichage et le
+  /// toucher, le commerçant a pu avancer. Son message d'erreur est
+  /// remonté tel quel à l'utilisateur.
+  Future<void> annulerCommande(int id) async {
+    try {
+      await _patch(
+        ApiConfig.statutCommandeUrl(id),
+        queryParams : {'statut': 'ANNULE'},
+        auth        : true,
+      );
+    } catch (e) {
+      ApiLogger.erreur('annulerCommande($id)', e);
+      rethrow;
+    }
+  }
 
   Future<CommandeDetailModel> getCommandeDetail({
     required int id,

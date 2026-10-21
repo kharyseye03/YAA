@@ -38,6 +38,11 @@ class CartModel {
       }
     }
 
+    // Même raison que pour les articles : les groupes doivent garder
+    // un ordre stable entre deux rafraîchissements, sinon ce sont les
+    // établissements qui permutent après chaque modification.
+    lignes.sort((a, b) => a.structureId.compareTo(b.structureId));
+
     return CartModel(
       id                : (json['id'] as num).toInt(),
       montantTotal      : (json['montantTotal'] as num?)?.toDouble() ?? 0.0,

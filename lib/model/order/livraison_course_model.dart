@@ -297,6 +297,20 @@ class LivraisonCourseModel {
 
   bool get isEnCours => !_statutsFinaux.contains(statut);
 
+  /// Annulation possible ou non, selon le statut.
+  ///
+  /// Même règle que le serveur : tant que le coursier n'est pas
+  /// arrivé au point de départ, rien n'a vraiment commencé. Une fois
+  /// sur place, il s'est déplacé — l'annulation ne lui est plus
+  /// opposable, et l'API refuse.
+  static bool statutAnnulable(String statut) => const {
+        'RECHERCHE_COURSIER',
+        'COURSIER_ASSIGNE',
+        'COURSIER_EN_ROUTE_VERS_DEPART',
+      }.contains(statut);
+
+  bool get peutEtreAnnulee => statutAnnulable(statut);
+
   /// "6.9 km · 16 min"
   String get metaLabel {
     final d = distanceKm > 0 ? '${distanceKm.toStringAsFixed(1)} km' : null;
