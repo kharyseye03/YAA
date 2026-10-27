@@ -20,6 +20,7 @@ import '../../model/category/structure.dart';
 import '../../model/category/produit_detail.dart';
 import '../../model/category/structure_detail.dart';
 import '../../model/banniere/banniere_model.dart';
+import '../../model/notification/notification_model.dart';
 import '../../model/course/estimation_model.dart';
 import '../auth/token_storage.dart';
 import '../../model/user/user_profile.dart';
@@ -330,6 +331,100 @@ class ApiService {
       throw Exception(e.message);
     } on FormatException {
       throw Exception('Réponse invalide du serveur.');
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// GET dont la réponse est le corps **brut** : un tableau, un
+  /// nombre, ce que le serveur renvoie.
+  ///
+  /// La plupart des routes enveloppent leurs données dans
+  /// `{data: …}` ; celles des notifications ne le font pas. Plutôt que
+  /// d'inventer une enveloppe absente, on lit tel quel.
+  Future<dynamic> _getBrut(
+    String endpoint, {
+    Map<String, String>? queryParams,
+    bool auth = false,
+  }) async {
+    try {
+      var uri = Uri.parse(ApiConfig.getUrl(endpoint));
+      if (queryParams != null) {
+        uri = uri.replace(queryParameters: queryParams);
+      }
+
+      ApiLogger.requete('GET', uri);
+      final chrono = Stopwatch()..start();
+
+      final response = await _send(
+        auth    : auth,
+        request : (headers) => _client.get(uri, headers: headers),
+      );
+
+      ApiLogger.reponse(
+          'GET', uri, response.statusCode, response.body, chrono.elapsed);
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        if (response.body.isEmpty) return null;
+        return json.decode(response.body);
+      }
+
+      if (response.body.isEmpty) {
+        throw Exception(MessagesErreur.pourStatut(response.statusCode));
+      }
+      final data = json.decode(response.body);
+      throw MessagesErreur.depuisReponse(
+          response.statusCode,
+          data is Map<String, dynamic> ? data['message'] as String? : null);
+
+    } on SocketException {
+      throw Exception(MessagesErreur.horsLigne);
+    } on TimeoutException catch (e) {
+      throw Exception(e.message);
+    } on FormatException {
+      throw Exception('Réponse invalide du serveur.');
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// PUT sans corps, paramètres dans l'URL.
+  ///
+  /// Les marquages « lu » fonctionnent ainsi : rien à envoyer, tout
+  /// est dans le chemin ou la requête.
+  Future<void> _putVide(
+    String endpoint, {
+    Map<String, String>? queryParams,
+    bool auth = false,
+  }) async {
+    try {
+      var uri = Uri.parse(ApiConfig.getUrl(endpoint));
+      if (queryParams != null) {
+        uri = uri.replace(queryParameters: queryParams);
+      }
+
+      ApiLogger.requete('PUT', uri);
+      final chrono = Stopwatch()..start();
+
+      final response = await _send(
+        auth    : auth,
+        request : (headers) => _client.put(uri, headers: headers),
+      );
+
+      ApiLogger.reponse(
+          'PUT', uri, response.statusCode, response.body, chrono.elapsed);
+
+      if (response.statusCode == 200 ||
+          response.statusCode == 201 ||
+          response.statusCode == 204) {
+        return;
+      }
+      throw Exception(MessagesErreur.pourStatut(response.statusCode));
+
+    } on SocketException {
+      throw Exception(MessagesErreur.horsLigne);
+    } on TimeoutException catch (e) {
+      throw Exception(e.message);
     } catch (e) {
       rethrow;
     }
@@ -799,6 +894,75 @@ class ApiService {
       rethrow;
     }
   }
+
+  // ════════════════════════════════════════════════════
+  // MÉTHODES PUBLIQUES — Notifications (historique)
+  // ════════════════════════════════════════════════════
+
+  /// Les 50 plus récentes, les plus nouvelles d'abord.
+  Future<List<NotificationModel>> getNotifications() async {
+    try {
+      final brut = await _getBrut(
+        ApiConfig.notificationsEndpoint,
+        queryParams : {'appType': ApiConfig.appType},
+        auth        : true,
+      );
+      final liste = brut as List<dynamic>? ?? const [];
+      return liste
+          .whereType<Map<String, dynamic>>()
+          .map(NotificationModel.fromJson)
+          .toList();
+    } catch (e) {
+      ApiLogger.erreur('getNotifications', e);
+      rethrow;
+    }
+  }
+
+  /// Nombre de non lues, pour la pastille.
+  ///
+  /// Accepte un nombre brut comme `{"count": 3}` : le contrat n'est
+  /// pas documenté, et une pastille fausse vaut mieux qu'un écran en
+  /// erreur.
+  Future<int> getNotificationsNonLues() async {
+    try {
+      final brut = await _getBrut(
+        ApiConfig.notificationsNonLuesEndpoint,
+        queryParams : {'appType': ApiConfig.appType},
+        auth        : true,
+      );
+      return switch (brut) {
+        int v                 => v,
+        num v                 => v.toInt(),
+        String v              => int.tryParse(v) ?? 0,
+        Map<String, dynamic> v => (v['count'] ?? v['nombre'] ?? v['total'])
+                is num
+            ? ((v['count'] ?? v['nombre'] ?? v['total']) as num).toInt()
+            : 0,
+        _                     => 0,
+      };
+    } catch (e) {
+      ApiLogger.erreur('getNotificationsNonLues', e);
+      rethrow;
+    }
+  }
+
+  Future<void> marquerNotificationLue(int id) =>
+      _putVide(ApiConfig.notificationLueUrl(id), auth: true);
+
+  Future<void> marquerToutesNotificationsLues() => _putVide(
+        ApiConfig.notificationsToutesLuesEndpoint,
+        queryParams : {'appType': ApiConfig.appType},
+        auth        : true,
+      );
+
+  Future<void> supprimerNotification(int id) =>
+      _delete(ApiConfig.notificationUrl(id), auth: true);
+
+  Future<void> supprimerToutesNotifications() => _delete(
+        ApiConfig.notificationsEndpoint,
+        queryParams : {'appType': ApiConfig.appType},
+        auth        : true,
+      );
 
   // ════════════════════════════════════════════════════
   // MÉTHODES PUBLIQUES — Notifications push

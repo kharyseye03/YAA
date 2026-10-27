@@ -5,6 +5,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimens.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../location/providers/position_provider.dart';
+import '../../notifications/providers/notification_notifier.dart';
 
 class HomeHeader extends ConsumerWidget {
   const HomeHeader({
@@ -124,18 +125,68 @@ class HomeHeader extends ConsumerWidget {
           GestureDetector(
             onTap: onNotificationTap,
             behavior: HitTestBehavior.opaque,
-            child: SizedBox(
+            child: _ClocheAvecPastille(
+              nonLues: ref.watch(notificationProvider).nonLues,
+              child: SizedBox(
               width: 42.r,
-              height: 42.r,
-              child: Icon(
-                Icons.notifications_none_rounded,
-                color: AppColors.dark,
-                size: 20.r,
+                height: 42.r,
+                child: Icon(
+                  Icons.notifications_none_rounded,
+                  color: AppColors.dark,
+                  size: 20.r,
+                ),
               ),
             ),
           ),
         ],
       ),
+    );
+  }
+}
+
+/// La cloche, avec le nombre de notifications non lues.
+///
+/// Au-delà de neuf, « 9+ » : le chiffre exact n'apprend plus rien, et
+/// une pastille trop large déborde de la cloche.
+class _ClocheAvecPastille extends StatelessWidget {
+  const _ClocheAvecPastille({required this.nonLues, required this.child});
+
+  final int nonLues;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    if (nonLues <= 0) return child;
+
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        child,
+        Positioned(
+          top   : 6.h,
+          right : 4.w,
+          child: Container(
+            padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 1.h),
+            constraints: BoxConstraints(minWidth: 16.r),
+            decoration: BoxDecoration(
+              color        : AppColors.error,
+              shape        : BoxShape.rectangle,
+              borderRadius : BorderRadius.circular(AppDimens.radiusFull),
+              border       : Border.all(color: Colors.white, width: 1.5),
+            ),
+            child: Text(
+              nonLues > 9 ? '9+' : '$nonLues',
+              textAlign: TextAlign.center,
+              style: AppTextStyles.caption.copyWith(
+                color      : Colors.white,
+                fontWeight : FontWeight.w800,
+                fontSize   : 9.sp,
+                height     : 1.2,
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

@@ -38,6 +38,16 @@ class ApiConfig {
   /// (FLASH_DEAL, SPONSOR, NOUVEAUTE…). Authentifiée : 401 sans jeton.
   static const String bannieresEndpoint = '/bannieres/mobile/groupes';
 
+  // ── Endpoints Notifications (historique) ──────────
+  /// ⚠️ Renvoie un tableau nu, pas l'enveloppe `{data: …}`.
+  static const String notificationsEndpoint = '/notifications';
+  static const String notificationsNonLuesEndpoint =
+      '/notifications/non-lues';
+  static String notificationLueUrl(int id) => '/notifications/$id/lue';
+  static const String notificationsToutesLuesEndpoint =
+      '/notifications/lues';
+  static String notificationUrl(int id) => '/notifications/$id';
+
   // ── Endpoints Notifications push ──────────────────
   /// Jeton Firebase de cet appareil, rangé à côté du compte.
   ///
