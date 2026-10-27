@@ -6,6 +6,8 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 import '../../core/utils/journal.dart';
 import '../api/api_service.dart';
+import '../location/location_service.dart';
+import '../permissions/file_autorisations.dart';
 
 /// Notifications push, de bout en bout.
 ///
@@ -157,7 +159,16 @@ class PushService {
   Future<void> enregistrerAppareil() async {
     if (!_actif) return;
     try {
-      final reglages = await FirebaseMessaging.instance.requestPermission();
+      // Laisser la localisation poser sa question d'abord : l'accueil
+      // se monte au même instant et l'attend pour afficher l'adresse.
+      // Le délai n'est qu'un garde-fou, pour le cas où cet écran ne
+      // demanderait jamais rien ; la file, elle, garantit dans tous
+      // les cas qu'une seule boîte de dialogue est à l'écran.
+      await LocationService.autorisationTranchee
+          .timeout(const Duration(seconds: 10), onTimeout: () {});
+
+      final reglages = await FileAutorisations.enFile(
+          () => FirebaseMessaging.instance.requestPermission());
       if (reglages.authorizationStatus == AuthorizationStatus.denied) {
         journal('ℹ️ Notifications refusées par l\'utilisateur');
         return;

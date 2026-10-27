@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:geocoding/geocoding.dart';
@@ -5,6 +6,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 
 import '../../config/maps/maps_config.dart';
+import '../permissions/file_autorisations.dart';
 
 /// Suggestion d'adresse retournée par l'autocomplétion Google Places
 class PlaceSuggestion {
@@ -52,6 +54,25 @@ class LocationResult {
 }
 
 class LocationService {
+  // ── Priorité de la demande d'autorisation ──────────────────
+  //
+  // La position passe avant les notifications, non par principe mais
+  // parce que l'accueil l'attend : tant qu'elle n'est pas tranchée,
+  // l'en-tête reste sur « Localisation… ». Les notifications, elles,
+  // peuvent patienter trois secondes.
+  //
+  // [autorisationTranchee] se termine dès que la question est réglée,
+  // accordée ou refusée. Elle ne se termine qu'une fois, au premier
+  // appel de [getCurrentLocation] ; les suivants la retrouvent déjà
+  // close et ne font donc plus attendre personne.
+  static final Completer<void> _autorisationTranchee = Completer<void>();
+  static Future<void> get autorisationTranchee =>
+      _autorisationTranchee.future;
+
+  static void _trancherAutorisation() {
+    if (!_autorisationTranchee.isCompleted) _autorisationTranchee.complete();
+  }
+
   // Détecte un "Plus Code" Google (ex: "PG8J+MWG", "8FVC9G8F+5W")
   // que le reverse geocoding met parfois en début d'adresse.
   static final _plusCodeRegExp = RegExp(r'^[A-Z0-9]{4,}\+[A-Z0-9]{2,}$');
@@ -71,23 +92,36 @@ class LocationService {
   /// Demande la permission, récupère la position GPS puis la
   /// convertit en adresse lisible (reverse geocoding natif).
   Future<LocationResult> getCurrentLocation() async {
-    // 1. Vérifier que le GPS du téléphone est activé
-    final serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      throw Exception('Veuillez activer la localisation de votre téléphone');
-    }
-
-    // 2. Vérifier / demander la permission
-    var permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
-        throw Exception('Permission de localisation refusée');
+    // Étapes 1 et 2 dans leur propre bloc : quoi qu'il en sorte —
+    // position accordée, refusée, ou GPS éteint sans qu'on ait eu à
+    // demander quoi que ce soit — la question de l'autorisation est
+    // close, et les demandes qui attendaient leur tour peuvent partir.
+    LocationPermission permission;
+    try {
+      // 1. Vérifier que le GPS du téléphone est activé
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        throw Exception('Veuillez activer la localisation de votre téléphone');
       }
-    }
-    if (permission == LocationPermission.deniedForever) {
-      throw Exception(
-          'Permission refusée définitivement. Activez-la dans les réglages.');
+
+      // 2. Vérifier / demander la permission
+      permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        // Via la file : à la connexion, les notifications demandent la
+        // leur au même instant, et deux boîtes de dialogue lancées
+        // ensemble s'annulent l'une l'autre.
+        permission = await FileAutorisations.enFile(
+            () => Geolocator.requestPermission());
+        if (permission == LocationPermission.denied) {
+          throw Exception('Permission de localisation refusée');
+        }
+      }
+      if (permission == LocationPermission.deniedForever) {
+        throw Exception(
+            'Permission refusée définitivement. Activez-la dans les réglages.');
+      }
+    } finally {
+      _trancherAutorisation();
     }
 
     // 3. Récupérer la position GPS
