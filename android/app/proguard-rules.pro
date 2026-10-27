@@ -13,6 +13,14 @@
 # Google Maps
 -keep class com.google.android.gms.maps.** { *; }
 
+# Firebase : le SDK résout ses composants par réflexion, à partir de
+# noms de classes listés dans le manifeste fusionné. R8 ne voit donc
+# aucun appel vers eux et les élague volontiers — l'app démarre, puis
+# échoue à initialiser Firebase en silence, uniquement en release.
+-keep class com.google.firebase.** { *; }
+-keep class com.google.android.gms.common.** { *; }
+-dontwarn com.google.firebase.**
+
 # Composants différés de Flutter : le moteur référence Play Core pour
 # télécharger des morceaux d'app à la demande. YAA ne s'en sert pas et
 # n'embarque donc pas la bibliothèque, mais R8 voit les références et
