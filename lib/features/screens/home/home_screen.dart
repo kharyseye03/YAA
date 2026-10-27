@@ -26,6 +26,9 @@ import 'home_header.dart';
 // import 'promo_sheet.dart'; // page promo plein écran, voir
 // _ouvrirBanniere : plus appelée depuis le passage des bannières à
 // l'API, le fichier est conservé pour un retour éventuel.
+import '../../notifications/providers/notification_notifier.dart';
+import '../../orders/providers/commande_notifier.dart';
+import 'bandeau_en_cours.dart';
 import 'banniere_stories.dart';
 import 'providers/banniere_provider.dart';
 import 'providers/category_provider.dart';
@@ -53,7 +56,31 @@ class HomeScreen extends ConsumerStatefulWidget {
   ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends ConsumerState<HomeScreen> {
+class _HomeScreenState extends ConsumerState<HomeScreen>
+    with WidgetsBindingObserver {
+  /// Relit les commandes au retour au premier plan.
+  ///
+  /// Le bandeau annonce un état qui vieillit : pendant que l'app
+  /// dormait, le coursier a pu arriver, ou la course se terminer.
+  /// Rafraîchir ici évite d'afficher une course finie — sans pour
+  /// autant interroger le serveur en continu, ce qui coûterait de la
+  /// batterie pour rien.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && mounted) {
+      ref.read(commandeProvider.notifier).loadCommandes(silencieux: true);
+      // Une notification a pu arriver pendant que l'app dormait :
+      // c'est même le cas le plus courant.
+      ref.read(notificationProvider.notifier).chargerCompteur();
+    }
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
   late int _currentNavIndex = widget.ongletInitial;
 
   /// Barre de navigation visible. Masquée pendant qu'on descend dans
@@ -113,7 +140,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     // pendant la construction.
     Future.microtask(() {
       if (mounted) ref.read(favoriProvider.notifier).loadFavoris();
+      // Alimente le bandeau « en cours ». Sans cet appel, il resterait
+      // muet tant qu'on n'a pas ouvert l'onglet Commandes — c'est-à-dire
+      // précisément quand on en a besoin.
+      if (mounted) ref.read(commandeProvider.notifier).loadCommandes();
+      // Alimente la pastille de la cloche. Le compteur seul, pas la
+      // liste : on n'a pas besoin du contenu ici.
+      if (mounted) ref.read(notificationProvider.notifier).chargerCompteur();
     });
+    WidgetsBinding.instance.addObserver(this);
     SystemChrome.setSystemUIOverlayStyle(
       const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
@@ -261,18 +296,28 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         offset   : _navVisible ? Offset.zero : const Offset(0, 1.4),
         duration : const Duration(milliseconds: 220),
         curve    : Curves.easeOut,
-        child: HomeBottomNav(
-          currentIndex: _currentNavIndex,
-          // Changer d'onglet la fait toujours réapparaître : sans ça,
-          // on arrive sur un écran dont la navigation est cachée.
-          onTap: (index) => setState(() {
-            _currentNavIndex = index;
-            _navVisible = true;
-          }),
-          onCartTap: () => setState(() {
-            _currentNavIndex = 4;
-            _navVisible = true;
-          }),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Au-dessus de la barre, donc visible depuis les cinq
+            // onglets : une course en route ne doit pas disparaître
+            // parce qu'on est allé regarder ses favoris.
+            const BandeauEnCours(),
+            HomeBottomNav(
+              currentIndex: _currentNavIndex,
+              // Changer d'onglet la fait toujours réapparaître : sans
+              // ça, on arrive sur un écran dont la navigation est
+              // cachée.
+              onTap: (index) => setState(() {
+                _currentNavIndex = index;
+                _navVisible = true;
+              }),
+              onCartTap: () => setState(() {
+                _currentNavIndex = 4;
+                _navVisible = true;
+              }),
+            ),
+          ],
         ),
       ),
     );

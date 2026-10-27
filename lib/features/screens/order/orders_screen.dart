@@ -2,9 +2,11 @@ import 'dart:async';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimens.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../core/utils/app_router.dart';
 import '../../../core/utils/devise.dart';
 import '../../../features/orders/providers/commande_notifier.dart';
 import '../../../model/order/commande_model.dart';
@@ -62,6 +64,21 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
     _rafraichissement?.cancel();
     _pages.dispose();
     super.dispose();
+  }
+
+  /// Ouvre une mission : le suivi si elle est en cours, son détail
+  /// sinon.
+  ///
+  /// Toucher une course en route pour tomber sur une fiche sans carte
+  /// ni position était le geste le plus décevant de l'écran : ce qu'on
+  /// vient voir, c'est où en est le coursier. Une mission terminée,
+  /// elle, n'a plus rien à suivre — son détail est la bonne réponse.
+  void _ouvrirMission(LivraisonCourseModel mission) {
+    if (mission.isEnCours) {
+      context.pushNamed(RouteNames.coursierSearch, extra: mission);
+      return;
+    }
+    showMissionDetailSheet(context, mission.id);
   }
 
   void _allerAOnglet(int i) => _pages.animateToPage(
@@ -164,8 +181,7 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
                         count    : courses.length,
                         builder  : (i) => CommandeCard(
                           mission : courses[i],
-                          onTap   : () =>
-                              showMissionDetailSheet(context, courses[i].id),
+                          onTap   : () => _ouvrirMission(courses[i]),
                         ),
                       ),
                     ],
