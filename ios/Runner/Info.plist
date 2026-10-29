@@ -55,6 +55,15 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<!-- Réveille brièvement l'app quand un message arrive alors qu'elle
+	     est en arrière-plan, pour que Firebase le traite. Sans ce mode,
+	     iOS affiche bien la bannière mais ne remet jamais le message à
+	     l'app : le compteur de non-lues et l'ouverture au bon écran
+	     cessent de fonctionner dès que l'app n'est pas au premier plan. -->
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+	</array>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Accès à la galerie pour choisir votre photo de profil.</string>
 	<key>NSCameraUsageDescription</key>

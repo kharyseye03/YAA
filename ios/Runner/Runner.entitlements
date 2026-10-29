@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Droit de recevoir des notifications push. « development » vise
+	     le serveur APNs de test ; à l'export pour l'App Store, Xcode
+	     remplace la valeur par « production » en s'appuyant sur le
+	     profil de distribution. C'est la valeur que pose Xcode quand
+	     on active la capacité à la main, et celle que Codemagic
+	     traduit de la même façon. -->
+	<key>aps-environment</key>
+	<string>development</string>
+</dict>
+</plist>

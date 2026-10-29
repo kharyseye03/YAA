@@ -174,6 +174,16 @@ class PushService {
         return;
       }
 
+      // Sur iOS, le jeton Firebase est dérivé du jeton APNs, qu'Apple
+      // délivre de façon asynchrone après l'acceptation. Demander le
+      // jeton trop tôt renvoie `null` — et comme on abandonne sur
+      // `null`, l'appareil n'était jamais enregistré au premier
+      // lancement, celui qui compte. On laisse donc APNs répondre.
+      if (Platform.isIOS && !await _attendreJetonApns()) {
+        journal('⚠️ Jeton APNs indisponible, enregistrement reporté');
+        return;
+      }
+
       final jeton = await FirebaseMessaging.instance.getToken();
       if (jeton == null) return;
       await _envoyerAuBackend(jeton);
@@ -185,6 +195,22 @@ class PushService {
     } catch (e) {
       journal('⚠️ Enregistrement du jeton échoué : $e');
     }
+  }
+
+  /// Attend qu'Apple ait délivré le jeton APNs, au plus dix secondes.
+  ///
+  /// Il arrive presque toujours en moins d'une seconde ; l'attente ne
+  /// se voit pas, puisqu'elle a lieu après la connexion, pendant que
+  /// l'accueil se remplit. En l'absence de réseau, ou sur un
+  /// simulateur, il ne vient jamais — d'où la sortie au bout du
+  /// délai, qui laisse `onTokenRefresh` rattraper le coup plus tard.
+  Future<bool> _attendreJetonApns() async {
+    for (var essai = 0; essai < 10; essai++) {
+      final apns = await FirebaseMessaging.instance.getAPNSToken();
+      if (apns != null) return true;
+      await Future<void>.delayed(const Duration(seconds: 1));
+    }
+    return false;
   }
 
   Future<void> _envoyerAuBackend(String jeton) async {
