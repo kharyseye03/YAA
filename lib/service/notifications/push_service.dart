@@ -237,8 +237,14 @@ class PushService {
   /// qui survivaient à la déconnexion, en plus visible.
   Future<void> oublierAppareil() async {
     if (!_actif) return;
-    final jeton = _jeton ?? await FirebaseMessaging.instance.getToken();
+    // Tout est sous `try`, y compris la lecture du jeton. Sur iOS,
+    // `getToken` lève quand Apple n'a pas encore délivré son jeton
+    // APNs — ce qui arrive dès que la capacité push n'est pas
+    // accordée au build. L'exception remontait alors jusqu'à
+    // `logout`, qui n'allait jamais jusqu'à effacer la session :
+    // impossible de se déconnecter.
     try {
+      final jeton = _jeton ?? await FirebaseMessaging.instance.getToken();
       if (jeton != null) await ApiService().supprimerAppareil(token: jeton);
     } catch (e) {
       journal('⚠️ Suppression du jeton côté backend échouée : $e');

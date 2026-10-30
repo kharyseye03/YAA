@@ -299,7 +299,13 @@ class AuthNotifier extends StateNotifier<AuthState> {
     // appel authentifié. Après, le serveur le refuserait, et le
     // téléphone continuerait de recevoir les notifications de cette
     // personne alors qu'une autre s'y connecte.
-    await PushService.instance.oublierAppareil();
+    // Borné dans le temps : détacher le jeton est souhaitable, mais
+    // jamais au point de retenir quelqu'un dans son compte. Un réseau
+    // qui traîne ou un service de notifications en panne ne doit pas
+    // rendre la déconnexion impossible.
+    await PushService.instance
+        .oublierAppareil()
+        .timeout(const Duration(seconds: 5), onTimeout: () {});
     await TokenStorage.instance.clear();
     await _prefs.remove(_emailKey);
     await _prefs.remove(_telephoneKey);
