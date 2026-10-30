@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -10,6 +11,7 @@ import '../../../core/constants/app_text_styles.dart';
 import '../../../core/utils/app_router.dart';
 import '../../../core/utils/phone_formatter.dart';
 import '../../../service/location/location_service.dart';
+import '../../../service/notifications/push_service.dart';
 import '../../../shared/widgets/user_avatar.dart';
 import '../../auth/providers/auth_notifier.dart';
 import '../../cart/providers/delivery_address_provider.dart';
@@ -175,9 +177,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
             SizedBox(height: AppDimens.lg),
 
-            Text(
-              'YAA · version 1.0.0',
-              style: AppTextStyles.caption.copyWith(color: AppColors.textMuted),
+            // Appui long : diagnostic des notifications. Volontairement
+            // sans indice visuel — c'est un outil de mise au point, pas
+            // une fonction de l'app. À retirer avec [_afficherDiagnostic].
+            GestureDetector(
+              onLongPress: _afficherDiagnostic,
+              child: Text(
+                'YAA · version 1.1.0',
+                style:
+                    AppTextStyles.caption.copyWith(color: AppColors.textMuted),
+              ),
             ),
 
             SizedBox(height: 90.h),
@@ -287,6 +296,61 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
+
+  /// Affiche l'état des jetons de notification de cet appareil.
+  ///
+  /// **Temporaire**, voir [PushService.diagnostic] : sert à envoyer un
+  /// message de test depuis la console Firebase sans passer par le
+  /// backend. À retirer, avec l'appui long qui l'appelle, une fois les
+  /// notifications iOS validées.
+  Future<void> _afficherDiagnostic() async {
+    final etat = await PushService.instance.diagnostic();
+    if (!mounted) return;
+
+    await showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Diagnostic notifications'),
+        content: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment : CrossAxisAlignment.start,
+            mainAxisSize       : MainAxisSize.min,
+            children: [
+              Text('Jeton APNs (iOS) : '
+                  '${etat.apns == null ? "absent" : "présent"}'),
+              SizedBox(height: AppDimens.sm),
+              if (etat.erreur != null)
+                Text('Erreur : ${etat.erreur}',
+                    style: const TextStyle(color: AppColors.error))
+              else
+                SelectableText(etat.fcm ?? 'Aucun jeton',
+                    style: TextStyle(fontSize: 11.sp)),
+            ],
+          ),
+        ),
+        actions: [
+          if (etat.fcm != null)
+            TextButton(
+              onPressed: () {
+                // Le messager est retenu avant la fermeture : après le
+                // pop, ce contexte-ci n'est plus dans l'arbre.
+                final messager = ScaffoldMessenger.of(context);
+                Clipboard.setData(ClipboardData(text: etat.fcm!));
+                Navigator.pop(context);
+                messager.showSnackBar(
+                  const SnackBar(content: Text('Jeton copié')),
+                );
+              },
+              child: const Text('Copier'),
+            ),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Fermer'),
+          ),
+        ],
+      ),
+    );
+  }
 
   Future<void> _confirmerDeconnexion() async {
     {
