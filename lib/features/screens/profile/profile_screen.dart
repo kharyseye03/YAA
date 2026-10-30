@@ -176,7 +176,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             SizedBox(height: AppDimens.lg),
 
             Text(
-              'YAA · version 1.1.0',
+              'YAA · version 1.1.1',
               style:
                   AppTextStyles.caption.copyWith(color: AppColors.textMuted),
             ),
