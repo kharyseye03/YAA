@@ -209,37 +209,6 @@ class PushService {
     }
   }
 
-  /// État des jetons de cet appareil, pour diagnostic.
-  ///
-  /// **Temporaire.** Ajouté le 30/10/2026 pour trancher d'où vient le
-  /// silence des notifications iOS, sans dépendre du backend : avec le
-  /// jeton FCM, on envoie un message depuis la console Firebase et on
-  /// voit tout de suite si le chemin app → APNs → Firebase répond.
-  /// À retirer une fois la question réglée.
-  ///
-  /// `apns` ne vaut quelque chose que sur iOS ; sur Android il est
-  /// toujours nul, et c'est normal.
-  Future<({String? apns, String? fcm, String? erreur})> diagnostic() async {
-    if (!_actif) {
-      return (apns: null, fcm: null, erreur: 'Notifications désactivées');
-    }
-    String? apns;
-    try {
-      apns = await FirebaseMessaging.instance.getAPNSToken();
-    } catch (_) {
-      // Sans importance : l'absence est elle-même l'information.
-    }
-    try {
-      return (
-        apns   : apns,
-        fcm    : _jeton ?? await FirebaseMessaging.instance.getToken(),
-        erreur : null,
-      );
-    } catch (e) {
-      return (apns: apns, fcm: null, erreur: '$e');
-    }
-  }
-
   /// Attend qu'Apple ait délivré le jeton APNs, au plus dix secondes.
   ///
   /// Il arrive presque toujours en moins d'une seconde ; l'attente ne
