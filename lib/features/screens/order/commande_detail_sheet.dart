@@ -5,6 +5,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimens.dart';
 import '../../../core/errors/messages_erreur.dart';
 import '../../../service/api/api_service.dart';
+import '../../../shared/widgets/attente_et_confirmation.dart';
 import 'confirmation_annulation.dart';
 import '../../../core/utils/devise.dart';
 import '../../../features/orders/providers/commande_notifier.dart';
@@ -215,12 +216,31 @@ class _CommandeDetailSheetState extends ConsumerState<_CommandeDetailSheet> {
 
     setState(() => _enAnnulation = true);
     try {
-      await ApiService().annulerCommande(widget.commandeId);
+      await pendantAttente(context, () async {
+        await ApiService().annulerCommande(widget.commandeId);
+        // Rechargé ici, sous le voile, et non après la fermeture :
+        // `ref` ne survit pas à la destruction de la feuille, et le
+        // rechargement échouait en silence. C'est ce qui laissait le
+        // bandeau de l'accueil annoncer une commande annulée.
+        //
+        // Son échec à lui ne doit pas faire passer une annulation
+        // réussie pour un échec : la commande est annulée côté
+        // serveur quoi qu'il arrive à cette relecture.
+        try {
+          await ref.read(commandeProvider.notifier).loadCommandes();
+        } catch (_) {}
+      });
+      if (!mounted) return;
+
+      await confirmationAction(
+        context,
+        titre   : 'Commande annulée',
+        message : 'L\'établissement en a été informé.',
+      );
       if (!mounted) return;
       // La feuille se ferme : la commande annulée quitte l'onglet des
       // commandes en cours, il n'y a plus rien à y regarder.
       Navigator.of(context).pop();
-      await ref.read(commandeProvider.notifier).loadCommandes();
     } catch (e) {
       if (!mounted) return;
       setState(() => _enAnnulation = false);

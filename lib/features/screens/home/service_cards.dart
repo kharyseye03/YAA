@@ -26,8 +26,8 @@ class ServiceCards extends StatelessWidget {
   // page — ils ne viennent d'aucune API ni d'aucun tarif validé. Un
   // prix affiché engage YAA vis-à-vis du client : à remplacer par les
   // vrais tarifs de départ avant toute mise en production.
-  static const int _prixDepartLivraison = 15000;
-  static const int _prixDepartCourse    = 20000;
+  static const int _prixDepartLivraison = 5000;
+  static const int _prixDepartCourse    = 15000;
 
   @override
   Widget build(BuildContext context) {

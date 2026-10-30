@@ -9,12 +9,24 @@ import '../../../service/api/api_service.dart';
 class CartState {
   final bool isLoading;
   final bool isAdding;
+
+  /// Une modification de ligne est partie au serveur et le panier
+  /// n'a pas encore été relu.
+  ///
+  /// Distinct de [isLoading], qui vide l'écran le temps du premier
+  /// chargement. Ici l'écran reste entier : seules les quantités sont
+  /// déjà justes et les totaux encore ceux d'avant. Un indicateur
+  /// discret suffit, et il est nécessaire — sans lui, un total qui
+  /// met une seconde à suivre le « + » passe pour un défaut.
+  final bool synchronisation;
+
   final CartModel? cart;
   final String? error;
 
   const CartState({
-    this.isLoading = false,
-    this.isAdding  = false,
+    this.isLoading       = false,
+    this.isAdding        = false,
+    this.synchronisation = false,
     this.cart,
     this.error,
   });
@@ -22,16 +34,18 @@ class CartState {
   CartState copyWith({
     bool? isLoading,
     bool? isAdding,
+    bool? synchronisation,
     CartModel? cart,
     String? error,
     bool clearError = false,
     bool clearCart  = false,   // ← permet de mettre cart à null explicitement
   }) {
     return CartState(
-      isLoading : isLoading ?? this.isLoading,
-      isAdding  : isAdding  ?? this.isAdding,
-      cart      : clearCart ? null : (cart ?? this.cart),
-      error     : clearError ? null : (error ?? this.error),
+      isLoading       : isLoading ?? this.isLoading,
+      isAdding        : isAdding  ?? this.isAdding,
+      synchronisation : synchronisation ?? this.synchronisation,
+      cart            : clearCart ? null : (cart ?? this.cart),
+      error           : clearError ? null : (error ?? this.error),
     );
   }
 }
@@ -98,28 +112,36 @@ class CartNotifier extends StateNotifier<CartState> {
     required int produitId,
     required int quantite,
   }) async {
+    state = state.copyWith(synchronisation: true);
     try {
       await ApiService().addToCart(produitId: produitId, quantite: quantite);
       final cart = await ApiService().getCart();
-      state = state.copyWith(cart: cart, clearError: true);
+      state = state.copyWith(
+          cart: cart, synchronisation: false, clearError: true);
       return true;
     } catch (e) {
       journal('❌ changerQuantite: $e');
-      state = state.copyWith(error: MessagesErreur.depuisException(e));
+      state = state.copyWith(
+        synchronisation : false,
+        error           : MessagesErreur.depuisException(e),
+      );
       return false;
     }
   }
 
   /// Supprime une ligne du panier via son id (idLigne)
   Future<void> removeItem(int idLigne) async {
+    state = state.copyWith(synchronisation: true);
     try {
       await ApiService().deleteCartLine(idLigne: idLigne);
       final cart = await ApiService().getCart();
-      state = state.copyWith(cart: cart, clearError: true);
+      state = state.copyWith(
+          cart: cart, synchronisation: false, clearError: true);
     } catch (e) {
       journal('❌ removeItem: $e');
       state = state.copyWith(
-        error: MessagesErreur.depuisException(e),
+        synchronisation : false,
+        error           : MessagesErreur.depuisException(e),
       );
     }
   }

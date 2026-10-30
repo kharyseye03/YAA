@@ -219,14 +219,36 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                         ),
                       ),
                       const SizedBox(height: 2),
-                      Text(
-                        montantLabel(total),
-                        style: TextStyle(
-                          fontFamily : 'PlusJakartaSans',
-                          fontSize   : 30.sp,
-                          fontWeight : FontWeight.w800,
-                          color      : AppColors.dark,
-                        ),
+                      // Le montant s'estompe et un indicateur l'accompagne
+                      // pendant que le serveur recalcule. Les quantités,
+                      // elles, sont déjà à jour : sans ce signe, le total
+                      // qui met une seconde à suivre passe pour un bug.
+                      Row(
+                        children: [
+                          AnimatedOpacity(
+                            duration : const Duration(milliseconds: 180),
+                            opacity  : cartState.synchronisation ? 0.45 : 1,
+                            child: Text(
+                              montantLabel(total),
+                              style: TextStyle(
+                                fontFamily : 'PlusJakartaSans',
+                                fontSize   : 30.sp,
+                                fontWeight : FontWeight.w800,
+                                color      : AppColors.dark,
+                              ),
+                            ),
+                          ),
+                          if (cartState.synchronisation) ...[
+                            SizedBox(width: 10.w),
+                            SizedBox(
+                              width  : 15.r,
+                              height : 15.r,
+                              child  : const CircularProgressIndicator(
+                                  strokeWidth: 1.8,
+                                  color: AppColors.primary),
+                            ),
+                          ],
+                        ],
                       ),
 
                       SizedBox(height: 20.h),

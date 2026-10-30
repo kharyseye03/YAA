@@ -14,6 +14,7 @@ import '../../../shared/widgets/recherche_animation.dart';
 import '../course/rating_sheet.dart';
 import '../../../core/errors/messages_erreur.dart';
 import '../../../service/api/api_service.dart';
+import '../../../shared/widgets/attente_et_confirmation.dart';
 import 'confirmation_annulation.dart';
 import 'detail_widgets.dart';
 import 'orders_screen.dart' show CommandeCard;
@@ -320,10 +321,23 @@ class _MissionDetailSheetState extends ConsumerState<_MissionDetailSheet> {
 
     setState(() => _enAnnulation = true);
     try {
-      await ApiService().annulerMission(m.id);
+      await pendantAttente(context, () async {
+        await ApiService().annulerMission(m.id);
+        // Sous le voile, avant la fermeture : après le pop, `ref` est
+        // mort et la relecture échouait sans bruit — le bandeau de
+        // l'accueil continuait d'annoncer une course annulée.
+        try {
+          await ref.read(commandeProvider.notifier).loadCommandes();
+        } catch (_) {}
+      });
+      if (!mounted) return;
+
+      await confirmationAction(
+        context,
+        titre: livraison ? 'Livraison annulée' : 'Course annulée',
+      );
       if (!mounted) return;
       Navigator.of(context).pop();
-      await ref.read(commandeProvider.notifier).loadCommandes();
     } catch (e) {
       if (!mounted) return;
       setState(() => _enAnnulation = false);

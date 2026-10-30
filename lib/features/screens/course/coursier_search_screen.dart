@@ -1,6 +1,7 @@
 import 'dart:async';
 import '../../../core/utils/journal.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -9,6 +10,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimens.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/utils/app_router.dart';
+import '../../../features/orders/providers/commande_notifier.dart';
 import '../../../model/order/livraison_course_model.dart';
 import '../../../service/api/api_service.dart';
 import '../../../service/location/location_service.dart';
@@ -21,6 +23,7 @@ import '../../../core/constants/app_contacts.dart';
 import '../../../core/errors/messages_erreur.dart';
 import '../../../core/utils/devise.dart';
 import '../../../shared/widgets/user_avatar.dart';
+import '../../../shared/widgets/attente_et_confirmation.dart';
 import '../order/confirmation_annulation.dart';
 import 'rating_sheet.dart';
 
@@ -30,16 +33,20 @@ import 'rating_sheet.dart';
 ///
 /// Dès qu'un coursier est assigné, le panneau du bas se transforme
 /// en fiche coursier (nom, téléphone, appel).
-class CoursierSearchScreen extends StatefulWidget {
+class CoursierSearchScreen extends ConsumerStatefulWidget {
   const CoursierSearchScreen({super.key, required this.mission});
 
   final LivraisonCourseModel mission;
 
   @override
-  State<CoursierSearchScreen> createState() => _CoursierSearchScreenState();
+  ConsumerState<CoursierSearchScreen> createState() =>
+      _CoursierSearchScreenState();
 }
 
-class _CoursierSearchScreenState extends State<CoursierSearchScreen>
+// Passé en ConsumerState pour relire les commandes après une
+// annulation : sans ça, le bandeau « en cours » de l'accueil gardait
+// la course qu'on venait d'annuler.
+class _CoursierSearchScreenState extends ConsumerState<CoursierSearchScreen>
     with TickerProviderStateMixin {
   // Une seule boucle d'animation ; les ondes sont décalées entre elles
   late final AnimationController _pulse = AnimationController(
@@ -489,7 +496,22 @@ class _CoursierSearchScreenState extends State<CoursierSearchScreen>
 
     setState(() => _enAnnulation = true);
     try {
-      await ApiService().annulerMission(_mission.id);
+      await pendantAttente(context, () async {
+        await ApiService().annulerMission(_mission.id);
+        // Ce rechargement manquait : on rentrait à l'accueil sans
+        // relire les commandes, et le bandeau « en cours » gardait la
+        // course qu'on venait d'annuler. Son échec ne remet pas en
+        // cause l'annulation elle-même.
+        try {
+          await ref.read(commandeProvider.notifier).loadCommandes();
+        } catch (_) {}
+      });
+      if (!mounted) return;
+
+      await confirmationAction(
+        context,
+        titre: livraison ? 'Livraison annulée' : 'Course annulée',
+      );
       if (!mounted) return;
       _pollTimer?.cancel();
       _retourAccueil();
