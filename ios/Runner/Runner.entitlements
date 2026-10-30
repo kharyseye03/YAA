@@ -2,13 +2,21 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<!-- Droit de recevoir des notifications push. « development » vise
-	     le serveur APNs de test ; à l'export pour l'App Store, Xcode
-	     remplace la valeur par « production » en s'appuyant sur le
-	     profil de distribution. C'est la valeur que pose Xcode quand
-	     on active la capacité à la main, et celle que Codemagic
-	     traduit de la même façon. -->
+	<!-- Droit de recevoir des notifications push.
+
+	     « production » et non « development » : cette valeur décide à
+	     quel serveur APNs l'appareil s'adresse, et les deux ne
+	     communiquent pas. Xcode pose « development » quand on active
+	     la capacité à la main, en comptant sur l'export App Store pour
+	     la remplacer — mais notre chaîne signe en manuel, sur
+	     Codemagic, et ne remplace rien. Une app partie en TestFlight
+	     avec « development » s'enregistre auprès du serveur de test :
+	     les messages sont acceptés et n'arrivent jamais.
+
+	     Conséquence à connaître : un build lancé depuis Xcode en débogage
+	     ne recevra pas de notifications. Tant que la compilation passe
+	     par Codemagic, ça n'a pas d'importance. -->
 	<key>aps-environment</key>
-	<string>development</string>
+	<string>production</string>
 </dict>
 </plist>
