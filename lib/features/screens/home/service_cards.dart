@@ -20,12 +20,6 @@ class ServiceCards extends StatelessWidget {
 
   final VoidCallback onLivraison;
   final VoidCallback onCourse;
-
-  // ⚠️ VALEURS COMMERCIALES À CONFIRMER ⚠️
-  // Ce sont des montants d'attente, choisis pour construire la mise en
-  // page — ils ne viennent d'aucune API ni d'aucun tarif validé. Un
-  // prix affiché engage YAA vis-à-vis du client : à remplacer par les
-  // vrais tarifs de départ avant toute mise en production.
   static const int _prixDepartLivraison = 5000;
   static const int _prixDepartCourse    = 15000;
 
@@ -36,9 +30,7 @@ class ServiceCards extends StatelessWidget {
       child: Row(
         children: [
           Expanded(
-            // Dégradés croisés : la moto est sombre et disparaîtrait
-            // sur un fond navy, la voiture est claire et ressort mal
-            // sur de l'orange.
+
             child: _ServiceCard(
               titre    : 'Livraison',
               accroche : 'dès ${montantLabel(_prixDepartLivraison)}',
@@ -103,9 +95,6 @@ class _ServiceCard extends StatelessWidget {
           ),
         ],
       ),
-      // Material + InkWell par-dessus le dégradé : le Container peint
-      // le fond, l'InkWell peint l'onde au toucher. Un GestureDetector
-      // seul ne donnait aucun retour, la carte semblait inerte.
       child: Material(
         color: Colors.transparent,
         borderRadius: rayon,
@@ -116,10 +105,6 @@ class _ServiceCard extends StatelessWidget {
             borderRadius: rayon,
             child: Stack(
               children: [
-                // ── Véhicule, en haut à droite ──────────────────
-                // Plafonné à 58 % de la hauteur et repoussé vers le
-                // haut : auparavant il occupait toute la carte et le
-                // texte se dessinait par-dessus. Chacun son espace.
                 if (image != null)
                   Positioned(
                     right : -4.w,
@@ -136,7 +121,6 @@ class _ServiceCard extends StatelessWidget {
                     ),
                   ),
 
-                // ── Titre + prix d'appel, en bas à gauche ───────
                 Positioned(
                   left   : 14.w,
                   right  : 10.w,
@@ -156,8 +140,6 @@ class _ServiceCard extends StatelessWidget {
                         ),
                       ),
                       SizedBox(height: AppDimens.xs),
-                      // Pastille plutôt que texte nu : sur un dégradé,
-                      // un chiffre posé à plat se lit mal et se perd.
                       Container(
                         padding: EdgeInsets.symmetric(
                             horizontal: 8.w, vertical: 3.h),

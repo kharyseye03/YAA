@@ -26,6 +26,7 @@ import 'home_header.dart';
 // import 'promo_sheet.dart'; // page promo plein écran, voir
 // _ouvrirBanniere : plus appelée depuis le passage des bannières à
 // l'API, le fichier est conservé pour un retour éventuel.
+import '../../../service/notifications/push_service.dart';
 import '../../notifications/providers/notification_notifier.dart';
 import '../../orders/providers/commande_notifier.dart';
 import 'bandeau_en_cours.dart';
@@ -72,6 +73,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       // Une notification a pu arriver pendant que l'app dormait :
       // c'est même le cas le plus courant.
       ref.read(notificationProvider.notifier).chargerCompteur();
+      // Ne fait rien si le serveur connaît déjà ce jeton. Rattrape le
+      // cas où l'app a démarré sans réseau : sans ça, l'appareil
+      // restait inconnu du backend jusqu'à la prochaine connexion.
+      PushService.instance.reprendreEnregistrement();
     }
   }
 

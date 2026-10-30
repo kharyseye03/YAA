@@ -60,6 +60,15 @@ class PushService {
   bool _actif = false;
   String? _jeton;
 
+  /// Le serveur connaît ce jeton. Faux tant qu'il ne le connaît pas,
+  /// ce qui autorise [reprendreEnregistrement] à réessayer.
+  bool _enregistre = false;
+
+  /// L'écoute du renouvellement est posée une fois pour toutes :
+  /// la reposer à chaque tentative empilerait les abonnements, et le
+  /// jeton partirait en plusieurs exemplaires.
+  bool _ecouteRenouvellement = false;
+
   /// Appelé quand l'utilisateur touche une notification. Renseigné par
   /// l'application une fois le routeur construit — le service ne sait
   /// pas naviguer, il se contente de transmettre les données.
@@ -191,7 +200,10 @@ class PushService {
       // Firebase renouvelle le jeton de lui-même : réinstallation,
       // restauration, effacement des données. Sans cette écoute, les
       // notifications cessent d'arriver un jour, sans rien signaler.
-      FirebaseMessaging.instance.onTokenRefresh.listen(_envoyerAuBackend);
+      if (!_ecouteRenouvellement) {
+        _ecouteRenouvellement = true;
+        FirebaseMessaging.instance.onTokenRefresh.listen(_envoyerAuBackend);
+      }
     } catch (e) {
       journal('⚠️ Enregistrement du jeton échoué : $e');
     }
@@ -244,20 +256,48 @@ class PushService {
     return false;
   }
 
+  /// Envoie le jeton au backend, en réessayant.
+  ///
+  /// L'enregistrement n'a lieu qu'au démarrage ou à la connexion. S'il
+  /// échoue — réseau qui flanche, backend qui redémarre —, rien ne le
+  /// retentait et l'appareil restait inconnu du serveur jusqu'à la
+  /// prochaine connexion, sans que personne ne s'en aperçoive. C'est
+  /// exactement ce qui est arrivé le 30/10/2026 : le jeton était bon,
+  /// le backend ne le connaissait pas.
   Future<void> _envoyerAuBackend(String jeton) async {
     _jeton = jeton;
-    try {
-      await ApiService().enregistrerAppareil(
-        token: jeton,
-        // En minuscules : c'est la forme attendue par le backend.
-        plateforme: Platform.isIOS ? 'ios' : 'android',
-      );
-      journal('✅ Jeton de notification enregistré');
-    } catch (e) {
-      // L'endpoint n'existe pas encore côté backend : on n'en fait pas
-      // une erreur visible, le reste de l'app n'en dépend pas.
-      journal('⚠️ Envoi du jeton au backend échoué : $e');
+
+    for (var essai = 1; essai <= 3; essai++) {
+      try {
+        await ApiService().enregistrerAppareil(
+          token: jeton,
+          // En minuscules : c'est la forme attendue par le backend.
+          plateforme: Platform.isIOS ? 'ios' : 'android',
+        );
+        _enregistre = true;
+        journal('✅ Jeton de notification enregistré');
+        return;
+      } catch (e) {
+        journal('⚠️ Envoi du jeton au backend échoué (essai $essai) : $e');
+        if (essai < 3) {
+          await Future<void>.delayed(Duration(seconds: 2 * essai));
+        }
+      }
     }
+    // Les trois tentatives ont échoué : [reprendreEnregistrement] le
+    // retentera au prochain retour au premier plan.
+    _enregistre = false;
+  }
+
+  /// Reprend l'enregistrement s'il n'a jamais abouti.
+  ///
+  /// À appeler au retour au premier plan. Ne fait rien dans le cas
+  /// normal, où le jeton est déjà chez le serveur ; sert aux fois où
+  /// l'app a démarré sans réseau, ou avant que la configuration soit
+  /// complète.
+  Future<void> reprendreEnregistrement() async {
+    if (!_actif || _enregistre) return;
+    await enregistrerAppareil();
   }
 
   /// À appeler **à la déconnexion**, avant d'effacer la session.
@@ -285,6 +325,7 @@ class PushService {
       await FirebaseMessaging.instance.deleteToken();
     } catch (_) {}
     _jeton = null;
+    _enregistre = false;
   }
 
   // ── Réception ────────────────────────────────────────────────
