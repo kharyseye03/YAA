@@ -64,3 +64,6 @@ android/key.properties
 
 # Fichiers de verrouillage Word, crees a l'ouverture d'un .docx
 ~$*
+
+# Sortie generee par graphify : reconstruite a chaque build
+graphify-out/
