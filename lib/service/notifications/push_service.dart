@@ -64,6 +64,15 @@ class PushService {
   /// ce qui autorise [reprendreEnregistrement] à réessayer.
   bool _enregistre = false;
 
+  /// Un enregistrement est déjà en cours.
+  ///
+  /// Sur iOS il dure jusqu'à seize secondes — dix d'attente du jeton
+  /// APNs, six de reprises. Quitter l'app et y revenir pendant ce
+  /// temps est banal, et chaque retour relance [reprendreEnregistrement],
+  /// qui ne voit pas encore `_enregistre`. Sans ce drapeau, trois
+  /// enregistrements partaient en parallèle.
+  bool _enCours = false;
+
   /// L'écoute du renouvellement est posée une fois pour toutes :
   /// la reposer à chaque tentative empilerait les abonnements, et le
   /// jeton partirait en plusieurs exemplaires.
@@ -166,7 +175,8 @@ class PushService {
   /// quelqu'un qui vient de se connecter comprend pourquoi on la lui
   /// demande, ce qui n'est pas le cas au tout premier lancement.
   Future<void> enregistrerAppareil() async {
-    if (!_actif) return;
+    if (!_actif || _enCours) return;
+    _enCours = true;
     try {
       // Laisser la localisation poser sa question d'abord : l'accueil
       // se monte au même instant et l'attend pour afficher l'adresse.
@@ -206,6 +216,8 @@ class PushService {
       }
     } catch (e) {
       journal('⚠️ Enregistrement du jeton échoué : $e');
+    } finally {
+      _enCours = false;
     }
   }
 

@@ -24,8 +24,12 @@ Future<T> pendantAttente<T>(
 ) async {
   final navigateur = Navigator.of(context, rootNavigator: true);
 
-  // Non attendu : la boîte ne se ferme qu'à notre demande, plus bas.
-  unawaitedDialogue(showDialog<void>(
+  // La route est gardée sous la main, plutôt qu'un `showDialog` suivi
+  // d'un `pop` : `pop` retire ce qui est au-dessus, pas forcément ce
+  // voile. Si quelque chose s'ouvre pendant l'attente — toucher une
+  // notification ouvre la commande correspondante —, c'était cet
+  // écran-là qui partait, et le voile restait, infermable.
+  final voile = DialogRoute<void>(
     context: context,
     barrierDismissible: false,
     barrierColor: Colors.black.withValues(alpha: 0.35),
@@ -47,22 +51,18 @@ Future<T> pendantAttente<T>(
         ),
       ),
     ),
-  ));
+  );
+  navigateur.push(voile);
 
   try {
     return await action();
   } finally {
     // `finally` et non après le `return` : si l'action échoue, le
     // voile doit disparaître quand même, sinon l'écran reste pris.
-    if (navigateur.canPop()) navigateur.pop();
+    // `removeRoute` et non `pop` : il vise ce voile où qu'il soit.
+    navigateur.removeRoute(voile);
   }
 }
-
-/// Ignore volontairement le futur d'une boîte de dialogue.
-///
-/// Nommé plutôt qu'un `// ignore:` pour que l'intention se lise :
-/// cette boîte-là est fermée par [pendantAttente], pas attendue.
-void unawaitedDialogue(Future<void> _) {}
 
 /// Confirme qu'un geste a abouti, et attend d'être lue.
 ///
